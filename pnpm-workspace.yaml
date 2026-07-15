@@ -1,0 +1,8 @@
+packages: []
+
+allowBuilds:
+  esbuild: true
+
+overrides:
+  'vitepress>@vitejs/plugin-vue': 5.2.4
+  'vitepress>vite': 6.4.3

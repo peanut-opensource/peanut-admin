@@ -457,6 +457,38 @@
       "official_sources": ["https://www.npmjs.com/package/vitepress", "https://vitepress.dev/"]
     },
     {
+      "id": "docs.vite",
+      "status": "accepted",
+      "category": "documentation",
+      "name": "vite",
+      "exact_version": "6.4.3",
+      "constraint": "6.4.3",
+      "direct_dependency": true,
+      "license": "MIT",
+      "purpose": "Security-patched Vite runtime compatible with VitePress 1.6.4",
+      "alternatives": ["Vite 5 rejected by security audit", "Vite 8 rejected for VitePress 1.6.4 incompatibility"],
+      "adapter": "The documentation workspace pins this version independently from the Admin Web Vite 8 toolchain",
+      "exit_plan": "Remove the documentation-only pin when a VitePress release supports the accepted current Vite major",
+      "security_status": "Accepted after GHSA-fx2h-pf6j-xcff audit on 2026-07-15; 6.4.3 is the first patched compatible release",
+      "official_sources": ["https://www.npmjs.com/package/vite/v/6.4.3", "https://github.com/vitejs/vite/security/advisories/GHSA-fx2h-pf6j-xcff"]
+    },
+    {
+      "id": "docs.vite-plugin-vue",
+      "status": "accepted",
+      "category": "documentation",
+      "name": "@vitejs/plugin-vue",
+      "exact_version": "5.2.4",
+      "constraint": "5.2.4",
+      "direct_dependency": true,
+      "license": "MIT",
+      "purpose": "VitePress 1.6.4-compatible Vue plugin paired with patched Vite 6",
+      "alternatives": ["Plugin Vue 6 rejected for unnecessary compatibility risk in the VitePress 1 line"],
+      "adapter": "The documentation workspace pins this version independently from the Admin Web plugin",
+      "exit_plan": "Upgrade with VitePress and remove the documentation-only compatibility pin",
+      "security_status": "Official metadata, Vite 6 peer range, and license reviewed 2026-07-15",
+      "official_sources": ["https://www.npmjs.com/package/@vitejs/plugin-vue/v/5.2.4", "https://github.com/vitejs/vite-plugin-vue"]
+    },
+    {
       "id": "tool.node",
       "status": "accepted",
       "category": "toolchain",

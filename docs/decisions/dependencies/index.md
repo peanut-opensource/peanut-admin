@@ -14,11 +14,13 @@ The machine-readable registry is [`p0-dependencies.json`](p0-dependencies.json).
 | Admin Web | Vue 3.5.39, Vite 8.1.4, TypeScript 5.9.3, Element Plus 2.14.3, Pinia 4.0.2, Vue Router 5.2.0 |
 | Web quality | Vitest 4.1.10, Playwright 1.61.1, ESLint 10.7.0, vue-tsc 3.3.7 |
 | API contract | OpenAPI 3.1 validated by Redocly CLI and consumed through openapi-typescript plus openapi-fetch |
-| Documentation | VitePress 1.6.4 |
+| Documentation | VitePress 1.6.4 on security-patched Vite 6.4.3 and Plugin Vue 5.2.4 |
 | Development services | MySQL 8.4.10 and Valkey 9.1.0 Alpine |
 | Supply chain | Composer/pnpm audits and license inventories, Gitleaks 8.30.1, GitHub dependency review |
 
 TypeScript intentionally remains on the 5.9 line because the accepted `openapi-typescript` 7.13.0 release declares a TypeScript 5 peer dependency. A newer major number is not, by itself, a valid reason to break a verified toolchain.
+
+The documentation workspace intentionally uses Vite 6.4.3 instead of VitePress 1.6.4's default Vite 5 range. Vite 5 is affected by GHSA-fx2h-pf6j-xcff, while Vite 8 is not compatible with the current VitePress rendering pipeline. This documentation-only pin is separate from the Admin Web Vite 8 baseline.
 
 Valkey is accepted as the P0 development cache because it provides the required open-source RESP-compatible server. Cache access must remain behind Kernel cache ports and cache data must never become authoritative.
 

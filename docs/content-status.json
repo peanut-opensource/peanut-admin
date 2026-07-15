@@ -9,7 +9,49 @@
       "replacement": null
     },
     {
-      "path": "docs/decisions/dependencies/README.md",
+      "path": "docs/index.md",
+      "title": "Peanut Admin Developer Documentation",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/core-concepts/index.md",
+      "title": "Core Concepts",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/architecture/index.md",
+      "title": "Architecture",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/standards/index.md",
+      "title": "Engineering Standards",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/api/index.md",
+      "title": "API Contract",
+      "status": "draft",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/status/index.md",
+      "title": "P0 Status",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/decisions/dependencies/index.md",
       "title": "P0 Dependency Decisions",
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
