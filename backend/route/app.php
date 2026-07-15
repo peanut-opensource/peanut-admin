@@ -2,4 +2,7 @@
 
 declare(strict_types=1);
 
-return require __DIR__ . '/tenant-auth.php';
+return array_merge(
+    require __DIR__ . '/tenant-auth.php',
+    require __DIR__ . '/platform-auth.php',
+);
