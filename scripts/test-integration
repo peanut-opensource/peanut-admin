@@ -29,4 +29,6 @@ for attempt in $(seq 1 60); do
   sleep 2
 done
 
-PEANUT_INTEGRATION=1 php vendor/bin/phpunit packages/php/kernel/tests/Integration
+PEANUT_INTEGRATION=1 php vendor/bin/phpunit \
+  packages/php/kernel/tests/Integration \
+  packages/php/data-permission/tests/Integration
