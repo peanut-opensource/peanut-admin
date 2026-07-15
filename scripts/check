@@ -17,7 +17,11 @@ printf '%s\n' \
   README.md \
   docs/README.md \
   docs/content-status.json \
+  docs/decisions/dependencies/README.md \
+  docs/decisions/dependencies/p0-dependencies.json \
+  docs/standards/dependency-policy.md \
   scripts/check \
+  scripts/check-dependency-decisions \
   scripts/check-doc-content-status \
   | LC_ALL=C sort > "$EXPECTED_FILES"
 
@@ -26,11 +30,12 @@ find . -path './.git' -prune -o -type f -print \
   | LC_ALL=C sort > "$ACTUAL_FILES"
 
 if ! diff -u "$EXPECTED_FILES" "$ACTUAL_FILES"; then
-  echo 'ERROR: P0-A01 file boundary changed' >&2
+  echo 'ERROR: P0-A02 file boundary changed' >&2
   exit 1
 fi
 
 ./scripts/check-doc-content-status
+./scripts/check-dependency-decisions
 
 php -r '
 $expected = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30";
@@ -41,8 +46,8 @@ if ($actual !== $expected) {
 }
 '
 
-if grep -En '/Users/|base-framework|BusinessSpace|PermissionDomain|MemberIdentity|DataScope|DCS|Finance Manager' \
-  AGENTS.md README.md NOTICE docs/README.md docs/content-status.json; then
+if rg -n '/Users/|base-framework|BusinessSpace|PermissionDomain|MemberIdentity|DataScope|DCS|Finance Manager' \
+  AGENTS.md README.md NOTICE docs; then
   echo 'ERROR: private path, legacy model, or product-specific content detected' >&2
   exit 1
 fi
@@ -54,5 +59,12 @@ for forbidden_dir in backend frontend packages templates examples; do
   fi
 done
 
+for forbidden_file in composer.json composer.lock package.json pnpm-lock.yaml; do
+  if [[ -e "$forbidden_file" ]]; then
+    echo "ERROR: $forbidden_file cannot be created before its approved installation task" >&2
+    exit 1
+  fi
+done
+
 git diff --check
-echo 'P0-A01 checks: OK'
+echo 'P0-A02 checks: OK'
