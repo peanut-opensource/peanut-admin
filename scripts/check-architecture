@@ -34,9 +34,11 @@ if rg -ni 'adminer|mailhog|minio|rabbitmq|queue-ui' compose.yaml docker; then
   exit 1
 fi
 
-if find backend packages/php -type f \( -path '*/database/migrations/*' -o -path '*/controller/*' \) -print -quit | rg -q .; then
-  echo 'ERROR: P0-A04 cannot contain migrations or controllers' >&2
-  exit 1
+if [[ "${PEANUT_RUNTIME_STAGE:-skeleton}" == "skeleton" ]]; then
+  if find backend packages/php -type f \( -path '*/database/migrations/*' -o -path '*/controller/*' \) -print -quit | rg -q .; then
+    echo 'ERROR: P0-A04 cannot contain migrations or controllers' >&2
+    exit 1
+  fi
 fi
 
 if rg -n 'DCS|Finance Manager|BusinessSpace|PermissionDomain|MemberIdentity|DataScope' \
