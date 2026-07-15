@@ -8,6 +8,7 @@ cd "$ROOT"
 ./scripts/check-dependency-decisions
 ./scripts/check-docs
 PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture
+./scripts/test-unit
 ./scripts/test-integration
 ./scripts/check-workspace
 
