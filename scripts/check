@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+EXPECTED_FILES="$(mktemp)"
+ACTUAL_FILES="$(mktemp)"
+trap 'rm -f "$EXPECTED_FILES" "$ACTUAL_FILES"' EXIT
+
+printf '%s\n' \
+  .editorconfig \
+  .gitignore \
+  AGENTS.md \
+  LICENSE \
+  NOTICE \
+  README.md \
+  docs/README.md \
+  docs/content-status.json \
+  scripts/check \
+  scripts/check-doc-content-status \
+  | LC_ALL=C sort > "$EXPECTED_FILES"
+
+find . -path './.git' -prune -o -type f -print \
+  | sed 's#^./##' \
+  | LC_ALL=C sort > "$ACTUAL_FILES"
+
+if ! diff -u "$EXPECTED_FILES" "$ACTUAL_FILES"; then
+  echo 'ERROR: P0-A01 file boundary changed' >&2
+  exit 1
+fi
+
+./scripts/check-doc-content-status
+
+php -r '
+$expected = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30";
+$actual = hash_file("sha256", "LICENSE");
+if ($actual !== $expected) {
+    fwrite(STDERR, "ERROR: LICENSE is not the approved Apache-2.0 text\n");
+    exit(1);
+}
+'
+
+if grep -En '/Users/|base-framework|BusinessSpace|PermissionDomain|MemberIdentity|DataScope|DCS|Finance Manager' \
+  AGENTS.md README.md NOTICE docs/README.md docs/content-status.json; then
+  echo 'ERROR: private path, legacy model, or product-specific content detected' >&2
+  exit 1
+fi
+
+for forbidden_dir in backend frontend packages templates examples; do
+  if [[ -e "$forbidden_dir" ]]; then
+    echo "ERROR: $forbidden_dir is outside P0-A01" >&2
+    exit 1
+  fi
+done
+
+git diff --check
+echo 'P0-A01 checks: OK'

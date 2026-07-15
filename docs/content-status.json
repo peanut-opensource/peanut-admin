@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "path": "docs/README.md",
+      "title": "Peanut Admin Documentation",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    }
+  ]
+}

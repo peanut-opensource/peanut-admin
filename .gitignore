@@ -1,0 +1,16 @@
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+
+.env
+.env.*
+!.env.example
+
+vendor/
+node_modules/
+coverage/
+dist/
+.cache/
+*.log
