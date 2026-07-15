@@ -1,0 +1,28 @@
+{
+  "name": "peanut-admin/reference-backend",
+  "description": "ThinkPHP reference host for Peanut Admin packages",
+  "type": "project",
+  "license": "Apache-2.0",
+  "version": "0.1.0",
+  "repositories": [
+    {
+      "type": "path",
+      "url": "../packages/php/kernel"
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/data-permission"
+    }
+  ],
+  "require": {
+    "php": "^8.3",
+    "peanut-admin/data-permission": "^0.1.0",
+    "peanut-admin/kernel": "^0.1.0",
+    "topthink/framework": "^8.1.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "PeanutAdmin\\App\\": "app/"
+    }
+  }
+}

@@ -1,7 +1,15 @@
-packages: []
+packages:
+  - frontend
+  - packages/web/*
 
 allowBuilds:
   esbuild: true
+
+minimumReleaseAge: 1440
+
+minimumReleaseAgeExclude:
+  - pinia@4.0.2
+  - vue-router@5.2.0
 
 overrides:
   'vitepress>@vitejs/plugin-vue': 5.2.4

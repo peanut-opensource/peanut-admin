@@ -1,0 +1,18 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use PeanutAdmin\Kernel\Module\ModuleKey;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+$value = $argv[1] ?? '';
+$key = ModuleKey::fromString($value);
+
+echo json_encode([
+    'key' => $key->value(),
+    'backend_path' => $key->backendRelativePath(),
+    'backend_namespace' => $key->backendNamespace(),
+    'frontend_path' => $key->frontendRelativePath(),
+], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), PHP_EOL;

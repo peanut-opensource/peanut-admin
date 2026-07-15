@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+mapping="$(php ./scripts/module-key example.work-item)"
+php -r '
+$mapping = json_decode(stream_get_contents(STDIN), true, 512, JSON_THROW_ON_ERROR);
+$expected = [
+    "key" => "example.work-item",
+    "backend_path" => "backend/app/Modules/Example/WorkItem/",
+    "backend_namespace" => "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\",
+    "frontend_path" => "frontend/src/modules/example-work-item/",
+];
+if ($mapping !== $expected) {
+    fwrite(STDERR, "ERROR: module key conversion drifted from G-04\n");
+    exit(1);
+}
+' <<< "$mapping"
+
+if rg -n "from ['\"]@peanut-admin/[^'\"]+/(src|internal)/" frontend packages/web; then
+  echo 'ERROR: web host or package uses a private deep import' >&2
+  exit 1
+fi
+
+if rg -n '/packages/(php|web)/' backend/app frontend/src; then
+  echo 'ERROR: host source references a package filesystem path' >&2
+  exit 1
+fi
+
+if rg -ni 'adminer|mailhog|minio|rabbitmq|queue-ui' compose.yaml docker; then
+  echo 'ERROR: compose contains a service outside the P0-A04 boundary' >&2
+  exit 1
+fi
+
+if find backend packages/php -type f \( -path '*/database/migrations/*' -o -path '*/controller/*' \) -print -quit | rg -q .; then
+  echo 'ERROR: P0-A04 cannot contain migrations or controllers' >&2
+  exit 1
+fi
+
+if rg -n 'DCS|Finance Manager|BusinessSpace|PermissionDomain|MemberIdentity|DataScope' \
+  backend frontend packages docker compose.yaml; then
+  echo 'ERROR: product-specific or superseded architecture content entered runtime paths' >&2
+  exit 1
+fi
+
+echo 'Architecture boundaries: OK'

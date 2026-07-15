@@ -1,0 +1,65 @@
+{
+  "name": "peanut-admin/peanut-admin",
+  "description": "Peanut Admin modular multi-tenant administration foundation",
+  "type": "project",
+  "license": "Apache-2.0",
+  "repositories": [
+    {
+      "type": "path",
+      "url": "packages/php/kernel",
+      "options": {
+        "symlink": true
+      }
+    },
+    {
+      "type": "path",
+      "url": "packages/php/data-permission",
+      "options": {
+        "symlink": true
+      }
+    },
+    {
+      "type": "path",
+      "url": "packages/php/testing",
+      "options": {
+        "symlink": true
+      }
+    }
+  ],
+  "require": {
+    "php": "^8.3",
+    "opis/json-schema": "^2.6.0",
+    "peanut-admin/data-permission": "^0.1.0",
+    "peanut-admin/kernel": "^0.1.0",
+    "topthink/framework": "^8.1.4",
+    "topthink/think-migration": "^3.1.1",
+    "topthink/think-orm": "^4.0.51"
+  },
+  "require-dev": {
+    "deptrac/deptrac": "^4.6.2",
+    "friendsofphp/php-cs-fixer": "^3.95.15",
+    "peanut-admin/testing": "^0.1.0",
+    "phpstan/phpstan": "^2.2.5",
+    "phpunit/phpunit": "^12.5.31"
+  },
+  "autoload": {
+    "psr-4": {
+      "PeanutAdmin\\App\\": "backend/app/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "PeanutAdmin\\App\\Tests\\": "backend/tests/"
+    }
+  },
+  "config": {
+    "allow-plugins": {},
+    "optimize-autoloader": true,
+    "platform": {
+      "php": "8.3.24"
+    },
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}

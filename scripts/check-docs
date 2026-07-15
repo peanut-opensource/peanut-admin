@@ -15,7 +15,7 @@ if (($package["packageManager"] ?? null) !== "pnpm@11.13.0") {
     fwrite(STDERR, "ERROR: packageManager must be pnpm@11.13.0\n");
     exit(1);
 }
-if (($package["devDependencies"]["vitepress"] ?? null) !== "^1.6.4") {
+if (($package["devDependencies"]["vitepress"] ?? null) !== "1.6.4") {
     fwrite(STDERR, "ERROR: VitePress must match the accepted dependency decision\n");
     exit(1);
 }

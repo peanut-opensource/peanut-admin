@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/12.5/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         cacheDirectory=".cache/phpunit"
+         colors="true"
+         failOnWarning="true">
+    <testsuites>
+        <testsuite name="Peanut Admin P0">
+            <directory>backend/tests</directory>
+            <directory>packages/php/kernel/tests</directory>
+            <directory>packages/php/data-permission/tests</directory>
+            <directory>packages/php/testing/tests</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>backend/app</directory>
+            <directory>packages/php/kernel/src</directory>
+            <directory>packages/php/data-permission/src</directory>
+            <directory>packages/php/testing/src</directory>
+        </include>
+    </source>
+</phpunit>

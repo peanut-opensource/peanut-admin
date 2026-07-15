@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+required=(
+  composer.json
+  composer.lock
+  backend/composer.json
+  frontend/package.json
+  packages/php/kernel/composer.json
+  packages/php/data-permission/composer.json
+  packages/php/testing/composer.json
+  packages/web/admin-core/package.json
+  packages/web/admin-shell/package.json
+  packages/web/testing/package.json
+  compose.yaml
+  docs/decisions/dependencies/p0-a04-lock-evidence.json
+)
+
+for path in "${required[@]}"; do
+  if [[ ! -f "$path" ]]; then
+    echo "ERROR: workspace file is missing: $path" >&2
+    exit 1
+  fi
+done
+
+composer_version="$(composer --version --no-ansi | sed -E 's/^Composer version ([0-9.]+).*/\1/')"
+pnpm_version="$(pnpm --version)"
+if [[ "$composer_version" != '2.10.2' ]]; then
+  echo "ERROR: Composer 2.10.2 is required, found $composer_version" >&2
+  exit 1
+fi
+if [[ "$pnpm_version" != '11.13.0' ]]; then
+  echo "ERROR: pnpm 11.13.0 is required, found $pnpm_version" >&2
+  exit 1
+fi
+
+php -r '
+$evidence = json_decode(
+    (string) file_get_contents("docs/decisions/dependencies/p0-a04-lock-evidence.json"),
+    true,
+    512,
+    JSON_THROW_ON_ERROR,
+);
+foreach (["composer.lock", "pnpm-lock.yaml"] as $path) {
+    $expected = $evidence["locks"][$path]["sha256"] ?? null;
+    if (!is_string($expected) || hash_file("sha256", $path) !== $expected) {
+        fwrite(STDERR, "ERROR: dependency lock evidence is stale for {$path}\n");
+        exit(1);
+    }
+}
+'
+
+php -r '
+$expectedPhp = [
+    "packages/php/kernel/composer.json" => ["peanut-admin/kernel", "PeanutAdmin\\Kernel\\"],
+    "packages/php/data-permission/composer.json" => ["peanut-admin/data-permission", "PeanutAdmin\\DataPermission\\"],
+    "packages/php/testing/composer.json" => ["peanut-admin/testing", "PeanutAdmin\\Testing\\"],
+];
+foreach ($expectedPhp as $path => [$name, $namespace]) {
+    $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+    if (($manifest["name"] ?? null) !== $name) {
+        fwrite(STDERR, "ERROR: {$path} has the wrong package name\n");
+        exit(1);
+    }
+    if (($manifest["license"] ?? null) !== "Apache-2.0") {
+        fwrite(STDERR, "ERROR: {$path} must declare Apache-2.0\n");
+        exit(1);
+    }
+    if (($manifest["autoload"]["psr-4"][$namespace] ?? null) !== "src/") {
+        fwrite(STDERR, "ERROR: {$path} has the wrong PSR-4 public namespace\n");
+        exit(1);
+    }
+}
+
+$backend = json_decode((string) file_get_contents("backend/composer.json"), true, 512, JSON_THROW_ON_ERROR);
+if (($backend["autoload"]["psr-4"]["PeanutAdmin\\App\\"] ?? null) !== "app/") {
+    fwrite(STDERR, "ERROR: backend host namespace must map PeanutAdmin\\App\\ to app/\n");
+    exit(1);
+}
+
+$expectedWeb = [
+    "packages/web/admin-core/package.json" => "@peanut-admin/admin-core",
+    "packages/web/admin-shell/package.json" => "@peanut-admin/admin-shell",
+    "packages/web/testing/package.json" => "@peanut-admin/web-testing",
+];
+foreach ($expectedWeb as $path => $name) {
+    $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+    if (($manifest["name"] ?? null) !== $name || ($manifest["license"] ?? null) !== "Apache-2.0") {
+        fwrite(STDERR, "ERROR: {$path} has an invalid name or license\n");
+        exit(1);
+    }
+    if (!isset($manifest["exports"]["."])) {
+        fwrite(STDERR, "ERROR: {$path} must expose one public root export\n");
+        exit(1);
+    }
+}
+'
+
+approved_license_hash="cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+for package_license in packages/php/*/LICENSE packages/web/*/LICENSE; do
+  actual="$(shasum -a 256 "$package_license" | awk '{print $1}')"
+  if [[ "$actual" != "$approved_license_hash" ]]; then
+    echo "ERROR: package license does not match Apache-2.0 baseline: $package_license" >&2
+    exit 1
+  fi
+done
+
+composer validate --strict --no-check-publish
+php vendor/bin/phpunit
+php vendor/bin/phpstan analyse --no-progress
+php vendor/bin/deptrac analyse --no-progress --fail-on-uncovered --cache-file=.cache/deptrac.cache
+php vendor/bin/php-cs-fixer check --diff --config=scripts/php-cs-fixer.php
+
+pnpm lint
+pnpm typecheck
+pnpm test:unit
+pnpm build
+
+docker compose config --quiet
+
+echo 'Workspace skeleton: OK'

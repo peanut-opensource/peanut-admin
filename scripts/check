@@ -4,58 +4,11 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_FILES="$(mktemp)"
-ACTUAL_FILES="$(mktemp)"
-trap 'rm -f "$EXPECTED_FILES" "$ACTUAL_FILES"' EXIT
-
-printf '%s\n' \
-  .github/workflows/docs.yml \
-  .editorconfig \
-  .gitignore \
-  .npmrc \
-  AGENTS.md \
-  LICENSE \
-  NOTICE \
-  README.md \
-  docs/.vitepress/config.ts \
-  docs/.vitepress/theme/custom.css \
-  docs/.vitepress/theme/index.ts \
-  docs/README.md \
-  docs/api/index.md \
-  docs/architecture/index.md \
-  docs/content-status.json \
-  docs/core-concepts/index.md \
-  docs/decisions/dependencies/index.md \
-  docs/decisions/dependencies/p0-dependencies.json \
-  docs/index.md \
-  docs/standards/index.md \
-  docs/standards/dependency-policy.md \
-  docs/status/index.md \
-  package.json \
-  pnpm-lock.yaml \
-  pnpm-workspace.yaml \
-  scripts/check \
-  scripts/check-dependency-decisions \
-  scripts/check-doc-content-status \
-  scripts/check-docs \
-  | LC_ALL=C sort > "$EXPECTED_FILES"
-
-find . \( \
-  -path './.git' -o \
-  -path './node_modules' -o \
-  -path './docs/.vitepress/dist' \
-\) -prune -o -type f -print \
-  | sed 's#^./##' \
-  | LC_ALL=C sort > "$ACTUAL_FILES"
-
-if ! diff -u "$EXPECTED_FILES" "$ACTUAL_FILES"; then
-  echo 'ERROR: P0-A03 file boundary changed' >&2
-  exit 1
-fi
-
 ./scripts/check-doc-content-status
 ./scripts/check-dependency-decisions
 ./scripts/check-docs
+./scripts/check-architecture
+./scripts/check-workspace
 
 php -r '
 $expected = "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30";
@@ -72,39 +25,19 @@ if rg -n '/Users/|base-framework|BusinessSpace|PermissionDomain|MemberIdentity|D
   exit 1
 fi
 
-for forbidden_dir in backend frontend packages templates examples; do
-  if [[ -e "$forbidden_dir" ]]; then
-    echo "ERROR: $forbidden_dir is outside P0-A01" >&2
+for required_dir in backend frontend packages/php/kernel packages/php/data-permission packages/php/testing packages/web/admin-core packages/web/admin-shell packages/web/testing docker; do
+  if [[ ! -d "$required_dir" ]]; then
+    echo "ERROR: P0 workspace directory is missing: $required_dir" >&2
     exit 1
   fi
 done
 
-for forbidden_file in composer.json composer.lock; do
-  if [[ -e "$forbidden_file" ]]; then
-    echo "ERROR: $forbidden_file cannot be created before its approved installation task" >&2
+for deferred_dir in templates examples; do
+  if [[ -e "$deferred_dir" ]]; then
+    echo "ERROR: $deferred_dir is not introduced in P0-A04" >&2
     exit 1
   fi
 done
-
-php -r '
-$package = json_decode((string) file_get_contents("package.json"), true, 512, JSON_THROW_ON_ERROR);
-$dependencies = $package["dependencies"] ?? [];
-$development = $package["devDependencies"] ?? [];
-$expected = [
-    "@vitejs/plugin-vue" => "5.2.4",
-    "vite" => "6.4.3",
-    "vitepress" => "^1.6.4",
-];
-if ($dependencies !== [] || $development !== $expected) {
-    fwrite(STDERR, "ERROR: P0-A03 may install only the accepted documentation toolchain\n");
-    exit(1);
-}
-'
-
-if rg -q 'vite@([0-5]\\.|6\\.[0-3]\\.|6\\.4\\.[0-2])' pnpm-lock.yaml; then
-  echo 'ERROR: documentation lock contains a Vite release older than the accepted audited baseline' >&2
-  exit 1
-fi
 
 git diff --check
-echo 'P0-A03 checks: OK'
+echo 'P0-A04 checks: OK'
