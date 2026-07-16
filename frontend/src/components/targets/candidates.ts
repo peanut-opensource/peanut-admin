@@ -7,6 +7,7 @@ export interface TargetCandidateRequest {
   resourceKey: string
   operation: string
   targetResourceKey: string
+  targetRole: string
   mode?: 'runtime' | 'policy-config'
   page?: number
   pageSize?: number
@@ -29,6 +30,7 @@ export const loadTargetCandidatePage = async (
         resource_key: request.resourceKey,
         operation: request.operation,
         target_resource_key: request.targetResourceKey,
+        target_role: request.targetRole,
         mode: request.mode ?? 'runtime',
         page: request.page ?? 1,
         page_size: request.pageSize ?? 20,

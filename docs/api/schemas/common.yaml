@@ -27,16 +27,18 @@ $defs:
   Target:
     type: object
     additionalProperties: false
-    required: [target_resource_key, target_id]
+    required: [target_resource_key, target_role, target_id]
     properties:
       target_resource_key: { type: string, minLength: 1, maxLength: 160 }
+      target_role: { type: string, minLength: 1, maxLength: 64, default: primary }
       target_id: { type: string, minLength: 1, maxLength: 128 }
   TargetSet:
     type: object
     additionalProperties: false
-    required: [target_resource_key, target_ids]
+    required: [target_resource_key, target_role, target_ids]
     properties:
       target_resource_key: { type: string, minLength: 1, maxLength: 160 }
+      target_role: { type: string, minLength: 1, maxLength: 64, default: primary }
       target_ids:
         type: array
         minItems: 1
@@ -52,9 +54,10 @@ $defs:
       digest: { type: string, pattern: '^[a-f0-9]{64}$' }
   BoundaryTarget:
     type: object
-    required: [target_resource_key, target_id, label]
+    required: [target_resource_key, target_role, target_id, label]
     properties:
       target_resource_key: { type: string }
+      target_role: { type: string }
       target_id: { type: string }
       label: { type: string }
   Problem:

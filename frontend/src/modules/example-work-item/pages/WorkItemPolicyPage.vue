@@ -24,6 +24,7 @@ const load = async () => {
       resourceKey: 'example.work-item',
       operation: 'policy-publish',
       targetResourceKey: 'example.project',
+      targetRole: 'primary',
       mode: 'policy-config',
     })
     candidates.value = page.candidates
@@ -46,6 +47,7 @@ const publish = async () => {
         reason: 'Published from the reference admin shell',
         targets: [{
           target_resource_key: 'example.project',
+          target_role: 'primary',
           target_ids: selected.value.map(target => target.target_id),
         }],
       },

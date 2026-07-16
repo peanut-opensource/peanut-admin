@@ -139,10 +139,12 @@ export const targetCandidates = (value: unknown): TargetCandidate[] => {
   const { items } = apiCollection(value)
   return items.flatMap(item => {
     if (typeof item.target_resource_key !== 'string'
+      || typeof item.target_role !== 'string'
       || typeof item.target_id !== 'string'
       || typeof item.label !== 'string') return []
     return [{
       target_resource_key: item.target_resource_key,
+      target_role: item.target_role,
       target_id: item.target_id,
       label: item.label,
       ...(typeof item.owner_label === 'string' ? { owner_label: item.owner_label } : {}),

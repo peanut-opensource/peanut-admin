@@ -44,8 +44,9 @@ $defs:
       owner_type: { enum: [deployment, tenant] }
   TargetCandidate:
     type: object
-    required: [target_resource_key, target_id, label]
+    required: [target_resource_key, target_role, target_id, label]
     properties:
       target_resource_key: { type: string }
+      target_role: { type: string }
       target_id: { type: string }
       label: { type: string }

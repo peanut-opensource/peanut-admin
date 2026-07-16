@@ -69,7 +69,7 @@ SQL);
             static fn($target): TypedResourceTargetSet => new TypedResourceTargetSet(
                 $target->targetResourceKey,
                 $target->targetIds,
-                $target->targetResourceKey === 'example.project' ? 'primary' : 'related',
+                $target->targetRole,
             ),
             $context->targets,
         ));

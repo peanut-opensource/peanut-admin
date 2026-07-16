@@ -194,6 +194,7 @@ paths:
         - { in: query, name: resource_key, required: true, schema: { type: string } }
         - { in: query, name: operation, required: true, schema: { type: string } }
         - { in: query, name: target_resource_key, required: true, schema: { type: string } }
+        - { in: query, name: target_role, required: true, schema: { type: string, default: primary } }
         - { in: query, name: mode, schema: { enum: [runtime, policy-config], default: runtime } }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
@@ -209,6 +210,7 @@ paths:
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
         - { in: query, name: target_resource_key, required: true, schema: { type: string } }
+        - { in: query, name: target_role, required: true, schema: { type: string, default: primary } }
         - { in: query, name: target_id, required: true, schema: { type: array, items: { type: string } }, explode: true }
         - { in: query, name: status, schema: { enum: [open, active, closed] } }
         - { in: query, name: sort, schema: { enum: [-created_at, created_at, title, -title] } }
@@ -239,6 +241,7 @@ paths:
       x-permission: example.reference.use
       parameters:
         - { in: query, name: target_resource_key, required: true, schema: { type: string } }
+        - { in: query, name: target_role, required: true, schema: { type: string, default: primary } }
         - { in: query, name: target_id, required: true, schema: { type: string } }
         - { in: query, name: q, schema: { type: string, maxLength: 100 } }
       responses: *standardResponses

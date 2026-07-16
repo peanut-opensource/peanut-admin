@@ -20,6 +20,7 @@ const load = async () => {
       resourceKey: targetType.value,
       operation: 'select',
       targetResourceKey: targetType.value,
+      targetRole: 'primary',
     })
     rows.value = result.candidates
   } catch (error) {

@@ -9,13 +9,14 @@ A typed target identifies a business boundary object owned by a Module. The Kern
   "target_sets": [
     {
       "target_resource_key": "example.project",
+      "target_role": "primary",
       "target_ids": ["1", "2"]
     }
   ]
 }
 ```
 
-Identifiers are strings at API boundaries. One target set has one `target_resource_key` and one role. Project IDs and Queue IDs cannot be mixed even when their raw values match.
+Identifiers are strings at API boundaries. One target set has one `target_resource_key` and one `target_role`. Project IDs and Queue IDs cannot be mixed even when their raw values match. Relation uniqueness is based on both fields, so the same target type can appear separately as `source` and `destination`.
 
 In PHP, use `TypedResourceTargetSet` and `TypedResourceTargetCollection`:
 
@@ -24,7 +25,7 @@ use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
 
 $targets = new TypedResourceTargetCollection([
-    new TypedResourceTargetSet('example.project', ['1', '2']),
+    new TypedResourceTargetSet('example.project', ['1', '2'], 'primary'),
 ]);
 ```
 

@@ -51,6 +51,8 @@ Module dependencies determine deployment migration order. Schema migration runs 
 
 Register permissions, protected resources, operations, target cardinality, and target types in controlled catalog files. A `shared_master` resource also declares a scope provider. Do not invent operation permissions in controllers.
 
+Each operation target relation is a structured object, not a bare type string. It declares `target_resource_key`, `target_role`, `input_mode` (`explicit`, `derived`, or `either`), and an optional `policy_selection_permission`. This preserves source/destination semantics through HTTP, jobs, the Kernel adapter, and the data-permission engine.
+
 The owner implements query, target, create, resolver, and catalog-provider contracts as needed. Other Modules call exported contracts and never query the owner's private tables.
 
 ## 5. Contribute Admin Web Routes

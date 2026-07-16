@@ -6,7 +6,9 @@
     "provider": "PeanutAdmin\\App\\Modules\\Example\\Target\\Infrastructure\\Authorization\\ProjectPolicyProvider",
     "operations": [
       {"key": "list", "target_cardinality": "none", "target_types": []},
-      {"key": "select", "target_cardinality": "many_readable", "target_types": ["example.project"]}
+      {"key": "select", "target_cardinality": "many_readable", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]}
     ]
   },
   {
@@ -16,7 +18,9 @@
     "provider": "PeanutAdmin\\App\\Modules\\Example\\Target\\Infrastructure\\Authorization\\QueuePolicyProvider",
     "operations": [
       {"key": "list", "target_cardinality": "none", "target_types": []},
-      {"key": "select", "target_cardinality": "many_readable", "target_types": ["example.queue"]}
+      {"key": "select", "target_cardinality": "many_readable", "target_types": [
+        {"target_resource_key": "example.queue", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]}
     ]
   }
 ]

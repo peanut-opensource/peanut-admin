@@ -175,6 +175,7 @@ const candidateRows = (state: ApiFixtureState, targetType: string) => {
   const suffixes = state.targetMode === 'single' ? ['A'] : ['A', 'B', 'C']
   return suffixes.map((suffix, index) => ({
     target_resource_key: targetType,
+    target_role: 'primary',
     target_id: String(9001 + index),
     label: `${targetType === 'example.queue' ? 'Queue' : 'Project'} ${suffix}`,
     status: 'active',
@@ -307,7 +308,7 @@ const handleApi = async (route: Route, state: ApiFixtureState): Promise<void> =>
     const targetIds = url.searchParams.getAll('target_id')
     await fulfillJson(route, { data: targetIds.map((targetId, index) => ({
       id: String(8001 + index), title: `Work item ${targetId}`, status: index % 2 === 0 ? 'open' : 'active', revision: '2',
-      boundary_target: { target_resource_key: 'example.project', target_id: targetId, label: `Project ${String.fromCharCode(65 + index)}` },
+      boundary_target: { target_resource_key: 'example.project', target_role: 'primary', target_id: targetId, label: `Project ${String.fromCharCode(65 + index)}` },
     })), meta: { total: targetIds.length, target_scope: { mode: targetIds.length > 1 ? 'multiple' : 'single' } } })
     return
   }

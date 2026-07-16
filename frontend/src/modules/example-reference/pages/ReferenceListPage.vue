@@ -26,7 +26,7 @@ const loadReferences = async () => {
   problem.value = null
   try {
     const response = runtime.unwrap(await runtime.tenantClient.GET('/api/v1/example/reference-items/candidates', {
-      params: { query: { target_resource_key: target.target_resource_key, target_id: target.target_id } },
+      params: { query: { target_resource_key: target.target_resource_key, target_role: target.target_role, target_id: target.target_id } },
     }))
     rows.value = apiCollection(response).items
   } catch (error) {
@@ -44,10 +44,15 @@ const initialize = async () => {
       resourceKey: 'example.reference-item',
       operation: 'use',
       targetResourceKey: 'example.project',
+      targetRole: 'primary',
     })
     candidates.value = page.candidates
     selected.value = page.candidates.length === 1
-      ? [{ target_resource_key: page.candidates[0]!.target_resource_key, target_id: page.candidates[0]!.target_id }]
+      ? [{
+          target_resource_key: page.candidates[0]!.target_resource_key,
+          target_role: page.candidates[0]!.target_role,
+          target_id: page.candidates[0]!.target_id,
+        }]
       : []
     await loadReferences()
   } catch (error) {

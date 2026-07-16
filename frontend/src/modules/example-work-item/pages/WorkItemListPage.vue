@@ -17,6 +17,7 @@ const scope: OperationTargetScope = {
   resourceKey: 'example.work-item',
   operation: 'list',
   targetResourceKey: 'example.project',
+  targetRole: 'primary',
   cardinality: 'many_readable',
 }
 const candidates = ref<TargetCandidate[]>([])
@@ -54,6 +55,7 @@ const loadList = async () => {
           page: 1,
           page_size: 20,
           target_resource_key: scope.targetResourceKey,
+          target_role: scope.targetRole,
           target_id: selected.value.map(target => target.target_id),
           sort: '-created_at',
         },
@@ -89,6 +91,7 @@ const initialize = async () => {
       resourceKey: 'example.work-item',
       operation: 'list',
       targetResourceKey: scope.targetResourceKey,
+      targetRole: scope.targetRole,
     })
     candidates.value = page.candidates
     targetStore.replace(scope, page.candidates)
@@ -103,6 +106,7 @@ const initialize = async () => {
 const selectAllAuthorized = () => {
   selected.value = candidates.value.map(candidate => ({
     target_resource_key: candidate.target_resource_key,
+    target_role: candidate.target_role,
     target_id: candidate.target_id,
   }))
 }
@@ -116,7 +120,7 @@ const openCreate = async () => {
   const target = selected.value[0]
   if (target === undefined || selected.value.length !== 1) return
   const response = runtime.unwrap(await runtime.tenantClient.GET('/api/v1/example/reference-items/candidates', {
-    params: { query: { target_resource_key: target.target_resource_key, target_id: target.target_id } },
+    params: { query: { target_resource_key: target.target_resource_key, target_role: target.target_role, target_id: target.target_id } },
   }))
   references.value = apiCollection(response).items
   createForm.title = ''

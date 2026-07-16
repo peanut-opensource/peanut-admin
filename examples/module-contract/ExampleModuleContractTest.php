@@ -98,7 +98,7 @@ final class ExampleModuleContractTest extends TestCase
 
         $createContext = $this->operationContext('create', [
             new RequestedTargetSet('example.project', ['1']),
-            new RequestedTargetSet('example.queue', ['1']),
+            new RequestedTargetSet('example.queue', ['1'], 'related'),
         ]);
         $workItemId = (new WorkItemCommandService($this->pdo, $scope))->create(
             $createContext,
@@ -107,7 +107,9 @@ final class ExampleModuleContractTest extends TestCase
         self::assertSame('1', $workItemId);
 
         $listContext = $this->operationContext('list', [new RequestedTargetSet('example.project', ['1', '2'])]);
-        self::assertCount(1, (new PdoWorkItemQuery($this->pdo))->list($listContext));
+        $page = (new PdoWorkItemQuery($this->pdo))->list($listContext);
+        self::assertCount(1, $page->items);
+        self::assertSame(1, $page->total);
 
         $policyId = (new WorkItemPolicyPublisher($this->pdo))->publish(
             $this->operationContext('policy-publish', [new RequestedTargetSet('example.project', ['1', '2'])]),

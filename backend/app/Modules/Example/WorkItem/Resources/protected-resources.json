@@ -5,12 +5,27 @@
     "ownership": "business_target_owned",
     "provider": "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Infrastructure\\Authorization\\WorkItemPolicyProvider",
     "operations": [
-      {"key": "list", "target_cardinality": "many_readable", "target_types": ["example.project", "example.queue"]},
-      {"key": "create", "target_cardinality": "one_required", "target_types": ["example.project", "example.queue"]},
-      {"key": "update", "target_cardinality": "one_required", "target_types": ["example.project", "example.queue"]},
-      {"key": "aggregate", "target_cardinality": "aggregate_read", "target_types": ["example.project"]},
-      {"key": "policy-publish", "target_cardinality": "policy_publish", "target_types": ["example.project"]},
-      {"key": "bulk-write", "target_cardinality": "bulk_write", "target_types": ["example.project"]}
+      {"key": "list", "target_cardinality": "many_readable", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"},
+        {"target_resource_key": "example.queue", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]},
+      {"key": "create", "target_cardinality": "one_required", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"},
+        {"target_resource_key": "example.queue", "target_role": "related", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]},
+      {"key": "update", "target_cardinality": "one_required", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"},
+        {"target_resource_key": "example.queue", "target_role": "related", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]},
+      {"key": "aggregate", "target_cardinality": "aggregate_read", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]},
+      {"key": "policy-publish", "target_cardinality": "policy_publish", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]},
+      {"key": "bulk-write", "target_cardinality": "bulk_write", "target_types": [
+        {"target_resource_key": "example.project", "target_role": "primary", "input_mode": "explicit", "policy_selection_permission": "example.target.manage"}
+      ]}
     ]
   }
 ]
