@@ -6,6 +6,7 @@ namespace PeanutAdmin\App\Tests\Upgrade;
 
 use PDO;
 use PeanutAdmin\App\command\UpgradeWorkflow;
+use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use Phinx\Config\Config;
 use Phinx\Migration\Manager;
@@ -66,6 +67,9 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
         self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_data_condition_definition WHERE status = 'active'"));
         self::assertSame(40, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_condition WHERE status = 'active'"));
         self::assertSame(16, $this->scalar("SELECT COUNT(*) FROM pa_menu_definition WHERE status = 'active'"));
+        $menus = new PdoMenuCatalogRepository($this->database);
+        self::assertCount(11, $menus->activeDefinitions('tenant'));
+        self::assertCount(5, $menus->activeDefinitions('platform'));
         self::assertSame(1, $this->scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
             . self::DATABASE . "' AND table_name = 'pa_data_permission_policy'",

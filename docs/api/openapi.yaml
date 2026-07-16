@@ -93,7 +93,7 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
 
   /api/v1/tenant:
-    get: { operationId: getTenant, summary: getTenant, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', responses: *standardResponses }
+    get: { operationId: getTenant, summary: getTenant, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::show', responses: *standardResponses }
   /api/v1/members:
     get:
       operationId: listMembers
@@ -175,16 +175,16 @@ paths:
     get: { operationId: getRoleDataPolicy, summary: getRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.role.data-policy.read, responses: *standardResponses }
     put: { operationId: replaceRoleDataPolicy, summary: replaceRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.role.data-policy.manage, requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
   /api/v1/permissions:
-    get: { operationId: listPermissions, summary: listPermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.permission.read, responses: *standardResponses }
+    get: { operationId: listPermissions, summary: listPermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::permissions', x-permission: core.permission.read, responses: *standardResponses }
   /api/v1/modules:
-    get: { operationId: listTenantModules, summary: listTenantModules, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.module.read, responses: *standardResponses }
+    get: { operationId: listTenantModules, summary: listTenantModules, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::modules', x-permission: core.module.read, responses: *standardResponses }
   /api/v1/modules/{module_key}/config:
     parameters: [{ $ref: '#/components/parameters/ModuleKey' }]
     patch: { operationId: updateTenantModuleConfig, summary: updateTenantModuleConfig, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.module.configure, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
   /api/v1/audit-events:
-    get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.audit.read, responses: *standardResponses }
+    get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
   /api/v1/menus:
-    get: { operationId: getTenantMenus, summary: getTenantMenus, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', responses: *standardResponses }
+    get: { operationId: getTenantMenus, summary: getTenantMenus, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::menus', responses: *standardResponses }
   /api/v1/authorization/target-candidates:
     get:
       operationId: listTargetCandidates
