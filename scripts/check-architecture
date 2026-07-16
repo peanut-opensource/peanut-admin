@@ -136,4 +136,7 @@ if rg -n 'DCS|Finance Manager|BusinessSpace|PermissionDomain|MemberIdentity|Data
   exit 1
 fi
 
+php vendor/bin/phpunit backend/tests/Architecture
+php vendor/bin/deptrac analyse --no-progress --fail-on-uncovered --cache-file=.cache/deptrac.cache
+
 echo 'Architecture boundaries: OK'

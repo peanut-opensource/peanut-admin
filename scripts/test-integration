@@ -31,4 +31,7 @@ done
 
 PEANUT_INTEGRATION=1 php vendor/bin/phpunit \
   packages/php/kernel/tests/Integration \
-  packages/php/data-permission/tests/Integration
+  packages/php/data-permission/tests/Integration \
+  backend/tests/Install \
+  backend/tests/Upgrade \
+  backend/tests/Health

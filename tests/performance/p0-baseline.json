@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "maximum_regression_ratio": 1.2,
+  "environment": {
+    "database_image": "mysql:8.4.10",
+    "php": "8.3.24",
+    "architecture": "arm64",
+    "operating_system": "Darwin",
+    "measurement_runs": 6
+  },
+  "scenarios": {
+    "typed-targets-10": { "p95_ms": 21.23 },
+    "typed-targets-500": { "p95_ms": 29.182 },
+    "typed-targets-5000": { "p95_ms": 90.637 },
+    "tenant-login": { "p95_ms": 194.584 },
+    "tenant-refresh": { "p95_ms": 27.282 },
+    "tenant-context": { "p95_ms": 100.278 },
+    "shared-master-scope": { "p95_ms": 36.372 }
+  }
+}

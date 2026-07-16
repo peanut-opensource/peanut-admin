@@ -5,16 +5,17 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 ./scripts/check-doc-content-status
-./scripts/check-dependency-decisions
 ./scripts/check-docs
-./scripts/check-openapi
+./scripts/check-dependency-decisions
 PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture
+./scripts/check-openapi
+./scripts/check-supply-chain
 ./scripts/test-unit
 ./scripts/test-integration
-PEANUT_INTEGRATION=1 php vendor/bin/phpunit backend/tests/Install backend/tests/Upgrade backend/tests/Health
 ./scripts/test-security
 ./scripts/test-browser
 ./scripts/test-recovery
+./scripts/test-performance
 ./scripts/check-workspace
 
 php -r '

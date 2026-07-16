@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+docker compose up -d mysql
+for attempt in $(seq 1 60); do
+  if php -r '
+    try {
+        new PDO(
+            "mysql:host=127.0.0.1;port=" . (getenv("MYSQL_PORT") ?: "3306"),
+            "root",
+            getenv("MYSQL_ROOT_PASSWORD") ?: "peanut_admin_root_dev",
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
+    } catch (Throwable) {
+        exit(1);
+    }
+  ' 2>/dev/null; then
+    break
+  fi
+  if [[ "$attempt" -eq 60 ]]; then
+    echo 'ERROR: MySQL 8 did not become ready for performance tests' >&2
+    exit 1
+  fi
+  sleep 2
+done
+
+report="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-performance.XXXXXX")"
+trap 'rm -f "$report"' EXIT
+php tests/performance/run.php > "$report"
+php -r '
+$baseline = json_decode((string) file_get_contents("tests/performance/p0-baseline.json"), true, 512, JSON_THROW_ON_ERROR);
+$report = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
+$ratio = $baseline["maximum_regression_ratio"] ?? null;
+if (!is_float($ratio) || $ratio !== 1.2) {
+    fwrite(STDERR, "ERROR: performance baseline must block regressions over 20%\n");
+    exit(1);
+}
+foreach (($baseline["scenarios"] ?? []) as $name => $expected) {
+    $actual = $report["scenarios"][$name]["p95_ms"] ?? null;
+    $reference = $expected["p95_ms"] ?? null;
+    if (!is_numeric($actual) || !is_numeric($reference) || $reference <= 0) {
+        fwrite(STDERR, "ERROR: performance scenario {$name} has incomplete evidence\n");
+        exit(1);
+    }
+    $limit = $reference * $ratio;
+    printf("%-24s p95=%8.3f ms baseline=%8.3f ms limit=%8.3f ms\n", $name, $actual, $reference, $limit);
+    if ($actual > $limit) {
+        fwrite(STDERR, "ERROR: {$name} p95 regressed by more than 20%\n");
+        exit(1);
+    }
+}
+' "$report"
+php vendor/bin/phpunit tests/performance
+
+echo 'Performance qualification: OK'

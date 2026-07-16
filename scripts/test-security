@@ -29,17 +29,43 @@ for attempt in $(seq 1 60); do
   sleep 2
 done
 
-PEANUT_INTEGRATION=1 php vendor/bin/phpunit packages/php/kernel/tests/Integration/Auth
+junit_report="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-security-junit.XXXXXX")"
+trap 'rm -f "$junit_report"' EXIT
+PEANUT_INTEGRATION=1 php vendor/bin/phpunit --log-junit "$junit_report" \
+  packages/php/kernel/tests/Integration/Auth \
+  packages/php/kernel/tests/Integration/Authorization \
+  packages/php/kernel/tests/Integration/Idempotency \
+  packages/php/kernel/tests/Integration/Module \
+  packages/php/kernel/tests/Integration/Schema \
+  packages/php/kernel/tests/Unit/Api \
+  packages/php/kernel/tests/Unit/Authorization \
+  packages/php/kernel/tests/Unit/Context \
+  packages/php/kernel/tests/Unit/Idempotency \
+  packages/php/kernel/tests/Unit/Module \
+  packages/php/data-permission/tests/Integration \
+  packages/php/data-permission/tests/Security \
+  packages/php/data-permission/tests/Unit \
+  backend/tests/Architecture \
+  backend/tests/Contract \
+  backend/tests/Security \
+  tests/security
 
-security_paths=(packages/php/data-permission/tests/Security)
-for optional_path in packages/php/kernel/tests/Security backend/tests/Security; do
-  if [[ -d "$optional_path" ]]; then
-    security_paths+=("$optional_path")
-  fi
-done
-PEANUT_INTEGRATION=1 php vendor/bin/phpunit "${security_paths[@]}"
+php -r '
+$document = new DOMDocument();
+if (!$document->load($argv[1])) {
+    fwrite(STDERR, "ERROR: security JUnit report cannot be parsed\n");
+    exit(1);
+}
+$skipped = $document->getElementsByTagName("skipped")->length;
+if ($skipped !== 0) {
+    fwrite(STDERR, "ERROR: security gate contains {$skipped} skipped test(s)\n");
+    exit(1);
+}
+' "$junit_report"
 
 if rg -n 'localStorage|sessionStorage' frontend/src packages/web; then
   echo 'ERROR: browser storage must not contain authentication tokens' >&2
   exit 1
 fi
+
+echo 'G-07 security qualification: OK (0 skipped)'
