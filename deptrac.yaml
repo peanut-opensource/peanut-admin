@@ -14,7 +14,7 @@ deptrac:
     - name: RuntimeLibraries
       collectors:
         - type: classNameRegex
-          value: '#^(Opis\\JsonSchema|Composer\\Semver)\\#'
+          value: '#^(Opis\\JsonSchema|Composer\\(Semver|InstalledVersions)|Phinx\\)#'
     - name: Kernel
       collectors:
         - type: classNameRegex
