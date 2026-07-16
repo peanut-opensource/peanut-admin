@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-16T01:01:49+08:00",
+  "generated_at": "2026-07-16T13:27:03+08:00",
   "tools": {
     "php": "8.3.24",
     "composer": "2.10.2",
@@ -13,7 +13,7 @@
       "audit": "no-security-vulnerability-advisories"
     },
     "pnpm-lock.yaml": {
-      "sha256": "5956534e3d421298497d4612437e2d9b22cea03b24c37602797b1cacc164135a",
+      "sha256": "0c895209bf3cf54a3e9a55a9dff4ad2691ec3c28eca652b64b56e2f05d5aa5bf",
       "audit": "no-known-vulnerabilities",
       "peer_dependencies": "no-issues"
     }

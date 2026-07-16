@@ -100,6 +100,9 @@ importers:
       openapi-fetch:
         specifier: 0.17.0
         version: 0.17.0
+      pinia:
+        specifier: 4.0.2
+        version: 4.0.2(@vue/devtools-api@8.1.5)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
     devDependencies:
       typescript:
         specifier: 5.9.3
@@ -107,6 +110,9 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@6.4.3(@types/node@24.10.1)(lightningcss@1.32.0)(yaml@2.9.0))
+      vue:
+        specifier: 3.5.39
+        version: 3.5.39(typescript@5.9.3)
 
   packages/web/admin-shell:
     dependencies:
@@ -123,6 +129,12 @@ importers:
         specifier: 5.2.0
         version: 5.2.0(@vue/compiler-sfc@3.5.39)(pinia@4.0.2(@vue/devtools-api@8.1.5)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3)))(rolldown@1.1.5)(rollup@4.62.2)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))(vue@3.5.39(typescript@5.9.3))
     devDependencies:
+      '@vue/test-utils':
+        specifier: 2.4.11
+        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
+      happy-dom:
+        specifier: 20.10.6
+        version: 20.10.6
       typescript:
         specifier: 5.9.3
         version: 5.9.3
@@ -138,6 +150,9 @@ importers:
 
   packages/web/testing:
     dependencies:
+      '@peanut-admin/admin-core':
+        specifier: workspace:^
+        version: link:../admin-core
       '@vue/test-utils':
         specifier: 2.4.11
         version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
