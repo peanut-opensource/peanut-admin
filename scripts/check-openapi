@@ -40,6 +40,9 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       classMethod,
       permission: operation['x-permission'] ?? null,
       operationId: operation.operationId,
+      audience: path.startsWith('/api/platform/') ? 'platform' : 'tenant',
+      requiresAuth: !Array.isArray(operation.security) || operation.security.length !== 0,
+      idempotent: (operation.parameters ?? []).some(parameter => parameter.name === 'Idempotency-Key'),
     })
   }
 }
@@ -92,9 +95,13 @@ const inspectIds = value => {
   for (const nested of Object.values(value)) inspectIds(nested)
 }
 inspectIds(document)
-const quote = value => value === null ? 'null' : `'${String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
+const quote = value => value === null
+  ? 'null'
+  : typeof value === 'boolean'
+    ? String(value)
+    : `'${String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 const body = routes.map(route =>
-  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}],`
+  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}, ${quote(route.audience)}, ${quote(route.requiresAuth)}, ${quote(route.idempotent)}],`
 ).join('\n')
 fs.writeFileSync(target, `<?php\n\ndeclare(strict_types=1);\n\n// Generated from docs/api/openapi.yaml.\nreturn [\n${body}\n];\n`)
 NODE
@@ -119,7 +126,7 @@ require "vendor/autoload.php";
 $routes = require "backend/route/openapi-generated.php";
 $seen = [];
 foreach ($routes as $route => $binding) {
-    [$class, $method, $permission, $operationId] = $binding;
+    [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent] = $binding;
     if (!is_string($operationId) || isset($seen[$operationId])) {
         fwrite(STDERR, "ERROR: duplicate or missing OpenAPI operationId for {$route}\n");
         exit(1);
@@ -131,6 +138,14 @@ foreach ($routes as $route => $binding) {
     }
     if ($permission !== null && !is_string($permission)) {
         fwrite(STDERR, "ERROR: invalid route permission for {$route}\n");
+        exit(1);
+    }
+    if (!in_array($audience, ["tenant", "platform"], true)
+        || !is_bool($requiresAuth)
+        || !is_bool($idempotent)
+        || ($permission !== null && !$requiresAuth)
+    ) {
+        fwrite(STDERR, "ERROR: invalid route runtime metadata for {$route}\n");
         exit(1);
     }
 }

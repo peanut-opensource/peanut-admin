@@ -20,4 +20,17 @@ final class RequestIdMiddleware
 
         return $next($request)->header(['X-Request-Id' => $requestId->value]);
     }
+
+    public static function current(Request $request): string
+    {
+        $route = $request->route();
+        $requestId = is_array($route) ? ($route['request_id'] ?? null) : null;
+        if ($requestId instanceof RequestId) {
+            return $requestId->value;
+        }
+
+        $header = $request->header('x-request-id');
+
+        return RequestId::fromHeader(is_string($header) ? $header : null)->value;
+    }
 }

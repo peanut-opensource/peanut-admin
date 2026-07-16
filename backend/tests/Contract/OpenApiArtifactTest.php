@@ -32,10 +32,14 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
 
         foreach ($routes as $route => $binding) {
-            [$class, $method, $permission, $operationId] = $binding;
+            [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent] = $binding;
             self::assertMatchesRegularExpression('/^[a-z][A-Za-z0-9]+$/', $operationId, $route);
             self::assertNotSame('', $class, $route);
             self::assertNotSame('', $method, $route);
+            self::assertContains($audience, ['tenant', 'platform'], $route);
+            self::assertIsBool($requiresAuth, $route);
+            self::assertIsBool($idempotent, $route);
+            self::assertTrue($permission === null || $requiresAuth, $route);
 
             if (str_starts_with($route, 'GET /api/platform/') || str_starts_with($route, 'POST /api/platform/')
                 || str_starts_with($route, 'PUT /api/platform/') || str_starts_with($route, 'PATCH /api/platform/')

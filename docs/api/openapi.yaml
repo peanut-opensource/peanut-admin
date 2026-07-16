@@ -44,7 +44,7 @@ paths:
     post:
       operationId: tenantLogin
       summary: tenantLogin
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::login'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::login'
       security: []
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/auth.yaml#/TenantLoginRequest' } } } }
       responses: *writeResponses
@@ -52,7 +52,7 @@ paths:
     post:
       operationId: selectTenant
       summary: selectTenant
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::selectTenant'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::selectTenant'
       security: []
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/auth.yaml#/SelectTenantRequest' } } } }
       responses: *writeResponses
@@ -60,26 +60,26 @@ paths:
     post:
       operationId: refreshTenantSession
       summary: refreshTenantSession
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::refresh'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::refresh'
       security: []
       responses: *writeResponses
   /api/v1/auth/context:
     get:
       operationId: getTenantContext
       summary: getTenantContext
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::context'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::context'
       responses: *standardResponses
   /api/v1/auth/tenant-switch/challenge:
     post:
       operationId: createTenantSwitchChallenge
       summary: createTenantSwitchChallenge
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::switchChallenge'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::switchChallenge'
       responses: *writeResponses
   /api/v1/auth/logout:
     post:
       operationId: logoutTenantSession
       summary: logoutTenantSession
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::logout'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::logout'
       responses:
         '204': { description: Session revoked }
         '401': { $ref: '#/components/responses/Problem' }
@@ -87,7 +87,7 @@ paths:
     post:
       operationId: logoutAllTenantSessions
       summary: logoutAllTenantSessions
-      x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::logoutAll'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::logoutAll'
       responses:
         '204': { description: Sessions revoked }
         '401': { $ref: '#/components/responses/Problem' }
@@ -246,13 +246,13 @@ paths:
     post: { operationId: publishExampleWorkItemPolicy, summary: publishExampleWorkItemPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: example.work-item.policy-publish, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
 
   /api/platform/v1/auth/login:
-    post: { operationId: platformLogin, summary: platformLogin, x-handler: 'PeanutAdmin\Kernel\Auth\PlatformAuthService::login', security: [], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: platformLogin, summary: platformLogin, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::login', security: [], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
   /api/platform/v1/auth/refresh:
-    post: { operationId: refreshPlatformSession, summary: refreshPlatformSession, x-handler: 'PeanutAdmin\Kernel\Auth\PlatformAuthService::refresh', security: [], responses: *writeResponses }
+    post: { operationId: refreshPlatformSession, summary: refreshPlatformSession, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::refresh', security: [], responses: *writeResponses }
   /api/platform/v1/auth/context:
-    get: { operationId: getPlatformContext, summary: getPlatformContext, x-handler: 'PeanutAdmin\Kernel\Auth\PlatformAuthService::context', responses: *standardResponses }
+    get: { operationId: getPlatformContext, summary: getPlatformContext, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::context', responses: *standardResponses }
   /api/platform/v1/auth/logout:
-    post: { operationId: logoutPlatformSession, summary: logoutPlatformSession, x-handler: 'PeanutAdmin\Kernel\Auth\PlatformAuthService::logout', responses: { '204': { description: Session revoked }, '401': { $ref: '#/components/responses/Problem' } } }
+    post: { operationId: logoutPlatformSession, summary: logoutPlatformSession, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::logout', responses: { '204': { description: Session revoked }, '401': { $ref: '#/components/responses/Problem' } } }
   /api/platform/v1/tenants:
     get: { operationId: listPlatformTenants, summary: listPlatformTenants, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\ContractController::handle', x-permission: platform.tenant.read, responses: *standardResponses }
     post: { operationId: createPlatformTenant, summary: createPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\ContractController::handle', x-permission: platform.tenant.create, requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }

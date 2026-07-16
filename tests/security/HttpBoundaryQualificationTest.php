@@ -10,9 +10,11 @@ final class HttpBoundaryQualificationTest extends TestCase
     {
         $root = dirname(__DIR__, 2);
         $securityConfig = $root . '/backend/config/security.php';
-        $globalMiddleware = $root . '/backend/middleware.php';
+        $globalMiddleware = $root . '/backend/app/middleware.php';
+        $provider = $root . '/backend/app/provider.php';
         self::assertFileExists($securityConfig);
         self::assertFileExists($globalMiddleware);
+        self::assertFileExists($provider);
 
         $config = require $securityConfig;
         self::assertSame([], $config['cors']['allowed_origins'] ?? null);
@@ -23,6 +25,7 @@ final class HttpBoundaryQualificationTest extends TestCase
 
         $middleware = (string) file_get_contents($globalMiddleware);
         self::assertStringContainsString('SecurityHeadersMiddleware::class', $middleware);
+        self::assertStringContainsString('ApiExceptionHandler::class', (string) file_get_contents($provider));
         $tenantCookie = (string) file_get_contents($root . '/packages/php/kernel/src/Http/TenantRefreshCookie.php');
         $platformCookie = (string) file_get_contents($root . '/packages/php/kernel/src/Auth/PlatformRefreshCookie.php');
         foreach (['__Host-', 'Secure', 'HttpOnly', 'SameSite=Lax'] as $required) {

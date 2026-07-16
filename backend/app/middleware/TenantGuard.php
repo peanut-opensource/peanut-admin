@@ -18,10 +18,9 @@ final class TenantGuard
             throw new AuthException('CONTEXT_TENANT_REQUIRED', 403);
         }
 
-        $requestId = $request->header('x-request-id');
         $context = TenantAuthRuntimeFactory::create()->context(
             substr($authorization, 7),
-            is_string($requestId) ? $requestId : '',
+            RequestIdMiddleware::current($request),
         );
         $route = $request->route();
         $request->withRoute([

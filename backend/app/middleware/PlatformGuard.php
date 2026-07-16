@@ -17,10 +17,9 @@ final class PlatformGuard
         if (!is_string($authorization) || !str_starts_with($authorization, 'Bearer ')) {
             throw new AuthException('AUTH_TOKEN_INVALID', 401);
         }
-        $requestId = $request->header('x-request-id');
         $context = PlatformAuthRuntimeFactory::create()->context(
             substr($authorization, 7),
-            is_string($requestId) ? $requestId : '',
+            RequestIdMiddleware::current($request),
         );
         $route = $request->route();
         $request->withRoute([
