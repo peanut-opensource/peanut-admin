@@ -35,7 +35,7 @@ for required_dir in backend frontend packages/php/kernel packages/php/data-permi
   fi
 done
 
-for deferred_dir in templates examples; do
+for deferred_dir in templates; do
   if [[ -e "$deferred_dir" ]]; then
     echo "ERROR: $deferred_dir is not introduced in P0-A04" >&2
     exit 1
