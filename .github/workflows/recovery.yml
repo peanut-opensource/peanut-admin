@@ -1,0 +1,52 @@
+name: Recovery
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'packages/php/**'
+      - 'profiles/**'
+      - 'schemas/**'
+      - 'scripts/backup-*'
+      - 'scripts/restore-*'
+      - 'scripts/verify-recovery'
+      - 'scripts/verify-clean-install'
+      - 'scripts/test-recovery'
+      - 'tests/recovery/**'
+      - '.github/workflows/recovery.yml'
+  push:
+    branches:
+      - dev
+    paths:
+      - 'backend/**'
+      - 'packages/php/**'
+      - 'profiles/**'
+      - 'schemas/**'
+      - 'scripts/backup-*'
+      - 'scripts/restore-*'
+      - 'scripts/verify-recovery'
+      - 'scripts/verify-clean-install'
+      - 'scripts/test-recovery'
+      - 'tests/recovery/**'
+      - '.github/workflows/recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          tools: composer:2.10.2
+          coverage: none
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist
+      - name: Run clean-install and recovery drills
+        run: ./scripts/test-recovery

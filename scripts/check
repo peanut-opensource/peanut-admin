@@ -14,6 +14,7 @@ PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture
 PEANUT_INTEGRATION=1 php vendor/bin/phpunit backend/tests/Install backend/tests/Upgrade backend/tests/Health
 ./scripts/test-security
 ./scripts/test-browser
+./scripts/test-recovery
 ./scripts/check-workspace
 
 php -r '
