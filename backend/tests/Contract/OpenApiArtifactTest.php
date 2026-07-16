@@ -23,6 +23,7 @@ final class OpenApiArtifactTest extends TestCase
         $types = (string) file_get_contents($root . '/packages/web/admin-core/src/generated/api.d.ts');
         self::assertStringContainsString('listExampleWorkItems', $types);
         self::assertStringContainsString('TargetSet', $types);
+        self::assertStringContainsString('SelectTenantRequest', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
     }
 

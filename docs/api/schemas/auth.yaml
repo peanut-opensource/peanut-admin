@@ -1,0 +1,16 @@
+TenantLoginRequest:
+  type: object
+  additionalProperties: false
+  required: [email, password]
+  properties:
+    email: { type: string, format: email }
+    password: { type: string, minLength: 1, writeOnly: true }
+    tenant_code: { type: [string, 'null'], maxLength: 96 }
+
+SelectTenantRequest:
+  type: object
+  additionalProperties: false
+  required: [challenge_token, tenant_id]
+  properties:
+    challenge_token: { type: string, minLength: 16, writeOnly: true }
+    tenant_id: { $ref: './common.yaml#/$defs/BigIntString' }

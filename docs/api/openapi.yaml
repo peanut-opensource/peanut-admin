@@ -46,7 +46,7 @@ paths:
       summary: tenantLogin
       x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::login'
       security: []
-      requestBody: { $ref: '#/components/requestBodies/GenericWrite' }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/auth.yaml#/TenantLoginRequest' } } } }
       responses: *writeResponses
   /api/v1/auth/tenants/select:
     post:
@@ -54,7 +54,7 @@ paths:
       summary: selectTenant
       x-handler: 'PeanutAdmin\Kernel\Http\TenantAuthEndpoint::selectTenant'
       security: []
-      requestBody: { $ref: '#/components/requestBodies/GenericWrite' }
+      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/auth.yaml#/SelectTenantRequest' } } } }
       responses: *writeResponses
   /api/v1/auth/refresh:
     post:
