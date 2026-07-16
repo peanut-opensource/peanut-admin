@@ -203,6 +203,27 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/security/asvs-p0-map.md",
+      "title": "OWASP ASVS 5.0 P0 Map",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/performance/p0-baseline.md",
+      "title": "P0 Performance Baseline",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/reference/third-party-licenses.generated.md",
+      "title": "Third-Party License Inventory",
+      "status": "generated",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
