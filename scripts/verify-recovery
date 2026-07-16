@@ -99,7 +99,7 @@ if DB_DATABASE="$source_database" ./scripts/restore-mysql \
   echo 'ERROR: recovery accepted the active database as restore target' >&2
   exit 1
 fi
-rg -q 'RESTORE_TARGET_IS_ACTIVE_DATABASE' "$workdir/active.out"
+grep -q 'RESTORE_TARGET_IS_ACTIVE_DATABASE' "$workdir/active.out"
 
 cp -R "$backup" "$workdir/corrupt"
 printf '\n-- corruption fixture\n' >>"$workdir/corrupt/dump.sql"
@@ -108,7 +108,7 @@ if DB_DATABASE="$source_database" ./scripts/restore-mysql \
   echo 'ERROR: recovery accepted a corrupted backup' >&2
   exit 1
 fi
-rg -q 'BACKUP_CHECKSUM_MISMATCH' "$workdir/corrupt.out"
+grep -q 'BACKUP_CHECKSUM_MISMATCH' "$workdir/corrupt.out"
 
 restore_started="$(php -r 'echo hrtime(true);')"
 DB_DATABASE="$source_database" \
@@ -123,7 +123,7 @@ if DB_DATABASE="$source_database" ./scripts/restore-mysql \
   echo 'ERROR: recovery overwrote an existing target database' >&2
   exit 1
 fi
-rg -q 'RESTORE_TARGET_ALREADY_EXISTS' "$workdir/existing.out"
+grep -q 'RESTORE_TARGET_ALREADY_EXISTS' "$workdir/existing.out"
 
 PEANUT_INTEGRATION=1 \
 RECOVERY_FIXTURE_PASSWORD="$fixture_password" \

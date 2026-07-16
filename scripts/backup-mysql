@@ -59,7 +59,7 @@ docker compose exec -T mysql sh -c '
     "$1"
 ' sh "$database" >"$output/dump.sql"
 
-dump_sha256="$(shasum -a 256 "$output/dump.sql" | awk '{print $1}')"
+dump_sha256="$(php -r 'echo hash_file("sha256", $argv[1]);' "$output/dump.sql")"
 printf '%s  %s\n' "$dump_sha256" 'dump.sql' >"$output/dump.sql.sha256"
 DB_DATABASE="$database" DB_USERNAME=root \
   DB_PASSWORD="${MYSQL_ROOT_PASSWORD:-peanut_admin_root_dev}" \

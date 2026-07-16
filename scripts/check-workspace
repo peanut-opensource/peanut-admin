@@ -101,7 +101,7 @@ foreach ($expectedWeb as $path => $name) {
 
 approved_license_hash="cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
 for package_license in packages/php/*/LICENSE packages/web/*/LICENSE; do
-  actual="$(shasum -a 256 "$package_license" | awk '{print $1}')"
+  actual="$(php -r 'echo hash_file("sha256", $argv[1]);' "$package_license")"
   if [[ "$actual" != "$approved_license_hash" ]]; then
     echo "ERROR: package license does not match Apache-2.0 baseline: $package_license" >&2
     exit 1
