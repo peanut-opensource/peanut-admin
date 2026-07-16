@@ -199,7 +199,7 @@
     },
     {
       "path": "docs/operations/backup-and-recovery.md",
-      "title": "Backup And Recovery Boundary",
+      "title": "Backup And Recovery",
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null

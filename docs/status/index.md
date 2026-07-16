@@ -14,10 +14,10 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 - OpenAPI artifacts, reference Admin Shell, and desktop/mobile browser acceptance tests.
 - CLI environment preflight, first install, ProductProfile application, local upgrade, migration checksums, and health checks.
 - Buildable developer guide with executable installation and Module examples.
+- Verified reference backup, restore-to-new-database, clean-install, and Alpha/Beta recovery drills.
 
 ## Remaining P0 Gates
 
-- Verified backup, restore-to-new-database, clean-install, and upgrade drill.
 - Final security, performance, supply-chain, and third-party-license gate.
 - Nine-role Runtime review and candidate qualification report.
 - Replacement of remaining `API_OPERATION_UNAVAILABLE` placeholders requires separately scoped implementation tasks; a contract entry alone is not considered available behavior.
