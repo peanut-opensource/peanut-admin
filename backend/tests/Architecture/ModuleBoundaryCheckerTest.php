@@ -9,6 +9,8 @@ use PeanutAdmin\Kernel\Module\CompiledModuleRegistry;
 use PeanutAdmin\Kernel\Module\ManifestDocument;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use PHPUnit\Framework\TestCase;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
 
 final class ModuleBoundaryCheckerTest extends TestCase
 {
@@ -22,8 +24,12 @@ final class ModuleBoundaryCheckerTest extends TestCase
 
     protected function tearDown(): void
     {
-        foreach (glob($this->root . '/*') ?: [] as $file) {
-            unlink($file);
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($this->root, RecursiveDirectoryIterator::SKIP_DOTS),
+            RecursiveIteratorIterator::CHILD_FIRST,
+        );
+        foreach ($iterator as $file) {
+            $file->isDir() ? rmdir($file->getPathname()) : unlink($file->getPathname());
         }
         rmdir($this->root);
     }
@@ -65,6 +71,38 @@ PHP);
             'revision',
         );
 
+        (new ModuleBoundaryChecker($registry))->check();
+    }
+
+    public function testNowdocCrossTableQueryIsRejectedButExplicitDatabaseForeignKeyIsAllowed(): void
+    {
+        mkdir($this->root . '/Database');
+        file_put_contents($this->root . '/Database/Schema.php', <<<'PHP'
+<?php
+$sql = <<<'SQL'
+CREATE TABLE `pa_example_owner` (
+  `other_id` BIGINT UNSIGNED NOT NULL,
+  CONSTRAINT `fk_other` FOREIGN KEY (`other_id`) REFERENCES `pa_example_other` (`id`)
+)
+SQL;
+PHP);
+        $manifest = ManifestDocument::fromArray($this->root, ['key' => 'example.owner']);
+        $registry = new CompiledModuleRegistry(
+            [$manifest],
+            [],
+            ['pa_example_owner' => 'example.owner', 'pa_example_other' => 'example.other'],
+            [],
+            'revision',
+        );
+        (new ModuleBoundaryChecker($registry))->check();
+
+        file_put_contents($this->root . '/Bad.php', <<<'PHP'
+<?php
+$sql = <<<'SQL'
+SELECT * FROM pa_example_other
+SQL;
+PHP);
+        $this->expectException(ModuleException::class);
         (new ModuleBoundaryChecker($registry))->check();
     }
 }

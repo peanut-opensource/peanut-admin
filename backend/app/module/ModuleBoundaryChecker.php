@@ -61,12 +61,12 @@ final readonly class ModuleBoundaryChecker
                     );
                 }
             }
-            if ($type !== T_CONSTANT_ENCAPSED_STRING) {
+            if (!in_array($type, [T_CONSTANT_ENCAPSED_STRING, T_ENCAPSED_AND_WHITESPACE], true)) {
                 continue;
             }
             foreach ($this->tableCandidates($text) as $table) {
                 $owner = $this->registry->ownedTableOwners[$table] ?? null;
-                if ($owner !== $moduleKey) {
+                if ($owner !== $moduleKey && !$this->isDeclaredForeignKeyReference($path, $text, $table)) {
                     throw new ModuleException(
                         'MODULE_REGISTRY_CONFLICT',
                         "{$path} references table {$table} owned by " . ($owner ?? 'no registered module') . '.',
@@ -74,6 +74,12 @@ final readonly class ModuleBoundaryChecker
                 }
             }
         }
+    }
+
+    private function isDeclaredForeignKeyReference(string $path, string $literal, string $table): bool
+    {
+        return str_contains($path, DIRECTORY_SEPARATOR . 'Database' . DIRECTORY_SEPARATOR)
+            && str_contains($literal, "REFERENCES `{$table}`");
     }
 
     /** @return list<string> */
