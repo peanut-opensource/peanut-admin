@@ -1,0 +1,14 @@
+[
+  {
+    "key": "example.reference-item",
+    "name": "Reference Item",
+    "ownership": "shared_master",
+    "provider": "PeanutAdmin\\App\\Modules\\Example\\Reference\\Infrastructure\\Authorization\\ReferencePolicyProvider",
+    "scope_provider": "PeanutAdmin\\App\\Modules\\Example\\Reference\\Infrastructure\\Authorization\\PdoReferenceScopeProvider",
+    "operations": [
+      {"key": "list", "target_cardinality": "many_readable", "target_types": ["example.project", "example.queue"]},
+      {"key": "use", "target_cardinality": "one_required", "target_types": ["example.project", "example.queue"]},
+      {"key": "maintain", "target_cardinality": "zero_or_one", "target_types": ["example.project", "example.queue"]}
+    ]
+  }
+]

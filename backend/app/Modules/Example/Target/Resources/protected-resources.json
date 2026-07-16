@@ -1,0 +1,22 @@
+[
+  {
+    "key": "example.project",
+    "name": "Project",
+    "ownership": "tenant_owned",
+    "provider": "PeanutAdmin\\App\\Modules\\Example\\Target\\Infrastructure\\Authorization\\ProjectPolicyProvider",
+    "operations": [
+      {"key": "list", "target_cardinality": "none", "target_types": []},
+      {"key": "select", "target_cardinality": "many_readable", "target_types": ["example.project"]}
+    ]
+  },
+  {
+    "key": "example.queue",
+    "name": "Queue",
+    "ownership": "tenant_owned",
+    "provider": "PeanutAdmin\\App\\Modules\\Example\\Target\\Infrastructure\\Authorization\\QueuePolicyProvider",
+    "operations": [
+      {"key": "list", "target_cardinality": "none", "target_types": []},
+      {"key": "select", "target_cardinality": "many_readable", "target_types": ["example.queue"]}
+    ]
+  }
+]
