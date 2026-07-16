@@ -11,6 +11,10 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^think\\#'
+    - name: RuntimeLibraries
+      collectors:
+        - type: classNameRegex
+          value: '#^(Opis\\JsonSchema|Composer\\Semver)\\#'
     - name: Kernel
       collectors:
         - type: classNameRegex
@@ -26,7 +30,15 @@ deptrac:
     - name: Backend
       collectors:
         - type: classNameRegex
-          value: '#^PeanutAdmin\\App\\#'
+          value: '#^PeanutAdmin\\App\\(?!Modules\\)#'
+    - name: ModuleContracts
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\App\\Modules\\.+\\Contracts\\#'
+    - name: ModuleInternals
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\App\\Modules\\(?!.*\\Contracts\\)#'
   ruleset:
     Kernel: []
     DataPermission:
@@ -36,5 +48,15 @@ deptrac:
       - DataPermission
     Backend:
       - Framework
+      - RuntimeLibraries
       - Kernel
       - DataPermission
+      - ModuleContracts
+    ModuleContracts:
+      - Kernel
+      - DataPermission
+    ModuleInternals:
+      - Framework
+      - Kernel
+      - DataPermission
+      - ModuleContracts

@@ -19,6 +19,8 @@ if ($mapping !== $expected) {
 }
 ' <<< "$mapping"
 
+./scripts/check-module-manifests
+
 if rg -n "from ['\"]@peanut-admin/[^'\"]+/(src|internal)/" frontend packages/web; then
   echo 'ERROR: web host or package uses a private deep import' >&2
   exit 1
