@@ -1,0 +1,137 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+write=false
+if [[ "${1:-}" == '--write' ]]; then
+  write=true
+elif [[ $# -gt 0 ]]; then
+  echo 'usage: scripts/check-openapi [--write]' >&2
+  exit 2
+fi
+
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+
+pnpm exec redocly lint docs/api/openapi.yaml --format=summary
+pnpm exec redocly bundle docs/api/openapi.yaml --output "$tmp/openapi.json" --ext json --dereferenced
+pnpm exec openapi-typescript "$tmp/openapi.json" -o "$tmp/api.d.ts"
+
+node - "$tmp/openapi.json" "$tmp/openapi-routes.php" <<'NODE'
+const fs = require('node:fs')
+const [source, target] = process.argv.slice(2)
+const document = JSON.parse(fs.readFileSync(source, 'utf8'))
+const methods = ['get', 'post', 'put', 'patch', 'delete']
+const routes = []
+for (const [path, item] of Object.entries(document.paths ?? {})) {
+  for (const method of methods) {
+    const operation = item[method]
+    if (!operation) continue
+    const handler = operation['x-handler']
+    if (typeof handler !== 'string' || !handler.includes('::')) {
+      throw new Error(`${method.toUpperCase()} ${path} has no x-handler`)
+    }
+    const [className, classMethod] = handler.split('::')
+    routes.push({
+      route: `${method.toUpperCase()} ${path}`,
+      className,
+      classMethod,
+      permission: operation['x-permission'] ?? null,
+      operationId: operation.operationId,
+    })
+  }
+}
+routes.sort((left, right) => left.route.localeCompare(right.route))
+if (routes.length !== 75) {
+  throw new Error(`Expected 75 P0 operations, found ${routes.length}`)
+}
+const operationIds = new Set(routes.map(route => route.operationId))
+if (operationIds.size !== routes.length) {
+  throw new Error('OpenAPI operationId values must be globally unique')
+}
+const idempotentOperations = [
+  'createExampleWorkItem',
+  'updateExampleWorkItem',
+  'publishExampleWorkItemPolicy',
+  'activateTenantOwnerCandidate',
+  'activatePlatformTenant',
+  'suspendPlatformTenant',
+  'closePlatformTenant',
+  'enablePlatformTenantModule',
+  'disablePlatformTenantModule',
+]
+for (const [path, item] of Object.entries(document.paths ?? {})) {
+  for (const method of methods) {
+    const operation = item[method]
+    if (!operation) continue
+    if (path.startsWith('/api/v1/') && JSON.stringify(operation.requestBody ?? {}).includes('"tenant_id"')) {
+      throw new Error(`${operation.operationId} accepts a client tenant_id`)
+    }
+    if (idempotentOperations.includes(operation.operationId)) {
+      const names = (operation.parameters ?? []).map(parameter => parameter.name)
+      if (!names.includes('Idempotency-Key')) {
+        throw new Error(`${operation.operationId} is missing Idempotency-Key`)
+      }
+    }
+  }
+}
+const inspectIds = value => {
+  if (!value || typeof value !== 'object') return
+  if (value.properties) {
+    for (const [name, schema] of Object.entries(value.properties)) {
+      if (/(^|_)id$/.test(name) && schema?.type === 'integer') {
+        throw new Error(`BIGINT API field ${name} is declared as integer`)
+      }
+      inspectIds(schema)
+    }
+  }
+  for (const nested of Object.values(value)) inspectIds(nested)
+}
+inspectIds(document)
+const quote = value => value === null ? 'null' : `'${String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
+const body = routes.map(route =>
+  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}],`
+).join('\n')
+fs.writeFileSync(target, `<?php\n\ndeclare(strict_types=1);\n\n// Generated from docs/api/openapi.yaml.\nreturn [\n${body}\n];\n`)
+NODE
+
+if [[ "$write" == true ]]; then
+  mkdir -p packages/web/admin-core/src/generated
+  cp "$tmp/api.d.ts" packages/web/admin-core/src/generated/api.d.ts
+  cp "$tmp/openapi-routes.php" backend/route/openapi-generated.php
+else
+  cmp "$tmp/api.d.ts" packages/web/admin-core/src/generated/api.d.ts || {
+    echo 'ERROR: generated OpenAPI TypeScript is stale; run scripts/check-openapi --write' >&2
+    exit 1
+  }
+  cmp "$tmp/openapi-routes.php" backend/route/openapi-generated.php || {
+    echo 'ERROR: generated OpenAPI routes are stale; run scripts/check-openapi --write' >&2
+    exit 1
+  }
+fi
+
+php -r '
+require "vendor/autoload.php";
+$routes = require "backend/route/openapi-generated.php";
+$seen = [];
+foreach ($routes as $route => $binding) {
+    [$class, $method, $permission, $operationId] = $binding;
+    if (!is_string($operationId) || isset($seen[$operationId])) {
+        fwrite(STDERR, "ERROR: duplicate or missing OpenAPI operationId for {$route}\n");
+        exit(1);
+    }
+    $seen[$operationId] = true;
+    if (!class_exists($class) || !method_exists($class, $method)) {
+        fwrite(STDERR, "ERROR: OpenAPI handler does not exist for {$route}: {$class}::{$method}\n");
+        exit(1);
+    }
+    if ($permission !== null && !is_string($permission)) {
+        fwrite(STDERR, "ERROR: invalid route permission for {$route}\n");
+        exit(1);
+    }
+}
+'
+
+echo 'OpenAPI contract: OK'

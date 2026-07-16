@@ -1,0 +1,51 @@
+$defs:
+  WorkItem:
+    type: object
+    required: [id, project_id, reference_item_id, title, status, revision]
+    properties:
+      id: { $ref: './common.yaml#/$defs/BigIntString' }
+      project_id: { $ref: './common.yaml#/$defs/BigIntString' }
+      queue_id:
+        anyOf:
+          - { $ref: './common.yaml#/$defs/BigIntString' }
+          - { type: 'null' }
+      reference_item_id: { $ref: './common.yaml#/$defs/BigIntString' }
+      title: { type: string, maxLength: 200 }
+      status: { enum: [open, active, closed] }
+      revision: { $ref: './common.yaml#/$defs/BigIntString' }
+      boundary_target: { $ref: './common.yaml#/$defs/BoundaryTarget' }
+  WorkItemListResponse:
+    type: object
+    required: [data, meta]
+    properties:
+      data:
+        type: array
+        items: { $ref: '#/$defs/WorkItem' }
+      meta: { $ref: './common.yaml#/$defs/PageMeta' }
+  CreateWorkItemRequest:
+    type: object
+    additionalProperties: false
+    required: [target, reference_item_id, title]
+    properties:
+      target: { $ref: './common.yaml#/$defs/Target' }
+      related_target:
+        anyOf:
+          - { $ref: './common.yaml#/$defs/Target' }
+          - { type: 'null' }
+      reference_item_id: { $ref: './common.yaml#/$defs/BigIntString' }
+      title: { type: string, minLength: 1, maxLength: 200 }
+  ReferenceCandidate:
+    type: object
+    required: [id, code, name, owner_type]
+    properties:
+      id: { $ref: './common.yaml#/$defs/BigIntString' }
+      code: { type: string }
+      name: { type: string }
+      owner_type: { enum: [deployment, tenant] }
+  TargetCandidate:
+    type: object
+    required: [target_resource_key, target_id, label]
+    properties:
+      target_resource_key: { type: string }
+      target_id: { type: string }
+      label: { type: string }
