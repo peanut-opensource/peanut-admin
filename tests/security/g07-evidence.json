@@ -42,7 +42,8 @@
       "evidence": [
         "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testLoginRequiresSelectionAndDoesNotLeakUnknownAccountState",
         "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testFiveFailuresLockCredentialTemporarily",
-        "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testIpAndIdentifierWindowIsRateLimited"
+        "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testIpWindowIsRateLimitedAcrossDifferentIdentifiers",
+        "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testIdentifierWindowIsRateLimitedAcrossDifferentIpAddresses"
       ]
     },
     {
