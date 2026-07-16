@@ -1,15 +1,15 @@
 # P0 Performance Baseline
 
-The P0 gate measures security-critical paths; it does not claim a production QPS capacity. The benchmark installs a fresh reference profile into MySQL, seeds 5,000 typed targets, verifies result correctness, and then records p50, p95, and p99 latency.
+The P0 gate measures security-critical paths; it does not claim a production QPS capacity. The benchmark installs a fresh reference profile into MySQL, seeds 5,000 Projects and paged WorkItems, verifies result correctness, and then records p50, p95, and p99 latency.
 
 ## Fixed Dataset And Runtime
 
 - MySQL image: `mysql:8.4.10`.
 - PHP baseline runtime: `8.3.24`.
-- Baseline host: Darwin arm64 development host.
-- Six complete warm-container calibration measurements were taken on 2026-07-16; the final three use the current login and refresh sample counts.
-- The checked-in p95 for each scenario is the highest observed p95 with its current operation shape.
-- CI uses the same lock files, PHP minor version, database image, fixture size, sample counts, and script.
+- Runner classes: Darwin/Linux on arm64, aarch64, or x86_64; unknown classes fail instead of borrowing this baseline.
+- Four complete warm-container calibration measurements were taken on 2026-07-16 after the query shape changed to `fixed-json-table-paginated-v1`.
+- The checked-in p95 for each scenario is the highest observed p95 with its current operation shape. Existing unchanged auth baselines were retained when they were already higher than the new observations.
+- CI uses the same lock files, PHP patch version, database image, fixture size, sample counts, and script.
 
 The versioned machine-readable values are in `tests/performance/p0-baseline.json`. `scripts/test-performance` fails when the current p95 exceeds the recorded value by more than 20 percent.
 
@@ -17,15 +17,15 @@ The versioned machine-readable values are in `tests/performance/p0-baseline.json
 
 | Scenario | Dataset | Baseline p95 | Query bound |
 | --- | ---: | ---: | ---: |
-| Tenant login | 20 independent sessions | 194.584 ms | Password hashing and transaction |
+| Tenant login | 20 independent sessions | 314.405 ms | Password hashing and transaction |
 | Tenant refresh | 18 one-time rotations | 27.282 ms | One rotation transaction |
 | Tenant context | 30 samples x 20 validations | 100.278 ms | Session and state validation |
-| Typed targets | 20 operations x 10 IDs | 21.230 ms | 1 query per operation |
-| Typed targets | 5 operations x 500 IDs | 29.182 ms | 1 query per operation |
-| Typed targets | 5,000 IDs | 90.637 ms | 10 queries of at most 500 IDs |
+| Typed targets | 30 operations x 10 IDs | 174.254 ms | fixed 2 parameters per resolver/list query; 20-row page |
+| Typed targets | 10 operations x 500 IDs | 90.834 ms | fixed 2 parameters per resolver/list query; 20-row page |
+| Typed targets | 3 operations x 5,000 IDs | 166.317 ms | fixed 2 parameters per resolver/list query; 20-row page |
 | Shared-master scope | 20 operations x 10 typed targets | 36.372 ms | 1 query per operation |
 
-The typed-target scenarios also assert identical membership results and reject a missing target. The shared-master scenario uses one truth table and one scope table and verifies that only the typed-target-visible candidate is returned.
+The typed-target scenarios call the real Module `PdoTargetResolver` and paginated `PdoWorkItemQuery`, assert exact target resolution and total counts, and reject a missing target. MySQL `JSON_TABLE` supplies a fixed relation input, so SQL text and parameter count do not grow with 10, 500, or 5,000 IDs. The shared-master scenario uses one truth table and one scope table and verifies that only the typed-target-visible candidate is returned.
 
 ## Interpretation
 

@@ -27,24 +27,34 @@ final readonly class PdoReferenceQuery implements ReferenceQuery
         if ($ids === []) {
             return [];
         }
-        $placeholders = implode(', ', array_fill(0, count($ids), '?'));
-        $statement = $this->pdo->prepare(<<<SQL
+        $options = [];
+        foreach (array_chunk($ids, 500) as $chunk) {
+            $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
+            $statement = $this->pdo->prepare(<<<SQL
 SELECT id, code, name, owner_type, owner_tenant_id
 FROM pa_example_reference_item
 WHERE status = 'active' AND CAST(id AS CHAR) IN ({$placeholders})
 ORDER BY code, id
 SQL);
-        $statement->execute($ids);
+            $statement->execute($chunk);
+            foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                $options[] = new ReferenceOption(
+                    (string) $row['id'],
+                    (string) $row['code'],
+                    (string) $row['name'],
+                    (string) $row['owner_type'],
+                    $row['owner_tenant_id'] === null ? null : (int) $row['owner_tenant_id'],
+                );
+            }
+        }
+        usort($options, static fn(ReferenceOption $left, ReferenceOption $right): int => [
+            $left->code,
+            $left->id,
+        ] <=> [
+            $right->code,
+            $right->id,
+        ]);
 
-        return array_values(array_map(
-            static fn(array $row): ReferenceOption => new ReferenceOption(
-                (string) $row['id'],
-                (string) $row['code'],
-                (string) $row['name'],
-                (string) $row['owner_type'],
-                $row['owner_tenant_id'] === null ? null : (int) $row['owner_tenant_id'],
-            ),
-            $statement->fetchAll(PDO::FETCH_ASSOC),
-        ));
+        return $options;
     }
 }

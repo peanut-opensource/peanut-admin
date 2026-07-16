@@ -33,6 +33,19 @@ php tests/performance/run.php > "$report"
 php -r '
 $baseline = json_decode((string) file_get_contents("tests/performance/p0-baseline.json"), true, 512, JSON_THROW_ON_ERROR);
 $report = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
+$environment = $baseline["environment"] ?? null;
+if (($baseline["schema_version"] ?? null) !== 2
+    || ($report["schema_version"] ?? null) !== 2
+    || !is_array($environment)
+    || ($environment["operation_shape"] ?? null) !== "fixed-json-table-paginated-v1"
+    || ($report["environment"]["database_version"] ?? null) !== "8.4.10"
+    || ($report["environment"]["php_version"] ?? null) !== ($environment["php"] ?? null)
+    || !in_array($report["environment"]["os"] ?? null, $environment["allowed_operating_systems"] ?? [], true)
+    || !in_array($report["environment"]["architecture"] ?? null, $environment["allowed_architectures"] ?? [], true)
+) {
+    fwrite(STDERR, "ERROR: performance runner does not match the versioned baseline environment\n");
+    exit(1);
+}
 $ratio = $baseline["maximum_regression_ratio"] ?? null;
 if (!is_float($ratio) || $ratio !== 1.2) {
     fwrite(STDERR, "ERROR: performance baseline must block regressions over 20%\n");
@@ -49,6 +62,13 @@ foreach (($baseline["scenarios"] ?? []) as $name => $expected) {
     printf("%-24s p95=%8.3f ms baseline=%8.3f ms limit=%8.3f ms\n", $name, $actual, $reference, $limit);
     if ($actual > $limit) {
         fwrite(STDERR, "ERROR: {$name} p95 regressed by more than 20%\n");
+        exit(1);
+    }
+    if (str_starts_with($name, "typed-targets-")
+        && (($report["scenarios"][$name]["sql_parameters_per_query"] ?? null) !== 2
+            || ($report["scenarios"][$name]["page_size"] ?? null) !== 20)
+    ) {
+        fwrite(STDERR, "ERROR: {$name} no longer measures the fixed paginated SQL path\n");
         exit(1);
     }
 }

@@ -33,7 +33,8 @@
   },
   "contracts": {
     "exports": [
-      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemQuery"
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemQuery",
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemPage"
     ],
     "events": ["example.work-item.changed.v1"]
   },

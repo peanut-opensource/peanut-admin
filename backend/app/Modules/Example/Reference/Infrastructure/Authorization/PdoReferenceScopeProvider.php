@@ -6,6 +6,7 @@ namespace PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization
 
 use PDO;
 use PeanutAdmin\App\Modules\Example\Reference\Contracts\ReferenceScope;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetIdSet;
 use PeanutAdmin\DataPermission\Catalog\ResourceOperation;
 use PeanutAdmin\DataPermission\Constraint\AlwaysFalse;
 use PeanutAdmin\DataPermission\Constraint\ColumnIn;
@@ -15,6 +16,7 @@ use PeanutAdmin\DataPermission\Context\AuthorizationContext;
 use PeanutAdmin\DataPermission\Decision\AuthorizationDecision;
 use PeanutAdmin\DataPermission\Provider\SharedMasterScopeProvider;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
+use PeanutAdmin\Kernel\Module\ModuleException;
 
 final readonly class PdoReferenceScopeProvider implements SharedMasterScopeProvider, ReferenceScope
 {
@@ -25,7 +27,16 @@ final readonly class PdoReferenceScopeProvider implements SharedMasterScopeProvi
         ResourceOperation $operation,
         TypedResourceTargetCollection $targets,
     ): QueryConstraint {
-        $ids = $this->allowedIds($context, $targets, $operation->operation === 'use' ? 'use' : 'view');
+        $capability = match ($operation->operation) {
+            'list' => 'view',
+            'use' => 'use',
+            'maintain' => 'maintain',
+            default => throw new ModuleException(
+                'AUTHZ_OPERATION_UNDECLARED',
+                'Reference capability is not declared for this operation.',
+            ),
+        };
+        $ids = $this->allowedIds($context, $targets, $capability);
 
         return $ids === [] ? new AlwaysFalse() : new ColumnIn(new ColumnReference('id'), $ids);
     }
@@ -55,19 +66,46 @@ final readonly class PdoReferenceScopeProvider implements SharedMasterScopeProvi
         TypedResourceTargetCollection $targets,
         string $capability,
     ): array {
+        if (!in_array($capability, ['view', 'use', 'maintain'], true)) {
+            throw new ModuleException('AUTHZ_OPERATION_UNDECLARED', 'Reference capability is invalid.');
+        }
+        $typedTargets = [];
+        foreach ($targets->sets as $targetSet) {
+            if (!in_array($targetSet->targetResourceKey, ['example.project', 'example.queue'], true)) {
+                throw new ModuleException('AUTHZ_TARGET_TYPE_MISMATCH', 'Unknown reference target type.');
+            }
+            foreach (TargetIdSet::fromStrings($targetSet->targetIds)->ids as $targetId) {
+                $typedTargets[] = [
+                    'resource_key' => $targetSet->targetResourceKey,
+                    'target_id' => $targetId,
+                ];
+            }
+        }
+        $typedTargetJson = json_encode($typedTargets, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
         $clauses = [
             "scope.scope_kind = 'all_tenants'",
             "(scope.scope_kind = 'tenant' AND scope.target_tenant_id = ?)",
+            <<<'SQL'
+(scope.scope_kind = 'typed_target' AND scope.target_tenant_id = ? AND EXISTS (
+    SELECT 1
+    FROM JSON_TABLE(
+        ?,
+        '$[*]' COLUMNS (
+            resource_key VARCHAR(160) PATH '$.resource_key',
+            target_id VARCHAR(128) PATH '$.target_id'
+        )
+    ) requested
+    WHERE requested.resource_key COLLATE utf8mb4_0900_ai_ci = scope.target_resource_key
+      AND requested.target_id COLLATE utf8mb4_0900_ai_ci = scope.target_id
+))
+SQL,
         ];
-        $parameters = [$capability, $context->tenant->tenantId];
-        foreach ($targets->sets as $targetSet) {
-            foreach ($targetSet->targetIds as $targetId) {
-                $clauses[] = "(scope.scope_kind = 'typed_target' AND scope.target_tenant_id = ? AND scope.target_resource_key = ? AND scope.target_id = ?)";
-                $parameters[] = $context->tenant->tenantId;
-                $parameters[] = $targetSet->targetResourceKey;
-                $parameters[] = $targetId;
-            }
-        }
+        $parameters = [
+            $capability,
+            $context->tenant->tenantId,
+            $context->tenant->tenantId,
+            $typedTargetJson,
+        ];
         $statement = $this->pdo->prepare(sprintf(<<<'SQL'
 SELECT DISTINCT CAST(item.id AS CHAR) AS id
 FROM pa_example_reference_item item

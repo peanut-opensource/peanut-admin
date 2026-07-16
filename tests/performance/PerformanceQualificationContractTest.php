@@ -18,9 +18,10 @@ final class PerformanceQualificationContractTest extends TestCase
         $path = $this->root . '/tests/performance/p0-baseline.json';
         self::assertFileExists($path);
         $baseline = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-        self::assertSame(1, $baseline['schema_version'] ?? null);
+        self::assertSame(2, $baseline['schema_version'] ?? null);
         self::assertSame(1.2, $baseline['maximum_regression_ratio'] ?? null);
         self::assertSame('mysql:8.4.10', $baseline['environment']['database_image'] ?? null);
+        self::assertSame('fixed-json-table-paginated-v1', $baseline['environment']['operation_shape'] ?? null);
 
         $scenarios = $baseline['scenarios'] ?? [];
         self::assertIsArray($scenarios);
@@ -41,5 +42,23 @@ final class PerformanceQualificationContractTest extends TestCase
             './scripts/test-performance',
             (string) file_get_contents($this->root . '/scripts/check'),
         );
+    }
+
+    public function testTypedTargetBenchmarkUsesTheRealResolverAndPaginatedQuery(): void
+    {
+        $runner = (string) file_get_contents($this->root . '/tests/performance/run.php');
+        self::assertStringContainsString('PdoTargetResolver', $runner);
+        self::assertStringContainsString('PdoWorkItemQuery', $runner);
+        self::assertStringContainsString("->list(\$operationContext, 1, 20)", $runner);
+
+        foreach ([
+            'backend/app/Modules/Example/Target/Infrastructure/Authorization/PdoTargetResolver.php',
+            'backend/app/Modules/Example/Target/Infrastructure/Authorization/PdoTargetCatalogProvider.php',
+            'backend/app/Modules/Example/WorkItem/Infrastructure/Persistence/PdoWorkItemQuery.php',
+            'backend/app/Modules/Example/Reference/Infrastructure/Authorization/PdoReferenceScopeProvider.php',
+        ] as $path) {
+            $source = (string) file_get_contents($this->root . '/' . $path);
+            self::assertStringContainsString('JSON_TABLE', $source, $path);
+        }
     }
 }

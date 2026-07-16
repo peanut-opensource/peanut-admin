@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence;
 
 use PDO;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetIdSet;
+use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemPage;
 use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemQuery;
 use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemView;
 use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
@@ -13,7 +15,7 @@ final readonly class PdoWorkItemQuery implements WorkItemQuery
 {
     public function __construct(private PDO $pdo) {}
 
-    public function list(AuthorizedOperationContext $context): array
+    public function list(AuthorizedOperationContext $context, int $page = 1, int $pageSize = 20): WorkItemPage
     {
         $projectIds = [];
         foreach ($context->targets as $target) {
@@ -22,18 +24,38 @@ final readonly class PdoWorkItemQuery implements WorkItemQuery
             }
         }
         if ($projectIds === []) {
-            return [];
+            return new WorkItemPage([], 0, max(1, $page), min(100, max(1, $pageSize)));
         }
-        $placeholders = implode(', ', array_fill(0, count($projectIds), '?'));
-        $statement = $this->pdo->prepare(<<<SQL
-SELECT id, tenant_id, project_id, queue_id, reference_item_id, title, status, revision
-FROM pa_example_work_item
-WHERE tenant_id = ? AND CAST(project_id AS CHAR) IN ({$placeholders})
-ORDER BY id
+        $targets = TargetIdSet::fromStrings($projectIds);
+        $page = max(1, $page);
+        $pageSize = min(100, max(1, $pageSize));
+        $offset = ($page - 1) * $pageSize;
+        $parameters = [$targets->json(), $context->tenantContext->tenantId];
+        $count = $this->pdo->prepare(<<<'SQL'
+SELECT COUNT(*)
+FROM pa_example_work_item work_item
+INNER JOIN JSON_TABLE(
+    ?,
+    '$[*]' COLUMNS (project_id BIGINT UNSIGNED PATH '$')
+) requested ON requested.project_id = work_item.project_id
+WHERE work_item.tenant_id = ?
 SQL);
-        $statement->execute([$context->tenantContext->tenantId, ...$projectIds]);
+        $count->execute($parameters);
+        $statement = $this->pdo->prepare(<<<SQL
+SELECT work_item.id, work_item.tenant_id, work_item.project_id, work_item.queue_id,
+       work_item.reference_item_id, work_item.title, work_item.status, work_item.revision
+FROM pa_example_work_item work_item
+INNER JOIN JSON_TABLE(
+    ?,
+    '$[*]' COLUMNS (project_id BIGINT UNSIGNED PATH '$')
+) requested ON requested.project_id = work_item.project_id
+WHERE work_item.tenant_id = ?
+ORDER BY work_item.id
+LIMIT {$pageSize} OFFSET {$offset}
+SQL);
+        $statement->execute($parameters);
 
-        return array_values(array_map(
+        $items = array_values(array_map(
             static fn(array $row): WorkItemView => new WorkItemView(
                 (string) $row['id'],
                 (int) $row['tenant_id'],
@@ -46,5 +68,7 @@ SQL);
             ),
             $statement->fetchAll(PDO::FETCH_ASSOC),
         ));
+
+        return new WorkItemPage($items, (int) $count->fetchColumn(), $page, $pageSize);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization;
 
 use PDO;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetIdSet;
 use PeanutAdmin\DataPermission\Target\ResolvedResourceTargets;
 use PeanutAdmin\DataPermission\Target\ResourceTargetResolver;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
@@ -26,12 +27,23 @@ final readonly class PdoTargetResolver implements ResourceTargetResolver
             'example.queue' => 'pa_example_queue',
             default => throw new ModuleException('AUTHZ_TARGET_TYPE_MISMATCH', 'Unknown example target type.'),
         };
-        $placeholders = implode(', ', array_fill(0, count($targets->targetIds), '?'));
+        $targetIds = TargetIdSet::fromStrings($targets->targetIds);
         $statement = $this->pdo->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE tenant_id = ? AND status = 'active' AND CAST(id AS CHAR) IN ({$placeholders})",
+            <<<SQL
+SELECT COUNT(*)
+FROM JSON_TABLE(
+    ?,
+    '$[*]' COLUMNS (target_id BIGINT UNSIGNED PATH '$')
+) requested
+LEFT JOIN {$table} target
+  ON target.tenant_id = ?
+ AND target.id = requested.target_id
+ AND target.status = 'active'
+WHERE target.id IS NULL
+SQL,
         );
-        $statement->execute([$context->tenantId, ...$targets->targetIds]);
-        if ((int) $statement->fetchColumn() !== count($targets->targetIds)) {
+        $statement->execute([$targetIds->json(), $context->tenantId]);
+        if ((int) $statement->fetchColumn() !== 0) {
             throw new ModuleException('AUTHZ_TARGET_NOT_FOUND', 'Target does not exist in the trusted tenant context.');
         }
 

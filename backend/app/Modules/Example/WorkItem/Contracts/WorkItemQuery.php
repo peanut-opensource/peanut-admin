@@ -8,6 +8,5 @@ use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
 
 interface WorkItemQuery
 {
-    /** @return list<WorkItemView> */
-    public function list(AuthorizedOperationContext $context): array;
+    public function list(AuthorizedOperationContext $context, int $page = 1, int $pageSize = 20): WorkItemPage;
 }

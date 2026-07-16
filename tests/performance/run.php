@@ -6,11 +6,15 @@ use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
+use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
+use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
-use PeanutAdmin\DataPermission\Provider\PdoTargetSetMembershipProvider;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
 use PeanutAdmin\Kernel\Auth\TenantAuthentication;
+use PeanutAdmin\Kernel\Context\AuthorizationDecision;
+use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
+use PeanutAdmin\Kernel\Context\RequestedTargetSet;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
@@ -119,34 +123,6 @@ SQL, implode(', ', $values));
         $pdo->prepare($sql)->execute($parameters);
     }
 
-    $membership = new PdoTargetSetMembershipProvider($pdo);
-    $results = [];
-    foreach ([10, 500, 5000] as $size) {
-        $ids = array_map('strval', range(1, $size));
-        $operationsPerSample = match ($size) {
-            10 => 20,
-            500 => 5,
-            default => 1,
-        };
-        if (!$membership->containsAll($tenantId, $targetSetId, $ids)) {
-            throw new RuntimeException("Typed-target fixture failed for {$size} targets.");
-        }
-        $results["typed-targets-{$size}"] = benchmark(
-            static function () use ($membership, $tenantId, $targetSetId, $ids, $operationsPerSample): void {
-                for ($index = 0; $index < $operationsPerSample; ++$index) {
-                    $membership->containsAll($tenantId, $targetSetId, $ids);
-                }
-            },
-            20,
-        ) + [
-            'operations_per_sample' => $operationsPerSample,
-            'query_upper_bound_per_operation' => (int) ceil($size / 500),
-        ];
-    }
-    if ($membership->containsAll($tenantId, $targetSetId, ['5001'])) {
-        throw new RuntimeException('Typed-target membership accepted a missing target.');
-    }
-
     $pdo->prepare(<<<'SQL'
 INSERT INTO pa_example_reference_item
     (owner_type, owner_tenant_id, code, name, status, created_at, updated_at)
@@ -159,7 +135,127 @@ INSERT INTO pa_example_reference_scope
 VALUES (?, 'typed_target', ?, 'example.project', '1', 'view', 'active')
 SQL)->execute([$referenceId, $tenantId]);
 
+    for ($offset = 1; $offset <= 5000; $offset += 500) {
+        $projectValues = [];
+        $projectParameters = [];
+        for ($index = $offset; $index < $offset + 500; ++$index) {
+            $projectValues[] = "(?, ?, ?, 'active', UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))";
+            $code = 'PERF-' . str_pad((string) $index, 5, '0', STR_PAD_LEFT);
+            array_push($projectParameters, $tenantId, $code, $code);
+        }
+        $pdo->prepare(sprintf(<<<'SQL'
+INSERT INTO pa_example_project (tenant_id, code, name, status, created_at, updated_at)
+VALUES %s
+SQL, implode(', ', $projectValues)))->execute($projectParameters);
+    }
+    $projectStatement = $pdo->query(
+        'SELECT id FROM pa_example_project WHERE tenant_id = ' . $tenantId . ' ORDER BY id',
+    );
+    if ($projectStatement === false) {
+        throw new RuntimeException('Performance fixture projects could not be read.');
+    }
+    $projectIds = array_values(array_map('strval', $projectStatement->fetchAll(PDO::FETCH_COLUMN)));
+    if (count($projectIds) !== 5000) {
+        throw new RuntimeException('Performance fixture did not create 5,000 projects.');
+    }
+    foreach (array_chunk($projectIds, 500) as $chunk) {
+        $workItemValues = [];
+        $workItemParameters = [];
+        foreach ($chunk as $projectId) {
+            $workItemValues[] = "(?, ?, NULL, ?, ?, NULL, ?, 'open', ?, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))";
+            array_push(
+                $workItemParameters,
+                $tenantId,
+                $projectId,
+                $referenceId,
+                $memberId,
+                'Performance work item ' . $projectId,
+                $memberId,
+            );
+        }
+        $pdo->prepare(sprintf(<<<'SQL'
+INSERT INTO pa_example_work_item
+    (tenant_id, project_id, queue_id, reference_item_id, owner_member_id, department_id,
+     title, status, created_by_member_id, created_at, updated_at)
+VALUES %s
+SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
+    }
+
     $auth = TenantAuthRuntimeFactory::create();
+    $initial = $auth->login(
+        'performance@example.test',
+        $password,
+        'performance',
+        '127.0.0.1',
+        'Peanut performance gate',
+        'perf-fixture-context',
+    );
+    if (!$initial instanceof TenantAuthentication) {
+        throw new RuntimeException('Performance fixture login unexpectedly required tenant selection.');
+    }
+    $resolver = new PdoTargetResolver($pdo);
+    $workItems = new PdoWorkItemQuery($pdo);
+    $results = [];
+    foreach ([10, 500, 5000] as $size) {
+        $ids = array_slice($projectIds, 0, $size);
+        $typedSet = new TypedResourceTargetSet('example.project', $ids);
+        $requestedSet = new RequestedTargetSet('example.project', $ids);
+        $operationContext = AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow(
+            $initial->context,
+            'example.work-item',
+            'list',
+            [$requestedSet],
+            hash('sha256', 'performance-targets-' . $size),
+        ));
+        $operationsPerSample = match ($size) {
+            10 => 30,
+            500 => 10,
+            default => 3,
+        };
+        $verify = static function () use (
+            $resolver,
+            $workItems,
+            $initial,
+            $typedSet,
+            $operationContext,
+            $size,
+        ): void {
+            $resolved = $resolver->resolveAndValidate($initial->context, $typedSet);
+            if (count($resolved->targets->sets[0]->targetIds) !== $size) {
+                throw new RuntimeException("Typed-target resolver changed the {$size}-target set.");
+            }
+            $page = $workItems->list($operationContext, 1, 20);
+            if ($page->total !== $size || count($page->items) !== min(20, $size)) {
+                throw new RuntimeException("Work-item query returned the wrong {$size}-target page.");
+            }
+        };
+        $verify();
+        $results["typed-targets-{$size}"] = benchmark(
+            static function () use ($verify, $operationsPerSample): void {
+                for ($index = 0; $index < $operationsPerSample; ++$index) {
+                    $verify();
+                }
+            },
+            30,
+            3,
+        ) + [
+            'operations_per_sample' => $operationsPerSample,
+            'sql_parameters_per_query' => 2,
+            'page_size' => 20,
+        ];
+    }
+    try {
+        $resolver->resolveAndValidate(
+            $initial->context,
+            new TypedResourceTargetSet('example.project', ['5001']),
+        );
+        throw new RuntimeException('Typed-target resolver accepted a missing target.');
+    } catch (\PeanutAdmin\Kernel\Module\ModuleException $exception) {
+        if ($exception->errorCode !== 'AUTHZ_TARGET_NOT_FOUND') {
+            throw $exception;
+        }
+    }
+
     $loginTokens = [];
     $results['tenant-login'] = benchmark(
         static function () use ($auth, $password, &$loginTokens): void {
@@ -226,7 +322,7 @@ SQL)->execute([$referenceId, $tenantId]);
     }
     $mysqlVersion = (string) $versionStatement->fetchColumn();
     fwrite(STDOUT, json_encode([
-        'schema_version' => 1,
+        'schema_version' => 2,
         'environment' => [
             'database_image' => 'mysql:8.4.10',
             'database_version' => $mysqlVersion,

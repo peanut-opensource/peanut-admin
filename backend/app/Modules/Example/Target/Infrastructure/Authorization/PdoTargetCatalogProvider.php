@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization;
 
 use PDO;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetIdSet;
 use PeanutAdmin\DataPermission\Catalog\ResourceOperation;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
 use PeanutAdmin\DataPermission\Target\ResourceTargetCatalogProvider;
@@ -31,17 +32,31 @@ final readonly class PdoTargetCatalogProvider implements ResourceTargetCatalogPr
         if ($ids === []) {
             return new TargetOptionPage([], 0);
         }
-        $placeholders = implode(', ', array_fill(0, count($ids), '?'));
+        $allowed = TargetIdSet::fromStrings($ids);
         $search = '%' . $query->search . '%';
-        $baseParameters = [$context->tenant->tenantId, ...$ids, $search, $search];
+        $baseParameters = [$allowed->json(), $context->tenant->tenantId, $search, $search];
         $count = $this->pdo->prepare(
-            "SELECT COUNT(*) FROM {$table} WHERE tenant_id = ? AND CAST(id AS CHAR) IN ({$placeholders}) AND status = 'active' AND (code LIKE ? OR name LIKE ?)",
+            <<<SQL
+SELECT COUNT(*)
+FROM JSON_TABLE(?, '$[*]' COLUMNS (target_id BIGINT UNSIGNED PATH '$')) allowed
+INNER JOIN {$table} target ON target.id = allowed.target_id
+WHERE target.tenant_id = ? AND target.status = 'active'
+  AND (target.code LIKE ? OR target.name LIKE ?)
+SQL,
         );
         $count->execute($baseParameters);
         $pageSize = min(100, max(1, $query->pageSize));
         $offset = max(0, ($query->page - 1) * $pageSize);
         $list = $this->pdo->prepare(
-            "SELECT id, name FROM {$table} WHERE tenant_id = ? AND CAST(id AS CHAR) IN ({$placeholders}) AND status = 'active' AND (code LIKE ? OR name LIKE ?) ORDER BY code, id LIMIT {$pageSize} OFFSET {$offset}",
+            <<<SQL
+SELECT target.id, target.name
+FROM JSON_TABLE(?, '$[*]' COLUMNS (target_id BIGINT UNSIGNED PATH '$')) allowed
+INNER JOIN {$table} target ON target.id = allowed.target_id
+WHERE target.tenant_id = ? AND target.status = 'active'
+  AND (target.code LIKE ? OR target.name LIKE ?)
+ORDER BY target.code, target.id
+LIMIT {$pageSize} OFFSET {$offset}
+SQL,
         );
         $list->execute($baseParameters);
 
