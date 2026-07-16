@@ -1,0 +1,486 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PeanutAdmin\App\command;
+
+use Composer\InstalledVersions;
+use DateTimeImmutable;
+use DateTimeZone;
+use PDO;
+use PeanutAdmin\App\module\ModuleRegistryFactory;
+use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
+use PeanutAdmin\Kernel\Migration\MigrationRecord;
+use PeanutAdmin\Kernel\Migration\ModuleMigrationLedger;
+use PeanutAdmin\Kernel\Module\CompiledModuleRegistry;
+use PeanutAdmin\Kernel\Module\ManifestDocument;
+use PeanutAdmin\Kernel\Module\ModuleException;
+use PeanutAdmin\Kernel\Package as KernelPackage;
+use Phinx\Config\Config;
+use Phinx\Migration\Manager;
+use Phinx\Migration\MigrationInterface;
+use RuntimeException;
+use think\console\Input;
+use think\migration\NullOutput;
+use Throwable;
+
+final readonly class UpgradeWorkflow
+{
+    public function __construct(
+        private string $root,
+        private PDO $pdo,
+    ) {
+        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    }
+
+    public static function fromEnvironment(string $root): self
+    {
+        return new self($root, self::connectFromEnvironment());
+    }
+
+    /** @return array{modules: list<string>, applied_module_migrations: int} */
+    public function run(): array
+    {
+        $registry = $this->registry();
+        $this->migratePackage(
+            $this->packagePath(KernelPackage::NAME) . '/database/migrations',
+            'kernel',
+            'pa_kernel_migration',
+        );
+        $this->migratePackage(
+            $this->packagePath(DataPermissionPackage::NAME) . '/database/migrations',
+            'data_permission',
+            'pa_data_permission_migration',
+        );
+
+        $plans = [];
+        foreach ($registry->modules as $module) {
+            $plans[] = $this->modulePlan($module);
+        }
+        foreach ($plans as $plan) {
+            $this->assertModulePlan($plan);
+        }
+
+        $batchStatement = $this->pdo
+            ->query('SELECT COALESCE(MAX(batch_no), 0) + 1 FROM pa_module_migration');
+        if ($batchStatement === false) {
+            throw new RuntimeException('MODULE_MIGRATION_LEDGER_UNAVAILABLE: batch could not be allocated.');
+        }
+        $batch = (int) $batchStatement->fetchColumn();
+        $applied = 0;
+        foreach ($plans as $index => $plan) {
+            $applied += $this->applyModulePlan($registry->modules[$index], $plan, $batch);
+        }
+
+        return [
+            'modules' => $registry->moduleKeys(),
+            'applied_module_migrations' => $applied,
+        ];
+    }
+
+    private function registry(): CompiledModuleRegistry
+    {
+        /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>} $config */
+        $config = require $this->root . '/backend/config/modules.php';
+        $roots = array_map(
+            fn(string $path): string => $this->root . '/' . ltrim($path, '/'),
+            $config['roots'],
+        );
+
+        return (new ModuleRegistryFactory(
+            $roots,
+            $config['frontend_components'],
+            $config['kernel_version'],
+            $this->packagePath(KernelPackage::NAME) . '/resources/schemas/module-manifest.schema.json',
+        ))->compileAndCheckBoundaries();
+    }
+
+    private function migratePackage(string $path, string $environment, string $table): void
+    {
+        $this->manager($path, $environment, $table)->migrate($environment);
+    }
+
+    /**
+     * @return array{
+     *   module_key: string,
+     *   module_version: string,
+     *   migrations: list<array{key: string, checksum: string, migration: MigrationInterface}>
+     * }
+     */
+    private function modulePlan(ManifestDocument $module): array
+    {
+        $moduleKey = $this->manifestString($module, 'key');
+        $moduleVersion = $this->manifestString($module, 'version');
+        $backend = $module->data['backend'] ?? [];
+        $relativePath = is_array($backend) ? ($backend['migrations'] ?? null) : null;
+        if ($relativePath === null) {
+            return ['module_key' => $moduleKey, 'module_version' => $moduleVersion, 'migrations' => []];
+        }
+        if (!is_string($relativePath) || $relativePath === '') {
+            throw new ModuleException('MODULE_MANIFEST_INVALID', "Invalid migration path for {$moduleKey}.");
+        }
+        $path = $module->root . '/' . $relativePath;
+        if (!is_dir($path)) {
+            throw new ModuleException('MODULE_MANIFEST_INVALID', "Migration directory is missing for {$moduleKey}.");
+        }
+
+        $files = glob($path . '/*.php');
+        if ($files === false) {
+            throw new RuntimeException("MODULE_MIGRATION_SCAN_FAILED: {$moduleKey}.");
+        }
+        $filesByVersion = [];
+        foreach ($files as $file) {
+            if (preg_match('/\/(\d{14})_[a-z0-9_]+\.php$/D', $file, $matches) !== 1) {
+                throw new ModuleException('MODULE_MANIFEST_INVALID', "Invalid migration filename for {$moduleKey}.");
+            }
+            $filesByVersion[(int) $matches[1]] = $file;
+        }
+
+        $manager = $this->manager($path, 'module', 'pa_kernel_migration');
+        $migrations = [];
+        foreach ($manager->getMigrations('module') as $version => $migration) {
+            $file = $filesByVersion[(int) $version] ?? throw new ModuleException(
+                'MODULE_MANIFEST_INVALID',
+                "Migration source is missing for {$moduleKey}:{$version}.",
+            );
+            $basename = pathinfo($file, PATHINFO_FILENAME);
+            $checksum = hash_file('sha256', $file);
+            if ($checksum === false) {
+                throw new RuntimeException("MODULE_MIGRATION_SCAN_FAILED: {$moduleKey}:{$basename}.");
+            }
+            $migrations[] = [
+                'key' => $moduleKey . ':' . $basename,
+                'checksum' => $checksum,
+                'migration' => $migration,
+            ];
+        }
+
+        return ['module_key' => $moduleKey, 'module_version' => $moduleVersion, 'migrations' => $migrations];
+    }
+
+    /**
+     * @param array{
+     *   module_key: string,
+     *   module_version: string,
+     *   migrations: list<array{key: string, checksum: string, migration: MigrationInterface}>
+     * } $plan
+     */
+    private function assertModulePlan(array $plan): void
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+SELECT module_key, migration_key, module_version, checksum, status
+FROM pa_module_migration WHERE module_key = :module_key
+SQL);
+        $statement->execute(['module_key' => $plan['module_key']]);
+        $records = [];
+        while (($row = $statement->fetch()) !== false) {
+            $records[] = new MigrationRecord(
+                (string) $row['module_key'],
+                (string) $row['migration_key'],
+                (string) $row['module_version'],
+                (string) $row['checksum'],
+                (string) $row['status'],
+            );
+        }
+        $ledger = new ModuleMigrationLedger($records);
+        $currentKeys = [];
+        foreach ($plan['migrations'] as $migration) {
+            $currentKeys[] = $migration['key'];
+            $ledger->shouldApply($plan['module_key'], $migration['key'], $migration['checksum']);
+        }
+        foreach ($records as $record) {
+            if ($record->status === 'applied' && !in_array($record->migrationKey, $currentKeys, true)) {
+                throw new ModuleException(
+                    'MODULE_MIGRATION_MISSING',
+                    "Applied migration file is missing: {$record->migrationKey}",
+                );
+            }
+        }
+    }
+
+    /**
+     * @param array{
+     *   module_key: string,
+     *   module_version: string,
+     *   migrations: list<array{key: string, checksum: string, migration: MigrationInterface}>
+     * } $plan
+     */
+    private function applyModulePlan(ManifestDocument $module, array $plan, int $batch): int
+    {
+        $pending = array_values(array_filter(
+            $plan['migrations'],
+            fn(array $migration): bool => $this->migrationNeedsApply($plan['module_key'], $migration['key']),
+        ));
+        $installation = $this->installation($plan['module_key']);
+        $metadataChanged = $installation === null
+            || $installation['installed_version'] !== $plan['module_version']
+            || $installation['manifest_digest'] !== $module->digest
+            || $installation['status'] !== 'active';
+        if ($pending === [] && !$metadataChanged) {
+            return 0;
+        }
+
+        $this->markInstallationStarted($module, $installation !== null);
+        try {
+            foreach ($pending as $migration) {
+                $this->applyMigration($plan, $migration, $batch);
+            }
+            $this->markInstallationActive($module, $installation !== null);
+        } catch (Throwable $exception) {
+            $this->markInstallationFailed($plan['module_key']);
+            throw $exception;
+        }
+
+        return count($pending);
+    }
+
+    private function migrationNeedsApply(string $moduleKey, string $migrationKey): bool
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+SELECT status FROM pa_module_migration
+WHERE module_key = :module_key AND migration_key = :migration_key
+SQL);
+        $statement->execute(['module_key' => $moduleKey, 'migration_key' => $migrationKey]);
+
+        return $statement->fetchColumn() !== 'applied';
+    }
+
+    /**
+     * @param array{module_key: string, module_version: string, migrations: list<mixed>} $plan
+     * @param array{key: string, checksum: string, migration: MigrationInterface} $entry
+     */
+    private function applyMigration(array $plan, array $entry, int $batch): void
+    {
+        $now = $this->now();
+        $statement = $this->pdo->prepare(<<<'SQL'
+INSERT INTO pa_module_migration (
+    module_key, migration_key, module_version, checksum, batch_no,
+    status, started_at, finished_at, error_code
+) VALUES (
+    :module_key, :migration_key, :module_version, :checksum, :batch_no,
+    'applying', :started_at, NULL, NULL
+)
+ON DUPLICATE KEY UPDATE
+    module_version = VALUES(module_version), checksum = VALUES(checksum),
+    batch_no = VALUES(batch_no), status = 'applying', started_at = VALUES(started_at),
+    finished_at = NULL, error_code = NULL
+SQL);
+        $statement->execute([
+            'module_key' => $plan['module_key'],
+            'migration_key' => $entry['key'],
+            'module_version' => $plan['module_version'],
+            'checksum' => $entry['checksum'],
+            'batch_no' => $batch,
+            'started_at' => $now,
+        ]);
+
+        try {
+            $this->executeMigration($entry['migration']);
+            $finished = $this->pdo->prepare(<<<'SQL'
+UPDATE pa_module_migration SET status = 'applied', finished_at = :finished_at, error_code = NULL
+WHERE module_key = :module_key AND migration_key = :migration_key
+SQL);
+            $finished->execute([
+                'finished_at' => $this->now(),
+                'module_key' => $plan['module_key'],
+                'migration_key' => $entry['key'],
+            ]);
+        } catch (Throwable $exception) {
+            $failed = $this->pdo->prepare(<<<'SQL'
+UPDATE pa_module_migration SET status = 'failed', finished_at = :finished_at,
+error_code = 'MODULE_MIGRATION_FAILED'
+WHERE module_key = :module_key AND migration_key = :migration_key
+SQL);
+            $failed->execute([
+                'finished_at' => $this->now(),
+                'module_key' => $plan['module_key'],
+                'migration_key' => $entry['key'],
+            ]);
+            throw new ModuleException(
+                'MODULE_MIGRATION_FAILED',
+                "Migration failed: {$entry['key']}",
+            );
+        }
+    }
+
+    private function executeMigration(MigrationInterface $migration): void
+    {
+        $manager = $this->manager(
+            $this->packagePath(KernelPackage::NAME) . '/database/migrations',
+            'runtime',
+            'pa_kernel_migration',
+        );
+        $adapter = $manager->getEnvironment('runtime')->getAdapter();
+        $migration->setAdapter($adapter);
+        $migration->setMigratingUp(true);
+        $migration->preFlightCheck();
+        if (method_exists($migration, MigrationInterface::INIT)) {
+            $migration->{MigrationInterface::INIT}();
+        }
+        $transactional = $adapter->hasTransactions();
+        if ($transactional) {
+            $adapter->beginTransaction();
+        }
+        try {
+            if (method_exists($migration, MigrationInterface::CHANGE)) {
+                $migration->{MigrationInterface::CHANGE}();
+            } else {
+                $up = [$migration, MigrationInterface::UP];
+                if (!is_callable($up)) {
+                    throw new RuntimeException('MODULE_MIGRATION_INVALID: up() is missing.');
+                }
+                $up();
+            }
+            if ($transactional) {
+                $adapter->commitTransaction();
+            }
+        } catch (Throwable $exception) {
+            if ($transactional) {
+                $adapter->rollbackTransaction();
+            }
+            throw $exception;
+        }
+        $migration->postFlightCheck();
+    }
+
+    /** @return array{installed_version: string, manifest_digest: string, status: string}|null */
+    private function installation(string $moduleKey): ?array
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+SELECT installed_version, manifest_digest, status
+FROM pa_module_installation WHERE module_key = :module_key
+SQL);
+        $statement->execute(['module_key' => $moduleKey]);
+        $row = $statement->fetch();
+
+        return $row === false ? null : [
+            'installed_version' => (string) $row['installed_version'],
+            'manifest_digest' => (string) $row['manifest_digest'],
+            'status' => (string) $row['status'],
+        ];
+    }
+
+    private function markInstallationStarted(ManifestDocument $module, bool $upgrade): void
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+INSERT INTO pa_module_installation (
+    module_key, installed_version, manifest_schema_version, manifest_digest,
+    status, revision, created_at, updated_at
+) VALUES (
+    :module_key, :installed_version, :schema_version, :manifest_digest,
+    'installing', 1, :created_at, :updated_at
+)
+ON DUPLICATE KEY UPDATE
+    status = 'upgrading', revision = revision + 1,
+    manifest_schema_version = VALUES(manifest_schema_version),
+    manifest_digest = VALUES(manifest_digest), updated_at = VALUES(updated_at),
+    last_error_code = NULL
+SQL);
+        $now = $this->now();
+        $statement->execute([
+            'module_key' => $this->manifestString($module, 'key'),
+            'installed_version' => $this->manifestString($module, 'version'),
+            'schema_version' => (int) $module->data['schema_version'],
+            'manifest_digest' => $module->digest,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+    }
+
+    private function markInstallationActive(ManifestDocument $module, bool $upgrade): void
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+UPDATE pa_module_installation SET
+    installed_version = :installed_version, manifest_digest = :manifest_digest,
+    status = 'active', installed_at = COALESCE(installed_at, :installed_at),
+    activated_at = COALESCE(activated_at, :activated_at),
+    upgraded_at = CASE WHEN :is_upgrade = 1 THEN :upgraded_at ELSE upgraded_at END,
+    last_error_code = NULL, updated_at = :updated_at
+WHERE module_key = :module_key
+SQL);
+        $now = $this->now();
+        $statement->execute([
+            'installed_version' => $this->manifestString($module, 'version'),
+            'manifest_digest' => $module->digest,
+            'installed_at' => $now,
+            'activated_at' => $now,
+            'is_upgrade' => $upgrade ? 1 : 0,
+            'upgraded_at' => $now,
+            'updated_at' => $now,
+            'module_key' => $this->manifestString($module, 'key'),
+        ]);
+    }
+
+    private function markInstallationFailed(string $moduleKey): void
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+UPDATE pa_module_installation SET status = 'failed', last_error_code = 'MODULE_MIGRATION_FAILED',
+revision = revision + 1, updated_at = :updated_at WHERE module_key = :module_key
+SQL);
+        $statement->execute(['updated_at' => $this->now(), 'module_key' => $moduleKey]);
+    }
+
+    private function manager(string $path, string $environment, string $table): Manager
+    {
+        $databaseStatement = $this->pdo->query('SELECT DATABASE()');
+        if ($databaseStatement === false) {
+            throw new RuntimeException('DATABASE_CONTEXT_UNAVAILABLE: current database could not be read.');
+        }
+
+        return new Manager(new Config([
+            'paths' => ['migrations' => $path],
+            'environments' => [
+                'default_environment' => $environment,
+                'default_migration_table' => $table,
+                $environment => [
+                    'adapter' => 'mysql',
+                    'connection' => $this->pdo,
+                    'name' => (string) $databaseStatement->fetchColumn(),
+                    'migration_table' => $table,
+                ],
+            ],
+            'version_order' => Config::VERSION_ORDER_CREATION_TIME,
+        ]), new Input([]), new NullOutput());
+    }
+
+    private function manifestString(ManifestDocument $module, string $key): string
+    {
+        $value = $module->data[$key] ?? null;
+        if (!is_string($value) || $value === '') {
+            throw new ModuleException('MODULE_MANIFEST_INVALID', "Missing manifest field: {$key}.");
+        }
+
+        return $value;
+    }
+
+    private function packagePath(string $package): string
+    {
+        $path = InstalledVersions::getInstallPath($package);
+        if (!is_string($path) || $path === '') {
+            throw new RuntimeException("PACKAGE_INSTALL_PATH_UNAVAILABLE: {$package}.");
+        }
+
+        return rtrim($path, '/');
+    }
+
+    private function now(): string
+    {
+        return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s.v');
+    }
+
+    private static function connectFromEnvironment(): PDO
+    {
+        return new PDO(
+            sprintf(
+                'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+                getenv('DB_HOST') ?: '127.0.0.1',
+                (int) (getenv('DB_PORT') ?: 3306),
+                getenv('DB_DATABASE') ?: 'peanut_admin',
+            ),
+            getenv('DB_USERNAME') ?: 'peanut_admin',
+            getenv('DB_PASSWORD') ?: 'peanut_admin_dev',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
+    }
+}
