@@ -26,6 +26,93 @@ if rg -n "from ['\"]@peanut-admin/[^'\"]+/(src|internal)/" frontend packages/web
   exit 1
 fi
 
+node --input-type=module <<'NODE'
+import fs from 'node:fs'
+import path from 'node:path'
+import ts from 'typescript'
+
+const packages = new Map([
+  ['@peanut-admin/admin-core', 'packages/web/admin-core'],
+  ['@peanut-admin/admin-shell', 'packages/web/admin-shell'],
+  ['@peanut-admin/web-testing', 'packages/web/testing'],
+])
+const allowedDependencies = new Map([
+  ['@peanut-admin/admin-core', new Set()],
+  ['@peanut-admin/admin-shell', new Set(['@peanut-admin/admin-core'])],
+  ['@peanut-admin/web-testing', new Set(['@peanut-admin/admin-core'])],
+])
+const errors = []
+const edges = new Map()
+
+const sourceFiles = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const candidate = path.join(directory, entry.name)
+  if (entry.isDirectory()) return entry.name === 'generated' ? [] : sourceFiles(candidate)
+  return entry.isFile() && candidate.endsWith('.ts') && !candidate.endsWith('.d.ts') ? [candidate] : []
+})
+
+const resolveRelative = (file, specifier) => {
+  const base = path.resolve(path.dirname(file), specifier)
+  return [`${base}.ts`, `${base}.d.ts`, path.join(base, 'index.ts')].find(fs.existsSync) ?? null
+}
+
+for (const [packageName, packageRoot] of packages) {
+  const root = path.resolve(packageRoot)
+  for (const file of sourceFiles(path.join(packageRoot, 'src'))) {
+    const absoluteFile = path.resolve(file)
+    const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true)
+    for (const statement of source.statements) {
+      if (!ts.isImportDeclaration(statement) && !ts.isExportDeclaration(statement)) continue
+      if (statement.moduleSpecifier === undefined || !ts.isStringLiteral(statement.moduleSpecifier)) continue
+      const specifier = statement.moduleSpecifier.text
+      if (specifier.startsWith('@peanut-admin/')) {
+        if (!packages.has(specifier)) {
+          errors.push(`${file}: private or unknown Peanut Admin import ${specifier}`)
+          continue
+        }
+        if (specifier === packageName || !allowedDependencies.get(packageName)?.has(specifier)) {
+          errors.push(`${file}: forbidden package dependency ${packageName} -> ${specifier}`)
+        }
+        continue
+      }
+      if (!specifier.startsWith('.')) continue
+      const target = resolveRelative(file, specifier)
+      if (target === null || !target.startsWith(`${root}${path.sep}`)) {
+        errors.push(`${file}: unresolved or cross-package relative import ${specifier}`)
+        continue
+      }
+      const targets = edges.get(absoluteFile) ?? []
+      targets.push(target)
+      edges.set(absoluteFile, targets)
+    }
+  }
+}
+
+const active = new Set()
+const visited = new Set()
+const visit = (file, stack) => {
+  if (active.has(file)) {
+    errors.push(`web source dependency cycle: ${[...stack, file].join(' -> ')}`)
+    return
+  }
+  if (visited.has(file)) return
+  active.add(file)
+  for (const target of edges.get(file) ?? []) visit(target, [...stack, file])
+  active.delete(file)
+  visited.add(file)
+}
+for (const file of edges.keys()) visit(file, [])
+
+if (errors.length > 0) {
+  for (const error of errors) console.error(`ERROR: ${error}`)
+  process.exit(1)
+}
+NODE
+
+if rg -n '(localStorage|sessionStorage)' packages/web/admin-core/src; then
+  echo 'ERROR: admin-core must not persist tokens, contexts, permissions, modules, or target state' >&2
+  exit 1
+fi
+
 if rg -n '/packages/(php|web)/' backend/app frontend/src; then
   echo 'ERROR: host source references a package filesystem path' >&2
   exit 1
