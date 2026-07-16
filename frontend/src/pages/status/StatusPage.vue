@@ -10,7 +10,11 @@ const router = useRouter()
 const workspace = useWorkspaceStore()
 const state = computed(() => String(route.name))
 const requestId = computed(() => workspace.problem?.request_id ?? 'unavailable')
-const message = computed(() => workspace.problem?.detail ?? '当前请求无法完成。')
+const message = computed(() => {
+  if (workspace.problem !== null) return workspace.problem.detail
+  if (String(route.query.code).startsWith('MODULE_')) return 'This module is currently unavailable.'
+  return '当前请求无法完成。'
+})
 
 const retry = () => {
   workspace.problem = null

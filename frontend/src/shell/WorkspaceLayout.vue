@@ -202,7 +202,11 @@ const closeMobileNavigation = () => {
           class="navigation-link"
           @click="closeMobileNavigation"
         >
-          {{ item.name }}
+          <span
+            class="navigation-marker"
+            aria-hidden="true"
+          />
+          <span>{{ item.name }}</span>
         </RouterLink>
         <RouterLink
           v-for="child in item.children"
@@ -211,7 +215,11 @@ const closeMobileNavigation = () => {
           class="navigation-link is-child"
           @click="closeMobileNavigation"
         >
-          {{ child.name }}
+          <span
+            class="navigation-marker"
+            aria-hidden="true"
+          />
+          <span>{{ child.name }}</span>
         </RouterLink>
       </template>
     </nav>

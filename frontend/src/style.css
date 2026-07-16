@@ -561,6 +561,10 @@ button:focus-visible {
   width: 100%;
 }
 
+.dialog-alert {
+  margin-bottom: 16px;
+}
+
 @media (max-width: 920px) {
   .shell-context {
     max-width: 260px;

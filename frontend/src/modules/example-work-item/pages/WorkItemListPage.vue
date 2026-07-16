@@ -27,6 +27,7 @@ const loading = ref(false)
 const problem = ref<AdminApiError | null>(null)
 const createOpen = ref(false)
 const createLoading = ref(false)
+const createProblem = ref<AdminApiError | null>(null)
 const createForm = reactive({ title: '', referenceItemId: '' })
 const references = ref<UnknownRecord[]>([])
 const selected = computed<TypedTarget[]>({
@@ -120,6 +121,7 @@ const openCreate = async () => {
   references.value = apiCollection(response).items
   createForm.title = ''
   createForm.referenceItemId = ''
+  createProblem.value = null
   createOpen.value = true
 }
 
@@ -138,6 +140,8 @@ const createWorkItem = async () => {
     }).then(runtime.unwrap)
     createOpen.value = false
     await loadList()
+  } catch (error) {
+    createProblem.value = error instanceof AdminApiError ? error : null
   } finally {
     createLoading.value = false
   }
@@ -286,6 +290,24 @@ onMounted(initialize)
         label-position="top"
         @submit.prevent="createWorkItem"
       >
+        <el-alert
+          v-if="createProblem"
+          :title="createProblem.problem.detail"
+          type="warning"
+          :closable="false"
+          class="dialog-alert"
+        >
+          <template #default>
+            请求编号：{{ createProblem.problem.request_id }}
+            <el-button
+              v-if="createProblem.problem.status === 412"
+              text
+              @click="createOpen = false; initialize()"
+            >
+              重新加载
+            </el-button>
+          </template>
+        </el-alert>
         <el-form-item
           label="标题"
           required

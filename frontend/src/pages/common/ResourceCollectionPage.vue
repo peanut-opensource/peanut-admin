@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { EmptyState, ForbiddenState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 import type { UnknownRecord } from '../../app/contracts'
@@ -17,9 +17,28 @@ const page = ref(1)
 const pageSize = ref(20)
 const total = ref(0)
 const problem = ref<AdminApiError | null>(null)
+const retryRemaining = ref(0)
+let retryTimer: ReturnType<typeof setInterval> | null = null
+
+const clearRetryTimer = () => {
+  if (retryTimer !== null) clearInterval(retryTimer)
+  retryTimer = null
+}
+
+const startRetryTimer = (retryAfter: string | null) => {
+  clearRetryTimer()
+  const seconds = Number.parseInt(retryAfter ?? '0', 10)
+  retryRemaining.value = Number.isFinite(seconds) && seconds > 0 ? seconds : 0
+  if (retryRemaining.value === 0) return
+  retryTimer = setInterval(() => {
+    retryRemaining.value = Math.max(0, retryRemaining.value - 1)
+    if (retryRemaining.value === 0) clearRetryTimer()
+  }, 1000)
+}
 
 const load = async () => {
   if (definition.value === null) return
+  if (retryRemaining.value > 0) return
   loading.value = true
   problem.value = null
   try {
@@ -28,6 +47,7 @@ const load = async () => {
     total.value = typeof result.meta.total === 'number' ? result.meta.total : result.items.length
   } catch (error) {
     problem.value = error instanceof AdminApiError ? error : null
+    if (problem.value?.problem.status === 429) startRetryTimer(problem.value.retryAfter)
     rows.value = []
   } finally {
     loading.value = false
@@ -47,6 +67,7 @@ watch(stringPageKey, () => {
   void load()
 })
 onMounted(load)
+onUnmounted(clearRetryTimer)
 </script>
 
 <template>
@@ -55,9 +76,10 @@ onMounted(load)
     <PageToolbar label="列表操作">
       <el-button
         :loading="loading"
+        :disabled="retryRemaining > 0"
         @click="load"
       >
-        刷新
+        {{ retryRemaining > 0 ? `${retryRemaining} 秒后重试` : '刷新' }}
       </el-button>
     </PageToolbar>
 
@@ -79,6 +101,7 @@ onMounted(load)
     >
       <template #default>
         请求编号：{{ problem.problem.request_id }}
+        <span v-if="retryRemaining > 0">，请在 {{ retryRemaining }} 秒后重试。</span>
       </template>
     </el-alert>
     <el-table

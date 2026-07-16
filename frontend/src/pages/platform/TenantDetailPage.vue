@@ -43,7 +43,14 @@ onMounted(load)
       </el-button>
     </PageToolbar>
     <ModuleUnavailableState
-      v-if="problem"
+      v-if="problem?.problem.status === 404"
+      title="租户不可用"
+      message="未找到可显示的租户信息。"
+      :request-id="problem.problem.request_id"
+      @action="load"
+    />
+    <ModuleUnavailableState
+      v-else-if="problem"
       :message="problem.problem.detail"
       :request-id="problem.problem.request_id"
       @action="load"
