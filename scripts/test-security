@@ -29,21 +29,34 @@ for attempt in $(seq 1 60); do
   sleep 2
 done
 
-junit_report="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-security-junit.XXXXXX")"
-trap 'rm -f "$junit_report"' EXIT
-PEANUT_INTEGRATION=1 php vendor/bin/phpunit --log-junit "$junit_report" \
-  packages/php/kernel/tests/Integration/Auth \
+report_dir="$(mktemp -d "${TMPDIR:-/tmp}/peanut-admin-security-junit.XXXXXX")"
+trap 'rm -rf "$report_dir"' EXIT
+
+run_suite() {
+  local name="$1"
+  shift
+  PEANUT_INTEGRATION=1 php vendor/bin/phpunit --log-junit "$report_dir/$name.xml" "$@"
+}
+
+run_suite tenant-auth \
+  packages/php/kernel/tests/Integration/Auth
+
+run_suite kernel-integration \
   packages/php/kernel/tests/Integration/Authorization \
   packages/php/kernel/tests/Integration/Idempotency \
   packages/php/kernel/tests/Integration/Module \
-  packages/php/kernel/tests/Integration/Schema \
+  packages/php/kernel/tests/Integration/Schema
+
+run_suite data-permission-integration \
+  packages/php/data-permission/tests/Integration \
+  packages/php/data-permission/tests/Security
+
+run_suite static-security-contracts \
   packages/php/kernel/tests/Unit/Api \
   packages/php/kernel/tests/Unit/Authorization \
   packages/php/kernel/tests/Unit/Context \
   packages/php/kernel/tests/Unit/Idempotency \
   packages/php/kernel/tests/Unit/Module \
-  packages/php/data-permission/tests/Integration \
-  packages/php/data-permission/tests/Security \
   packages/php/data-permission/tests/Unit \
   backend/tests/Architecture \
   backend/tests/Contract \
@@ -51,17 +64,25 @@ PEANUT_INTEGRATION=1 php vendor/bin/phpunit --log-junit "$junit_report" \
   tests/security
 
 php -r '
-$document = new DOMDocument();
-if (!$document->load($argv[1])) {
-    fwrite(STDERR, "ERROR: security JUnit report cannot be parsed\n");
+$reports = glob(rtrim($argv[1], "/") . "/*.xml");
+if (!is_array($reports) || count($reports) !== 4) {
+    fwrite(STDERR, "ERROR: security JUnit report set is incomplete\n");
     exit(1);
 }
-$skipped = $document->getElementsByTagName("skipped")->length;
+$skipped = 0;
+foreach ($reports as $report) {
+    $document = new DOMDocument();
+    if (!$document->load($report)) {
+        fwrite(STDERR, "ERROR: security JUnit report cannot be parsed: {$report}\n");
+        exit(1);
+    }
+    $skipped += $document->getElementsByTagName("skipped")->length;
+}
 if ($skipped !== 0) {
     fwrite(STDERR, "ERROR: security gate contains {$skipped} skipped test(s)\n");
     exit(1);
 }
-' "$junit_report"
+' "$report_dir"
 
 if rg -n 'localStorage|sessionStorage' frontend/src packages/web; then
   echo 'ERROR: browser storage must not contain authentication tokens' >&2
