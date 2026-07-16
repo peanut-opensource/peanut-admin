@@ -57,14 +57,27 @@ PHP);
     public function testPublicContractsAndOwnedTablesPass(): void
     {
         self::expectNotToPerformAssertions();
-        file_put_contents($this->root . '/Good.php', <<<'PHP'
+        $ownerRoot = $this->moduleRoot('owner');
+        $otherRoot = $this->moduleRoot('other');
+        file_put_contents($ownerRoot . '/Good.php', <<<'PHP'
 <?php
 use PeanutAdmin\App\Modules\Example\Other\Contracts\OtherQuery;
 $sql = 'SELECT * FROM pa_example_owner';
 PHP);
-        $manifest = ManifestDocument::fromArray($this->root, ['key' => 'example.owner']);
+        $owner = ManifestDocument::fromArray($ownerRoot, [
+            'key' => 'example.owner',
+            'dependencies' => [['module_key' => 'example.other', 'version' => '^1.0']],
+            'contracts' => ['exports' => []],
+        ]);
+        $other = ManifestDocument::fromArray($otherRoot, [
+            'key' => 'example.other',
+            'dependencies' => [],
+            'contracts' => ['exports' => [
+                'PeanutAdmin\\App\\Modules\\Example\\Other\\Contracts\\OtherQuery',
+            ]],
+        ]);
         $registry = new CompiledModuleRegistry(
-            [$manifest],
+            [$other, $owner],
             [],
             ['pa_example_owner' => 'example.owner'],
             [],
@@ -72,6 +85,26 @@ PHP);
         );
 
         (new ModuleBoundaryChecker($registry))->check();
+    }
+
+    public function testContractImportRequiresDeclaredDependency(): void
+    {
+        [$owner, $other] = $this->contractFixture([], [
+            'PeanutAdmin\\App\\Modules\\Example\\Other\\Contracts\\OtherQuery',
+        ]);
+
+        $this->expectModuleCode('MODULE_DEPENDENCY_MISSING', static function () use ($other, $owner): void {
+            (new ModuleBoundaryChecker(new CompiledModuleRegistry([$other, $owner], [], [], [], 'revision')))->check();
+        });
+    }
+
+    public function testContractImportMustBeExplicitlyExported(): void
+    {
+        [$owner, $other] = $this->contractFixture(['example.other'], []);
+
+        $this->expectModuleCode('MODULE_CONTRACT_MISSING', static function () use ($other, $owner): void {
+            (new ModuleBoundaryChecker(new CompiledModuleRegistry([$other, $owner], [], [], [], 'revision')))->check();
+        });
     }
 
     public function testNowdocCrossTableQueryIsRejectedButExplicitDatabaseForeignKeyIsAllowed(): void
@@ -104,5 +137,57 @@ SQL;
 PHP);
         $this->expectException(ModuleException::class);
         (new ModuleBoundaryChecker($registry))->check();
+    }
+
+    /**
+     * @param list<string> $dependencies
+     * @param list<string> $exports
+     * @return array{ManifestDocument, ManifestDocument}
+     */
+    private function contractFixture(array $dependencies, array $exports): array
+    {
+        $ownerRoot = $this->moduleRoot('contract-owner-' . count($dependencies));
+        $otherRoot = $this->moduleRoot('contract-other-' . count($exports));
+        file_put_contents($ownerRoot . '/Consumer.php', <<<'PHP'
+<?php
+use PeanutAdmin\App\Modules\Example\Other\Contracts\OtherQuery;
+PHP);
+
+        return [
+            ManifestDocument::fromArray($ownerRoot, [
+                'key' => 'example.owner',
+                'dependencies' => array_map(
+                    static fn(string $key): array => ['module_key' => $key, 'version' => '^1.0'],
+                    $dependencies,
+                ),
+                'contracts' => ['exports' => []],
+            ]),
+            ManifestDocument::fromArray($otherRoot, [
+                'key' => 'example.other',
+                'dependencies' => [],
+                'contracts' => ['exports' => $exports],
+            ]),
+        ];
+    }
+
+    private function moduleRoot(string $name): string
+    {
+        $path = $this->root . '/' . $name;
+        mkdir($path, 0777, true);
+
+        return $path;
+    }
+
+    private function expectModuleCode(string $errorCode, callable $operation): void
+    {
+        try {
+            $operation();
+        } catch (ModuleException $exception) {
+            self::assertSame($errorCode, $exception->errorCode);
+
+            return;
+        }
+
+        self::fail("Expected {$errorCode}.");
     }
 }

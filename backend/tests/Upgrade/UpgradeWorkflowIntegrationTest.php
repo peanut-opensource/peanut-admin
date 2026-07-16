@@ -58,6 +58,13 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
         self::assertSame(0, $second['applied_module_migrations']);
         self::assertSame(3, $this->scalar("SELECT COUNT(*) FROM pa_module_installation WHERE status = 'active'"));
         self::assertSame(3, $this->scalar("SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'"));
+        self::assertSame(50, $this->scalar("SELECT COUNT(*) FROM pa_permission WHERE status = 'active'"));
+        self::assertSame(4, $this->scalar("SELECT COUNT(*) FROM pa_protected_resource WHERE status = 'active'"));
+        self::assertSame(2, $this->scalar("SELECT COUNT(*) FROM pa_target_type WHERE status = 'active'"));
+        self::assertSame(13, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation WHERE status = 'active'"));
+        self::assertSame(17, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_target_type WHERE status = 'active'"));
+        self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_data_condition_definition WHERE status = 'active'"));
+        self::assertSame(40, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_condition WHERE status = 'active'"));
         self::assertSame(1, $this->scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
             . self::DATABASE . "' AND table_name = 'pa_data_permission_policy'",
@@ -108,11 +115,36 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
         $result = (new UpgradeWorkflow($root, $this->database))->run();
 
         self::assertSame(3, $result['applied_module_migrations']);
-        self::assertSame(35, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
+        self::assertSame(37, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
         self::assertSame(1, $this->scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
             . self::DATABASE . "' AND table_name = 'pa_example_work_item'",
         ));
+    }
+
+    public function testConcurrentUpgradeLockFailsBeforeChangingSchema(): void
+    {
+        $lockKey = 'pa:upgrade:' . substr(hash('sha256', self::DATABASE), 0, 48);
+        $lock = $this->database->prepare('SELECT GET_LOCK(:lock_key, 0)');
+        $lock->execute(['lock_key' => $lockKey]);
+        self::assertSame(1, (int) $lock->fetchColumn());
+
+        try {
+            (new UpgradeWorkflow(dirname(__DIR__, 3), $this->connect(self::DATABASE)))->run();
+        } catch (ModuleException $exception) {
+            self::assertSame('MODULE_UPGRADE_LOCKED', $exception->errorCode);
+            self::assertSame(0, $this->scalar(<<<'SQL'
+SELECT COUNT(*) FROM information_schema.tables
+WHERE table_schema = 'peanut_admin_ops_upgrade_test' AND table_name = 'pa_account'
+SQL));
+
+            return;
+        } finally {
+            $release = $this->database->prepare('SELECT RELEASE_LOCK(:lock_key)');
+            $release->execute(['lock_key' => $lockKey]);
+        }
+
+        self::fail('A concurrent upgrade lock must fail closed.');
     }
 
     private function connect(?string $database = null): PDO

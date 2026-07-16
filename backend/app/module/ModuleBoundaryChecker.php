@@ -18,18 +18,47 @@ final readonly class ModuleBoundaryChecker
 
     public function check(): void
     {
+        $namespaceOwners = [];
+        $exportOwners = [];
         foreach ($this->registry->modules as $manifest) {
-            $this->checkModule($manifest);
+            $moduleKey = $manifest->data['key'] ?? null;
+            if (!is_string($moduleKey)) {
+                throw new ModuleException('MODULE_MANIFEST_INVALID', 'Module key is required for boundary checks.');
+            }
+            $namespaceOwners[ModuleKey::fromString($moduleKey)->backendNamespace()] = $moduleKey;
+            $contracts = is_array($manifest->data['contracts'] ?? null) ? $manifest->data['contracts'] : [];
+            foreach ($contracts['exports'] ?? [] as $contract) {
+                if (is_string($contract)) {
+                    $exportOwners[ltrim($contract, '\\')] = $moduleKey;
+                }
+            }
+        }
+
+        foreach ($this->registry->modules as $manifest) {
+            $this->checkModule($manifest, $namespaceOwners, $exportOwners);
         }
     }
 
-    private function checkModule(ManifestDocument $manifest): void
+    /**
+     * @param array<string, string> $namespaceOwners
+     * @param array<string, string> $exportOwners
+     */
+    private function checkModule(ManifestDocument $manifest, array $namespaceOwners, array $exportOwners): void
     {
         $moduleKey = $manifest->data['key'] ?? null;
         if (!is_string($moduleKey)) {
             throw new ModuleException('MODULE_MANIFEST_INVALID', 'Module key is required for boundary checks.');
         }
         $namespace = ModuleKey::fromString($moduleKey)->backendNamespace();
+        $dependencies = [];
+        $declaredDependencies = $manifest->data['dependencies'] ?? [];
+        if (is_array($declaredDependencies)) {
+            foreach ($declaredDependencies as $dependency) {
+                if (is_array($dependency) && is_string($dependency['module_key'] ?? null)) {
+                    $dependencies[$dependency['module_key']] = true;
+                }
+            }
+        }
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator(
             $manifest->root,
             RecursiveDirectoryIterator::SKIP_DOTS,
@@ -38,12 +67,30 @@ final readonly class ModuleBoundaryChecker
             if (!$file instanceof SplFileInfo || !$file->isFile() || $file->getExtension() !== 'php') {
                 continue;
             }
-            $this->checkPhpFile($file->getPathname(), $moduleKey, $namespace);
+            $this->checkPhpFile(
+                $file->getPathname(),
+                $moduleKey,
+                $namespace,
+                $dependencies,
+                $namespaceOwners,
+                $exportOwners,
+            );
         }
     }
 
-    private function checkPhpFile(string $path, string $moduleKey, string $moduleNamespace): void
-    {
+    /**
+     * @param array<string, true> $dependencies
+     * @param array<string, string> $namespaceOwners
+     * @param array<string, string> $exportOwners
+     */
+    private function checkPhpFile(
+        string $path,
+        string $moduleKey,
+        string $moduleNamespace,
+        array $dependencies,
+        array $namespaceOwners,
+        array $exportOwners,
+    ): void {
         $tokens = token_get_all((string) file_get_contents($path));
         foreach ($tokens as $token) {
             if (!is_array($token)) {
@@ -53,11 +100,14 @@ final readonly class ModuleBoundaryChecker
             if (in_array($type, [T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
                 $reference = ltrim($text, '\\');
                 if (str_starts_with($reference, 'PeanutAdmin\\App\\Modules\\')
-                    && !str_starts_with($reference . '\\', $moduleNamespace)
-                    && !str_contains($reference, '\\Contracts\\')) {
-                    throw new ModuleException(
-                        'MODULE_REGISTRY_CONFLICT',
-                        "{$path} imports another module outside Contracts.",
+                    && !str_starts_with($reference . '\\', $moduleNamespace)) {
+                    $this->assertCrossModuleContract(
+                        $path,
+                        $reference,
+                        $moduleKey,
+                        $dependencies,
+                        $namespaceOwners,
+                        $exportOwners,
                     );
                 }
             }
@@ -73,6 +123,46 @@ final readonly class ModuleBoundaryChecker
                     );
                 }
             }
+        }
+    }
+
+    /**
+     * @param array<string, true> $dependencies
+     * @param array<string, string> $namespaceOwners
+     * @param array<string, string> $exportOwners
+     */
+    private function assertCrossModuleContract(
+        string $path,
+        string $reference,
+        string $moduleKey,
+        array $dependencies,
+        array $namespaceOwners,
+        array $exportOwners,
+    ): void {
+        $owner = null;
+        foreach ($namespaceOwners as $namespace => $candidateOwner) {
+            if (str_starts_with($reference . '\\', $namespace)) {
+                $owner = $candidateOwner;
+                break;
+            }
+        }
+        if ($owner === null || $owner === $moduleKey || !str_contains($reference, '\\Contracts\\')) {
+            throw new ModuleException(
+                'MODULE_REGISTRY_CONFLICT',
+                "{$path} imports another module outside its registered Contracts API.",
+            );
+        }
+        if (!isset($dependencies[$owner])) {
+            throw new ModuleException(
+                'MODULE_DEPENDENCY_MISSING',
+                "{$path} imports {$reference} without declaring dependency {$owner}.",
+            );
+        }
+        if (($exportOwners[$reference] ?? null) !== $owner) {
+            throw new ModuleException(
+                'MODULE_CONTRACT_MISSING',
+                "{$path} imports {$reference}, which {$owner} does not export.",
+            );
         }
     }
 

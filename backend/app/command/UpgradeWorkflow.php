@@ -10,6 +10,8 @@ use DateTimeZone;
 use PDO;
 use PeanutAdmin\App\module\ModuleRegistryFactory;
 use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
+use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
+use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
 use PeanutAdmin\Kernel\Migration\MigrationRecord;
 use PeanutAdmin\Kernel\Migration\ModuleMigrationLedger;
 use PeanutAdmin\Kernel\Module\CompiledModuleRegistry;
@@ -42,7 +44,30 @@ final readonly class UpgradeWorkflow
     /** @return array{modules: list<string>, applied_module_migrations: int} */
     public function run(): array
     {
+        if (!$this->acquireLock()) {
+            throw new ModuleException('MODULE_UPGRADE_LOCKED', 'Another upgrade is already running.');
+        }
+        try {
+            return $this->runLocked();
+        } finally {
+            $this->releaseLock();
+        }
+    }
+
+    /** @return array{modules: list<string>, applied_module_migrations: int} */
+    private function runLocked(): array
+    {
         $registry = $this->registry();
+        $plans = [];
+        foreach ($registry->modules as $module) {
+            $plans[] = $this->modulePlan($module);
+        }
+        if ($this->tableExists('pa_module_migration')) {
+            foreach ($plans as $plan) {
+                $this->assertModulePlan($plan);
+            }
+        }
+
         $this->migratePackage(
             $this->packagePath(KernelPackage::NAME) . '/database/migrations',
             'kernel',
@@ -54,10 +79,6 @@ final readonly class UpgradeWorkflow
             'pa_data_permission_migration',
         );
 
-        $plans = [];
-        foreach ($registry->modules as $module) {
-            $plans[] = $this->modulePlan($module);
-        }
         foreach ($plans as $plan) {
             $this->assertModulePlan($plan);
         }
@@ -72,11 +93,49 @@ final readonly class UpgradeWorkflow
         foreach ($plans as $index => $plan) {
             $applied += $this->applyModulePlan($registry->modules[$index], $plan, $batch);
         }
+        (new ModuleAuthorizationCatalogSynchronizer(
+            new PdoAuthorizationCatalogRepository($this->pdo),
+        ))->synchronize($registry);
 
         return [
             'modules' => $registry->moduleKeys(),
             'applied_module_migrations' => $applied,
         ];
+    }
+
+    private function acquireLock(): bool
+    {
+        $statement = $this->pdo->prepare('SELECT GET_LOCK(:lock_key, 0)');
+        $statement->execute(['lock_key' => $this->lockKey()]);
+
+        return (int) $statement->fetchColumn() === 1;
+    }
+
+    private function releaseLock(): void
+    {
+        $statement = $this->pdo->prepare('SELECT RELEASE_LOCK(:lock_key)');
+        $statement->execute(['lock_key' => $this->lockKey()]);
+    }
+
+    private function lockKey(): string
+    {
+        $statement = $this->pdo->query('SELECT DATABASE()');
+        if ($statement === false) {
+            throw new RuntimeException('DATABASE_CONTEXT_UNAVAILABLE: current database could not be read.');
+        }
+
+        return 'pa:upgrade:' . substr(hash('sha256', (string) $statement->fetchColumn()), 0, 48);
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+SELECT COUNT(*) FROM information_schema.tables
+WHERE table_schema = DATABASE() AND table_name = :table_name
+SQL);
+        $statement->execute(['table_name' => $table]);
+
+        return (int) $statement->fetchColumn() === 1;
     }
 
     private function registry(): CompiledModuleRegistry

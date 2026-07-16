@@ -8,10 +8,9 @@ use Composer\InstalledVersions;
 use DateTimeImmutable;
 use PDO;
 use PeanutAdmin\App\module\ModuleRegistryFactory;
-use PeanutAdmin\Kernel\Module\ManifestDocument;
+use PeanutAdmin\App\module\OpisTenantModuleConfigValidator;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use PeanutAdmin\Kernel\Module\Persistence\PdoModuleRuntimeRepository;
-use PeanutAdmin\Kernel\Module\TenantModuleConfigValidator;
 use PeanutAdmin\Kernel\Module\TenantModuleManager;
 use PeanutAdmin\Kernel\Package as KernelPackage;
 
@@ -42,9 +41,7 @@ final readonly class InstallProductProfileApplier
         $manager = new TenantModuleManager(
             $registry,
             new PdoModuleRuntimeRepository($this->pdo),
-            new class implements TenantModuleConfigValidator {
-                public function assertValid(ManifestDocument $manifest, array $config): void {}
-            },
+            new OpisTenantModuleConfigValidator(),
         );
         $enabled = [];
         $now = new DateTimeImmutable('now');
