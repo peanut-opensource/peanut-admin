@@ -65,6 +65,7 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
         self::assertSame(17, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_target_type WHERE status = 'active'"));
         self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_data_condition_definition WHERE status = 'active'"));
         self::assertSame(40, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_condition WHERE status = 'active'"));
+        self::assertSame(16, $this->scalar("SELECT COUNT(*) FROM pa_menu_definition WHERE status = 'active'"));
         self::assertSame(1, $this->scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
             . self::DATABASE . "' AND table_name = 'pa_data_permission_policy'",

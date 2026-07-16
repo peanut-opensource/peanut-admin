@@ -12,6 +12,8 @@ use PeanutAdmin\App\module\ModuleRegistryFactory;
 use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
 use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
+use PeanutAdmin\Kernel\Menu\MenuCatalogSynchronizer;
+use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
 use PeanutAdmin\Kernel\Migration\MigrationRecord;
 use PeanutAdmin\Kernel\Migration\ModuleMigrationLedger;
 use PeanutAdmin\Kernel\Module\CompiledModuleRegistry;
@@ -96,6 +98,7 @@ final readonly class UpgradeWorkflow
         (new ModuleAuthorizationCatalogSynchronizer(
             new PdoAuthorizationCatalogRepository($this->pdo),
         ))->synchronize($registry);
+        (new MenuCatalogSynchronizer(new PdoMenuCatalogRepository($this->pdo)))->synchronize($registry);
 
         return [
             'modules' => $registry->moduleKeys(),
