@@ -1,1 +1,1 @@
-export { exampleTargetRoutes } from './routes'
+export { exampleTargetModule } from './routes'

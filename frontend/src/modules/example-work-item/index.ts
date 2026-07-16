@@ -1,1 +1,1 @@
-export { exampleWorkItemRoutes } from './routes'
+export { exampleWorkItemModule } from './routes'

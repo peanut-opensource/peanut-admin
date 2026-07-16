@@ -1,14 +1,15 @@
-import type { RouteRecordRaw } from 'vue-router'
+import { defineAdminModule } from '@peanut-admin/admin-core'
 
-export const exampleTargetRoutes: RouteRecordRaw[] = [
-  {
-    path: '/examples/targets',
+export const exampleTargetModule = defineAdminModule({
+  key: 'example.target',
+  routes: [{
+    path: '/app/examples/targets',
     name: 'example-target-list',
     component: () => import('./pages/TargetListPage.vue'),
-    meta: {
-      componentKey: 'example.target.list',
-      permission: 'example.target.read',
+    access: {
       moduleKey: 'example.target',
+      permissionKeys: ['example.target.read'],
     },
-  },
-]
+  }],
+  disposeOnTenantChange: true,
+})

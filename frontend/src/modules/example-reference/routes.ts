@@ -1,14 +1,15 @@
-import type { RouteRecordRaw } from 'vue-router'
+import { defineAdminModule } from '@peanut-admin/admin-core'
 
-export const exampleReferenceRoutes: RouteRecordRaw[] = [
-  {
-    path: '/examples/references',
+export const exampleReferenceModule = defineAdminModule({
+  key: 'example.reference',
+  routes: [{
+    path: '/app/examples/references',
     name: 'example-reference-list',
     component: () => import('./pages/ReferenceListPage.vue'),
-    meta: {
-      componentKey: 'example.reference.list',
-      permission: 'example.reference.read',
+    access: {
       moduleKey: 'example.reference',
+      permissionKeys: ['example.reference.read', 'example.reference.use'],
     },
-  },
-]
+  }],
+  disposeOnTenantChange: true,
+})
