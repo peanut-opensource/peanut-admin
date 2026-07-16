@@ -28,6 +28,7 @@ foreach (["docs:dev", "docs:build", "docs:preview"] as $script) {
 '
 
 ./scripts/check-doc-content-status
+./scripts/verify-doc-examples
 
 php -r '
 $root = getcwd();

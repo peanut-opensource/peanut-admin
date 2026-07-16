@@ -4,7 +4,7 @@ This directory is the public documentation source for Peanut Admin.
 
 ## Current Scope
 
-The buildable documentation site contains the P0 foundation overview, core concepts, architecture, engineering standards, task status, dependency decisions, and an explicitly draft API placeholder. Runtime reference pages are added only with the tasks that implement and verify them.
+The buildable documentation site contains the P0 developer guide, runtime references, core concepts, architecture, engineering standards, task status, dependency decisions, and API contract. Runtime claims are bound to executable examples or current source symbols.
 
 Run the site locally from the repository root:
 
@@ -18,6 +18,8 @@ Build the same static output used by GitHub Pages:
 ```bash
 ./scripts/check-docs
 ```
+
+`check-docs` also runs `scripts/verify-doc-examples`, including a temporary MySQL installation and the fictional Module contract tutorial.
 
 ## Content Status
 

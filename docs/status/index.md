@@ -6,15 +6,21 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 
 - Clean public repository and Apache-2.0 governance baseline.
 - Canonical dependency decisions and dependency policy.
-- Buildable developer documentation site and documentation status registry.
+- Reusable PHP and web packages with enforced dependency boundaries.
+- Identity, Tenant, membership, Department, platform, audit, session, and trusted-context schema and services.
+- Tenant and platform authentication with separate audiences and rotating refresh tokens.
+- Functional RBAC, typed-target data permission, shared-master scope contracts, and security tests.
+- Module manifest compiler, migration ownership, TenantModule runtime, and fictional example Modules.
+- OpenAPI artifacts, reference Admin Shell, and desktop/mobile browser acceptance tests.
+- CLI environment preflight, first install, ProductProfile application, local upgrade, migration checksums, and health checks.
+- Buildable developer guide with executable installation and Module examples.
 
-## In Progress
+## Remaining P0 Gates
 
-- Monorepo workspace and reusable package skeletons.
-- Identity, tenant, membership, platform, audit, session, and context foundations.
-- Functional RBAC, typed-target data permission, and shared-master scope contracts.
-- Module runtime, fictional example modules, OpenAPI, and Admin Shell.
-- Installation, upgrade, recovery, security, performance, supply-chain, and runtime qualification.
+- Verified backup, restore-to-new-database, clean-install, and upgrade drill.
+- Final security, performance, supply-chain, and third-party-license gate.
+- Nine-role Runtime review and candidate qualification report.
+- Replacement of remaining `API_OPERATION_UNAVAILABLE` placeholders requires separately scoped implementation tasks; a contract entry alone is not considered available behavior.
 
 ## Intentionally Not In P0
 

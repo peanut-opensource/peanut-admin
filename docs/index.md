@@ -2,10 +2,11 @@
 
 Peanut Admin is a reusable multi-tenant administration foundation. It combines reusable PHP and web packages, a ThinkPHP reference host, a Vue Admin Shell, module contracts, examples, and project checks in one public repository.
 
-P0 is building an internal alpha foundation that downstream teams can extend safely. It is not yet a LikeAdmin-level finished product and does not contain product-specific store, warehouse, inventory, finance, or transaction logic.
+P0 is an internal alpha foundation that downstream teams can extend safely. It is not yet a finished commercial admin framework and does not contain product-specific domain logic.
 
 ## Start Here
 
+- [Developer Guide](./guide/): install, extend, test, upgrade, and troubleshoot the current runtime.
 - [Core Concepts](./core-concepts/): understand accounts, tenants, members, platform operators, departments, and typed business targets.
 - [Architecture](./architecture/): understand package boundaries, module ownership, isolation, and composition.
 - [Engineering Standards](./standards/): follow dependency, security, documentation, and implementation rules.
@@ -24,4 +25,6 @@ P0 is building an internal alpha foundation that downstream teams can extend saf
 
 ## Current Runtime Status
 
-The documentation and dependency contracts are available. Runtime packages, database schema, APIs, and Admin Shell behavior are delivered by later P0 tasks and must not be inferred from this site before their status becomes canonical.
+Reusable PHP and web packages, Kernel and data-permission schema, tenant and platform authentication, authorization contracts, fictional example Modules, OpenAPI artifacts, the reference Admin Shell, browser acceptance tests, and local installation/upgrade workflows are implemented.
+
+Some OpenAPI operations still use explicit `503 API_OPERATION_UNAVAILABLE` reference handlers. Backup recovery, final security/performance/supply-chain gates, and Runtime qualification are not complete until their later P0 tasks pass.

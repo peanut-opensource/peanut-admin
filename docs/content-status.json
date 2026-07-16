@@ -105,6 +105,104 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/guide/index.md",
+      "title": "Developer Guide",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/installation.md",
+      "title": "Installation",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/authentication.md",
+      "title": "Authentication And Trusted Context",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/authorization.md",
+      "title": "Functional And Data Authorization",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/module-development.md",
+      "title": "Module Development",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/admin-web.md",
+      "title": "Admin Web Composition",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/testing.md",
+      "title": "Testing",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/upgrade.md",
+      "title": "Upgrade",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/guide/troubleshooting.md",
+      "title": "Troubleshooting",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/reference/kernel-schema.md",
+      "title": "Kernel Schema And States",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/reference/typed-targets.md",
+      "title": "Typed Targets And Operation Cardinality",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/reference/shared-master.md",
+      "title": "Shared Master Scope",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/security/p0-baseline.md",
+      "title": "P0 Security Baseline",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/operations/backup-and-recovery.md",
+      "title": "Backup And Recovery Boundary",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

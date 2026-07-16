@@ -16,6 +16,7 @@ export default defineConfig({
   },
   themeConfig: {
     nav: [
+      { text: 'Guide', link: '/guide/' },
       { text: 'Concepts', link: '/core-concepts/' },
       { text: 'Architecture', link: '/architecture/' },
       { text: 'Standards', link: '/standards/' },
@@ -32,7 +33,32 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Development',
+        text: 'Developer Guide',
+        items: [
+          { text: 'Guide Overview', link: '/guide/' },
+          { text: 'Installation', link: '/guide/installation' },
+          { text: 'Authentication', link: '/guide/authentication' },
+          { text: 'Authorization', link: '/guide/authorization' },
+          { text: 'Module Development', link: '/guide/module-development' },
+          { text: 'Admin Web', link: '/guide/admin-web' },
+          { text: 'Testing', link: '/guide/testing' },
+          { text: 'Upgrade', link: '/guide/upgrade' },
+          { text: 'Troubleshooting', link: '/guide/troubleshooting' },
+        ],
+      },
+      {
+        text: 'Reference',
+        items: [
+          { text: 'Kernel Schema', link: '/reference/kernel-schema' },
+          { text: 'Typed Targets', link: '/reference/typed-targets' },
+          { text: 'Data Permission Package', link: '/reference/packages/data-permission' },
+          { text: 'Shared Master Scope', link: '/reference/shared-master' },
+          { text: 'Security Baseline', link: '/security/p0-baseline' },
+          { text: 'Backup Boundary', link: '/operations/backup-and-recovery' },
+        ],
+      },
+      {
+        text: 'Engineering',
         items: [
           { text: 'Engineering Standards', link: '/standards/' },
           { text: 'Dependency Policy', link: '/standards/dependency-policy' },
