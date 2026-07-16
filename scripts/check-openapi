@@ -43,10 +43,31 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       audience: path.startsWith('/api/platform/') ? 'platform' : 'tenant',
       requiresAuth: !Array.isArray(operation.security) || operation.security.length !== 0,
       idempotent: (operation.parameters ?? []).some(parameter => parameter.name === 'Idempotency-Key'),
+      moduleKey: operation['x-module-key'] ?? null,
     })
   }
 }
-routes.sort((left, right) => left.route.localeCompare(right.route))
+const compareRoutes = (left, right) => {
+  const [leftMethod, leftPath] = left.route.split(' ', 2)
+  const [rightMethod, rightPath] = right.route.split(' ', 2)
+  const methodOrder = leftMethod.localeCompare(rightMethod)
+  if (methodOrder !== 0) return methodOrder
+
+  const leftSegments = leftPath.split('/')
+  const rightSegments = rightPath.split('/')
+  for (let index = 0; index < Math.min(leftSegments.length, rightSegments.length); index += 1) {
+    const leftSegment = leftSegments[index]
+    const rightSegment = rightSegments[index]
+    if (leftSegment === rightSegment) continue
+    const leftIsParameter = leftSegment.startsWith('{')
+    const rightIsParameter = rightSegment.startsWith('{')
+    if (leftIsParameter !== rightIsParameter) return leftIsParameter ? 1 : -1
+    return leftSegment.localeCompare(rightSegment)
+  }
+
+  return leftSegments.length - rightSegments.length
+}
+routes.sort(compareRoutes)
 if (routes.length !== 75) {
   throw new Error(`Expected 75 P0 operations, found ${routes.length}`)
 }
@@ -65,6 +86,7 @@ const idempotentOperations = [
   'enablePlatformTenantModule',
   'disablePlatformTenantModule',
 ]
+const moduleKeyPattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)*$/
 for (const [path, item] of Object.entries(document.paths ?? {})) {
   for (const method of methods) {
     const operation = item[method]
@@ -78,6 +100,16 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       const names = (operation.parameters ?? []).map(parameter => parameter.name)
       if (!names.includes('Idempotency-Key')) {
         throw new Error(`${operation.operationId} is missing Idempotency-Key`)
+      }
+    }
+    const moduleKey = operation['x-module-key'] ?? null
+    if (moduleKey !== null) {
+      if (typeof moduleKey !== 'string' || moduleKey.length > 96 || !moduleKeyPattern.test(moduleKey)) {
+        throw new Error(`${operation.operationId} declares an invalid x-module-key`)
+      }
+      const requiresAuth = !Array.isArray(operation.security) || operation.security.length !== 0
+      if (path.startsWith('/api/platform/') || !requiresAuth || typeof operation['x-permission'] !== 'string') {
+        throw new Error(`${operation.operationId} cannot use x-module-key outside an authenticated tenant permission route`)
       }
     }
   }
@@ -101,7 +133,7 @@ const quote = value => value === null
     ? String(value)
     : `'${String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
 const body = routes.map(route =>
-  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}, ${quote(route.audience)}, ${quote(route.requiresAuth)}, ${quote(route.idempotent)}],`
+  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}, ${quote(route.audience)}, ${quote(route.requiresAuth)}, ${quote(route.idempotent)}, ${quote(route.moduleKey)}],`
 ).join('\n')
 fs.writeFileSync(target, `<?php\n\ndeclare(strict_types=1);\n\n// Generated from docs/api/openapi.yaml.\nreturn [\n${body}\n];\n`)
 NODE
@@ -126,7 +158,7 @@ require "vendor/autoload.php";
 $routes = require "backend/route/openapi-generated.php";
 $seen = [];
 foreach ($routes as $route => $binding) {
-    [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent] = $binding;
+    [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent, $moduleKey] = $binding;
     if (!is_string($operationId) || isset($seen[$operationId])) {
         fwrite(STDERR, "ERROR: duplicate or missing OpenAPI operationId for {$route}\n");
         exit(1);
@@ -144,6 +176,7 @@ foreach ($routes as $route => $binding) {
         || !is_bool($requiresAuth)
         || !is_bool($idempotent)
         || ($permission !== null && !$requiresAuth)
+        || ($moduleKey !== null && (!is_string($moduleKey) || $audience !== "tenant" || !$requiresAuth || $permission === null))
     ) {
         fwrite(STDERR, "ERROR: invalid route runtime metadata for {$route}\n");
         exit(1);

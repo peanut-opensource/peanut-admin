@@ -32,7 +32,7 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
 
         foreach ($routes as $route => $binding) {
-            [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent] = $binding;
+            [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent, $moduleKey] = $binding;
             self::assertMatchesRegularExpression('/^[a-z][A-Za-z0-9]+$/', $operationId, $route);
             self::assertNotSame('', $class, $route);
             self::assertNotSame('', $method, $route);
@@ -40,6 +40,7 @@ final class OpenApiArtifactTest extends TestCase
             self::assertIsBool($requiresAuth, $route);
             self::assertIsBool($idempotent, $route);
             self::assertTrue($permission === null || $requiresAuth, $route);
+            self::assertTrue($moduleKey === null || ($audience === 'tenant' && $requiresAuth && $permission !== null), $route);
 
             if (str_starts_with($route, 'GET /api/platform/') || str_starts_with($route, 'POST /api/platform/')
                 || str_starts_with($route, 'PUT /api/platform/') || str_starts_with($route, 'PATCH /api/platform/')
@@ -51,5 +52,39 @@ final class OpenApiArtifactTest extends TestCase
 
             self::assertFalse(is_string($permission) && str_starts_with($permission, 'platform.'), $route);
         }
+    }
+
+    public function testOptionalModuleRoutesDeclareTheirRuntimeModule(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+        $expected = [
+            'GET /api/v1/example/reference-items/candidates' => 'example.reference',
+            'GET /api/v1/example/work-items' => 'example.work-item',
+            'GET /api/v1/example/work-items/aggregate' => 'example.work-item',
+            'GET /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
+            'PATCH /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
+            'POST /api/v1/example/work-item-view-policies' => 'example.work-item',
+            'POST /api/v1/example/work-items' => 'example.work-item',
+        ];
+        $actual = [];
+        foreach ($routes as $route => $binding) {
+            if ($binding[7] !== null) {
+                $actual[$route] = $binding[7];
+            }
+        }
+
+        self::assertSame($expected, $actual);
+    }
+
+    public function testStaticRoutePrecedesParameterRouteAtTheSamePathLevel(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+        $orderedRoutes = array_keys($routes);
+        $aggregate = array_search('GET /api/v1/example/work-items/aggregate', $orderedRoutes, true);
+        $detail = array_search('GET /api/v1/example/work-items/{work_item_id}', $orderedRoutes, true);
+
+        self::assertIsInt($aggregate);
+        self::assertIsInt($detail);
+        self::assertLessThan($detail, $aggregate);
     }
 }

@@ -204,6 +204,7 @@ paths:
     get:
       operationId: listExampleWorkItems
       summary: listExampleWorkItems
+      x-module-key: example.work-item
       x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle'
       x-permission: example.work-item.read
       parameters:
@@ -220,6 +221,7 @@ paths:
     post:
       operationId: createExampleWorkItem
       summary: createExampleWorkItem
+      x-module-key: example.work-item
       x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle'
       x-permission: example.work-item.create
       parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
@@ -228,15 +230,16 @@ paths:
         content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/CreateWorkItemRequest' } } }
       responses: *writeResponses
   /api/v1/example/work-items/aggregate:
-    get: { operationId: aggregateExampleWorkItems, summary: aggregateExampleWorkItems, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: example.work-item.read, responses: *standardResponses }
+    get: { operationId: aggregateExampleWorkItems, summary: aggregateExampleWorkItems, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-module-key: example.work-item, x-permission: example.work-item.read, responses: *standardResponses }
   /api/v1/example/work-items/{work_item_id}:
     parameters: [{ in: path, name: work_item_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }]
-    get: { operationId: getExampleWorkItem, summary: getExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: example.work-item.read, responses: *standardResponses }
-    patch: { operationId: updateExampleWorkItem, summary: updateExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: example.work-item.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: getExampleWorkItem, summary: getExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-module-key: example.work-item, x-permission: example.work-item.read, responses: *standardResponses }
+    patch: { operationId: updateExampleWorkItem, summary: updateExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-module-key: example.work-item, x-permission: example.work-item.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
   /api/v1/example/reference-items/candidates:
     get:
       operationId: listExampleReferenceCandidates
       summary: listExampleReferenceCandidates
+      x-module-key: example.reference
       x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle'
       x-permission: example.reference.use
       parameters:
@@ -246,7 +249,7 @@ paths:
         - { in: query, name: q, schema: { type: string, maxLength: 100 } }
       responses: *standardResponses
   /api/v1/example/work-item-view-policies:
-    post: { operationId: publishExampleWorkItemPolicy, summary: publishExampleWorkItemPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: example.work-item.policy-publish, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: publishExampleWorkItemPolicy, summary: publishExampleWorkItemPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-module-key: example.work-item, x-permission: example.work-item.policy-publish, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
 
   /api/platform/v1/auth/login:
     post: { operationId: platformLogin, summary: platformLogin, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::login', security: [], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
