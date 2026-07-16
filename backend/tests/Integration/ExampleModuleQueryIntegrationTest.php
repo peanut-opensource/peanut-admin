@@ -5,23 +5,20 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Tests\Integration;
 
 use PDO;
+use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
 use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Persistence\PdoReferenceQuery;
-use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetCatalogProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
-use PeanutAdmin\DataPermission\Catalog\ResourceOperation;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
 use PeanutAdmin\DataPermission\Target\TargetCatalogQuery;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
 use PeanutAdmin\Kernel\Auth\TenantAuthentication;
-use PeanutAdmin\Kernel\Context\AuthorizationDecision;
-use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
-use PeanutAdmin\Kernel\Context\RequestedTargetSet;
+use PeanutAdmin\Testing\Authorization\PdoAuthorizationFixtureSeeder;
 use PHPUnit\Framework\TestCase;
 
 final class ExampleModuleQueryIntegrationTest extends TestCase
@@ -104,6 +101,28 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
         $memberId = (int) $installation['tenant']['owner_member_id'];
         $referenceId = $this->seedReference($tenantId);
         $projectIds = $this->seedProjectsAndWorkItems($tenantId, $memberId, $referenceId, 501);
+        if ($projectIds === []) {
+            throw new \RuntimeException('The example query fixture did not create Projects.');
+        }
+        $authorizationFixture = new PdoAuthorizationFixtureSeeder($this->pdo);
+        $roleId = $authorizationFixture->roleForMember($tenantId, $memberId);
+        $authorizationFixture->grantPermissions($tenantId, $roleId, [
+            'example.work-item.read',
+        ]);
+        $projectSetId = $authorizationFixture->targetSet(
+            $tenantId,
+            $memberId,
+            'example.project',
+            $projectIds,
+        );
+        $authorizationFixture->allowTargetGroups(
+            $tenantId,
+            $roleId,
+            $memberId,
+            'example.work-item',
+            'list',
+            [['example.project' => $projectSetId]],
+        );
 
         $authentication = TenantAuthRuntimeFactory::create()->login(
             'query-owner@example.test',
@@ -121,15 +140,14 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
         );
         self::assertCount(501, $resolved->targets->sets[0]->targetIds);
 
-        $requested = new RequestedTargetSet('example.project', $projectIds);
-        $operationContext = AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow(
+        $authorization = DataPermissionRuntimeFactory::create($this->pdo);
+        $targets = new TypedResourceTargetCollection([$targetSet]);
+        $page = (new PdoWorkItemQuery($this->pdo, $authorization))->list(
             $authentication->context,
-            'example.work-item',
-            'list',
-            [$requested],
-            hash('sha256', 'example-query-integration'),
-        ));
-        $page = (new PdoWorkItemQuery($this->pdo))->list($operationContext, 2, 50);
+            $targets,
+            2,
+            50,
+        );
         self::assertSame(501, $page->total);
         self::assertSame(2, $page->page);
         self::assertSame(50, $page->pageSize);
@@ -151,10 +169,10 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
             'view',
         ));
 
-        $catalog = new PdoTargetCatalogProvider($this->pdo, ['example.project' => $projectIds]);
-        $catalogPage = $catalog->searchAllowedTargets(
-            $authorizationContext,
-            $this->catalogOperation(),
+        $catalogPage = $authorization->searchAllowedTargets(
+            $authentication->context,
+            'example.work-item',
+            'list',
             new TargetCatalogQuery('example.project', '', 2, 50),
         );
         self::assertSame(501, $catalogPage->total);
@@ -215,21 +233,4 @@ SQL);
         return $ids;
     }
 
-    private function catalogOperation(): ResourceOperation
-    {
-        return new ResourceOperation(
-            1,
-            1,
-            'example.work-item',
-            'example.work-item',
-            'example.work-item.provider',
-            'business_target_owned',
-            'list',
-            'rule_filtered',
-            'many_readable',
-            'all',
-            ['example.work-item.read'],
-            [],
-        );
-    }
 }

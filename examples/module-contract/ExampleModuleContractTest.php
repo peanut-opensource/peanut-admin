@@ -6,29 +6,25 @@ namespace PeanutAdmin\Examples\ModuleContract;
 
 use DateTimeImmutable;
 use PDO;
-use PeanutAdmin\App\Modules\Example\Reference\Database\Schema as ReferenceSchema;
+use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
+use PeanutAdmin\App\command\InstallProductProfile;
+use PeanutAdmin\App\command\InstallWorkflow;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Persistence\PdoReferenceQuery;
-use PeanutAdmin\App\Modules\Example\Target\Database\Schema as TargetSchema;
-use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetCatalogProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
 use PeanutAdmin\App\Modules\Example\WorkItem\Application\CreateWorkItem;
 use PeanutAdmin\App\Modules\Example\WorkItem\Application\WorkItemCommandService;
 use PeanutAdmin\App\Modules\Example\WorkItem\Application\WorkItemPolicyPublisher;
-use PeanutAdmin\App\Modules\Example\WorkItem\Database\Schema as WorkItemSchema;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
-use PeanutAdmin\DataPermission\Catalog\ResourceOperation;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Target\TargetCatalogQuery;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Auth\ValidatedTenantSession;
-use PeanutAdmin\Kernel\Context\AuthorizationDecision;
-use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
-use PeanutAdmin\Kernel\Context\RequestedTargetSet;
 use PeanutAdmin\Kernel\Module\ModuleException;
-use PeanutAdmin\Kernel\Persistence\Schema\KernelSchema;
+use PeanutAdmin\Testing\Authorization\PdoAuthorizationFixtureSeeder;
 use PHPUnit\Framework\TestCase;
 
 final class ExampleModuleContractTest extends TestCase
@@ -37,6 +33,10 @@ final class ExampleModuleContractTest extends TestCase
 
     private PDO $admin;
     private PDO $pdo;
+    private DataPermissionEngine $authorization;
+    private int $tenantId;
+    private int $memberId;
+    private int $accountId;
 
     protected function setUp(): void
     {
@@ -47,17 +47,30 @@ final class ExampleModuleContractTest extends TestCase
         $this->admin->exec('DROP DATABASE IF EXISTS `' . self::DATABASE . '`');
         $this->admin->exec('CREATE DATABASE `' . self::DATABASE . '` CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci');
         $this->pdo = $this->connect(self::DATABASE);
-        foreach (['pa_account', 'pa_tenant', 'pa_department', 'pa_tenant_member'] as $table) {
-            $this->pdo->exec(KernelSchema::createSql($table));
-        }
-        $this->pdo->exec(TargetSchema::createProject());
-        $this->pdo->exec(TargetSchema::createQueue());
-        $this->pdo->exec(ReferenceSchema::createItem());
-        $this->pdo->exec(ReferenceSchema::createScope());
-        foreach (WorkItemSchema::createStatements() as $statement) {
-            $this->pdo->exec($statement);
-        }
-        $this->seed();
+        $root = dirname(__DIR__, 2);
+        $result = (new InstallWorkflow($root, $this->pdo))->run(
+            InstallProductProfile::load(
+                $root . '/profiles/reference-admin.json',
+                $root . '/schemas/product-profile.schema.json',
+            ),
+            'fixture-owner@example.test',
+            'Fixture-Owner-P0-2026!',
+            'Fixture Owner',
+            [
+                'code' => 'fixture',
+                'name' => 'Fixture Tenant',
+                'owner_email' => 'fixture-owner@example.test',
+                'owner_name' => 'Fixture Owner',
+            ],
+        );
+        $this->tenantId = (int) $result['tenant']['tenant_id'];
+        $this->memberId = (int) $result['tenant']['owner_member_id'];
+        $this->accountId = (int) $this->scalar(
+            "SELECT account_id FROM pa_tenant_member WHERE id = {$this->memberId}",
+        );
+        $this->seedBusinessFixtures();
+        $this->seedAuthorization();
+        $this->authorization = DataPermissionRuntimeFactory::create($this->pdo, $root);
     }
 
     protected function tearDown(): void
@@ -75,16 +88,17 @@ final class ExampleModuleContractTest extends TestCase
         $queue = $resolver->resolveAndValidate($tenant, new TypedResourceTargetSet('example.queue', ['1'], 'related'));
         self::assertSame('example.project', $project->targets->sets[0]->targetResourceKey);
         self::assertSame('example.queue', $queue->targets->sets[0]->targetResourceKey);
-        $catalog = new PdoTargetCatalogProvider($this->pdo, ['example.project' => ['1', '2']]);
-        $options = $catalog->searchAllowedTargets(
-            $authorization = new AuthorizationContext($tenant, 1),
-            new ResourceOperation(1, 1, 'example.project', 'example.target', 'project', 'tenant_owned', 'select', 'read', 'many_readable', 'any', [], []),
+        $options = $this->authorization->searchAllowedTargets(
+            $tenant,
+            'example.work-item',
+            'list',
             new TargetCatalogQuery('example.project', '', 1, 20),
         );
         self::assertSame(['1', '2'], array_column($options->items, 'id'));
 
         $scope = new PdoReferenceScopeProvider($this->pdo);
         $query = new PdoReferenceQuery($this->pdo, $scope);
+        $authorization = new AuthorizationContext($tenant, 1);
         $projectA = new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1'])]);
         $projectB = new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['2'])]);
         self::assertSame(['private-a', 'public-ref'], array_map(
@@ -96,28 +110,32 @@ final class ExampleModuleContractTest extends TestCase
             $query->candidates($authorization, $projectB, 'use'),
         ));
 
-        $createContext = $this->operationContext('create', [
-            new RequestedTargetSet('example.project', ['1']),
-            new RequestedTargetSet('example.queue', ['1'], 'related'),
+        $createTargets = new TypedResourceTargetCollection([
+            new TypedResourceTargetSet('example.project', ['1']),
+            new TypedResourceTargetSet('example.queue', ['1'], 'related'),
         ]);
-        $workItemId = (new WorkItemCommandService($this->pdo, $scope))->create(
-            $createContext,
+        $workItemId = (new WorkItemCommandService($this->pdo, $scope, $this->authorization))->create(
+            $tenant,
+            $createTargets,
             new CreateWorkItem('1', '1', '2', 'Fixture work item', 1),
         );
         self::assertSame('1', $workItemId);
 
-        $listContext = $this->operationContext('list', [new RequestedTargetSet('example.project', ['1', '2'])]);
-        $page = (new PdoWorkItemQuery($this->pdo))->list($listContext);
+        $page = (new PdoWorkItemQuery($this->pdo, $this->authorization))->list(
+            $tenant,
+            new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1', '2'])]),
+        );
         self::assertCount(1, $page->items);
         self::assertSame(1, $page->total);
 
-        $policyId = (new WorkItemPolicyPublisher($this->pdo))->publish(
-            $this->operationContext('policy-publish', [new RequestedTargetSet('example.project', ['1', '2'])]),
+        $policyId = (new WorkItemPolicyPublisher($this->pdo, $this->authorization))->publish(
+            $tenant,
+            new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1', '2'])]),
             'Fixture policy',
             ['status' => ['open']],
         );
         self::assertSame('1', $policyId);
-        self::assertSame(2, (int) $this->pdo->query('SELECT COUNT(*) FROM pa_example_work_item_policy_publication')->fetchColumn());
+        self::assertSame(2, (int) $this->scalar('SELECT COUNT(*) FROM pa_example_work_item_policy_publication'));
     }
 
     public function testCategoryConfusionPrivateScopeAndBulkWriteFailClosed(): void
@@ -131,13 +149,18 @@ final class ExampleModuleContractTest extends TestCase
             self::assertSame('AUTHZ_TARGET_NOT_FOUND', $exception->errorCode);
         }
 
-        $service = new WorkItemCommandService($this->pdo, new PdoReferenceScopeProvider($this->pdo));
+        $service = new WorkItemCommandService(
+            $this->pdo,
+            new PdoReferenceScopeProvider($this->pdo),
+            $this->authorization,
+        );
         try {
             $service->create(
-                $this->operationContext('create', [new RequestedTargetSet('example.project', ['2'])]),
-                new CreateWorkItem('2', null, '2', 'Denied reference', 1),
+                $tenant,
+                new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1'])]),
+                new CreateWorkItem('1', null, '3', 'Denied reference', 1),
             );
-            self::fail('Project B must not use Project A private reference.');
+            self::fail('Project A must not use Project C private reference.');
         } catch (ModuleException $exception) {
             self::assertSame('AUTHZ_SHARED_MASTER_SCOPE_DENIED', $exception->errorCode);
         }
@@ -146,43 +169,87 @@ final class ExampleModuleContractTest extends TestCase
         $service->bulkWrite();
     }
 
-    private function seed(): void
+    private function seedBusinessFixtures(): void
     {
         $now = '2026-07-16 12:00:00.000';
-        $this->pdo->exec("INSERT INTO pa_account (id, display_name, status, security_revision, created_at, updated_at) VALUES (1, 'Fixture', 'active', 1, '{$now}', '{$now}')");
-        $this->pdo->exec("INSERT INTO pa_tenant (id, code, name, display_name, status, locale, timezone, security_revision, authorization_revision, revision, activated_at, created_at, updated_at) VALUES (1, 'alpha', 'Alpha', 'Alpha', 'active', 'zh-CN', 'Asia/Shanghai', 1, 1, 1, '{$now}', '{$now}', '{$now}')");
-        $this->pdo->exec("INSERT INTO pa_department (id, tenant_id, parent_id, code, name, status, revision, created_at, updated_at) VALUES (1, 1, NULL, 'root', 'Root', 'active', 1, '{$now}', '{$now}')");
-        $this->pdo->exec("INSERT INTO pa_tenant_member (id, tenant_id, account_id, display_name, member_type, primary_department_id, status, security_revision, authorization_revision, joined_at, created_at, updated_at) VALUES (1, 1, 1, 'Fixture', 'internal', 1, 'active', 1, 1, '{$now}', '{$now}', '{$now}')");
-        $this->pdo->exec("INSERT INTO pa_example_project (id, tenant_id, code, name, status, revision, created_at, updated_at) VALUES (1,1,'A','Project A','active',1,'{$now}','{$now}'),(2,1,'B','Project B','active',1,'{$now}','{$now}'),(3,1,'C','Project C','active',1,'{$now}','{$now}')");
-        $this->pdo->exec("INSERT INTO pa_example_queue (id, tenant_id, code, name, status, revision, created_at, updated_at) VALUES (1,1,'A','Queue A','active',1,'{$now}','{$now}')");
-        $this->pdo->exec("INSERT INTO pa_example_reference_item (id, owner_type, owner_tenant_id, code, name, status, revision, created_at, updated_at) VALUES (1,'deployment',NULL,'public-ref','Public Reference','active',1,'{$now}','{$now}'),(2,'tenant',1,'private-a','Private A','active',1,'{$now}','{$now}')");
-        $this->pdo->exec("INSERT INTO pa_example_reference_scope (reference_item_id, scope_kind, target_tenant_id, target_resource_key, target_id, capability, status, revision) VALUES (1,'all_tenants',NULL,NULL,NULL,'use','active',1),(2,'typed_target',1,'example.project','1','use','active',1)");
+        $tenant = $this->tenantId;
+        $this->pdo->exec("INSERT INTO pa_example_project (id, tenant_id, code, name, status, revision, created_at, updated_at) VALUES (1,{$tenant},'A','Project A','active',1,'{$now}','{$now}'),(2,{$tenant},'B','Project B','active',1,'{$now}','{$now}'),(3,{$tenant},'C','Project C','active',1,'{$now}','{$now}')");
+        $this->pdo->exec("INSERT INTO pa_example_queue (id, tenant_id, code, name, status, revision, created_at, updated_at) VALUES (1,{$tenant},'A','Queue A','active',1,'{$now}','{$now}')");
+        $this->pdo->exec("INSERT INTO pa_example_reference_item (id, owner_type, owner_tenant_id, code, name, status, revision, created_at, updated_at) VALUES (1,'deployment',NULL,'public-ref','Public Reference','active',1,'{$now}','{$now}'),(2,'tenant',{$tenant},'private-a','Private A','active',1,'{$now}','{$now}'),(3,'tenant',{$tenant},'private-c','Private C','active',1,'{$now}','{$now}')");
+        $this->pdo->exec("INSERT INTO pa_example_reference_scope (reference_item_id, scope_kind, target_tenant_id, target_resource_key, target_id, capability, status, revision) VALUES (1,'all_tenants',NULL,NULL,NULL,'use','active',1),(2,'typed_target',{$tenant},'example.project','1','use','active',1),(3,'typed_target',{$tenant},'example.project','3','use','active',1)");
+    }
+
+    private function seedAuthorization(): void
+    {
+        $seeder = new PdoAuthorizationFixtureSeeder($this->pdo);
+        $roleId = $seeder->roleForMember($this->tenantId, $this->memberId);
+        $seeder->grantPermissions($this->tenantId, $roleId, [
+            'example.target.read',
+            'example.target.manage',
+            'example.reference.read',
+            'example.reference.use',
+            'example.work-item.read',
+            'example.work-item.create',
+            'example.work-item.policy-publish',
+        ]);
+        $readProjects = $seeder->targetSet($this->tenantId, $this->memberId, 'example.project', ['1', '2']);
+        $writeProjects = $seeder->targetSet($this->tenantId, $this->memberId, 'example.project', ['1']);
+        $queues = $seeder->targetSet($this->tenantId, $this->memberId, 'example.queue', ['1']);
+        $seeder->allowTargetGroups(
+            $this->tenantId,
+            $roleId,
+            $this->memberId,
+            'example.work-item',
+            'list',
+            [['example.project' => $readProjects]],
+        );
+        $seeder->allowTargetGroups(
+            $this->tenantId,
+            $roleId,
+            $this->memberId,
+            'example.work-item',
+            'create',
+            [
+                ['example.project' => $writeProjects],
+                ['example.project' => $writeProjects, 'example.queue' => $queues],
+            ],
+        );
+        $seeder->allowTargetGroups(
+            $this->tenantId,
+            $roleId,
+            $this->memberId,
+            'example.work-item',
+            'policy-publish',
+            [['example.project' => $readProjects]],
+        );
     }
 
     private function tenantContext(): TenantContext
     {
+        $revision = (int) $this->scalar(
+            "SELECT authorization_revision FROM pa_tenant WHERE id = {$this->tenantId}",
+        );
+
         return TenantContext::fromValidatedSession(new ValidatedTenantSession(
             1,
             'fixture-session',
-            1,
-            1,
-            1,
+            $this->tenantId,
+            $this->accountId,
+            $this->memberId,
             'admin-web',
             new DateTimeImmutable('2026-07-16T12:00:00Z'),
-            1,
+            $revision,
         ), 'fixture-request');
     }
 
-    /** @param list<RequestedTargetSet> $targets */
-    private function operationContext(string $operation, array $targets): AuthorizedOperationContext
+    private function scalar(string $sql): mixed
     {
-        return AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow(
-            $this->tenantContext(),
-            'example.work-item',
-            $operation,
-            $targets,
-            hash('sha256', $operation),
-        ));
+        $statement = $this->pdo->query($sql);
+        if ($statement === false) {
+            throw new \RuntimeException('The example fixture query could not be prepared.');
+        }
+
+        return $statement->fetchColumn();
     }
 
     private function connect(?string $database = null): PDO

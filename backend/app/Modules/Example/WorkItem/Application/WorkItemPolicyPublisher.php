@@ -5,24 +5,33 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\WorkItem\Application;
 
 use PDO;
-use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
+use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
+use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Module\ModuleException;
 
 final readonly class WorkItemPolicyPublisher
 {
-    public function __construct(private PDO $pdo) {}
+    public function __construct(private PDO $pdo, private DataPermissionEngine $authorization) {}
 
     /** @param array<string, mixed> $config */
     public function publish(
-        AuthorizedOperationContext $context,
+        TenantContext $context,
+        TypedResourceTargetCollection $targets,
         string $name,
         array $config,
     ): string {
-        if ($context->operation !== 'policy-publish') {
-            throw new ModuleException('AUTHZ_OPERATION_MISMATCH', 'Policy publication requires its dedicated operation.');
+        $decision = $this->authorization->decideTargets(
+            $context,
+            'example.work-item',
+            'policy-publish',
+            $targets,
+        );
+        if (!$decision->allowed) {
+            throw new ModuleException($decision->reasonCode, 'Policy targets are outside the effective data policy.');
         }
         $projects = [];
-        foreach ($context->targets as $target) {
+        foreach ($targets->sets as $target) {
             if ($target->targetResourceKey === 'example.project') {
                 $projects = [...$projects, ...$target->targetIds];
             }
@@ -38,10 +47,10 @@ INSERT INTO pa_example_work_item_view_policy (
 ) VALUES (:tenant_id, :name, :config_json, 'active', 1, :member_id, UTC_TIMESTAMP(3), UTC_TIMESTAMP(3))
 SQL);
             $policy->execute([
-                'tenant_id' => $context->tenantContext->tenantId,
+                'tenant_id' => $context->tenantId,
                 'name' => $name,
                 'config_json' => json_encode($config, JSON_THROW_ON_ERROR),
-                'member_id' => $context->tenantContext->memberId,
+                'member_id' => $context->memberId,
             ]);
             $policyId = (string) $this->pdo->lastInsertId();
             $publication = $this->pdo->prepare(<<<'SQL'
@@ -51,7 +60,7 @@ INSERT INTO pa_example_work_item_policy_publication (
 SQL);
             foreach ($projects as $projectId) {
                 $publication->execute([
-                    'tenant_id' => $context->tenantContext->tenantId,
+                    'tenant_id' => $context->tenantId,
                     'policy_id' => $policyId,
                     'project_id' => $projectId,
                 ]);

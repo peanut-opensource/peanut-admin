@@ -53,7 +53,7 @@ Register permissions, protected resources, operations, target cardinality, and t
 
 Each operation target relation is a structured object, not a bare type string. It declares `target_resource_key`, `target_role`, `input_mode` (`explicit`, `derived`, or `either`), and an optional `policy_selection_permission`. This preserves source/destination semantics through HTTP, jobs, the Kernel adapter, and the data-permission engine.
 
-The owner implements query, target, create, resolver, and catalog-provider contracts as needed. Other Modules call exported contracts and never query the owner's private tables.
+The owner implements query, target, create, resolver, and catalog-provider contracts as needed. Its `ModuleProvider` implements `DataPermissionModuleProvider` to register those implementations with the host runtime. Other Modules call exported contracts and never query the owner's private tables or the Kernel's authorization tables.
 
 ## 5. Contribute Admin Web Routes
 

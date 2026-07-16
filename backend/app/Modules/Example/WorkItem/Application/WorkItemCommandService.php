@@ -7,21 +7,33 @@ namespace PeanutAdmin\App\Modules\Example\WorkItem\Application;
 use PDO;
 use PeanutAdmin\App\Modules\Example\Reference\Contracts\ReferenceScope;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
-use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
-use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
+use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Module\ModuleException;
 
 final readonly class WorkItemCommandService
 {
-    public function __construct(private PDO $pdo, private ReferenceScope $referenceScope) {}
+    public function __construct(
+        private PDO $pdo,
+        private ReferenceScope $referenceScope,
+        private DataPermissionEngine $authorization,
+    ) {}
 
-    public function create(AuthorizedOperationContext $context, CreateWorkItem $command): string
-    {
-        if ($context->resourceKey !== 'example.work-item' || $context->operation !== 'create') {
-            throw new ModuleException('AUTHZ_OPERATION_MISMATCH', 'Create requires an authorized work-item create context.');
+    public function create(
+        TenantContext $context,
+        TypedResourceTargetCollection $targets,
+        CreateWorkItem $command,
+    ): string {
+        $decision = $this->authorization->decideCreate(
+            $context,
+            'example.work-item',
+            'create',
+            $targets,
+        );
+        if (!$decision->allowed) {
+            throw new ModuleException($decision->reasonCode, 'Create targets are outside the effective data policy.');
         }
-        $targets = $this->targets($context);
         if ($targets->countForRole('primary') !== 1 || !$this->contains($targets, 'example.project', $command->projectId)) {
             throw new ModuleException('AUTHZ_TARGET_CARDINALITY_INVALID', 'Create requires exactly the authorized Project.');
         }
@@ -29,7 +41,7 @@ final readonly class WorkItemCommandService
             throw new ModuleException('AUTHZ_TARGET_TYPE_MISMATCH', 'Queue must be explicitly authorized as Queue.');
         }
         $authorizationContext = new AuthorizationContext(
-            $context->tenantContext,
+            $context,
             $command->departmentId,
         );
         if (!$this->referenceScope->canUse($authorizationContext, $command->referenceItemId, $targets)) {
@@ -45,14 +57,14 @@ INSERT INTO pa_example_work_item (
 )
 SQL);
         $statement->execute([
-            'tenant_id' => $context->tenantContext->tenantId,
+            'tenant_id' => $context->tenantId,
             'project_id' => $command->projectId,
             'queue_id' => $command->queueId,
             'reference_item_id' => $command->referenceItemId,
-            'owner_member_id' => $context->tenantContext->memberId,
+            'owner_member_id' => $context->memberId,
             'department_id' => $command->departmentId,
             'title' => $command->title,
-            'created_by_member_id' => $context->tenantContext->memberId,
+            'created_by_member_id' => $context->memberId,
         ]);
 
         return (string) $this->pdo->lastInsertId();
@@ -61,18 +73,6 @@ SQL);
     public function bulkWrite(): never
     {
         throw new ModuleException('AUTHZ_BULK_WRITE_DISABLED', 'Ordinary bulk write is disabled in the P0 example.');
-    }
-
-    private function targets(AuthorizedOperationContext $context): TypedResourceTargetCollection
-    {
-        return new TypedResourceTargetCollection(array_map(
-            static fn($target): TypedResourceTargetSet => new TypedResourceTargetSet(
-                $target->targetResourceKey,
-                $target->targetIds,
-                $target->targetRole,
-            ),
-            $context->targets,
-        ));
     }
 
     private function contains(TypedResourceTargetCollection $targets, string $resourceKey, string $id): bool

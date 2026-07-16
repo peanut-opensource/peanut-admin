@@ -21,9 +21,9 @@ The P0 engine supports `core.tenant_all`, `core.self`, `core.own_department`, `c
 
 ## Query Constraints
 
-Providers return a typed constraint tree: tenant equality, column equality, bounded column membership, conjunction, disjunction, fixed EXISTS contracts, or constant true/false. Public APIs do not accept raw SQL or tenant-configured column names.
+Providers return a typed constraint tree: tenant equality, column equality, bounded column membership, JSON-array membership, conjunction, disjunction, fixed EXISTS contracts, or constant true/false. Public APIs do not accept raw SQL or tenant-configured column names.
 
-`ColumnIn` is limited to 500 values. Larger target sets use the fixed `data_permission.target-set` EXISTS contract against the normalized target relation. Repositories compile the constraint to parameterized SQL and apply it before list, count, aggregate, detail, or write selection queries.
+`ColumnIn` is limited to 500 values. Larger saved policy sets use the fixed `data_permission.target-set` EXISTS contract against the normalized target relation. Larger operation requests use one JSON parameter compiled to a fixed `JSON_TABLE` membership constraint. Repositories compile either form to parameterized SQL and apply it before list, count, aggregate, detail, or write selection queries.
 
 ## Provider Contracts
 
@@ -35,7 +35,7 @@ Providers return a typed constraint tree: tenant equality, column equality, boun
 - `SharedMasterScopeProvider`: intersects shared-record visibility and usage scope.
 - `ConditionProvider`: adds a version-controlled module condition without exposing expressions to tenants.
 
-Module code registers providers by manifest-owned keys. Missing registrations produce an authorization error and never broaden access.
+Module providers implement `DataPermissionModuleProvider` and register their resource providers, target resolvers, target catalogs, and shared-master providers by manifest-owned keys. The reference host composes only providers from the compiled Module registry. Missing registrations produce an authorization error and never broaden access.
 
 ## Targets And Caching
 

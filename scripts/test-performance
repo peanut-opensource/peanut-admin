@@ -34,10 +34,10 @@ php -r '
 $baseline = json_decode((string) file_get_contents("tests/performance/p0-baseline.json"), true, 512, JSON_THROW_ON_ERROR);
 $report = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
 $environment = $baseline["environment"] ?? null;
-if (($baseline["schema_version"] ?? null) !== 2
-    || ($report["schema_version"] ?? null) !== 2
+if (($baseline["schema_version"] ?? null) !== 3
+    || ($report["schema_version"] ?? null) !== 3
     || !is_array($environment)
-    || ($environment["operation_shape"] ?? null) !== "fixed-json-table-paginated-v1"
+    || ($environment["operation_shape"] ?? null) !== "authorized-structured-target-query-v2"
     || ($report["environment"]["database_version"] ?? null) !== "8.4.10"
     || ($report["environment"]["php_version"] ?? null) !== ($environment["php"] ?? null)
     || !in_array($report["environment"]["os"] ?? null, $environment["allowed_operating_systems"] ?? [], true)
@@ -64,12 +64,13 @@ foreach (($baseline["scenarios"] ?? []) as $name => $expected) {
         fwrite(STDERR, "ERROR: {$name} p95 regressed by more than 20%\n");
         exit(1);
     }
-    if (str_starts_with($name, "typed-targets-")
-        && (($report["scenarios"][$name]["sql_parameters_per_query"] ?? null) !== 2
-            || ($report["scenarios"][$name]["page_size"] ?? null) !== 20)
-    ) {
-        fwrite(STDERR, "ERROR: {$name} no longer measures the fixed paginated SQL path\n");
-        exit(1);
+    if (str_starts_with($name, "typed-targets-")) {
+        foreach (["operations_per_sample", "sql_parameters_per_query", "page_size"] as $field) {
+            if (($report["scenarios"][$name][$field] ?? null) !== ($expected[$field] ?? null)) {
+                fwrite(STDERR, "ERROR: {$name} changed its authorized query shape: {$field}\n");
+                exit(1);
+            }
+        }
     }
 }
 ' "$report"

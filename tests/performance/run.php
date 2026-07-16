@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
+use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
+use PeanutAdmin\DataPermission\Constraint\PdoQueryConstraintCompiler;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
 use PeanutAdmin\Kernel\Auth\TenantAuthentication;
-use PeanutAdmin\Kernel\Context\AuthorizationDecision;
-use PeanutAdmin\Kernel\Context\AuthorizedOperationContext;
-use PeanutAdmin\Kernel\Context\RequestedTargetSet;
+use PeanutAdmin\Testing\Authorization\PdoAuthorizationFixtureSeeder;
 
 require dirname(__DIR__, 2) . '/vendor/autoload.php';
 
@@ -181,6 +181,18 @@ VALUES %s
 SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
     }
 
+    $authorizationFixture = new PdoAuthorizationFixtureSeeder($pdo);
+    $roleId = $authorizationFixture->roleForMember($tenantId, $memberId);
+    $authorizationFixture->grantPermissions($tenantId, $roleId, ['example.work-item.read']);
+    $authorizationFixture->allowTargetGroups(
+        $tenantId,
+        $roleId,
+        $memberId,
+        'example.work-item',
+        'list',
+        [['example.project' => $targetSetId]],
+    );
+
     $auth = TenantAuthRuntimeFactory::create();
     $initial = $auth->login(
         'performance@example.test',
@@ -194,37 +206,35 @@ SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
         throw new RuntimeException('Performance fixture login unexpectedly required tenant selection.');
     }
     $resolver = new PdoTargetResolver($pdo);
-    $workItems = new PdoWorkItemQuery($pdo);
+    $authorization = DataPermissionRuntimeFactory::create($pdo, $root);
+    $workItems = new PdoWorkItemQuery($pdo, $authorization);
     $results = [];
     foreach ([10, 500, 5000] as $size) {
         $ids = array_slice($projectIds, 0, $size);
         $typedSet = new TypedResourceTargetSet('example.project', $ids);
-        $requestedSet = new RequestedTargetSet('example.project', $ids);
-        $operationContext = AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow(
+        $typedTargets = new TypedResourceTargetCollection([$typedSet]);
+        $compiled = (new PdoQueryConstraintCompiler())->compile($authorization->queryConstraint(
             $initial->context,
             'example.work-item',
             'list',
-            [$requestedSet],
-            hash('sha256', 'performance-targets-' . $size),
+            $typedTargets,
         ));
+        $resolved = $resolver->resolveAndValidate($initial->context, $typedSet);
+        if (count($resolved->targets->sets[0]->targetIds) !== $size) {
+            throw new RuntimeException("Typed-target resolver changed the {$size}-target set.");
+        }
         $operationsPerSample = match ($size) {
             10 => 30,
             500 => 10,
             default => 3,
         };
         $verify = static function () use (
-            $resolver,
             $workItems,
             $initial,
-            $typedSet,
-            $operationContext,
+            $typedTargets,
             $size,
         ): void {
-            $resolved = $resolver->resolveAndValidate($initial->context, $typedSet);
-            if (count($resolved->targets->sets[0]->targetIds) !== $size) {
-                throw new RuntimeException("Typed-target resolver changed the {$size}-target set.");
-            }
-            $page = $workItems->list($operationContext, 1, 20);
+            $page = $workItems->list($initial->context, $typedTargets, 1, 20);
             if ($page->total !== $size || count($page->items) !== min(20, $size)) {
                 throw new RuntimeException("Work-item query returned the wrong {$size}-target page.");
             }
@@ -240,7 +250,7 @@ SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
             3,
         ) + [
             'operations_per_sample' => $operationsPerSample,
-            'sql_parameters_per_query' => 2,
+            'sql_parameters_per_query' => count($compiled->parameters),
             'page_size' => 20,
         ];
     }
@@ -322,7 +332,7 @@ SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
     }
     $mysqlVersion = (string) $versionStatement->fetchColumn();
     fwrite(STDOUT, json_encode([
-        'schema_version' => 2,
+        'schema_version' => 3,
         'environment' => [
             'database_image' => 'mysql:8.4.10',
             'database_version' => $mysqlVersion,

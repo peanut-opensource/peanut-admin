@@ -1,0 +1,84 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PeanutAdmin\App\authorization;
+
+use Composer\InstalledVersions;
+use PDO;
+use PeanutAdmin\App\module\ModuleRegistryFactory;
+use PeanutAdmin\DataPermission\Catalog\PdoResourceOperationCatalog;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
+use PeanutAdmin\DataPermission\Policy\PdoPolicyRepository;
+use PeanutAdmin\DataPermission\Policy\PolicyCache;
+use PeanutAdmin\DataPermission\Runtime\DataPermissionModuleProvider;
+use PeanutAdmin\DataPermission\Runtime\DataPermissionRuntimeRegistry;
+use PeanutAdmin\Kernel\Authorization\PdoTenantAuthorizationRepository;
+use PeanutAdmin\Kernel\Authorization\RevisionPermissionCache;
+use PeanutAdmin\Kernel\Authorization\TenantAuthorizationEvaluator;
+use PeanutAdmin\Kernel\Module\ManifestDocument;
+use PeanutAdmin\Kernel\Module\ModuleException;
+use PeanutAdmin\Kernel\Package as KernelPackage;
+
+final class DataPermissionRuntimeFactory
+{
+    private function __construct() {}
+
+    public static function create(PDO $pdo, ?string $root = null): DataPermissionEngine
+    {
+        $root ??= dirname(__DIR__, 3);
+        /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>} $config */
+        $config = require $root . '/backend/config/modules.php';
+        $modules = (new ModuleRegistryFactory(
+            array_map(
+                static fn(string $path): string => $root . '/' . ltrim($path, '/'),
+                $config['roots'],
+            ),
+            $config['frontend_components'],
+            $config['kernel_version'],
+            self::kernelPath() . '/resources/schemas/module-manifest.schema.json',
+        ))->compileAndCheckBoundaries();
+        $runtime = new DataPermissionRuntimeRegistry();
+        foreach ($modules->modules as $module) {
+            $provider = self::moduleProvider($module);
+            if ($provider instanceof DataPermissionModuleProvider) {
+                $provider->registerDataPermission($runtime, $pdo);
+            }
+        }
+
+        return new DataPermissionEngine(
+            new PdoResourceOperationCatalog($pdo),
+            new PdoPolicyRepository($pdo),
+            new PolicyCache(),
+            new TenantAuthorizationEvaluator(
+                new PdoTenantAuthorizationRepository($pdo),
+                new RevisionPermissionCache(),
+            ),
+            $runtime->resourceProviders,
+            $runtime->targetResolvers,
+            $runtime->targetCatalogProviders,
+            $runtime->sharedMasterProviders,
+        );
+    }
+
+    private static function moduleProvider(ManifestDocument $module): object
+    {
+        $backend = $module->data['backend'] ?? null;
+        $class = is_array($backend) ? ($backend['provider'] ?? null) : null;
+        if (!is_string($class) || !class_exists($class)) {
+            throw new ModuleException('MODULE_CONTRACT_MISSING', 'Module runtime provider is unavailable.');
+        }
+
+        return new $class();
+    }
+
+    private static function kernelPath(): string
+    {
+        $path = InstalledVersions::getInstallPath(KernelPackage::NAME);
+        if (!is_string($path) || $path === '') {
+            throw new ModuleException('MODULE_CONTRACT_MISSING', 'Kernel package installation path is unavailable.');
+        }
+
+        return rtrim($path, '/');
+    }
+}
