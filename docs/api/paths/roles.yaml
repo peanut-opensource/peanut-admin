@@ -1,0 +1,47 @@
+/api/v1/roles:
+  get:
+    operationId: listRoles
+    x-permission: core.role.read
+    responses: { '200': { description: Paginated tenant roles } }
+  post:
+    operationId: createRole
+    x-permission: core.role.create
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../schemas/role.yaml#/CreateRoleRequest' }
+    responses: { '201': { description: Role created }, '422': { description: Reserved role key } }
+
+/api/v1/roles/{role_id}:
+  get:
+    operationId: getRole
+    x-permission: core.role.read
+    responses: { '200': { description: Role } }
+  patch:
+    operationId: updateRole
+    x-permission: core.role.update
+    parameters:
+      - { in: header, name: If-Match, required: true, schema: { type: string } }
+    responses: { '200': { description: Role updated } }
+
+/api/v1/roles/{role_id}/permissions:
+  put:
+    operationId: replaceRolePermissions
+    x-permission: core.role.permission.assign
+    parameters:
+      - { in: header, name: If-Match, required: true, schema: { type: string } }
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '../schemas/role.yaml#/ReplaceRolePermissionsRequest' }
+    responses: { '200': { description: Permission set replaced }, '422': { description: Permission is not assignable } }
+
+/api/v1/roles/{role_id}/archive:
+  post:
+    operationId: archiveRole
+    x-permission: core.role.archive
+    parameters:
+      - { in: header, name: If-Match, required: true, schema: { type: string } }
+    responses: { '200': { description: Role archived }, '409': { description: Built-in role is immutable } }
