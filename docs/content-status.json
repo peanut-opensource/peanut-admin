@@ -39,7 +39,42 @@
     {
       "path": "docs/api/index.md",
       "title": "API Contract",
-      "status": "draft",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/api/problems/validation-failed.md",
+      "title": "Validation Failed",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/api/problems/authz-data-denied.md",
+      "title": "Data Authorization Denied",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/api/problems/idempotency-key-reused.md",
+      "title": "Idempotency Key Reused",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/api/problems/module-installation-failed.md",
+      "title": "Module Unavailable",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/api/problems/precondition-required.md",
+      "title": "Precondition Required",
+      "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
     },

@@ -1,7 +1,7 @@
 # API Contract
 
-> Status: draft. The canonical OpenAPI 3.1 document is introduced in P0-C03.
+[`openapi.yaml`](./openapi.yaml) is the OpenAPI 3.1.2 fact source for Peanut Admin P0. It defines separate tenant and platform audiences, typed target requests, stable operation identifiers, pagination, ETags, idempotency, and RFC 9457 Problem Details.
 
-P0 will publish separate tenant and platform API prefixes with audience-specific session cookies and guards. The contract will define stable operation identifiers, error envelopes, idempotency behavior, typed target requests, pagination, and generated TypeScript types.
+TypeScript declarations are generated at `packages/web/admin-core/src/generated/api.d.ts`. Backend routes are generated from each operation's `x-handler` and `x-permission`; both generated artifacts are checked for drift by `./scripts/check-openapi`.
 
-Until the generated contract is available, this page must not be used to infer endpoint paths, request fields, response schemas, or error codes.
+All BIGINT identifiers cross the API boundary as decimal strings. Tenant requests obtain `tenant_id` from the validated session context, never from a request body.
