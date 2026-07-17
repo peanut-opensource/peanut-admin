@@ -76,6 +76,23 @@ final class OpenApiArtifactTest extends TestCase
         self::assertSame($expected, $actual);
     }
 
+    public function testExampleOperationsUseConcreteHandlers(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+
+        foreach ($routes as $route => $binding) {
+            if (!str_contains($route, '/api/v1/example/')) {
+                continue;
+            }
+
+            self::assertNotSame(
+                'PeanutAdmin\\App\\controller\\api\\v1\\ContractController',
+                $binding[0],
+                $route,
+            );
+        }
+    }
+
     public function testStaticRoutePrecedesParameterRouteAtTheSamePathLevel(): void
     {
         $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';

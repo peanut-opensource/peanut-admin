@@ -9,21 +9,22 @@ use PDO;
 use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
 use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
-use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Persistence\PdoReferenceQuery;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
-use PeanutAdmin\App\Modules\Example\WorkItem\Application\CreateWorkItem;
+use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Persistence\PdoTargetQuery;
+use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\CreateWorkItem;
 use PeanutAdmin\App\Modules\Example\WorkItem\Application\WorkItemCommandService;
 use PeanutAdmin\App\Modules\Example\WorkItem\Application\WorkItemPolicyPublisher;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
-use PeanutAdmin\DataPermission\Context\AuthorizationContext;
 use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Target\TargetCatalogQuery;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetSet;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Auth\ValidatedTenantSession;
+use PeanutAdmin\Kernel\Membership\Application\MemberAdminService;
 use PeanutAdmin\Kernel\Module\ModuleException;
+use PeanutAdmin\Kernel\Persistence\Pdo\PdoAuditRepository;
 use PeanutAdmin\Testing\Authorization\PdoAuthorizationFixtureSeeder;
 use PHPUnit\Framework\TestCase;
 
@@ -96,39 +97,46 @@ final class ExampleModuleContractTest extends TestCase
         );
         self::assertSame(['1', '2'], array_column($options->items, 'id'));
 
-        $scope = new PdoReferenceScopeProvider($this->pdo);
-        $query = new PdoReferenceQuery($this->pdo, $scope);
-        $authorization = new AuthorizationContext($tenant, 1);
+        $query = new PdoReferenceQuery($this->pdo, $this->authorization);
         $projectA = new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1'])]);
         $projectB = new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['2'])]);
         self::assertSame(['private-a', 'public-ref'], array_map(
             static fn($item): string => $item->code,
-            $query->candidates($authorization, $projectA, 'use'),
+            $query->candidates($tenant, $projectA, 'use'),
         ));
         self::assertSame(['public-ref'], array_map(
             static fn($item): string => $item->code,
-            $query->candidates($authorization, $projectB, 'use'),
+            $query->candidates($tenant, $projectB, 'use'),
         ));
 
         $createTargets = new TypedResourceTargetCollection([
             new TypedResourceTargetSet('example.project', ['1']),
             new TypedResourceTargetSet('example.queue', ['1'], 'related'),
         ]);
-        $workItemId = (new WorkItemCommandService($this->pdo, $scope, $this->authorization))->create(
+        $workItemId = (new WorkItemCommandService(
+            $this->pdo,
+            $this->authorization,
+            new PdoAuditRepository($this->pdo),
+            new MemberAdminService($this->pdo),
+        ))->create(
             $tenant,
             $createTargets,
-            new CreateWorkItem('1', '1', '2', 'Fixture work item', 1),
+            new CreateWorkItem('1', '1', '2', 'Fixture work item'),
         );
         self::assertSame('1', $workItemId);
 
-        $page = (new PdoWorkItemQuery($this->pdo, $this->authorization))->list(
+        $page = (new PdoWorkItemQuery($this->pdo, $this->authorization, new PdoTargetQuery($this->pdo)))->list(
             $tenant,
             new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1', '2'])]),
         );
         self::assertCount(1, $page->items);
         self::assertSame(1, $page->total);
 
-        $policyId = (new WorkItemPolicyPublisher($this->pdo, $this->authorization))->publish(
+        $policyId = (new WorkItemPolicyPublisher(
+            $this->pdo,
+            $this->authorization,
+            new PdoAuditRepository($this->pdo),
+        ))->publish(
             $tenant,
             new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1', '2'])]),
             'Fixture policy',
@@ -151,14 +159,15 @@ final class ExampleModuleContractTest extends TestCase
 
         $service = new WorkItemCommandService(
             $this->pdo,
-            new PdoReferenceScopeProvider($this->pdo),
             $this->authorization,
+            new PdoAuditRepository($this->pdo),
+            new MemberAdminService($this->pdo),
         );
         try {
             $service->create(
                 $tenant,
                 new TypedResourceTargetCollection([new TypedResourceTargetSet('example.project', ['1'])]),
-                new CreateWorkItem('1', null, '3', 'Denied reference', 1),
+                new CreateWorkItem('1', null, '3', 'Denied reference'),
             );
             self::fail('Project A must not use Project C private reference.');
         } catch (ModuleException $exception) {
@@ -195,6 +204,14 @@ final class ExampleModuleContractTest extends TestCase
         $readProjects = $seeder->targetSet($this->tenantId, $this->memberId, 'example.project', ['1', '2']);
         $writeProjects = $seeder->targetSet($this->tenantId, $this->memberId, 'example.project', ['1']);
         $queues = $seeder->targetSet($this->tenantId, $this->memberId, 'example.queue', ['1']);
+        $seeder->allowTargetGroups(
+            $this->tenantId,
+            $roleId,
+            $this->memberId,
+            'example.reference-item',
+            'use',
+            [['example.project' => $readProjects]],
+        );
         $seeder->allowTargetGroups(
             $this->tenantId,
             $roleId,

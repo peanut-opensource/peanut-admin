@@ -28,7 +28,8 @@
   "contracts": {
     "exports": [
       "PeanutAdmin\\App\\Modules\\Example\\Target\\Contracts\\TargetQuery",
-      "PeanutAdmin\\App\\Modules\\Example\\Target\\Contracts\\TargetIdSet"
+      "PeanutAdmin\\App\\Modules\\Example\\Target\\Contracts\\TargetIdSet",
+      "PeanutAdmin\\App\\Modules\\Example\\Target\\Contracts\\TargetRuntimeProvider"
     ],
     "events": []
   },

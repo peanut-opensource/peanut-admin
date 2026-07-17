@@ -5,8 +5,17 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\WorkItem;
 
 use PDO;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetQuery;
+use PeanutAdmin\App\Modules\Example\WorkItem\Application\WorkItemCommandService;
+use PeanutAdmin\App\Modules\Example\WorkItem\Application\WorkItemPolicyPublisher;
+use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemCommands;
+use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemPolicyPublication;
+use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemQuery;
+use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemRuntimeProvider;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Authorization\WorkItemPolicyProvider;
+use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
 use PeanutAdmin\DataPermission\Constraint\ColumnReference;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Provider\ConditionProviderRegistry;
 use PeanutAdmin\DataPermission\Provider\PdoDepartmentHierarchyProvider;
 use PeanutAdmin\DataPermission\Provider\PdoTargetSetMembershipProvider;
@@ -14,9 +23,11 @@ use PeanutAdmin\DataPermission\Provider\ProviderColumnMap;
 use PeanutAdmin\DataPermission\Provider\StandardResourcePolicyProvider;
 use PeanutAdmin\DataPermission\Runtime\DataPermissionModuleProvider;
 use PeanutAdmin\DataPermission\Runtime\DataPermissionRuntimeRegistry;
+use PeanutAdmin\Kernel\Audit\AuditRepository;
+use PeanutAdmin\Kernel\Membership\Application\MemberAdminService;
 use PeanutAdmin\Kernel\Module\ModuleProvider as ModuleProviderContract;
 
-final class ModuleProvider implements ModuleProviderContract, DataPermissionModuleProvider
+final class ModuleProvider implements ModuleProviderContract, DataPermissionModuleProvider, WorkItemRuntimeProvider
 {
     public function moduleKey(): string
     {
@@ -40,5 +51,30 @@ final class ModuleProvider implements ModuleProviderContract, DataPermissionModu
             new ConditionProviderRegistry(),
         ));
         $registry->registerResourceProvider(WorkItemPolicyProvider::class, $provider);
+    }
+
+    public function workItemQuery(
+        PDO $pdo,
+        DataPermissionEngine $authorization,
+        TargetQuery $targets,
+    ): WorkItemQuery {
+        return new PdoWorkItemQuery($pdo, $authorization, $targets);
+    }
+
+    public function workItemCommands(
+        PDO $pdo,
+        DataPermissionEngine $authorization,
+        AuditRepository $audit,
+        MemberAdminService $members,
+    ): WorkItemCommands {
+        return new WorkItemCommandService($pdo, $authorization, $audit, $members);
+    }
+
+    public function workItemPolicyPublication(
+        PDO $pdo,
+        DataPermissionEngine $authorization,
+        AuditRepository $audit,
+    ): WorkItemPolicyPublication {
+        return new WorkItemPolicyPublisher($pdo, $authorization, $audit);
     }
 }

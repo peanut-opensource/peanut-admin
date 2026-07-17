@@ -34,6 +34,33 @@ $defs:
           - { type: 'null' }
       reference_item_id: { $ref: './common.yaml#/$defs/BigIntString' }
       title: { type: string, minLength: 1, maxLength: 200 }
+  UpdateWorkItemRequest:
+    type: object
+    additionalProperties: false
+    required: [target]
+    anyOf:
+      - { required: [title] }
+      - { required: [status] }
+    properties:
+      target: { $ref: './common.yaml#/$defs/Target' }
+      related_target:
+        anyOf:
+          - { $ref: './common.yaml#/$defs/Target' }
+          - { type: 'null' }
+      title: { type: string, minLength: 1, maxLength: 200 }
+      status: { enum: [open, active, closed] }
+  PublishWorkItemPolicyRequest:
+    type: object
+    additionalProperties: false
+    required: [name, config, targets]
+    properties:
+      name: { type: string, minLength: 1, maxLength: 160 }
+      config: { type: object, additionalProperties: true }
+      targets:
+        type: array
+        minItems: 1
+        maxItems: 1
+        items: { $ref: './common.yaml#/$defs/TargetSet' }
   ReferenceCandidate:
     type: object
     required: [id, code, name, owner_type]

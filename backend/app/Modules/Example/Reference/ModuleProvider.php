@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\Reference;
 
 use PDO;
+use PeanutAdmin\App\Modules\Example\Reference\Contracts\ReferenceQuery;
+use PeanutAdmin\App\Modules\Example\Reference\Contracts\ReferenceRuntimeProvider;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\ReferencePolicyProvider;
+use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Persistence\PdoReferenceQuery;
 use PeanutAdmin\DataPermission\Constraint\ColumnReference;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Provider\ConditionProviderRegistry;
 use PeanutAdmin\DataPermission\Provider\PdoDepartmentHierarchyProvider;
 use PeanutAdmin\DataPermission\Provider\PdoTargetSetMembershipProvider;
@@ -17,7 +21,7 @@ use PeanutAdmin\DataPermission\Runtime\DataPermissionModuleProvider;
 use PeanutAdmin\DataPermission\Runtime\DataPermissionRuntimeRegistry;
 use PeanutAdmin\Kernel\Module\ModuleProvider as ModuleProviderContract;
 
-final class ModuleProvider implements ModuleProviderContract, DataPermissionModuleProvider
+final class ModuleProvider implements ModuleProviderContract, DataPermissionModuleProvider, ReferenceRuntimeProvider
 {
     public function moduleKey(): string
     {
@@ -40,5 +44,10 @@ final class ModuleProvider implements ModuleProviderContract, DataPermissionModu
         $scope = new PdoReferenceScopeProvider($pdo);
         $registry->registerResourceProvider(ReferencePolicyProvider::class, $provider);
         $registry->registerSharedMasterProvider('example.reference-item', $scope);
+    }
+
+    public function referenceQuery(PDO $pdo, DataPermissionEngine $authorization): ReferenceQuery
+    {
+        return new PdoReferenceQuery($pdo, $authorization);
     }
 }

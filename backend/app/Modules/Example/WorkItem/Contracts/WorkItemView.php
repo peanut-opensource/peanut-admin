@@ -10,6 +10,7 @@ final readonly class WorkItemView
         public string $id,
         public int $tenantId,
         public string $projectId,
+        public string $projectLabel,
         public ?string $queueId,
         public string $referenceItemId,
         public string $title,

@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Modules\Example\Target;
 
 use PDO;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetQuery;
+use PeanutAdmin\App\Modules\Example\Target\Contracts\TargetRuntimeProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetCatalogProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\ProjectPolicyProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\QueuePolicyProvider;
+use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Persistence\PdoTargetQuery;
 use PeanutAdmin\DataPermission\Constraint\ColumnReference;
 use PeanutAdmin\DataPermission\Provider\ConditionProviderRegistry;
 use PeanutAdmin\DataPermission\Provider\PdoDepartmentHierarchyProvider;
@@ -19,7 +22,7 @@ use PeanutAdmin\DataPermission\Runtime\DataPermissionModuleProvider;
 use PeanutAdmin\DataPermission\Runtime\DataPermissionRuntimeRegistry;
 use PeanutAdmin\Kernel\Module\ModuleProvider as ModuleProviderContract;
 
-final class ModuleProvider implements ModuleProviderContract, DataPermissionModuleProvider
+final class ModuleProvider implements ModuleProviderContract, DataPermissionModuleProvider, TargetRuntimeProvider
 {
     public function moduleKey(): string
     {
@@ -59,5 +62,10 @@ final class ModuleProvider implements ModuleProviderContract, DataPermissionModu
             PdoTargetCatalogProvider::class,
             new PdoTargetCatalogProvider($pdo),
         );
+    }
+
+    public function targetQuery(PDO $pdo): TargetQuery
+    {
+        return new PdoTargetQuery($pdo);
     }
 }

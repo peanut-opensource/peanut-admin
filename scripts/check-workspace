@@ -110,7 +110,7 @@ done
 
 composer validate --strict --no-check-publish
 php vendor/bin/phpunit
-php vendor/bin/phpstan analyse --no-progress
+php vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 php vendor/bin/deptrac analyse --no-progress --fail-on-uncovered --cache-file=.cache/deptrac.cache
 php vendor/bin/php-cs-fixer check --diff --config=scripts/php-cs-fixer.php
 

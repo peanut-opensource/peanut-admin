@@ -44,7 +44,8 @@ const publish = async () => {
     const response = runtime.unwrap(await runtime.tenantClient.POST('/api/v1/example/work-item-view-policies', {
       params: { header: { 'Idempotency-Key': globalThis.crypto.randomUUID() } },
       body: {
-        reason: 'Published from the reference admin shell',
+        name: 'Admin shell view policy',
+        config: { reason: 'Published from the reference admin shell' },
         targets: [{
           target_resource_key: 'example.project',
           target_role: 'primary',

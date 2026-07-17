@@ -7,54 +7,68 @@ namespace PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Persistence;
 use PDO;
 use PeanutAdmin\App\Modules\Example\Reference\Contracts\ReferenceOption;
 use PeanutAdmin\App\Modules\Example\Reference\Contracts\ReferenceQuery;
-use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
-use PeanutAdmin\DataPermission\Context\AuthorizationContext;
+use PeanutAdmin\DataPermission\Constraint\PdoQueryConstraintCompiler;
+use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
+use PeanutAdmin\Kernel\Auth\TenantContext;
+use PeanutAdmin\Kernel\Module\ModuleException;
 
 final readonly class PdoReferenceQuery implements ReferenceQuery
 {
     public function __construct(
         private PDO $pdo,
-        private PdoReferenceScopeProvider $scope,
+        private DataPermissionEngine $authorization,
     ) {}
 
     public function candidates(
-        AuthorizationContext $context,
+        TenantContext $context,
         TypedResourceTargetCollection $targets,
         string $capability,
+        string $search = '',
     ): array {
-        $ids = $this->scope->allowedIds($context, $targets, $capability);
-        if ($ids === []) {
-            return [];
+        $operation = match ($capability) {
+            'view' => 'list',
+            'use' => 'use',
+            'maintain' => 'maintain',
+            default => throw new ModuleException('AUTHZ_OPERATION_UNDECLARED', 'Reference capability is invalid.'),
+        };
+        $search = trim($search);
+        if (mb_strlen($search) > 100) {
+            throw new ModuleException('REFERENCE_SEARCH_INVALID', 'Reference search is limited to 100 characters.');
         }
-        $options = [];
-        foreach (array_chunk($ids, 500) as $chunk) {
-            $placeholders = implode(', ', array_fill(0, count($chunk), '?'));
-            $statement = $this->pdo->prepare(<<<SQL
-SELECT id, code, name, owner_type, owner_tenant_id
-FROM pa_example_reference_item
-WHERE status = 'active' AND CAST(id AS CHAR) IN ({$placeholders})
-ORDER BY code, id
+        $constraint = (new PdoQueryConstraintCompiler())->compile(
+            $this->authorization->queryConstraint(
+                $context,
+                'example.reference-item',
+                $operation,
+                $targets,
+            ),
+        );
+        $searchSql = $search === ''
+            ? ''
+            : " AND LOCATE(:search, CONCAT(item.code, ' ', item.name)) > 0";
+        $parameters = $constraint->parameters;
+        if ($search !== '') {
+            $parameters['search'] = $search;
+        }
+        $statement = $this->pdo->prepare(<<<SQL
+SELECT item.id, item.code, item.name, item.owner_type, item.owner_tenant_id
+FROM pa_example_reference_item item
+WHERE item.status = 'active' AND {$constraint->sql}{$searchSql}
+ORDER BY item.code, item.id
+LIMIT 100
 SQL);
-            $statement->execute($chunk);
-            foreach ($statement->fetchAll(PDO::FETCH_ASSOC) as $row) {
-                $options[] = new ReferenceOption(
-                    (string) $row['id'],
-                    (string) $row['code'],
-                    (string) $row['name'],
-                    (string) $row['owner_type'],
-                    $row['owner_tenant_id'] === null ? null : (int) $row['owner_tenant_id'],
-                );
-            }
-        }
-        usort($options, static fn(ReferenceOption $left, ReferenceOption $right): int => [
-            $left->code,
-            $left->id,
-        ] <=> [
-            $right->code,
-            $right->id,
-        ]);
+        $statement->execute($parameters);
 
-        return $options;
+        return array_values(array_map(
+            static fn(array $row): ReferenceOption => new ReferenceOption(
+                (string) $row['id'],
+                (string) $row['code'],
+                (string) $row['name'],
+                (string) $row['owner_type'],
+                $row['owner_tenant_id'] === null ? null : (int) $row['owner_tenant_id'],
+            ),
+            $statement->fetchAll(PDO::FETCH_ASSOC),
+        ));
     }
 }

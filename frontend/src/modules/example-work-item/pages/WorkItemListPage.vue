@@ -70,10 +70,22 @@ const loadList = async () => {
 }
 
 const loadAggregate = async () => {
+  if (selected.value.length === 0) {
+    aggregate.value = null
+    return
+  }
   loading.value = true
   problem.value = null
   try {
-    const value = runtime.unwrap(await runtime.tenantClient.GET('/api/v1/example/work-items/aggregate'))
+    const value = runtime.unwrap(await runtime.tenantClient.GET('/api/v1/example/work-items/aggregate', {
+      params: {
+        query: {
+          target_resource_key: scope.targetResourceKey,
+          target_role: scope.targetRole,
+          target_id: selected.value.map(target => target.target_id),
+        },
+      },
+    }))
     const data = isRecord(value) && isRecord(value.data) ? value.data : value
     aggregate.value = isRecord(data) ? data : null
   } catch (error) {

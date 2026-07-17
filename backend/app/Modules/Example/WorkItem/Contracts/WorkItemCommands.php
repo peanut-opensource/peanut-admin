@@ -7,22 +7,23 @@ namespace PeanutAdmin\App\Modules\Example\WorkItem\Contracts;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 
-interface WorkItemQuery
+interface WorkItemCommands
 {
-    public function list(
+    public function create(
         TenantContext $context,
         TypedResourceTargetCollection $targets,
-        int $page = 1,
-        int $pageSize = 20,
-        ?string $status = null,
-        string $sort = '-created_at',
-    ): WorkItemPage;
+        CreateWorkItem $command,
+    ): string;
 
-    public function get(TenantContext $context, string $workItemId): WorkItemView;
-
-    /** @return array{total: int, by_status: array<string, int>} */
-    public function aggregate(
+    /** @return array{id: string, revision: int} */
+    public function update(
         TenantContext $context,
+        string $workItemId,
+        int $expectedRevision,
         TypedResourceTargetCollection $targets,
+        ?string $title,
+        ?string $status,
     ): array;
+
+    public function bulkWrite(): never;
 }

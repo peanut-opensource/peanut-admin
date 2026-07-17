@@ -34,7 +34,11 @@
   "contracts": {
     "exports": [
       "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemQuery",
-      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemPage"
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemPage",
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\CreateWorkItem",
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemCommands",
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemPolicyPublication",
+      "PeanutAdmin\\App\\Modules\\Example\\WorkItem\\Contracts\\WorkItemRuntimeProvider"
     ],
     "events": ["example.work-item.changed.v1"]
   },

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PeanutAdmin\App\Modules\Example\WorkItem\Application;
+namespace PeanutAdmin\App\Modules\Example\WorkItem\Contracts;
 
 final readonly class CreateWorkItem
 {
@@ -11,6 +11,5 @@ final readonly class CreateWorkItem
         public ?string $queueId,
         public string $referenceItemId,
         public string $title,
-        public ?int $departmentId,
     ) {}
 }

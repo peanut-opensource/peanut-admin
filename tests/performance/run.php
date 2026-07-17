@@ -8,6 +8,7 @@ use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
+use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Persistence\PdoTargetQuery;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
 use PeanutAdmin\DataPermission\Constraint\PdoQueryConstraintCompiler;
@@ -207,7 +208,7 @@ SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
     }
     $resolver = new PdoTargetResolver($pdo);
     $authorization = DataPermissionRuntimeFactory::create($pdo, $root);
-    $workItems = new PdoWorkItemQuery($pdo, $authorization);
+    $workItems = new PdoWorkItemQuery($pdo, $authorization, new PdoTargetQuery($pdo));
     $results = [];
     foreach ([10, 500, 5000] as $size) {
         $ids = array_slice($projectIds, 0, $size);

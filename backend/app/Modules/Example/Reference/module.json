@@ -29,7 +29,8 @@
   "contracts": {
     "exports": [
       "PeanutAdmin\\App\\Modules\\Example\\Reference\\Contracts\\ReferenceQuery",
-      "PeanutAdmin\\App\\Modules\\Example\\Reference\\Contracts\\ReferenceScope"
+      "PeanutAdmin\\App\\Modules\\Example\\Reference\\Contracts\\ReferenceScope",
+      "PeanutAdmin\\App\\Modules\\Example\\Reference\\Contracts\\ReferenceRuntimeProvider"
     ],
     "events": ["example.reference.changed.v1"]
   },

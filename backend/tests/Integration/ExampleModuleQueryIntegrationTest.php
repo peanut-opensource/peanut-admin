@@ -12,6 +12,7 @@ use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Authorization\PdoReferenceScopeProvider;
 use PeanutAdmin\App\Modules\Example\Reference\Infrastructure\Persistence\PdoReferenceQuery;
 use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Authorization\PdoTargetResolver;
+use PeanutAdmin\App\Modules\Example\Target\Infrastructure\Persistence\PdoTargetQuery;
 use PeanutAdmin\App\Modules\Example\WorkItem\Infrastructure\Persistence\PdoWorkItemQuery;
 use PeanutAdmin\DataPermission\Context\AuthorizationContext;
 use PeanutAdmin\DataPermission\Target\TargetCatalogQuery;
@@ -107,6 +108,7 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
         $authorizationFixture = new PdoAuthorizationFixtureSeeder($this->pdo);
         $roleId = $authorizationFixture->roleForMember($tenantId, $memberId);
         $authorizationFixture->grantPermissions($tenantId, $roleId, [
+            'example.reference.read',
             'example.work-item.read',
         ]);
         $projectSetId = $authorizationFixture->targetSet(
@@ -120,6 +122,14 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
             $roleId,
             $memberId,
             'example.work-item',
+            'list',
+            [['example.project' => $projectSetId]],
+        );
+        $authorizationFixture->allowTargetGroups(
+            $tenantId,
+            $roleId,
+            $memberId,
+            'example.reference-item',
             'list',
             [['example.project' => $projectSetId]],
         );
@@ -142,7 +152,7 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
 
         $authorization = DataPermissionRuntimeFactory::create($this->pdo);
         $targets = new TypedResourceTargetCollection([$targetSet]);
-        $page = (new PdoWorkItemQuery($this->pdo, $authorization))->list(
+        $page = (new PdoWorkItemQuery($this->pdo, $authorization, new PdoTargetQuery($this->pdo)))->list(
             $authentication->context,
             $targets,
             2,
@@ -163,8 +173,8 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
                 'view',
             ),
         );
-        self::assertCount(1, (new PdoReferenceQuery($this->pdo, $scope))->candidates(
-            $authorizationContext,
+        self::assertCount(1, (new PdoReferenceQuery($this->pdo, $authorization))->candidates(
+            $authentication->context,
             new TypedResourceTargetCollection([$targetSet]),
             'view',
         ));
