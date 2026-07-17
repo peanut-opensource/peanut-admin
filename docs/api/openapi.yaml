@@ -180,7 +180,7 @@ paths:
     get: { operationId: listTenantModules, summary: listTenantModules, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::modules', x-permission: core.module.read, responses: *standardResponses }
   /api/v1/modules/{module_key}/config:
     parameters: [{ $ref: '#/components/parameters/ModuleKey' }]
-    patch: { operationId: updateTenantModuleConfig, summary: updateTenantModuleConfig, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.module.configure, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    patch: { operationId: updateTenantModuleConfig, summary: updateTenantModuleConfig, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::updateModuleConfig', x-permission: core.module.configure, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
   /api/v1/audit-events:
     get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
   /api/v1/menus:

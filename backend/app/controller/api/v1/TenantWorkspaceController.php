@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\v1;
 
+use PeanutAdmin\App\module\OpisTenantModuleConfigValidator;
+use PeanutAdmin\App\module\RuntimeModuleRegistry;
+use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
+use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Authorization\PdoTenantAuthorizationRepository;
 use PeanutAdmin\Kernel\Authorization\RevisionPermissionCache;
 use PeanutAdmin\Kernel\Authorization\TenantAuthorizationEvaluator;
 use PeanutAdmin\Kernel\Menu\MenuDefinition;
 use PeanutAdmin\Kernel\Menu\MenuRegistry;
 use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
+use PeanutAdmin\Kernel\Module\TenantModuleConfigurationService;
 use PeanutAdmin\Kernel\Tenancy\Application\TenantWorkspaceQueryService;
 use think\Request;
 use think\Response;
@@ -40,6 +45,36 @@ final class TenantWorkspaceController
             $context = MemberAdminRuntime::context($request);
 
             return ['data' => $this->service()->modules($context->tenantId)];
+        });
+    }
+
+    public function updateModuleConfig(Request $request, string $moduleKey): Response
+    {
+        return MemberAdminRuntime::run($request, function () use ($request, $moduleKey): array {
+            $context = MemberAdminRuntime::context($request);
+            $body = MemberAdminRuntime::body($request);
+            $config = $body['config'] ?? null;
+            if (!is_array($config) || array_is_list($config)) {
+                throw AdminAccessException::invalid(
+                    'MODULE_CONFIG_INVALID',
+                    'The config field must be a JSON object.',
+                );
+            }
+            $module = (new TenantModuleConfigurationService(
+                MemberAdminRuntime::pdo(),
+                RuntimeModuleRegistry::compile(),
+                new OpisTenantModuleConfigValidator(),
+            ))->update(
+                $context->tenantId,
+                $moduleKey,
+                $config,
+                Etag::parse(MemberAdminRuntime::header($request, 'if-match')),
+                $context->memberId,
+                $context->accountId,
+                $context->requestId,
+            );
+
+            return ['data' => $module, 'etag' => Etag::format((int) $module['revision'])];
         });
     }
 

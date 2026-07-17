@@ -39,7 +39,7 @@ return [
     'PATCH /api/v1/departments/{department_id}' => ['PeanutAdmin\\App\\controller\\api\\v1\\DepartmentController', 'update', 'core.department.update', 'updateDepartment', 'tenant', true, false, null],
     'PATCH /api/v1/example/work-items/{work_item_id}' => ['PeanutAdmin\\App\\controller\\api\\v1\\ContractController', 'handle', 'example.work-item.update', 'updateExampleWorkItem', 'tenant', true, true, 'example.work-item'],
     'PATCH /api/v1/members/{member_id}' => ['PeanutAdmin\\App\\controller\\api\\v1\\MemberController', 'update', 'core.member.update', 'updateMember', 'tenant', true, false, null],
-    'PATCH /api/v1/modules/{module_key}/config' => ['PeanutAdmin\\App\\controller\\api\\v1\\ContractController', 'handle', 'core.module.configure', 'updateTenantModuleConfig', 'tenant', true, false, null],
+    'PATCH /api/v1/modules/{module_key}/config' => ['PeanutAdmin\\App\\controller\\api\\v1\\TenantWorkspaceController', 'updateModuleConfig', 'core.module.configure', 'updateTenantModuleConfig', 'tenant', true, false, null],
     'PATCH /api/v1/roles/{role_id}' => ['PeanutAdmin\\App\\controller\\api\\v1\\RoleController', 'update', 'core.role.update', 'updateRole', 'tenant', true, false, null],
     'POST /api/platform/v1/auth/login' => ['PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformAuthController', 'login', null, 'platformLogin', 'platform', false, false, null],
     'POST /api/platform/v1/auth/logout' => ['PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformAuthController', 'logout', null, 'logoutPlatformSession', 'platform', true, false, null],

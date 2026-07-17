@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\authorization;
 
-use Composer\InstalledVersions;
 use PDO;
-use PeanutAdmin\App\module\ModuleRegistryFactory;
+use PeanutAdmin\App\module\RuntimeModuleRegistry;
 use PeanutAdmin\DataPermission\Catalog\PdoResourceOperationCatalog;
 use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Policy\PdoPolicyRepository;
@@ -18,7 +17,6 @@ use PeanutAdmin\Kernel\Authorization\RevisionPermissionCache;
 use PeanutAdmin\Kernel\Authorization\TenantAuthorizationEvaluator;
 use PeanutAdmin\Kernel\Module\ManifestDocument;
 use PeanutAdmin\Kernel\Module\ModuleException;
-use PeanutAdmin\Kernel\Package as KernelPackage;
 
 final class DataPermissionRuntimeFactory
 {
@@ -27,17 +25,7 @@ final class DataPermissionRuntimeFactory
     public static function create(PDO $pdo, ?string $root = null): DataPermissionEngine
     {
         $root ??= dirname(__DIR__, 3);
-        /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>} $config */
-        $config = require $root . '/backend/config/modules.php';
-        $modules = (new ModuleRegistryFactory(
-            array_map(
-                static fn(string $path): string => $root . '/' . ltrim($path, '/'),
-                $config['roots'],
-            ),
-            $config['frontend_components'],
-            $config['kernel_version'],
-            self::kernelPath() . '/resources/schemas/module-manifest.schema.json',
-        ))->compileAndCheckBoundaries();
+        $modules = RuntimeModuleRegistry::compile($root);
         $runtime = new DataPermissionRuntimeRegistry();
         foreach ($modules->modules as $module) {
             $provider = self::moduleProvider($module);
@@ -70,15 +58,5 @@ final class DataPermissionRuntimeFactory
         }
 
         return new $class();
-    }
-
-    private static function kernelPath(): string
-    {
-        $path = InstalledVersions::getInstallPath(KernelPackage::NAME);
-        if (!is_string($path) || $path === '') {
-            throw new ModuleException('MODULE_CONTRACT_MISSING', 'Kernel package installation path is unavailable.');
-        }
-
-        return rtrim($path, '/');
     }
 }
