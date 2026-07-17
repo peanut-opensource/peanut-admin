@@ -19,19 +19,41 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop-chromium',
+      testIgnore: '**/full-stack.e2e.ts',
       use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } },
     },
     {
       name: 'mobile-chromium',
+      testIgnore: '**/full-stack.e2e.ts',
+      use: { browserName: 'chromium', viewport: { width: 390, height: 844 } },
+    },
+    {
+      name: 'full-stack-desktop',
+      testMatch: '**/full-stack.e2e.ts',
+      use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } },
+    },
+    {
+      name: 'full-stack-mobile',
+      testMatch: '**/full-stack.e2e.ts',
       use: { browserName: 'chromium', viewport: { width: 390, height: 844 } },
     },
   ],
-  webServer: {
-    command: 'pnpm --filter @peanut-admin/reference-admin build && pnpm --filter @peanut-admin/reference-admin exec vite preview --host 127.0.0.1 --port 4173',
-    url: 'http://127.0.0.1:4173/login',
-    reuseExistingServer: false,
-    timeout: 120_000,
-    stdout: 'ignore',
-    stderr: 'pipe',
-  },
+  webServer: [
+    {
+      command: 'php -S 127.0.0.1:4180 -t backend/public backend/public/router.php',
+      url: 'http://127.0.0.1:4180/api/v1/health',
+      reuseExistingServer: false,
+      timeout: 120_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+    {
+      command: "VITE_API_BASE_URL='' pnpm --filter @peanut-admin/reference-admin build && pnpm --filter @peanut-admin/reference-admin exec vite preview --config tests/fixtures/full-stack-vite.config.ts --host 127.0.0.1 --port 4173 --strictPort",
+      url: 'http://127.0.0.1:4173/login',
+      reuseExistingServer: false,
+      timeout: 120_000,
+      stdout: 'ignore',
+      stderr: 'pipe',
+    },
+  ],
 })

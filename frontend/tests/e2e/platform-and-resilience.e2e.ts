@@ -9,6 +9,7 @@ import {
   loginTenant,
   monitorPageErrors,
   navigateByLink,
+  openNavigationIfNeeded,
 } from '../fixtures/api'
 
 test('platform workspace manages target tenants without tenant audience', async ({ page }, testInfo) => {
@@ -33,30 +34,29 @@ test('platform workspace manages target tenants without tenant audience', async 
   expect(errors).toEqual([])
 })
 
-test('concurrent 401 responses use one refresh rotation', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'mobile-chromium', 'Desktop navigation keeps both requests in one in-memory app instance.')
-  const state = createApiFixtureState()
+test('concurrent 401 responses use one refresh rotation', async ({ page }) => {
+  const state = createApiFixtureState({ refreshDelayMs: 750 })
   const errors = monitorPageErrors(page)
   await installApiFixture(page, state)
   await loginTenant(page)
   state.expireTenantAccess = true
 
-  await page.getByRole('link', { name: '成员管理' }).click({ noWaitAfter: true })
-  await page.getByRole('link', { name: '角色管理' }).click()
+  await navigateByLink(page, '成员管理')
+  await navigateByLink(page, '角色管理')
   await expect(page).toHaveURL(/\/app\/roles$/)
   await expect(page.getByText('Tenant Owner')).toBeVisible()
   expect(state.refreshCount).toBe(1)
   expect(errors).toEqual([])
 })
 
-test('tenant switch prevents a late old-tenant response from appearing', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'mobile-chromium', 'Desktop header owns the explicit tenant switch command.')
+test('tenant switch prevents a late old-tenant response from appearing', async ({ page }) => {
   const state = createApiFixtureState({ memberDelayMs: 500 })
   const errors = monitorPageErrors(page)
   await installApiFixture(page, state)
   await loginTenant(page)
 
-  await page.getByRole('link', { name: '成员管理' }).click({ noWaitAfter: true })
+  await navigateByLink(page, '成员管理')
+  await openNavigationIfNeeded(page)
   await page.getByRole('button', { name: '切换租户' }).click()
   await expect(page).toHaveURL(/\/select-tenant/)
   await page.getByRole('button', { name: '进入工作区' }).click()

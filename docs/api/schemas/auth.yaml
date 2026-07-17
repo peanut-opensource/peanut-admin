@@ -37,6 +37,50 @@ TenantContext:
     tenant_member_id: { $ref: './common.yaml#/$defs/BigIntString' }
     authorization_revision: { $ref: './common.yaml#/$defs/BigIntString' }
 
+ContextAccount:
+  type: object
+  additionalProperties: false
+  required: [id, display_name, avatar_uri]
+  properties:
+    id: { $ref: './common.yaml#/$defs/BigIntString' }
+    display_name: { type: string }
+    avatar_uri: { type: [string, 'null'] }
+
+ContextTenant:
+  type: object
+  additionalProperties: false
+  required: [id, code, display_name, timezone]
+  properties:
+    id: { $ref: './common.yaml#/$defs/BigIntString' }
+    code: { type: string }
+    display_name: { type: string }
+    timezone: { type: string }
+
+ContextMember:
+  type: object
+  additionalProperties: false
+  required: [id, display_name, primary_department_id, role_ids]
+  properties:
+    id: { $ref: './common.yaml#/$defs/BigIntString' }
+    display_name: { type: string }
+    primary_department_id: { type: [string, 'null'] }
+    role_ids:
+      type: array
+      items: { $ref: './common.yaml#/$defs/BigIntString' }
+
+TenantContextView:
+  type: object
+  additionalProperties: false
+  required: [audience, account, tenant, member, module_keys, permission_keys, authorization_revision]
+  properties:
+    audience: { type: string, const: tenant }
+    account: { $ref: '#/ContextAccount' }
+    tenant: { $ref: '#/ContextTenant' }
+    member: { $ref: '#/ContextMember' }
+    module_keys: { type: array, items: { type: string } }
+    permission_keys: { type: array, items: { type: string } }
+    authorization_revision: { $ref: './common.yaml#/$defs/BigIntString' }
+
 TenantAuthentication:
   type: object
   additionalProperties: false
@@ -93,5 +137,5 @@ TenantContextResponse:
   additionalProperties: false
   required: [data, meta]
   properties:
-    data: { $ref: '#/TenantContext' }
+    data: { $ref: '#/TenantContextView' }
     meta: { $ref: './common.yaml#/$defs/RequestMeta' }

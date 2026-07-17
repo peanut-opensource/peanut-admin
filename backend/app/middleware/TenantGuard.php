@@ -15,7 +15,7 @@ final class TenantGuard
     {
         $authorization = $request->header('authorization');
         if (!is_string($authorization) || !str_starts_with($authorization, 'Bearer ')) {
-            throw new AuthException('CONTEXT_TENANT_REQUIRED', 403);
+            throw new AuthException('AUTH_TOKEN_INVALID', 401);
         }
 
         $context = TenantAuthRuntimeFactory::create()->context(

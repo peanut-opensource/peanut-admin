@@ -22,6 +22,7 @@ export interface ApiFixtureState {
   includeUnsafeMenu: boolean
   expireTenantAccess: boolean
   refreshCount: number
+  refreshDelayMs: number
   memberDelayMs: number
   policySelectionForbidden: boolean
   nextProblems: Map<string, FixtureProblem>
@@ -62,6 +63,7 @@ export const createApiFixtureState = (overrides: Partial<ApiFixtureState> = {}):
   includeUnsafeMenu: false,
   expireTenantAccess: false,
   refreshCount: 0,
+  refreshDelayMs: 100,
   memberDelayMs: 0,
   policySelectionForbidden: false,
   nextProblems: new Map(),
@@ -245,7 +247,7 @@ const handleApi = async (route: Route, state: ApiFixtureState): Promise<void> =>
   }
   if (operation === 'POST /api/v1/auth/refresh') {
     state.refreshCount += 1
-    await sleep(100)
+    await sleep(state.refreshDelayMs)
     state.tenantToken = 'tenant-access-2'
     state.expireTenantAccess = false
     await fulfillJson(route, { data: { state: 'authenticated', access_token: state.tenantToken } })

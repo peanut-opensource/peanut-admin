@@ -1,6 +1,47 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "matrix": "G-07",
+  "runners": [
+    {
+      "id": "security-phpunit",
+      "command": "./scripts/test-security",
+      "evidence_roots": [
+        "packages/php/kernel/tests/Integration/Auth",
+        "packages/php/kernel/tests/Integration/Authorization",
+        "packages/php/kernel/tests/Integration/Idempotency",
+        "packages/php/kernel/tests/Integration/Module",
+        "packages/php/kernel/tests/Integration/Schema",
+        "packages/php/kernel/tests/Unit/Api",
+        "packages/php/kernel/tests/Unit/Authorization",
+        "packages/php/kernel/tests/Unit/Context",
+        "packages/php/kernel/tests/Unit/Idempotency",
+        "packages/php/kernel/tests/Unit/Module",
+        "packages/php/data-permission/tests/Integration",
+        "packages/php/data-permission/tests/Security",
+        "packages/php/data-permission/tests/Unit",
+        "backend/tests/Architecture",
+        "backend/tests/Contract",
+        "backend/tests/Security",
+        "tests/security"
+      ],
+      "verification_files": ["scripts/test-security"],
+      "markers": ["--log-junit", "skipped", "packages/php/kernel/tests/Integration/Auth", "packages/php/data-permission/tests/Security", "backend/tests/Security", "tests/security"]
+    },
+    {
+      "id": "browser-playwright",
+      "command": "./scripts/test-browser",
+      "evidence_roots": ["frontend/tests/e2e"],
+      "verification_files": ["scripts/test-browser", "playwright.config.ts"],
+      "markers": ["pnpm exec playwright test", "frontend/tests/e2e", "full-stack.e2e.ts"]
+    },
+    {
+      "id": "web-unit",
+      "command": "./scripts/test-unit",
+      "evidence_roots": ["frontend/tests/routing.spec.ts"],
+      "verification_files": ["scripts/test-unit", "package.json"],
+      "markers": ["pnpm test:unit", "vitest run frontend/tests packages/web"]
+    }
+  ],
   "groups": [
     {
       "ids": ["TEN-001", "TEN-002", "TEN-003", "TEN-004", "TEN-005"],
@@ -43,7 +84,8 @@
         "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testLoginRequiresSelectionAndDoesNotLeakUnknownAccountState",
         "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testFiveFailuresLockCredentialTemporarily",
         "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testIpWindowIsRateLimitedAcrossDifferentIdentifiers",
-        "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testIdentifierWindowIsRateLimitedAcrossDifferentIpAddresses"
+        "packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php::testIdentifierWindowIsRateLimitedAcrossDifferentIpAddresses",
+        "frontend/tests/e2e/full-stack.e2e.ts::real tenant login reaches multi-target read and single-target write"
       ]
     },
     {
@@ -64,7 +106,8 @@
     {
       "ids": ["AUTH-014"],
       "evidence": [
-        "packages/php/kernel/tests/Integration/Auth/PlatformAuthServiceIntegrationTest.php::testAudienceCannotCrossTenantAndPlatformGuards"
+        "packages/php/kernel/tests/Integration/Auth/PlatformAuthServiceIntegrationTest.php::testAudienceCannotCrossTenantAndPlatformGuards",
+        "frontend/tests/e2e/full-stack.e2e.ts::real platform login reaches the protected tenant collection"
       ]
     },
     {
@@ -122,14 +165,16 @@
       "evidence": [
         "packages/php/data-permission/tests/Security/AuthorizationPathParityTest.php::testTypedTargetsCardinalityBulkAndPolicyPublishFailClosed",
         "packages/php/data-permission/tests/Security/AuthorizationPathParityTest.php::testTargetCandidatesArePagedAndPolicyConfigurationNeedsDelegationPermission",
-        "packages/php/data-permission/tests/Integration/Engine/DataPermissionEngineTest.php::testExplicitTargetsValidateCardinalityTypeTenantAndPolicy"
+        "packages/php/data-permission/tests/Integration/Engine/DataPermissionEngineTest.php::testExplicitTargetsValidateCardinalityTypeTenantAndPolicy",
+        "frontend/tests/e2e/full-stack.e2e.ts::real tenant login reaches multi-target read and single-target write"
       ]
     },
     {
       "ids": ["PERM-036", "PERM-037", "PERM-038", "PERM-039"],
       "evidence": [
         "packages/php/data-permission/tests/Security/AuthorizationPathParityTest.php::testSharedMasterVisibilityUsageAndMissingProviderAreFailClosed",
-        "packages/php/data-permission/tests/Security/AuthorizationPathParityTest.php::testTargetCandidatesArePagedAndPolicyConfigurationNeedsDelegationPermission"
+        "packages/php/data-permission/tests/Security/AuthorizationPathParityTest.php::testTargetCandidatesArePagedAndPolicyConfigurationNeedsDelegationPermission",
+        "frontend/tests/e2e/full-stack.e2e.ts::real tenant login reaches multi-target read and single-target write"
       ]
     },
     {
@@ -178,7 +223,8 @@
       "evidence": [
         "frontend/tests/e2e/tenant-workspace.e2e.ts::manual unauthorized route does not load protected collection",
         "frontend/tests/e2e/platform-and-resilience.e2e.ts::tenant switch prevents a late old-tenant response from appearing",
-        "frontend/tests/routing.spec.ts::uses route_name instead of a backend-provided path or component"
+        "frontend/tests/routing.spec.ts::uses route_name instead of a backend-provided path or component",
+        "frontend/tests/e2e/full-stack.e2e.ts::real tenant login reaches multi-target read and single-target write"
       ]
     },
     {

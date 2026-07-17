@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\controller\api\v1;
 
 use PeanutAdmin\App\controller\api\AuthHttpRuntime;
+use PeanutAdmin\App\controller\api\WorkspaceContextRuntime;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Http\TenantAuthEndpoint;
@@ -65,10 +66,16 @@ final class TenantAuthController
     #[OpenApiHandlerContract]
     public function context(Request $request): Response
     {
-        return AuthHttpRuntime::tenantResponse($this->endpoint()->context(
+        $requestId = AuthHttpRuntime::requestId($request);
+        $context = TenantAuthRuntimeFactory::create()->context(
             AuthHttpRuntime::bearerToken($request),
-            AuthHttpRuntime::requestId($request),
-        ));
+            $requestId,
+        );
+
+        return AuthHttpRuntime::response(200, [
+            'data' => WorkspaceContextRuntime::tenant(MemberAdminRuntime::pdo(), $context),
+            'meta' => ['request_id' => $requestId],
+        ]);
     }
 
     #[OpenApiHandlerContract]

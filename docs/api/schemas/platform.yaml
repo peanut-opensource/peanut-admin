@@ -15,6 +15,25 @@ PlatformContext:
     account_id: { $ref: './common.yaml#/$defs/BigIntString' }
     platform_operator_id: { $ref: './common.yaml#/$defs/BigIntString' }
 
+PlatformContextOperator:
+  type: object
+  additionalProperties: false
+  required: [id, display_name]
+  properties:
+    id: { $ref: './common.yaml#/$defs/BigIntString' }
+    display_name: { type: string }
+
+PlatformContextView:
+  type: object
+  additionalProperties: false
+  required: [audience, account, operator, permission_keys, authorization_revision]
+  properties:
+    audience: { type: string, const: platform }
+    account: { $ref: './auth.yaml#/ContextAccount' }
+    operator: { $ref: '#/PlatformContextOperator' }
+    permission_keys: { type: array, items: { type: string } }
+    authorization_revision: { type: string, minLength: 1 }
+
 PlatformAuthentication:
   type: object
   additionalProperties: false
@@ -39,7 +58,7 @@ PlatformContextResponse:
   additionalProperties: false
   required: [data, meta]
   properties:
-    data: { $ref: '#/PlatformContext' }
+    data: { $ref: '#/PlatformContextView' }
     meta: { $ref: './common.yaml#/$defs/RequestMeta' }
 
 PlatformOperator:

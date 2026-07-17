@@ -223,5 +223,16 @@ const closeMobileNavigation = () => {
         </RouterLink>
       </template>
     </nav>
+    <div class="mobile-navigation-commands">
+      <el-button
+        v-if="audience === 'tenant'"
+        @click="switchTenant"
+      >
+        切换租户
+      </el-button>
+      <el-button @click="logout">
+        退出
+      </el-button>
+    </div>
   </el-drawer>
 </template>

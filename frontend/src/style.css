@@ -262,6 +262,19 @@ button:focus-visible {
   background: #314039;
 }
 
+.mobile-navigation-commands {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--pa-shell-border-color);
+}
+
+.mobile-navigation-commands .el-button {
+  width: 100%;
+  margin: 0;
+}
+
 .pa-shell__workspace {
   display: grid;
   grid-template-columns: var(--pa-shell-sidebar-width) minmax(0, 1fr);
@@ -597,7 +610,7 @@ button:focus-visible {
     display: none;
   }
 
-  .shell-commands .el-button:first-child {
+  .shell-commands .el-button {
     display: none;
   }
 

@@ -60,6 +60,7 @@ final class DataAuthorizationController
                 'data' => array_map(
                     static fn(array $item): array => [
                         'target_resource_key' => $targetResourceKey,
+                        'target_role' => $targetRole,
                         'target_id' => $item['id'],
                         'label' => $item['label'],
                     ],

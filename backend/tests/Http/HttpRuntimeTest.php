@@ -25,9 +25,9 @@ final class HttpRuntimeTest extends TestCase
     {
         $response = $this->request('GET', '/api/v1/members');
 
-        self::assertSame(403, $response->getCode());
+        self::assertSame(401, $response->getCode());
         self::assertSame('application/problem+json', $response->getHeader('Content-Type'));
-        self::assertSame('CONTEXT_TENANT_REQUIRED', $response->getData()['code'] ?? null);
+        self::assertSame('AUTH_TOKEN_INVALID', $response->getData()['code'] ?? null);
         self::assertSame('nosniff', $response->getHeader('X-Content-Type-Options'));
     }
 

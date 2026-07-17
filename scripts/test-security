@@ -4,6 +4,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+php_only=0
+if [[ "${1:-}" == '--php-only' ]]; then
+  php_only=1
+  shift
+fi
+if [[ "$#" -ne 0 ]]; then
+  echo 'ERROR: test-security accepts only --php-only' >&2
+  exit 1
+fi
+
 docker compose up -d mysql
 
 for attempt in $(seq 1 60); do
@@ -89,4 +99,10 @@ if rg -n 'localStorage|sessionStorage' frontend/src packages/web; then
   exit 1
 fi
 
-echo 'G-07 security qualification: OK (0 skipped)'
+if [[ "$php_only" -eq 1 ]]; then
+  echo 'G-07 PHP security qualification: OK (0 skipped)'
+  exit 0
+fi
+
+./scripts/test-browser frontend/tests/e2e/full-stack.e2e.ts
+echo 'G-07 security qualification: OK (PHP and real browser, 0 skipped)'

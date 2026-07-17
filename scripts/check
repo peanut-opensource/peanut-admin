@@ -12,7 +12,7 @@ PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture
 ./scripts/check-supply-chain
 ./scripts/test-unit
 ./scripts/test-integration
-./scripts/test-security
+./scripts/test-security --php-only
 ./scripts/test-browser
 ./scripts/test-recovery
 ./scripts/test-performance

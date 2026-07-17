@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\controller\api\platform\v1;
 
 use PeanutAdmin\App\controller\api\AuthHttpRuntime;
+use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
+use PeanutAdmin\App\controller\api\WorkspaceContextRuntime;
 use PeanutAdmin\App\middleware\PlatformAuthRuntimeFactory;
 use PeanutAdmin\Kernel\Api\ApiException;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
@@ -53,18 +55,15 @@ final class PlatformAuthController
     #[OpenApiHandlerContract]
     public function context(Request $request): Response
     {
+        $requestId = AuthHttpRuntime::requestId($request);
         $context = $this->service()->context(
             AuthHttpRuntime::bearerToken($request),
-            AuthHttpRuntime::requestId($request),
+            $requestId,
         );
 
         return AuthHttpRuntime::response(200, [
-            'data' => [
-                'audience' => 'platform',
-                'account_id' => (string) $context->accountId,
-                'platform_operator_id' => (string) $context->operatorId,
-            ],
-            'meta' => ['request_id' => AuthHttpRuntime::requestId($request)],
+            'data' => WorkspaceContextRuntime::platform(MemberAdminRuntime::pdo(), $context),
+            'meta' => ['request_id' => $requestId],
         ]);
     }
 
