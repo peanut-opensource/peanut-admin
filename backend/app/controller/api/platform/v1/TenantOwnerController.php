@@ -75,9 +75,6 @@ final class TenantOwnerController
 
     private function service(): TenantOwnerAdminService
     {
-        return new TenantOwnerAdminService(
-            MemberAdminRuntime::pdo(),
-            (string) (getenv('AUTH_IDENTIFIER_HMAC_KEY') ?: ''),
-        );
+        return new TenantOwnerAdminService(MemberAdminRuntime::pdo());
     }
 }

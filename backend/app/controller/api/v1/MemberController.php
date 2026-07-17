@@ -151,9 +151,6 @@ final class MemberController
 
     private function service(): MemberAdminService
     {
-        return new MemberAdminService(
-            MemberAdminRuntime::pdo(),
-            (string) (getenv('AUTH_IDENTIFIER_HMAC_KEY') ?: ''),
-        );
+        return new MemberAdminService(MemberAdminRuntime::pdo());
     }
 }
