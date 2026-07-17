@@ -117,4 +117,20 @@ PEANUT_BOOTSTRAP_PASSWORD='docs-example-password-only' \
 
 PEANUT_INTEGRATION=1 php vendor/bin/phpunit examples/module-contract/ExampleModuleContractTest.php
 
+php -r '
+$routes = require "backend/route/openapi-generated.php";
+if (count($routes) !== 75) {
+    fwrite(STDERR, "ERROR: documentation expects exactly 75 current P0 operations\n");
+    exit(1);
+}
+foreach ($routes as $route => $binding) {
+    if (str_ends_with($binding[0], "\\ContractController")) {
+        fwrite(STDERR, "ERROR: documented P0 operation uses a fallback handler: {$route}\n");
+        exit(1);
+    }
+}
+'
+
+./scripts/verify-internal-starter
+
 echo 'Documentation examples: OK'

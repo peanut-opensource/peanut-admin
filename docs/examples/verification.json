@@ -62,10 +62,16 @@
       "source_contains": "refresh_reused"
     },
     {
-      "document": "docs/guide/troubleshooting.md",
-      "document_contains": "API_OPERATION_UNAVAILABLE",
-      "source": "backend/app/controller/api/v1/ContractController.php",
-      "source_contains": "API_OPERATION_UNAVAILABLE"
+      "document": "docs/api/index.md",
+      "document_contains": "All 75 operations",
+      "source": "backend/tests/Contract/OpenApiArtifactTest.php",
+      "source_contains": "assertCount(75, $routes)"
+    },
+    {
+      "document": "docs/guide/internal-starter.md",
+      "document_contains": "./scripts/verify-internal-starter",
+      "source": "scripts/verify-internal-starter",
+      "source_contains": "Internal starter: OK"
     },
     {
       "document": "docs/reference/kernel-schema.md",

@@ -37,6 +37,7 @@ export default defineConfig({
         items: [
           { text: 'Guide Overview', link: '/guide/' },
           { text: 'Installation', link: '/guide/installation' },
+          { text: 'Internal Starter', link: '/guide/internal-starter' },
           { text: 'Authentication', link: '/guide/authentication' },
           { text: 'Authorization', link: '/guide/authorization' },
           { text: 'Module Development', link: '/guide/module-development' },

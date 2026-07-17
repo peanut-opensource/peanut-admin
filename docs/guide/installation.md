@@ -2,6 +2,8 @@
 
 The P0 installer is a local CLI workflow. It checks the PHP runtime, validates a static ProductProfile, applies Kernel and data-permission migrations, applies Module migrations in dependency order, bootstraps the first platform owner, and can create one initial tenant owner.
 
+Use the [internal starter](./internal-starter.md) when the goal is to prove that a new host can consume the reusable packages. The reference installation below exercises the complete repository host and database schema.
+
 ## Requirements
 
 - PHP 8.3 with `json`, `pdo`, `pdo_mysql`, `openssl`, and `mbstring`.

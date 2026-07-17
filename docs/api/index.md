@@ -8,4 +8,6 @@ All BIGINT identifiers cross the API boundary as decimal strings. Tenant request
 
 ## Implementation Status
 
-The contract includes operations whose reference-host business handler is not yet implemented. A generated route bound to a `ContractController` returns `503 API_OPERATION_UNAVAILABLE` by design. Generated types and routes prove contract consistency, not handler completeness. Authentication, organization administration, typed-target examples, and the Admin Shell have dedicated runtime tests; consult [P0 Status](../status/) before depending on another operation.
+All 75 operations in the current P0 OpenAPI document bind to concrete reference-host handlers. `./scripts/check-openapi` verifies that each handler exists, accepts the declared path parameters, returns `think\Response`, and carries success status, body, and header metadata matching the generated route.
+
+This statement applies only to operations present in the current P0 document. A future operation is unavailable until its OpenAPI schema, concrete handler, authorization metadata, and automated evidence land together. The unused fail-closed contract fallback classes do not publish an operation.

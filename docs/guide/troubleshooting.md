@@ -44,9 +44,9 @@ Hiding a menu does not repair an inactive Module or missing permission.
 
 A degraded report currently means the cache probe is down while database and application checks are up. Requests may continue, but cache-backed performance and revision behavior need operator attention. The CLI returns non-zero.
 
-## API Returns 503
+## Operation Is Missing From The API
 
-`API_OPERATION_UNAVAILABLE` means the OpenAPI operation exists as a frozen contract but its reference-host handler is still a placeholder. It is not equivalent to a transient database or cache failure. Check the [P0 status](../status/) before building against that operation.
+Only operations in the current P0 OpenAPI document are available. Do not call an unused fallback controller or infer availability from a planned name. Add the operation schema, concrete handler, authorization metadata, generated artifacts, and tests in one scoped change.
 
 ## 403, 404, 412, And 429
 

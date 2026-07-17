@@ -25,6 +25,6 @@ P0 is an internal alpha foundation that downstream teams can extend safely. It i
 
 ## Current Runtime Status
 
-Reusable PHP and web packages, Kernel and data-permission schema, tenant and platform authentication, authorization contracts, fictional example Modules, OpenAPI artifacts, the reference Admin Shell, browser acceptance tests, and local installation/upgrade workflows are implemented.
+Reusable PHP and web packages, Kernel and data-permission schema, tenant and platform authentication, authorization contracts, fictional example Modules, all 75 current P0 OpenAPI handlers, the reference Admin Shell, real full-stack browser tests, local installation/upgrade workflows, and the fixed internal starter are implemented.
 
-Some OpenAPI operations still use explicit `503 API_OPERATION_UNAVAILABLE` reference handlers. Backup recovery, final security/performance/supply-chain gates, and Runtime qualification are not complete until their later P0 tasks pass.
+The internal starter proves package consumption from a clean directory but is not a public generator or long-term template upgrade promise. Recovery requalification, the final aggregate gate, and the nine-role Runtime review remain before P0 candidate qualification.

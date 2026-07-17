@@ -15,12 +15,15 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 - CLI environment preflight, first install, ProductProfile application, local upgrade, migration checksums, and health checks.
 - Buildable developer guide with executable installation and Module examples.
 - Verified reference backup, restore-to-new-database, clean-install, and Alpha/Beta recovery drills.
+- Concrete handlers and typed success contracts for all 75 current P0 OpenAPI operations.
+- Real MySQL, ThinkPHP, and Vite full-stack browser evidence with no `/api/**` interception.
+- Fixed internal starter with reproducible clean-directory install, build, start, and test evidence.
 
 ## Remaining P0 Gates
 
-- Final security, performance, supply-chain, and third-party-license gate.
+- Recovery and clean-install requalification against the current Runtime and internal starter.
+- Final aggregate Runtime gate.
 - Nine-role Runtime review and candidate qualification report.
-- Replacement of remaining `API_OPERATION_UNAVAILABLE` placeholders requires separately scoped implementation tasks; a contract entry alone is not considered available behavior.
 
 ## Intentionally Not In P0
 
@@ -28,7 +31,8 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 - File management, notifications, spreadsheets, queue management UI, and visual schedulers.
 - Plugin marketplace and remote code installation.
 - Group tenants, delegation, franchise collaboration, and cross-tenant business access.
-- POS, mobile, mini-program, or product-specific domain modules.
+- POS, mobile, mini-program, or application-specific domain modules.
+- Public project generator, configurable CRUD generator, or long-term template upgrade contract.
 - Package publication, release tags, or a claim of production-ready public release.
 
 The repository checks are the authoritative evidence for completed implementation. Documentation never upgrades an unimplemented capability by description alone.
