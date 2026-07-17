@@ -45,13 +45,13 @@ composer install \
   --working-dir "$first/backend" \
   --no-interaction \
   --prefer-dist
-pnpm --dir "$first" install
+pnpm --dir "$first" install --frozen-lockfile
 
 composer install \
   --working-dir "$second/backend" \
   --no-interaction \
   --prefer-dist
-pnpm --dir "$second" install
+pnpm --dir "$second" install --frozen-lockfile
 
 cmp "$first/backend/composer.lock" "$second/backend/composer.lock"
 cmp "$first/pnpm-lock.yaml" "$second/pnpm-lock.yaml"

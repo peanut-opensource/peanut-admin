@@ -10,16 +10,17 @@ Create a project in an empty directory:
 ./scripts/create-internal-starter /tmp/peanut-admin-starter
 ```
 
-The command copies the fixed host and local version `0.1.0` package snapshots.
-The generated manifests use Composer path repositories and a pnpm workspace;
-they do not contain a source-repository absolute path.
+The command copies the fixed host, committed dependency lock files, and local
+version `0.1.0` package snapshots. The generated manifests use Composer path
+repositories and a pnpm workspace; they do not contain a source-repository
+absolute path.
 
 Install, build, and test the generated project:
 
 ```bash
 cd /tmp/peanut-admin-starter
 composer install --working-dir backend
-pnpm install
+pnpm install --frozen-lockfile
 php backend/tests/smoke.php
 pnpm typecheck
 pnpm test

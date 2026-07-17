@@ -13,7 +13,7 @@ final class StarterExceptionHandler extends Handle
 {
     public function render(Request $request, Throwable $exception): Response
     {
-        error_log($exception::class . ': ' . $exception->getMessage());
+        error_log('Peanut Admin internal starter request failed.');
 
         return Response::create([
             'error' => 'STARTER_REQUEST_FAILED',

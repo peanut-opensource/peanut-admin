@@ -12,6 +12,7 @@ $required = [
     '.env.example',
     'README.md',
     'backend/composer.json',
+    'backend/composer.lock',
     'backend/app/provider.php',
     'backend/config/cache.php',
     'backend/public/index.php',
@@ -27,6 +28,7 @@ $required = [
     'packages/web/admin-core/package.json',
     'packages/web/admin-shell/package.json',
     'pnpm-workspace.yaml',
+    'pnpm-lock.yaml',
 ];
 foreach ($required as $path) {
     if (!is_file($root . '/' . $path)) {
