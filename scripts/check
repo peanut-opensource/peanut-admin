@@ -16,6 +16,7 @@ PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture
 ./scripts/test-browser
 ./scripts/test-recovery
 ./scripts/test-performance
+./scripts/verify-internal-starter
 ./scripts/check-workspace
 
 php -r '

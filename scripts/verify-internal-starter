@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+workdir="$(mktemp -d "${TMPDIR:-/tmp}/peanut-admin-starter.XXXXXX")"
+first="$workdir/first"
+second="$workdir/second"
+backend_pid=''
+frontend_pid=''
+
+cleanup() {
+  if [[ -n "$frontend_pid" ]]; then
+    kill "$frontend_pid" 2>/dev/null || true
+    wait "$frontend_pid" 2>/dev/null || true
+  fi
+  if [[ -n "$backend_pid" ]]; then
+    kill "$backend_pid" 2>/dev/null || true
+    wait "$backend_pid" 2>/dev/null || true
+  fi
+  rm -rf "$workdir"
+}
+trap cleanup EXIT
+
+./scripts/create-internal-starter "$first"
+./scripts/create-internal-starter "$second"
+diff -ru --exclude='.DS_Store' "$first" "$second"
+
+php tests/starter/assert-generated-starter.php "$first"
+
+if rg -n '/Users/|/home/[^/]+/|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|password\s*=' "$first"; then
+  echo 'ERROR: generated starter contains a private path or secret-like value' >&2
+  exit 1
+fi
+if rg -ni '\bDCS\b|Finance Manager|门店|仓库|商品|库存|结算|\bwarehouse\b|\binventory\b|\btrade\b|\bsettlement\b' \
+  "$first/README.md" \
+  "$first/backend" \
+  "$first/frontend"; then
+  echo 'ERROR: generated starter contains product-specific language' >&2
+  exit 1
+fi
+
+composer install \
+  --working-dir "$first/backend" \
+  --no-interaction \
+  --prefer-dist
+pnpm --dir "$first" install
+
+composer install \
+  --working-dir "$second/backend" \
+  --no-interaction \
+  --prefer-dist
+pnpm --dir "$second" install
+
+cmp "$first/backend/composer.lock" "$second/backend/composer.lock"
+cmp "$first/pnpm-lock.yaml" "$second/pnpm-lock.yaml"
+
+php "$first/backend/tests/smoke.php"
+pnpm --dir "$first" typecheck
+pnpm --dir "$first" test
+pnpm --dir "$first" build
+
+free_port() {
+  php -r '
+  $socket = stream_socket_server("tcp://127.0.0.1:0", $errorCode, $errorMessage);
+  if ($socket === false) {
+      fwrite(STDERR, "ERROR: {$errorMessage}\n");
+      exit(1);
+  }
+  $name = stream_socket_get_name($socket, false);
+  fclose($socket);
+  echo substr((string) strrchr((string) $name, ":"), 1);
+  '
+}
+
+backend_port="$(free_port)"
+frontend_port="$(free_port)"
+
+php -S "127.0.0.1:$backend_port" \
+  -t "$first/backend/public" \
+  "$first/backend/public/router.php" \
+  >"$workdir/backend.log" 2>&1 &
+backend_pid="$!"
+
+pnpm --dir "$first" --filter @peanut-admin/internal-starter-admin preview \
+  --host 127.0.0.1 \
+  --port "$frontend_port" \
+  >"$workdir/frontend.log" 2>&1 &
+frontend_pid="$!"
+
+wait_for_url() {
+  local url="$1"
+  local log="$2"
+  for attempt in $(seq 1 60); do
+    if curl --fail --silent --show-error "$url" >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "ERROR: starter service did not become ready: $url" >&2
+  sed -n '1,240p' "$log" >&2
+  return 1
+}
+
+wait_for_url "http://127.0.0.1:$backend_port/health" "$workdir/backend.log"
+wait_for_url "http://127.0.0.1:$frontend_port" "$workdir/frontend.log"
+
+health="$(curl --fail --silent --show-error "http://127.0.0.1:$backend_port/health")"
+greeting="$(curl --fail --silent --show-error "http://127.0.0.1:$backend_port/api/example/greeting")"
+
+STARTER_HEALTH="$health" STARTER_GREETING="$greeting" php -r '
+$health = json_decode((string) getenv("STARTER_HEALTH"), true, 512, JSON_THROW_ON_ERROR);
+$greeting = json_decode((string) getenv("STARTER_GREETING"), true, 512, JSON_THROW_ON_ERROR);
+if (($health["status"] ?? null) !== "ok"
+    || ($health["packages"]["kernel"] ?? null) !== "0.1.0"
+    || ($health["packages"]["data_permission"] ?? null) !== "0.1.0"
+    || ($greeting["module_key"] ?? null) !== "example.greeting") {
+    fwrite(STDERR, "ERROR: starter HTTP smoke response is invalid\n");
+    exit(1);
+}
+'
+
+echo 'Internal starter: OK (reproducible create, install, build, start, test)'

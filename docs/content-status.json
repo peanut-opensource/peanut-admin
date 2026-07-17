@@ -170,6 +170,13 @@
       "replacement": null
     },
     {
+      "path": "docs/guide/internal-starter.md",
+      "title": "Internal Starter",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/reference/kernel-schema.md",
       "title": "Kernel Schema And States",
       "status": "canonical",
