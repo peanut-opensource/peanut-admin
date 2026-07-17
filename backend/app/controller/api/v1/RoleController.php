@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\v1;
 
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Authorization\Application\RoleAdminService;
 use think\Request;
@@ -11,6 +12,7 @@ use think\Response;
 
 final class RoleController
 {
+    #[OpenApiHandlerContract]
     public function index(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -30,6 +32,7 @@ final class RoleController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function show(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {
@@ -40,6 +43,10 @@ final class RoleController
         });
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function create(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -64,6 +71,7 @@ final class RoleController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function update(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {
@@ -84,6 +92,7 @@ final class RoleController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function replacePermissions(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {
@@ -104,6 +113,7 @@ final class RoleController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function archive(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {

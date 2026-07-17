@@ -6,6 +6,7 @@ namespace PeanutAdmin\App\controller\api\v1;
 
 use PeanutAdmin\App\module\OpisTenantModuleConfigValidator;
 use PeanutAdmin\App\module\RuntimeModuleRegistry;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Authorization\PdoTenantAuthorizationRepository;
@@ -21,6 +22,7 @@ use think\Response;
 
 final class TenantWorkspaceController
 {
+    #[OpenApiHandlerContract]
     public function show(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -30,6 +32,7 @@ final class TenantWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function permissions(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -39,6 +42,7 @@ final class TenantWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function modules(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -48,6 +52,7 @@ final class TenantWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function updateModuleConfig(Request $request, string $moduleKey): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $moduleKey): array {
@@ -78,6 +83,7 @@ final class TenantWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function auditEvents(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -97,6 +103,7 @@ final class TenantWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function menus(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {

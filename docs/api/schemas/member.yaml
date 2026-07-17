@@ -1,8 +1,10 @@
 Member:
   type: object
+  additionalProperties: false
   required: [id, status, security_revision, revision, role_keys]
   properties:
     id: { type: string, pattern: '^[1-9][0-9]*$' }
+    account_id: { type: string, pattern: '^[1-9][0-9]*$' }
     display_name: { type: [string, 'null'], maxLength: 120 }
     member_no: { type: [string, 'null'], maxLength: 64 }
     member_type: { type: string, enum: [internal, external] }
@@ -42,3 +44,21 @@ ReplaceMemberRolesRequest:
       type: array
       uniqueItems: true
       items: { type: string, pattern: '^[1-9][0-9]*$' }
+
+MemberResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/Member' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+MemberListResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data:
+      type: array
+      items: { $ref: '#/Member' }
+    meta: { $ref: './common.yaml#/$defs/PageMeta' }

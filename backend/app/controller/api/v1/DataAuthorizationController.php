@@ -7,6 +7,7 @@ namespace PeanutAdmin\App\controller\api\v1;
 use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
 use PeanutAdmin\DataPermission\Application\DataPolicyAdminService;
 use PeanutAdmin\DataPermission\Target\TargetCatalogQuery;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use think\Request;
@@ -14,6 +15,7 @@ use think\Response;
 
 final class DataAuthorizationController
 {
+    #[OpenApiHandlerContract]
     public function targetCandidates(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -79,6 +81,7 @@ final class DataAuthorizationController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function getRolePolicy(
         Request $request,
         string $roleId,
@@ -103,6 +106,7 @@ final class DataAuthorizationController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function replaceRolePolicy(
         Request $request,
         string $roleId,

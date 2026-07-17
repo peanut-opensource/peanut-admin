@@ -6,6 +6,7 @@ namespace PeanutAdmin\App\controller\api\v1;
 
 use PeanutAdmin\App\controller\api\AuthHttpRuntime;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Http\TenantAuthEndpoint;
 use PeanutAdmin\Kernel\Http\TenantRefreshCookie;
 use think\Request;
@@ -13,6 +14,7 @@ use think\Response;
 
 final class TenantAuthController
 {
+    #[OpenApiHandlerContract]
     public function login(Request $request): Response
     {
         $body = AuthHttpRuntime::body($request);
@@ -30,6 +32,7 @@ final class TenantAuthController
         ));
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::AUTHENTICATED_HEADERS)]
     public function selectTenant(Request $request): Response
     {
         $body = AuthHttpRuntime::body($request);
@@ -45,6 +48,7 @@ final class TenantAuthController
         ));
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::AUTHENTICATED_HEADERS)]
     public function refresh(Request $request): Response
     {
         $refreshToken = AuthHttpRuntime::requiredCookie($request, TenantRefreshCookie::NAME);
@@ -58,6 +62,7 @@ final class TenantAuthController
         ));
     }
 
+    #[OpenApiHandlerContract]
     public function context(Request $request): Response
     {
         return AuthHttpRuntime::tenantResponse($this->endpoint()->context(
@@ -66,6 +71,7 @@ final class TenantAuthController
         ));
     }
 
+    #[OpenApiHandlerContract]
     public function switchChallenge(Request $request): Response
     {
         return AuthHttpRuntime::tenantResponse($this->endpoint()->switchChallenge(
@@ -76,6 +82,11 @@ final class TenantAuthController
         ));
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 204,
+        hasJsonBody: false,
+        headers: OpenApiHandlerContract::SESSION_CLEARED_HEADERS,
+    )]
     public function logout(Request $request): Response
     {
         return AuthHttpRuntime::tenantResponse($this->endpoint()->logout(
@@ -84,6 +95,11 @@ final class TenantAuthController
         ));
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 204,
+        hasJsonBody: false,
+        headers: OpenApiHandlerContract::SESSION_CLEARED_HEADERS,
+    )]
     public function logoutAll(Request $request): Response
     {
         return AuthHttpRuntime::tenantResponse($this->endpoint()->logoutAll(

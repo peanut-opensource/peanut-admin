@@ -1,5 +1,6 @@
 TenantOwnerCandidate:
   type: object
+  additionalProperties: false
   required: [tenant_id, member]
   properties:
     tenant_id: { type: string, pattern: '^[1-9][0-9]*$' }
@@ -23,3 +24,11 @@ ActivateTenantOwnerCandidateRequest:
   required: [change_reason]
   properties:
     change_reason: { type: string, minLength: 1, maxLength: 500 }
+
+TenantOwnerCandidateResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/TenantOwnerCandidate' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }

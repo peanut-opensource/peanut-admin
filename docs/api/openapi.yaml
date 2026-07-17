@@ -11,33 +11,151 @@ servers:
 security:
   - bearerAuth: []
 
-x-standard-responses: &standardResponses
-  '200':
-    description: Successful response
-    content:
-      application/json:
-        schema: { $ref: './schemas/common.yaml#/$defs/SuccessResponse' }
+x-read-errors: &readErrors
   '401': { $ref: '#/components/responses/Problem' }
   '403': { $ref: '#/components/responses/Problem' }
   '404': { $ref: '#/components/responses/Problem' }
   '422': { $ref: '#/components/responses/Problem' }
-  '429': { $ref: '#/components/responses/Problem' }
+  '429': { $ref: '#/components/responses/RateLimitedProblem' }
+  '500': { $ref: '#/components/responses/Problem' }
   '503': { $ref: '#/components/responses/Problem' }
-x-write-responses: &writeResponses
-  '200':
-    description: Successful command
-    content:
-      application/json:
-        schema: { $ref: './schemas/common.yaml#/$defs/SuccessResponse' }
-  '201':
-    description: Resource created
-    content:
-      application/json:
-        schema: { $ref: './schemas/common.yaml#/$defs/SuccessResponse' }
+x-write-errors: &writeErrors
+  <<: *readErrors
   '409': { $ref: '#/components/responses/Problem' }
   '412': { $ref: '#/components/responses/Problem' }
-  '422': { $ref: '#/components/responses/Problem' }
   '428': { $ref: '#/components/responses/Problem' }
+
+x-tenant-login-responses: &tenantLoginResponses
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/TenantLoginOk' }
+x-tenant-authenticated-responses: &tenantAuthenticatedResponses
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/TenantAuthenticatedOk' }
+x-tenant-selection-responses: &tenantSelectionResponses
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/TenantSelectionOk' }
+x-tenant-context-responses: &tenantContextResponses
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/TenantContextOk' }
+x-platform-authenticated-responses: &platformAuthenticatedResponses
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/PlatformAuthenticatedOk' }
+x-platform-context-responses: &platformContextResponses
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/PlatformContextOk' }
+
+x-tenant-response: &tenantResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/TenantOk' }
+x-tenant-list-response: &tenantListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/TenantListOk' }
+x-tenant-created-response: &tenantCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/TenantCreated' }
+x-tenant-versioned-response: &tenantVersionedResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/TenantVersionedOk' }
+x-permission-list-response: &permissionListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/PermissionListOk' }
+x-tenant-module-response: &tenantModuleResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/TenantModuleOk' }
+x-tenant-module-list-response: &tenantModuleListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/TenantModuleListOk' }
+x-tenant-audit-list-response: &tenantAuditListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/TenantAuditListOk' }
+x-menu-list-response: &menuListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/MenuListOk' }
+
+x-member-response: &memberResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/MemberOk' }
+x-member-created-response: &memberCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/MemberCreated' }
+x-member-list-response: &memberListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/MemberListOk' }
+x-department-response: &departmentResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/DepartmentOk' }
+x-department-created-response: &departmentCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/DepartmentCreated' }
+x-department-list-response: &departmentListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/DepartmentListOk' }
+x-role-response: &roleResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/RoleOk' }
+x-role-created-response: &roleCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/RoleCreated' }
+x-role-list-response: &roleListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/RoleListOk' }
+x-owner-created-response: &ownerCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/TenantOwnerCreated' }
+x-owner-response: &ownerResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/TenantOwnerOk' }
+
+x-target-candidate-list-response: &targetCandidateListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/TargetCandidateListOk' }
+x-data-policy-response: &dataPolicyResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/DataPolicyOk' }
+
+x-work-item-list-response: &workItemListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/WorkItemListOk' }
+x-work-item-created-response: &workItemCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/WorkItemCreated' }
+x-work-item-response: &workItemResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/WorkItemOk' }
+x-work-item-updated-response: &workItemUpdatedResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/WorkItemUpdated' }
+x-work-item-aggregate-response: &workItemAggregateResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/WorkItemAggregateOk' }
+x-reference-candidate-list-response: &referenceCandidateListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/ReferenceCandidateListOk' }
+x-work-item-policy-published-response: &workItemPolicyPublishedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/WorkItemPolicyPublished' }
+
+x-platform-operator-response: &platformOperatorResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/PlatformOperatorOk' }
+x-platform-operator-created-response: &platformOperatorCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/PlatformOperatorCreated' }
+x-platform-operator-list-response: &platformOperatorListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/PlatformOperatorListOk' }
+x-platform-role-response: &platformRoleResponse
+  <<: *writeErrors
+  '200': { $ref: './responses.yaml#/PlatformRoleOk' }
+x-platform-role-created-response: &platformRoleCreatedResponse
+  <<: *writeErrors
+  '201': { $ref: './responses.yaml#/PlatformRoleCreated' }
+x-platform-role-list-response: &platformRoleListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/PlatformRoleListOk' }
+x-platform-audit-list-response: &platformAuditListResponse
+  <<: *readErrors
+  '200': { $ref: './responses.yaml#/PlatformAuditListOk' }
 
 paths:
   /api/v1/auth/login:
@@ -47,7 +165,7 @@ paths:
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::login'
       security: []
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/auth.yaml#/TenantLoginRequest' } } } }
-      responses: *writeResponses
+      responses: *tenantLoginResponses
   /api/v1/auth/tenants/select:
     post:
       operationId: selectTenant
@@ -55,45 +173,55 @@ paths:
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::selectTenant'
       security: []
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/auth.yaml#/SelectTenantRequest' } } } }
-      responses: *writeResponses
+      responses: *tenantAuthenticatedResponses
   /api/v1/auth/refresh:
     post:
       operationId: refreshTenantSession
       summary: refreshTenantSession
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::refresh'
       security: []
-      responses: *writeResponses
+      responses: *tenantAuthenticatedResponses
   /api/v1/auth/context:
     get:
       operationId: getTenantContext
       summary: getTenantContext
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::context'
-      responses: *standardResponses
+      responses: *tenantContextResponses
   /api/v1/auth/tenant-switch/challenge:
     post:
       operationId: createTenantSwitchChallenge
       summary: createTenantSwitchChallenge
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::switchChallenge'
-      responses: *writeResponses
+      responses: *tenantSelectionResponses
   /api/v1/auth/logout:
     post:
       operationId: logoutTenantSession
       summary: logoutTenantSession
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::logout'
       responses:
-        '204': { description: Session revoked }
-        '401': { $ref: '#/components/responses/Problem' }
+        <<: *readErrors
+        '204':
+          description: Session revoked
+          headers:
+            X-Request-Id: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: no-store } }
+            Set-Cookie: { schema: { type: string } }
   /api/v1/auth/logout-all:
     post:
       operationId: logoutAllTenantSessions
       summary: logoutAllTenantSessions
       x-handler: 'PeanutAdmin\App\controller\api\v1\TenantAuthController::logoutAll'
       responses:
-        '204': { description: Sessions revoked }
-        '401': { $ref: '#/components/responses/Problem' }
+        <<: *readErrors
+        '204':
+          description: Sessions revoked
+          headers:
+            X-Request-Id: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: no-store } }
+            Set-Cookie: { schema: { type: string } }
 
   /api/v1/tenant:
-    get: { operationId: getTenant, summary: getTenant, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::show', responses: *standardResponses }
+    get: { operationId: getTenant, summary: getTenant, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::show', responses: *tenantResponse }
   /api/v1/members:
     get:
       operationId: listMembers
@@ -101,17 +229,17 @@ paths:
       x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::index'
       x-permission: core.member.read
       parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
-      responses: *standardResponses
+      responses: *memberListResponse
     post:
       operationId: createPendingMember
       summary: createPendingMember
       x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::create'
       x-permission: core.member.create
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/member.yaml#/CreateMemberRequest' } } } }
-      responses: *writeResponses
+      responses: *memberCreatedResponse
   /api/v1/members/{member_id}:
     parameters: [{ $ref: '#/components/parameters/MemberId' }]
-    get: { operationId: getMember, summary: getMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::show', x-permission: core.member.read, responses: *standardResponses }
+    get: { operationId: getMember, summary: getMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::show', x-permission: core.member.read, responses: *memberResponse }
     patch:
       operationId: updateMember
       summary: updateMember
@@ -119,7 +247,7 @@ paths:
       x-permission: core.member.update
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/member.yaml#/UpdateMemberRequest' } } } }
-      responses: *writeResponses
+      responses: *memberResponse
   /api/v1/members/{member_id}/roles:
     parameters: [{ $ref: '#/components/parameters/MemberId' }]
     put:
@@ -129,62 +257,62 @@ paths:
       x-permission: core.member.role.assign
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/member.yaml#/ReplaceMemberRolesRequest' } } } }
-      responses: *writeResponses
+      responses: *memberResponse
   /api/v1/members/{member_id}/activate:
     parameters: [{ $ref: '#/components/parameters/MemberId' }]
-    post: { operationId: activateMember, summary: activateMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::activate', x-permission: core.member.activate, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *writeResponses }
+    post: { operationId: activateMember, summary: activateMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::activate', x-permission: core.member.activate, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *memberResponse }
   /api/v1/members/{member_id}/suspend:
     parameters: [{ $ref: '#/components/parameters/MemberId' }]
-    post: { operationId: suspendMember, summary: suspendMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::suspend', x-permission: core.member.suspend, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *writeResponses }
+    post: { operationId: suspendMember, summary: suspendMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::suspend', x-permission: core.member.suspend, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *memberResponse }
   /api/v1/members/{member_id}/leave:
     parameters: [{ $ref: '#/components/parameters/MemberId' }]
-    post: { operationId: leaveMember, summary: leaveMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::leave', x-permission: core.member.leave, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *writeResponses }
+    post: { operationId: leaveMember, summary: leaveMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::leave', x-permission: core.member.leave, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *memberResponse }
 
   /api/v1/departments:
-    get: { operationId: listDepartments, summary: listDepartments, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::index', x-permission: core.department.read, responses: *standardResponses }
-    post: { operationId: createDepartment, summary: createDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::create', x-permission: core.department.create, requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/department.yaml#/WriteDepartmentRequest' } } } }, responses: *writeResponses }
+    get: { operationId: listDepartments, summary: listDepartments, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::index', x-permission: core.department.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *departmentListResponse }
+    post: { operationId: createDepartment, summary: createDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::create', x-permission: core.department.create, requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/department.yaml#/WriteDepartmentRequest' } } } }, responses: *departmentCreatedResponse }
   /api/v1/departments/{department_id}:
     parameters: [{ $ref: '#/components/parameters/DepartmentId' }]
-    get: { operationId: getDepartment, summary: getDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::show', x-permission: core.department.read, responses: *standardResponses }
-    patch: { operationId: updateDepartment, summary: updateDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::update', x-permission: core.department.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/department.yaml#/WriteDepartmentRequest' } } } }, responses: *writeResponses }
+    get: { operationId: getDepartment, summary: getDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::show', x-permission: core.department.read, responses: *departmentResponse }
+    patch: { operationId: updateDepartment, summary: updateDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::update', x-permission: core.department.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/department.yaml#/WriteDepartmentRequest' } } } }, responses: *departmentResponse }
   /api/v1/departments/{department_id}/move:
     parameters: [{ $ref: '#/components/parameters/DepartmentId' }]
-    post: { operationId: moveDepartment, summary: moveDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::move', x-permission: core.department.move, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/department.yaml#/MoveDepartmentRequest' } } } }, responses: *writeResponses }
+    post: { operationId: moveDepartment, summary: moveDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::move', x-permission: core.department.move, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/department.yaml#/MoveDepartmentRequest' } } } }, responses: *departmentResponse }
   /api/v1/departments/{department_id}/archive:
     parameters: [{ $ref: '#/components/parameters/DepartmentId' }]
-    post: { operationId: archiveDepartment, summary: archiveDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::archive', x-permission: core.department.archive, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *writeResponses }
+    post: { operationId: archiveDepartment, summary: archiveDepartment, x-handler: 'PeanutAdmin\App\controller\api\v1\DepartmentController::archive', x-permission: core.department.archive, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *departmentResponse }
 
   /api/v1/roles:
-    get: { operationId: listRoles, summary: listRoles, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::index', x-permission: core.role.read, responses: *standardResponses }
-    post: { operationId: createRole, summary: createRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::create', x-permission: core.role.create, requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/role.yaml#/CreateRoleRequest' } } } }, responses: *writeResponses }
+    get: { operationId: listRoles, summary: listRoles, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::index', x-permission: core.role.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *roleListResponse }
+    post: { operationId: createRole, summary: createRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::create', x-permission: core.role.create, requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/role.yaml#/CreateRoleRequest' } } } }, responses: *roleCreatedResponse }
   /api/v1/roles/{role_id}:
     parameters: [{ $ref: '#/components/parameters/RoleId' }]
-    get: { operationId: getRole, summary: getRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::show', x-permission: core.role.read, responses: *standardResponses }
-    patch: { operationId: updateRole, summary: updateRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::update', x-permission: core.role.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/role.yaml#/UpdateRoleRequest' } } } }, responses: *writeResponses }
+    get: { operationId: getRole, summary: getRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::show', x-permission: core.role.read, responses: *roleResponse }
+    patch: { operationId: updateRole, summary: updateRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::update', x-permission: core.role.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/role.yaml#/UpdateRoleRequest' } } } }, responses: *roleResponse }
   /api/v1/roles/{role_id}/archive:
     parameters: [{ $ref: '#/components/parameters/RoleId' }]
-    post: { operationId: archiveRole, summary: archiveRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::archive', x-permission: core.role.archive, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *writeResponses }
+    post: { operationId: archiveRole, summary: archiveRole, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::archive', x-permission: core.role.archive, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *roleResponse }
   /api/v1/roles/{role_id}/permissions:
     parameters: [{ $ref: '#/components/parameters/RoleId' }]
-    put: { operationId: replaceRolePermissions, summary: replaceRolePermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::replacePermissions', x-permission: core.role.permission.assign, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/role.yaml#/ReplaceRolePermissionsRequest' } } } }, responses: *writeResponses }
+    put: { operationId: replaceRolePermissions, summary: replaceRolePermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\RoleController::replacePermissions', x-permission: core.role.permission.assign, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/role.yaml#/ReplaceRolePermissionsRequest' } } } }, responses: *roleResponse }
   /api/v1/roles/{role_id}/data-policies/{resource_key}/{operation}:
     parameters:
       - { $ref: '#/components/parameters/RoleId' }
       - { in: path, name: resource_key, required: true, schema: { type: string } }
       - { in: path, name: operation, required: true, schema: { type: string } }
-    get: { operationId: getRoleDataPolicy, summary: getRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::getRolePolicy', x-permission: core.role.data-policy.read, responses: *standardResponses }
-    put: { operationId: replaceRoleDataPolicy, summary: replaceRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::replaceRolePolicy', x-permission: core.role.data-policy.manage, parameters: [{ $ref: '#/components/parameters/IfMatchOptional' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: getRoleDataPolicy, summary: getRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::getRolePolicy', x-permission: core.role.data-policy.read, responses: *dataPolicyResponse }
+    put: { operationId: replaceRoleDataPolicy, summary: replaceRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::replaceRolePolicy', x-permission: core.role.data-policy.manage, parameters: [{ $ref: '#/components/parameters/IfMatchOptional' }], requestBody: { $ref: '#/components/requestBodies/DataPolicyWrite' }, responses: *dataPolicyResponse }
   /api/v1/permissions:
-    get: { operationId: listPermissions, summary: listPermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::permissions', x-permission: core.permission.read, responses: *standardResponses }
+    get: { operationId: listPermissions, summary: listPermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::permissions', x-permission: core.permission.read, responses: *permissionListResponse }
   /api/v1/modules:
-    get: { operationId: listTenantModules, summary: listTenantModules, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::modules', x-permission: core.module.read, responses: *standardResponses }
+    get: { operationId: listTenantModules, summary: listTenantModules, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::modules', x-permission: core.module.read, responses: *tenantModuleListResponse }
   /api/v1/modules/{module_key}/config:
     parameters: [{ $ref: '#/components/parameters/ModuleKey' }]
-    patch: { operationId: updateTenantModuleConfig, summary: updateTenantModuleConfig, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::updateModuleConfig', x-permission: core.module.configure, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    patch: { operationId: updateTenantModuleConfig, summary: updateTenantModuleConfig, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::updateModuleConfig', x-permission: core.module.configure, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/ModuleConfigWrite' }, responses: *tenantModuleResponse }
   /api/v1/audit-events:
-    get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
+    get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *tenantAuditListResponse }
   /api/v1/menus:
-    get: { operationId: getTenantMenus, summary: getTenantMenus, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::menus', responses: *standardResponses }
+    get: { operationId: getTenantMenus, summary: getTenantMenus, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::menus', responses: *menuListResponse }
   /api/v1/authorization/target-candidates:
     get:
       operationId: listTargetCandidates
@@ -196,9 +324,10 @@ paths:
         - { in: query, name: target_resource_key, required: true, schema: { type: string } }
         - { in: query, name: target_role, required: true, schema: { type: string, default: primary } }
         - { in: query, name: mode, schema: { enum: [runtime, policy-config], default: runtime } }
+        - { in: query, name: q, schema: { type: string, maxLength: 100 } }
         - { $ref: '#/components/parameters/Page' }
         - { $ref: '#/components/parameters/PageSize' }
-      responses: *standardResponses
+      responses: *targetCandidateListResponse
 
   /api/v1/example/work-items:
     get:
@@ -215,9 +344,7 @@ paths:
         - { in: query, name: target_id, required: true, schema: { type: array, items: { type: string } }, explode: false }
         - { in: query, name: status, schema: { enum: [open, active, closed] } }
         - { in: query, name: sort, schema: { enum: [-created_at, created_at, title, -title] } }
-      responses:
-        '200': { description: Authorized multi-target work items, content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/WorkItemListResponse' } } } }
-        '422': { $ref: '#/components/responses/Problem' }
+      responses: *workItemListResponse
     post:
       operationId: createExampleWorkItem
       summary: createExampleWorkItem
@@ -228,7 +355,7 @@ paths:
       requestBody:
         required: true
         content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/CreateWorkItemRequest' } } }
-      responses: *writeResponses
+      responses: *workItemCreatedResponse
   /api/v1/example/work-items/aggregate:
     get:
       operationId: aggregateExampleWorkItems
@@ -240,11 +367,11 @@ paths:
         - { in: query, name: target_resource_key, required: true, schema: { type: string } }
         - { in: query, name: target_role, required: true, schema: { type: string, default: primary } }
         - { in: query, name: target_id, required: true, schema: { type: array, items: { type: string } }, explode: false }
-      responses: *standardResponses
+      responses: *workItemAggregateResponse
   /api/v1/example/work-items/{work_item_id}:
     parameters: [{ in: path, name: work_item_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }]
-    get: { operationId: getExampleWorkItem, summary: getExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ExampleController::getWorkItem', x-module-key: example.work-item, x-permission: example.work-item.read, responses: *standardResponses }
-    patch: { operationId: updateExampleWorkItem, summary: updateExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ExampleController::updateWorkItem', x-module-key: example.work-item, x-permission: example.work-item.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/UpdateWorkItemRequest' } } } }, responses: *writeResponses }
+    get: { operationId: getExampleWorkItem, summary: getExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ExampleController::getWorkItem', x-module-key: example.work-item, x-permission: example.work-item.read, responses: *workItemResponse }
+    patch: { operationId: updateExampleWorkItem, summary: updateExampleWorkItem, x-handler: 'PeanutAdmin\App\controller\api\v1\ExampleController::updateWorkItem', x-module-key: example.work-item, x-permission: example.work-item.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/UpdateWorkItemRequest' } } } }, responses: *workItemUpdatedResponse }
   /api/v1/example/reference-items/candidates:
     get:
       operationId: listExampleReferenceCandidates
@@ -257,82 +384,93 @@ paths:
         - { in: query, name: target_role, required: true, schema: { type: string, default: primary } }
         - { in: query, name: target_id, required: true, schema: { type: string } }
         - { in: query, name: q, schema: { type: string, maxLength: 100 } }
-      responses: *standardResponses
+      responses: *referenceCandidateListResponse
   /api/v1/example/work-item-view-policies:
-    post: { operationId: publishExampleWorkItemPolicy, summary: publishExampleWorkItemPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ExampleController::publishWorkItemPolicy', x-module-key: example.work-item, x-permission: example.work-item.policy-publish, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/PublishWorkItemPolicyRequest' } } } }, responses: *writeResponses }
+    post: { operationId: publishExampleWorkItemPolicy, summary: publishExampleWorkItemPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ExampleController::publishWorkItemPolicy', x-module-key: example.work-item, x-permission: example.work-item.policy-publish, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/example.yaml#/$defs/PublishWorkItemPolicyRequest' } } } }, responses: *workItemPolicyPublishedResponse }
 
   /api/platform/v1/auth/login:
-    post: { operationId: platformLogin, summary: platformLogin, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::login', security: [], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: platformLogin, summary: platformLogin, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::login', security: [], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/PlatformLoginRequest' } } } }, responses: *platformAuthenticatedResponses }
   /api/platform/v1/auth/refresh:
-    post: { operationId: refreshPlatformSession, summary: refreshPlatformSession, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::refresh', security: [], responses: *writeResponses }
+    post: { operationId: refreshPlatformSession, summary: refreshPlatformSession, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::refresh', security: [], responses: *platformAuthenticatedResponses }
   /api/platform/v1/auth/context:
-    get: { operationId: getPlatformContext, summary: getPlatformContext, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::context', responses: *standardResponses }
+    get: { operationId: getPlatformContext, summary: getPlatformContext, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::context', responses: *platformContextResponses }
   /api/platform/v1/auth/logout:
-    post: { operationId: logoutPlatformSession, summary: logoutPlatformSession, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::logout', responses: { '204': { description: Session revoked }, '401': { $ref: '#/components/responses/Problem' } } }
+    post:
+      operationId: logoutPlatformSession
+      summary: logoutPlatformSession
+      x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAuthController::logout'
+      responses:
+        <<: *readErrors
+        '204':
+          description: Session revoked
+          headers:
+            X-Request-Id: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: no-store } }
+            Set-Cookie: { schema: { type: string } }
   /api/platform/v1/tenants:
-    get: { operationId: listPlatformTenants, summary: listPlatformTenants, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::tenants', x-permission: platform.tenant.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
-    post: { operationId: createPlatformTenant, summary: createPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::create', x-permission: platform.tenant.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: listPlatformTenants, summary: listPlatformTenants, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::tenants', x-permission: platform.tenant.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *tenantListResponse }
+    post: { operationId: createPlatformTenant, summary: createPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::create', x-permission: platform.tenant.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/CreatePlatformTenantRequest' } } } }, responses: *tenantCreatedResponse }
   /api/platform/v1/tenants/{tenant_id}:
     parameters: [{ $ref: '#/components/parameters/TenantId' }]
-    get: { operationId: getPlatformTenant, summary: getPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::tenant', x-permission: platform.tenant.read, responses: *standardResponses }
-    patch: { operationId: updatePlatformTenant, summary: updatePlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::update', x-permission: platform.tenant.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: getPlatformTenant, summary: getPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::tenant', x-permission: platform.tenant.read, responses: *tenantVersionedResponse }
+    patch: { operationId: updatePlatformTenant, summary: updatePlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::update', x-permission: platform.tenant.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/UpdatePlatformTenantRequest' } } } }, responses: *tenantVersionedResponse }
   /api/platform/v1/tenants/{tenant_id}/owner-candidates:
     parameters: [{ $ref: '#/components/parameters/TenantId' }]
-    post: { operationId: createTenantOwnerCandidate, summary: createTenantOwnerCandidate, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\TenantOwnerController::create', x-permission: platform.tenant.provision-owner, requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/tenant-owner.yaml#/CreateTenantOwnerCandidateRequest' } } } }, responses: *writeResponses }
+    post: { operationId: createTenantOwnerCandidate, summary: createTenantOwnerCandidate, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\TenantOwnerController::create', x-permission: platform.tenant.provision-owner, requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/tenant-owner.yaml#/CreateTenantOwnerCandidateRequest' } } } }, responses: *ownerCreatedResponse }
   /api/platform/v1/tenants/{tenant_id}/owner-candidates/{member_id}/activate:
     parameters: [{ $ref: '#/components/parameters/TenantId' }, { $ref: '#/components/parameters/MemberId' }]
-    post: { operationId: activateTenantOwnerCandidate, summary: activateTenantOwnerCandidate, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\TenantOwnerController::activate', x-permission: platform.tenant.provision-owner, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/tenant-owner.yaml#/ActivateTenantOwnerCandidateRequest' } } } }, responses: *writeResponses }
+    post: { operationId: activateTenantOwnerCandidate, summary: activateTenantOwnerCandidate, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\TenantOwnerController::activate', x-permission: platform.tenant.provision-owner, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/tenant-owner.yaml#/ActivateTenantOwnerCandidateRequest' } } } }, responses: *ownerResponse }
   /api/platform/v1/tenants/{tenant_id}/activate:
     parameters: [{ $ref: '#/components/parameters/TenantId' }]
-    post: { operationId: activatePlatformTenant, summary: activatePlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::activate', x-permission: platform.tenant.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: activatePlatformTenant, summary: activatePlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::activate', x-permission: platform.tenant.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *tenantVersionedResponse }
   /api/platform/v1/tenants/{tenant_id}/suspend:
     parameters: [{ $ref: '#/components/parameters/TenantId' }]
-    post: { operationId: suspendPlatformTenant, summary: suspendPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::suspend', x-permission: platform.tenant.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: suspendPlatformTenant, summary: suspendPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::suspend', x-permission: platform.tenant.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *tenantVersionedResponse }
   /api/platform/v1/tenants/{tenant_id}/close:
     parameters: [{ $ref: '#/components/parameters/TenantId' }]
-    post: { operationId: closePlatformTenant, summary: closePlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::close', x-permission: platform.tenant.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: closePlatformTenant, summary: closePlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::close', x-permission: platform.tenant.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *tenantVersionedResponse }
   /api/platform/v1/tenants/{tenant_id}/modules/{module_key}:
     parameters: [{ $ref: '#/components/parameters/TenantId' }, { $ref: '#/components/parameters/ModuleKey' }]
-    put: { operationId: enablePlatformTenantModule, summary: enablePlatformTenantModule, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::enableModule', x-permission: platform.tenant.module.manage, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
-    delete: { operationId: disablePlatformTenantModule, summary: disablePlatformTenantModule, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::disableModule', x-permission: platform.tenant.module.manage, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    put: { operationId: enablePlatformTenantModule, summary: enablePlatformTenantModule, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::enableModule', x-permission: platform.tenant.module.manage, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/EnableTenantModuleRequest' } } } }, responses: *tenantModuleResponse }
+    delete: { operationId: disablePlatformTenantModule, summary: disablePlatformTenantModule, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::disableModule', x-permission: platform.tenant.module.manage, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *tenantModuleResponse }
   /api/platform/v1/operators:
-    get: { operationId: listPlatformOperators, summary: listPlatformOperators, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::operators', x-permission: platform.operator.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
-    post: { operationId: createPlatformOperator, summary: createPlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::createOperator', x-permission: platform.operator.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: listPlatformOperators, summary: listPlatformOperators, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::operators', x-permission: platform.operator.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *platformOperatorListResponse }
+    post: { operationId: createPlatformOperator, summary: createPlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::createOperator', x-permission: platform.operator.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/CreatePlatformOperatorRequest' } } } }, responses: *platformOperatorCreatedResponse }
   /api/platform/v1/operators/{operator_id}:
     parameters: [{ $ref: '#/components/parameters/OperatorId' }]
-    get: { operationId: getPlatformOperator, summary: getPlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::operator', x-permission: platform.operator.read, responses: *standardResponses }
-    patch: { operationId: updatePlatformOperator, summary: updatePlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::updateOperator', x-permission: platform.operator.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: getPlatformOperator, summary: getPlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::operator', x-permission: platform.operator.read, responses: *platformOperatorResponse }
+    patch: { operationId: updatePlatformOperator, summary: updatePlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::updateOperator', x-permission: platform.operator.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/UpdatePlatformOperatorRequest' } } } }, responses: *platformOperatorResponse }
   /api/platform/v1/operators/{operator_id}/roles:
     parameters: [{ $ref: '#/components/parameters/OperatorId' }]
-    put: { operationId: replacePlatformOperatorRoles, summary: replacePlatformOperatorRoles, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::replaceOperatorRoles', x-permission: platform.operator.role.assign, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    put: { operationId: replacePlatformOperatorRoles, summary: replacePlatformOperatorRoles, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::replaceOperatorRoles', x-permission: platform.operator.role.assign, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ReplacePlatformOperatorRolesRequest' } } } }, responses: *platformOperatorResponse }
   /api/platform/v1/operators/{operator_id}/suspend:
     parameters: [{ $ref: '#/components/parameters/OperatorId' }]
-    post: { operationId: suspendPlatformOperator, summary: suspendPlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::suspendOperator', x-permission: platform.operator.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: suspendPlatformOperator, summary: suspendPlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::suspendOperator', x-permission: platform.operator.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *platformOperatorResponse }
   /api/platform/v1/operators/{operator_id}/activate:
     parameters: [{ $ref: '#/components/parameters/OperatorId' }]
-    post: { operationId: activatePlatformOperator, summary: activatePlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::activateOperator', x-permission: platform.operator.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: activatePlatformOperator, summary: activatePlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::activateOperator', x-permission: platform.operator.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *platformOperatorResponse }
   /api/platform/v1/operators/{operator_id}/close:
     parameters: [{ $ref: '#/components/parameters/OperatorId' }]
-    post: { operationId: closePlatformOperator, summary: closePlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::closeOperator', x-permission: platform.operator.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: closePlatformOperator, summary: closePlatformOperator, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::closeOperator', x-permission: platform.operator.lifecycle, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *platformOperatorResponse }
   /api/platform/v1/roles:
-    get: { operationId: listPlatformRoles, summary: listPlatformRoles, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::roles', x-permission: platform.role.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
-    post: { operationId: createPlatformRole, summary: createPlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::createRole', x-permission: platform.role.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: listPlatformRoles, summary: listPlatformRoles, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::roles', x-permission: platform.role.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *platformRoleListResponse }
+    post: { operationId: createPlatformRole, summary: createPlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::createRole', x-permission: platform.role.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/CreatePlatformRoleRequest' } } } }, responses: *platformRoleCreatedResponse }
   /api/platform/v1/roles/{role_id}:
     parameters: [{ $ref: '#/components/parameters/RoleId' }]
-    get: { operationId: getPlatformRole, summary: getPlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::role', x-permission: platform.role.read, responses: *standardResponses }
-    patch: { operationId: updatePlatformRole, summary: updatePlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::updateRole', x-permission: platform.role.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: getPlatformRole, summary: getPlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::role', x-permission: platform.role.read, responses: *platformRoleResponse }
+    patch: { operationId: updatePlatformRole, summary: updatePlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::updateRole', x-permission: platform.role.update, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/UpdatePlatformRoleRequest' } } } }, responses: *platformRoleResponse }
   /api/platform/v1/roles/{role_id}/archive:
     parameters: [{ $ref: '#/components/parameters/RoleId' }]
-    post: { operationId: archivePlatformRole, summary: archivePlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::archiveRole', x-permission: platform.role.archive, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    post: { operationId: archivePlatformRole, summary: archivePlatformRole, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::archiveRole', x-permission: platform.role.archive, parameters: [{ $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ChangeReasonRequest' } } } }, responses: *platformRoleResponse }
   /api/platform/v1/roles/{role_id}/permissions:
     parameters: [{ $ref: '#/components/parameters/RoleId' }]
-    put: { operationId: replacePlatformRolePermissions, summary: replacePlatformRolePermissions, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::replaceRolePermissions', x-permission: platform.role.permission.assign, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    put: { operationId: replacePlatformRolePermissions, summary: replacePlatformRolePermissions, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformAccessController::replaceRolePermissions', x-permission: platform.role.permission.assign, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/ReplacePlatformRolePermissionsRequest' } } } }, responses: *platformRoleResponse }
   /api/platform/v1/permissions:
-    get: { operationId: listPlatformPermissions, summary: listPlatformPermissions, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::permissions', x-permission: platform.permission.read, responses: *standardResponses }
+    get: { operationId: listPlatformPermissions, summary: listPlatformPermissions, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::permissions', x-permission: platform.permission.read, responses: *permissionListResponse }
   /api/platform/v1/audit-events:
-    get: { operationId: listPlatformAuditEvents, summary: listPlatformAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::auditEvents', x-permission: platform.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *standardResponses }
+    get: { operationId: listPlatformAuditEvents, summary: listPlatformAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::auditEvents', x-permission: platform.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *platformAuditListResponse }
   /api/platform/v1/menus:
-    get: { operationId: getPlatformMenus, summary: getPlatformMenus, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::menus', responses: *standardResponses }
+    get: { operationId: getPlatformMenus, summary: getPlatformMenus, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::menus', responses: *menuListResponse }
 
 components:
   securitySchemes:
@@ -353,42 +491,36 @@ components:
     OperatorId: { in: path, name: operator_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     ModuleKey: { in: path, name: module_key, required: true, schema: { type: string, pattern: '^[a-z][a-z0-9.-]+$' } }
   requestBodies:
-    GenericWrite:
+    ModuleConfigWrite:
       required: true
       content:
         application/json:
           schema:
             type: object
             additionalProperties: false
+            required: [config]
             properties:
-              email: { type: string, format: email }
-              password: { type: string, writeOnly: true }
-              tenant_code: { type: [string, 'null'] }
-              challenge_token: { type: string, writeOnly: true }
-              display_name: { type: [string, 'null'], maxLength: 160 }
-              initial_password: { type: string, writeOnly: true }
-              code: { type: string, maxLength: 96 }
-              name: { type: string, maxLength: 160 }
-              description: { type: [string, 'null'], maxLength: 500 }
-              locale: { type: string }
-              timezone: { type: string }
-              parent_id: { type: [string, 'null'] }
-              primary_department_id: { type: [string, 'null'] }
-              sort_order: { type: integer }
-              role_ids: { type: array, uniqueItems: true, items: { type: string } }
-              permission_keys: { type: array, uniqueItems: true, items: { type: string } }
-              status: { type: string }
-              source: { type: string }
-              config: { type: object }
-              effective_at: { type: [string, 'null'], format: date-time }
-              expires_at: { type: [string, 'null'], format: date-time }
-              change_reason: { type: string, maxLength: 500 }
-              reason: { type: string, maxLength: 500 }
-              groups: { type: array, items: { type: object } }
-              targets: { type: array, items: { $ref: './schemas/common.yaml#/$defs/TargetSet' } }
+              config: { type: object, additionalProperties: true }
+    DataPolicyWrite:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: './schemas/authorization.yaml#/ReplaceDataPolicyRequest' }
   responses:
     Problem:
       description: RFC 9457 problem response
+      headers:
+        X-Request-Id: { schema: { type: string } }
+        Cache-Control: { schema: { type: string, const: no-store } }
+      content:
+        application/problem+json:
+          schema: { $ref: './schemas/common.yaml#/$defs/Problem' }
+    RateLimitedProblem:
+      description: RFC 9457 rate limit problem response
+      headers:
+        X-Request-Id: { schema: { type: string } }
+        Cache-Control: { schema: { type: string, const: no-store } }
+        Retry-After: { schema: { type: integer, minimum: 1 } }
       content:
         application/problem+json:
           schema: { $ref: './schemas/common.yaml#/$defs/Problem' }

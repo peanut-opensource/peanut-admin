@@ -25,6 +25,27 @@ final class OpenApiArtifactTest extends TestCase
         self::assertStringContainsString('TargetSet', $types);
         self::assertStringContainsString('SelectTenantRequest', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
+        self::assertStringNotContainsString('data: unknown', $types);
+        self::assertDoesNotMatchRegularExpression('/(?:\| unknown|unknown \|)/', $types);
+    }
+
+    public function testGeneratedRoutesCarryTypedSuccessContracts(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+
+        foreach ($routes as $route => $binding) {
+            self::assertCount(12, $binding, $route);
+            $status = $binding[8];
+            $mediaType = $binding[9];
+            $headers = $binding[10];
+            $schema = $binding[11];
+
+            self::assertContains($status, [200, 201, 204], $route);
+            self::assertSame($status === 204 ? null : 'application/json', $mediaType, $route);
+            self::assertContains('X-Request-Id', $headers, $route);
+            self::assertContains('Cache-Control', $headers, $route);
+            self::assertSame($status === 204 ? null : true, $schema === null ? null : true, $route);
+        }
     }
 
     public function testGeneratedRoutesKeepAudienceAndPermissionContractsSeparate(): void

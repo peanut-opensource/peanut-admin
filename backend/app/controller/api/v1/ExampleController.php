@@ -17,6 +17,7 @@ use PeanutAdmin\App\Modules\Example\WorkItem\Contracts\WorkItemView;
 use PeanutAdmin\DataPermission\Engine\DataPermissionEngine;
 use PeanutAdmin\DataPermission\Exception\DataAuthorizationException;
 use PeanutAdmin\DataPermission\Target\TypedResourceTargetCollection;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Membership\Application\MemberAdminService;
@@ -27,6 +28,7 @@ use think\Response;
 
 final class ExampleController
 {
+    #[OpenApiHandlerContract]
     public function listWorkItems(Request $request): Response
     {
         return $this->run($request, function () use ($request): array {
@@ -69,6 +71,10 @@ final class ExampleController
         });
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function createWorkItem(Request $request): Response
     {
         return $this->run($request, function () use ($request): array {
@@ -101,6 +107,7 @@ final class ExampleController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function getWorkItem(Request $request, string $workItemId): Response
     {
         return $this->run($request, function () use ($request, $workItemId): array {
@@ -113,6 +120,7 @@ final class ExampleController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function updateWorkItem(Request $request, string $workItemId): Response
     {
         return $this->run($request, function () use ($request, $workItemId): array {
@@ -134,6 +142,7 @@ final class ExampleController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function aggregateWorkItems(Request $request): Response
     {
         return $this->run($request, function () use ($request): array {
@@ -147,6 +156,7 @@ final class ExampleController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function referenceCandidates(Request $request): Response
     {
         return $this->run($request, function () use ($request): array {
@@ -179,6 +189,10 @@ final class ExampleController
         });
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function publishWorkItemPolicy(Request $request): Response
     {
         return $this->run($request, function () use ($request): array {

@@ -1,5 +1,6 @@
 Role:
   type: object
+  additionalProperties: false
   required: [id, key, name, is_builtin, status, revision, permission_keys]
   properties:
     id: { type: string, pattern: '^[1-9][0-9]*$' }
@@ -39,3 +40,21 @@ ReplaceRolePermissionsRequest:
       type: array
       uniqueItems: true
       items: { type: string }
+
+RoleResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/Role' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+RoleListResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data:
+      type: array
+      items: { $ref: '#/Role' }
+    meta: { $ref: './common.yaml#/$defs/PageMeta' }

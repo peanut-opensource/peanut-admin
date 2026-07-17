@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\controller\api\platform\v1;
 
 use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Context\PlatformContext;
@@ -15,6 +16,10 @@ use think\Response;
 
 final class PlatformAccessController
 {
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function createOperator(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -38,6 +43,7 @@ final class PlatformAccessController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function updateOperator(Request $request, string $operatorId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $operatorId): array {
@@ -57,6 +63,7 @@ final class PlatformAccessController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function replaceOperatorRoles(Request $request, string $operatorId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $operatorId): array {
@@ -77,21 +84,28 @@ final class PlatformAccessController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function suspendOperator(Request $request, string $operatorId): Response
     {
         return $this->transitionOperator($request, $operatorId, PlatformOperatorStatus::Suspended);
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function activateOperator(Request $request, string $operatorId): Response
     {
         return $this->transitionOperator($request, $operatorId, PlatformOperatorStatus::Active);
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function closeOperator(Request $request, string $operatorId): Response
     {
         return $this->transitionOperator($request, $operatorId, PlatformOperatorStatus::Closed);
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function createRole(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -115,6 +129,7 @@ final class PlatformAccessController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function updateRole(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {
@@ -135,6 +150,7 @@ final class PlatformAccessController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function archiveRole(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {
@@ -153,6 +169,7 @@ final class PlatformAccessController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function replaceRolePermissions(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {

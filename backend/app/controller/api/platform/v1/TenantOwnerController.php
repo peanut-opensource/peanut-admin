@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\controller\api\platform\v1;
 
 use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Context\PlatformContext;
@@ -14,6 +15,10 @@ use think\Response;
 
 final class TenantOwnerController
 {
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function create(Request $request, string $tenantId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $tenantId): array {
@@ -40,6 +45,7 @@ final class TenantOwnerController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function activate(Request $request, string $tenantId, string $memberId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $tenantId, $memberId): array {

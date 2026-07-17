@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\v1;
 
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Membership\Application\MemberAdminService;
 use think\Request;
@@ -11,6 +12,7 @@ use think\Response;
 
 final class MemberController
 {
+    #[OpenApiHandlerContract]
     public function index(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -31,6 +33,7 @@ final class MemberController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function show(Request $request, string $memberId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $memberId): array {
@@ -41,6 +44,10 @@ final class MemberController
         });
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function create(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -65,6 +72,7 @@ final class MemberController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function update(Request $request, string $memberId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $memberId): array {
@@ -91,6 +99,7 @@ final class MemberController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function replaceRoles(Request $request, string $memberId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $memberId): array {
@@ -111,16 +120,19 @@ final class MemberController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function activate(Request $request, string $memberId): Response
     {
         return $this->transition($request, $memberId, 'activate');
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function suspend(Request $request, string $memberId): Response
     {
         return $this->transition($request, $memberId, 'suspend');
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function leave(Request $request, string $memberId): Response
     {
         return $this->transition($request, $memberId, 'leave');

@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\controller\api\platform\v1;
 
 use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
+use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Authorization\RevisionPermissionCache;
 use PeanutAdmin\Kernel\Context\PlatformContext;
 use PeanutAdmin\Kernel\Menu\MenuDefinition;
@@ -19,6 +21,7 @@ use think\Response;
 
 final class PlatformWorkspaceController
 {
+    #[OpenApiHandlerContract]
     public function tenants(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -28,15 +31,19 @@ final class PlatformWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function tenant(Request $request, string $tenantId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $tenantId): array {
             $this->context($request);
 
-            return ['data' => $this->service()->tenant((int) $tenantId)];
+            $tenant = $this->service()->tenant((int) $tenantId);
+
+            return ['data' => $tenant, 'etag' => Etag::format((int) $tenant['revision'])];
         });
     }
 
+    #[OpenApiHandlerContract]
     public function operators(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -46,15 +53,19 @@ final class PlatformWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function operator(Request $request, string $operatorId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $operatorId): array {
             $this->context($request);
 
-            return ['data' => $this->service()->operator((int) $operatorId)];
+            $operator = $this->service()->operator((int) $operatorId);
+
+            return ['data' => $operator, 'etag' => Etag::format((int) $operator['security_revision'])];
         });
     }
 
+    #[OpenApiHandlerContract]
     public function roles(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -64,15 +75,19 @@ final class PlatformWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function role(Request $request, string $roleId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $roleId): array {
             $this->context($request);
 
-            return ['data' => $this->service()->role((int) $roleId)];
+            $role = $this->service()->role((int) $roleId);
+
+            return ['data' => $role, 'etag' => Etag::format((int) $role['revision'])];
         });
     }
 
+    #[OpenApiHandlerContract]
     public function permissions(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -82,6 +97,7 @@ final class PlatformWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function auditEvents(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -91,6 +107,7 @@ final class PlatformWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
     public function menus(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {

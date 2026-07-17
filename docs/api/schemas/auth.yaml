@@ -14,3 +14,84 @@ SelectTenantRequest:
   properties:
     challenge_token: { type: string, minLength: 16, writeOnly: true }
     tenant_id: { $ref: './common.yaml#/$defs/BigIntString' }
+
+TenantChoice:
+  type: object
+  additionalProperties: false
+  required: [tenant_id, tenant_code, tenant_name, tenant_member_id, member_display_name]
+  properties:
+    tenant_id: { $ref: './common.yaml#/$defs/BigIntString' }
+    tenant_code: { type: string }
+    tenant_name: { type: string }
+    tenant_member_id: { $ref: './common.yaml#/$defs/BigIntString' }
+    member_display_name: { type: string }
+
+TenantContext:
+  type: object
+  additionalProperties: false
+  required: [audience, account_id, tenant_id, tenant_member_id]
+  properties:
+    audience: { type: string, const: tenant }
+    account_id: { $ref: './common.yaml#/$defs/BigIntString' }
+    tenant_id: { $ref: './common.yaml#/$defs/BigIntString' }
+    tenant_member_id: { $ref: './common.yaml#/$defs/BigIntString' }
+    authorization_revision: { $ref: './common.yaml#/$defs/BigIntString' }
+
+TenantAuthentication:
+  type: object
+  additionalProperties: false
+  required: [state, access_token, token_type, expires_in, context]
+  properties:
+    state: { type: string, const: authenticated }
+    access_token: { type: string }
+    token_type: { type: string, const: Bearer }
+    expires_in: { type: integer, minimum: 1 }
+    context: { $ref: '#/TenantContext' }
+
+TenantSelection:
+  type: object
+  additionalProperties: false
+  required: [state, challenge_token, expires_at, tenants]
+  properties:
+    state: { type: string, const: tenant_selection_required }
+    challenge_token: { type: string }
+    expires_at: { type: string, format: date-time }
+    tenants:
+      type: array
+      minItems: 1
+      items: { $ref: '#/TenantChoice' }
+
+TenantLoginResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data:
+      oneOf:
+        - { $ref: '#/TenantAuthentication' }
+        - { $ref: '#/TenantSelection' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+TenantAuthenticationResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/TenantAuthentication' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+TenantSelectionResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/TenantSelection' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+TenantContextResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/TenantContext' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }

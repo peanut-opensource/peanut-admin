@@ -9,6 +9,7 @@ use Exception;
 use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
 use PeanutAdmin\App\module\OpisTenantModuleConfigValidator;
 use PeanutAdmin\App\module\RuntimeModuleRegistry;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
 use PeanutAdmin\Kernel\Context\PlatformContext;
@@ -21,6 +22,10 @@ use think\Response;
 
 final class PlatformTenantController
 {
+    #[OpenApiHandlerContract(
+        successStatus: 201,
+        headers: OpenApiHandlerContract::CREATED_HEADERS,
+    )]
     public function create(Request $request): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request): array {
@@ -46,6 +51,7 @@ final class PlatformTenantController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function update(Request $request, string $tenantId): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $tenantId): array {
@@ -68,21 +74,25 @@ final class PlatformTenantController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function activate(Request $request, string $tenantId): Response
     {
         return $this->transition($request, $tenantId, TenantStatus::Active);
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function suspend(Request $request, string $tenantId): Response
     {
         return $this->transition($request, $tenantId, TenantStatus::Suspended);
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function close(Request $request, string $tenantId): Response
     {
         return $this->transition($request, $tenantId, TenantStatus::Closed);
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function enableModule(Request $request, string $tenantId, string $moduleKey): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $tenantId, $moduleKey): array {
@@ -124,6 +134,7 @@ final class PlatformTenantController
         });
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::VERSIONED_HEADERS)]
     public function disableModule(Request $request, string $tenantId, string $moduleKey): Response
     {
         return MemberAdminRuntime::run($request, function () use ($request, $tenantId, $moduleKey): array {

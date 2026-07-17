@@ -16,8 +16,13 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
 pnpm exec redocly lint docs/api/openapi.yaml --format=summary
-pnpm exec redocly bundle docs/api/openapi.yaml --output "$tmp/openapi.json" --ext json --dereferenced
+pnpm exec redocly bundle docs/api/openapi.yaml --output "$tmp/openapi.json" --ext json
 pnpm exec openapi-typescript "$tmp/openapi.json" -o "$tmp/api.d.ts"
+
+if rg -n 'data: unknown|\| unknown|unknown \|' "$tmp/api.d.ts"; then
+  echo 'ERROR: generated OpenAPI types contain a critical unknown response or request body' >&2
+  exit 1
+fi
 
 node - "$tmp/openapi.json" "$tmp/openapi-routes.php" <<'NODE'
 const fs = require('node:fs')
@@ -25,6 +30,46 @@ const [source, target] = process.argv.slice(2)
 const document = JSON.parse(fs.readFileSync(source, 'utf8'))
 const methods = ['get', 'post', 'put', 'patch', 'delete']
 const routes = []
+const resolvePointer = pointer => pointer
+  .slice(2)
+  .split('/')
+  .map(segment => segment.replaceAll('~1', '/').replaceAll('~0', '~'))
+  .reduce((value, segment) => value?.[segment], document)
+const resolve = value => {
+  const seen = new Set()
+  while (value && typeof value === 'object' && typeof value.$ref === 'string') {
+    if (!value.$ref.startsWith('#/')) return value
+    if (seen.has(value.$ref)) throw new Error(`Circular local reference: ${value.$ref}`)
+    seen.add(value.$ref)
+    value = resolvePointer(value.$ref)
+  }
+  return value
+}
+const schemaIsConstrained = value => {
+  value = resolve(value)
+  if (!value || typeof value !== 'object') return false
+  if (Array.isArray(value.oneOf) || Array.isArray(value.anyOf) || Array.isArray(value.allOf)) {
+    const branches = value.oneOf ?? value.anyOf ?? value.allOf
+    return branches.length > 0 && branches.every(schemaIsConstrained)
+  }
+  if (typeof value.type === 'string' || Array.isArray(value.type)) return true
+  if (value.const !== undefined || Array.isArray(value.enum)) return true
+
+  return Object.keys(value).length > 0
+}
+const schemaContainsProperty = (value, property, seen = new Set()) => {
+  if (!value || typeof value !== 'object') return false
+  if (typeof value.$ref === 'string' && value.$ref.startsWith('#/')) {
+    if (seen.has(value.$ref)) return false
+    seen.add(value.$ref)
+    return schemaContainsProperty(resolvePointer(value.$ref), property, seen)
+  }
+  if (Object.hasOwn(value.properties ?? {}, property)) return true
+
+  return ['oneOf', 'anyOf', 'allOf'].some(keyword =>
+    Array.isArray(value[keyword]) && value[keyword].some(branch => schemaContainsProperty(branch, property, seen)),
+  )
+}
 for (const [path, item] of Object.entries(document.paths ?? {})) {
   for (const method of methods) {
     const operation = item[method]
@@ -34,6 +79,38 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       throw new Error(`${method.toUpperCase()} ${path} has no x-handler`)
     }
     const [className, classMethod] = handler.split('::')
+    const parameters = [...(item.parameters ?? []), ...(operation.parameters ?? [])].map(resolve)
+    const successResponses = Object.entries(operation.responses ?? {})
+      .filter(([status]) => /^2[0-9][0-9]$/.test(status))
+    if (successResponses.length !== 1) {
+      throw new Error(`${operation.operationId} must declare exactly one successful response`)
+    }
+    const [successStatusText, successResponseValue] = successResponses[0]
+    const successResponse = resolve(successResponseValue)
+    const successStatus = Number(successStatusText)
+    const content = successResponse.content ?? {}
+    const mediaTypes = Object.keys(content)
+    const mediaType = mediaTypes.length === 0 ? null : mediaTypes[0]
+    if (successStatus === 204) {
+      if (mediaTypes.length !== 0) {
+        throw new Error(`${operation.operationId} declares content for a 204 response`)
+      }
+    } else {
+      if (mediaTypes.length !== 1 || mediaType !== 'application/json') {
+        throw new Error(`${operation.operationId} must return one application/json success body`)
+      }
+      const responseSchema = content[mediaType]?.schema
+      const resolvedSchema = resolve(responseSchema)
+      const required = new Set(resolvedSchema?.required ?? [])
+      if (!required.has('data') || !required.has('meta') || !schemaIsConstrained(resolvedSchema?.properties?.data)) {
+        throw new Error(`${operation.operationId} has an unconstrained success data schema`)
+      }
+    }
+    const responseSchemaRef = mediaType === null ? null : (content[mediaType]?.schema?.$ref ?? null)
+    if (mediaType !== null && responseSchemaRef === null) {
+      throw new Error(`${operation.operationId} success body must reference a named schema`)
+    }
+    const responseHeaders = Object.keys(successResponse.headers ?? {}).sort()
     routes.push({
       route: `${method.toUpperCase()} ${path}`,
       className,
@@ -42,8 +119,12 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       operationId: operation.operationId,
       audience: path.startsWith('/api/platform/') ? 'platform' : 'tenant',
       requiresAuth: !Array.isArray(operation.security) || operation.security.length !== 0,
-      idempotent: (operation.parameters ?? []).some(parameter => parameter.name === 'Idempotency-Key'),
+      idempotent: parameters.some(parameter => parameter.name === 'Idempotency-Key'),
       moduleKey: operation['x-module-key'] ?? null,
+      successStatus,
+      mediaType,
+      responseHeaders,
+      responseSchemaRef,
     })
   }
 }
@@ -98,13 +179,17 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
   for (const method of methods) {
     const operation = item[method]
     if (!operation) continue
+    const requestBody = resolve(operation.requestBody)
+    const requestSchema = resolve(requestBody?.content?.['application/json']?.schema)
     if (path.startsWith('/api/v1/')
       && operation.operationId !== 'selectTenant'
-      && JSON.stringify(operation.requestBody ?? {}).includes('"tenant_id"')) {
+      && schemaContainsProperty(requestSchema, 'tenant_id')) {
       throw new Error(`${operation.operationId} accepts a client tenant_id`)
     }
     if (idempotentOperations.includes(operation.operationId)) {
-      const names = (operation.parameters ?? []).map(parameter => parameter.name)
+      const names = [...(item.parameters ?? []), ...(operation.parameters ?? [])]
+        .map(resolve)
+        .map(parameter => parameter.name)
       if (!names.includes('Idempotency-Key')) {
         throw new Error(`${operation.operationId} is missing Idempotency-Key`)
       }
@@ -136,11 +221,12 @@ const inspectIds = value => {
 inspectIds(document)
 const quote = value => value === null
   ? 'null'
-  : typeof value === 'boolean'
+  : typeof value === 'boolean' || typeof value === 'number'
     ? String(value)
     : `'${String(value).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
+const quoteList = values => `[${values.map(quote).join(', ')}]`
 const body = routes.map(route =>
-  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}, ${quote(route.audience)}, ${quote(route.requiresAuth)}, ${quote(route.idempotent)}, ${quote(route.moduleKey)}],`
+  `    ${quote(route.route)} => [${quote(route.className)}, ${quote(route.classMethod)}, ${quote(route.permission)}, ${quote(route.operationId)}, ${quote(route.audience)}, ${quote(route.requiresAuth)}, ${quote(route.idempotent)}, ${quote(route.moduleKey)}, ${quote(route.successStatus)}, ${quote(route.mediaType)}, ${quoteList(route.responseHeaders)}, ${quote(route.responseSchemaRef)}],`
 ).join('\n')
 fs.writeFileSync(target, `<?php\n\ndeclare(strict_types=1);\n\n// Generated from docs/api/openapi.yaml.\nreturn [\n${body}\n];\n`)
 NODE
@@ -165,7 +251,8 @@ require "vendor/autoload.php";
 $routes = require "backend/route/openapi-generated.php";
 $seen = [];
 foreach ($routes as $route => $binding) {
-    [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent, $moduleKey] = $binding;
+    [$class, $method, $permission, $operationId, $audience, $requiresAuth, $idempotent, $moduleKey,
+        $successStatus, $mediaType, $responseHeaders, $responseSchemaRef] = $binding;
     if (!is_string($operationId) || isset($seen[$operationId])) {
         fwrite(STDERR, "ERROR: duplicate or missing OpenAPI operationId for {$route}\n");
         exit(1);
@@ -173,6 +260,52 @@ foreach ($routes as $route => $binding) {
     $seen[$operationId] = true;
     if (!class_exists($class) || !method_exists($class, $method)) {
         fwrite(STDERR, "ERROR: OpenAPI handler does not exist for {$route}: {$class}::{$method}\n");
+        exit(1);
+    }
+    $reflection = new ReflectionMethod($class, $method);
+    $returnType = $reflection->getReturnType();
+    if (!$returnType instanceof ReflectionNamedType || $returnType->getName() !== think\Response::class) {
+        fwrite(STDERR, "ERROR: OpenAPI handler must return think\\Response for {$route}\n");
+        exit(1);
+    }
+    $parameters = $reflection->getParameters();
+    $requestType = $parameters[0]->getType() ?? null;
+    if (!$requestType instanceof ReflectionNamedType || $requestType->getName() !== think\Request::class) {
+        fwrite(STDERR, "ERROR: OpenAPI handler must accept think\\Request first for {$route}\n");
+        exit(1);
+    }
+    preg_match_all("/\\{([a-z0-9_]+)\\}/", $route, $matches);
+    $expectedPathParameters = array_map(
+        static fn(string $name): string => lcfirst(str_replace(" ", "", ucwords(str_replace("_", " ", $name)))),
+        $matches[1],
+    );
+    $actualPathParameters = array_map(static fn(ReflectionParameter $parameter): string => $parameter->getName(), array_slice($parameters, 1));
+    if ($expectedPathParameters !== $actualPathParameters) {
+        fwrite(STDERR, "ERROR: OpenAPI path parameters do not match handler signature for {$route}\n");
+        exit(1);
+    }
+    foreach (array_slice($parameters, 1) as $parameter) {
+        $type = $parameter->getType();
+        if (!$type instanceof ReflectionNamedType || $type->getName() !== "string") {
+            fwrite(STDERR, "ERROR: OpenAPI path parameters must use string transport types for {$route}\n");
+            exit(1);
+        }
+    }
+    $attributes = $reflection->getAttributes(PeanutAdmin\Kernel\Api\OpenApiHandlerContract::class);
+    if (count($attributes) !== 1) {
+        fwrite(STDERR, "ERROR: OpenAPI handler must declare exactly one OpenApiHandlerContract for {$route}\n");
+        exit(1);
+    }
+    $contract = $attributes[0]->newInstance();
+    $declaredHeaders = $contract->headers;
+    sort($declaredHeaders);
+    sort($responseHeaders);
+    if ($contract->successStatus !== $successStatus
+        || $contract->hasJsonBody !== ($mediaType === "application/json")
+        || $declaredHeaders !== $responseHeaders
+        || (($mediaType === "application/json") !== is_string($responseSchemaRef))
+    ) {
+        fwrite(STDERR, "ERROR: OpenAPI success status/header/body contract does not match handler for {$route}\n");
         exit(1);
     }
     if ($permission !== null && !is_string($permission)) {

@@ -4,17 +4,13 @@ $defs:
     pattern: '^[1-9][0-9]*$'
   RequestMeta:
     type: object
+    additionalProperties: false
     required: [request_id]
     properties:
       request_id: { type: string }
-  SuccessResponse:
-    type: object
-    required: [data, meta]
-    properties:
-      data: {}
-      meta: { $ref: '#/$defs/RequestMeta' }
   PageMeta:
     type: object
+    additionalProperties: false
     required: [request_id, page, page_size, total, total_pages]
     properties:
       request_id: { type: string }
@@ -47,6 +43,7 @@ $defs:
         items: { type: string, minLength: 1, maxLength: 128 }
   TargetScope:
     type: object
+    additionalProperties: false
     required: [mode, target_count, digest]
     properties:
       mode: { enum: [none, single, multiple, aggregate] }
@@ -54,6 +51,7 @@ $defs:
       digest: { type: string, pattern: '^[a-f0-9]{64}$' }
   BoundaryTarget:
     type: object
+    additionalProperties: false
     required: [target_resource_key, target_role, target_id, label]
     properties:
       target_resource_key: { type: string }
@@ -62,6 +60,7 @@ $defs:
       label: { type: string }
   Problem:
     type: object
+    additionalProperties: false
     required: [type, title, status, detail, instance, code, request_id]
     properties:
       type: { type: string }

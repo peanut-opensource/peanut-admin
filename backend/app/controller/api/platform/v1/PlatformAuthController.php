@@ -7,6 +7,7 @@ namespace PeanutAdmin\App\controller\api\platform\v1;
 use PeanutAdmin\App\controller\api\AuthHttpRuntime;
 use PeanutAdmin\App\middleware\PlatformAuthRuntimeFactory;
 use PeanutAdmin\Kernel\Api\ApiException;
+use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Auth\PlatformAuthentication;
 use PeanutAdmin\Kernel\Auth\PlatformAuthService;
 use PeanutAdmin\Kernel\Auth\PlatformRefreshCookie;
@@ -15,6 +16,7 @@ use think\Response;
 
 final class PlatformAuthController
 {
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::AUTHENTICATED_HEADERS)]
     public function login(Request $request): Response
     {
         $body = AuthHttpRuntime::body($request);
@@ -31,6 +33,7 @@ final class PlatformAuthController
         return $this->authenticated($authentication, AuthHttpRuntime::requestId($request));
     }
 
+    #[OpenApiHandlerContract(headers: OpenApiHandlerContract::AUTHENTICATED_HEADERS)]
     public function refresh(Request $request): Response
     {
         if (!AuthHttpRuntime::trustedOrigin($request)) {
@@ -47,6 +50,7 @@ final class PlatformAuthController
         return $this->authenticated($authentication, AuthHttpRuntime::requestId($request));
     }
 
+    #[OpenApiHandlerContract]
     public function context(Request $request): Response
     {
         $context = $this->service()->context(
@@ -64,6 +68,11 @@ final class PlatformAuthController
         ]);
     }
 
+    #[OpenApiHandlerContract(
+        successStatus: 204,
+        hasJsonBody: false,
+        headers: OpenApiHandlerContract::SESSION_CLEARED_HEADERS,
+    )]
     public function logout(Request $request): Response
     {
         $this->service()->logout(AuthHttpRuntime::bearerToken($request));
