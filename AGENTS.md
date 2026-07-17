@@ -9,7 +9,9 @@ Before changing files, read in order:
 1. `README.md`
 2. `docs/README.md`
 3. `docs/content-status.json`
-4. The task-specific files named by the controlling prompt
+4. `docs/status/index.md`
+5. `docs/status/runtime-operation-coverage.json`
+6. The task-specific files named by the controlling prompt.
 
 ## Current Boundary
 
@@ -20,6 +22,14 @@ Before changing files, read in order:
 - Do not add product-specific business logic, names, tables, pages, or examples.
 - Do not install dependencies without an accepted dependency decision record.
 - Prefer mature libraries when an accepted dependency exists; do not recreate established infrastructure without a recorded reason.
+
+## Runtime Remediation Stop Line
+
+- The historical D04 commit `f351a21` is not a qualified P0 Runtime or a downstream-consumption baseline.
+- The remediation history contains implementation evidence through R07 and the revised documentation and recovery gates; commit subjects alone do not prove qualification.
+- A candidate is qualified only when a fresh D04 aggregate check and the fixed-commit D05 nine-role review are both recorded against the same resulting tree.
+- Do not merge a remediation candidate, publish packages, create a tag or release, or provide a downstream-consumption baseline without the required qualification evidence and separate approval.
+- Do not add product-specific business models, tables, pages, names, or workflows to the Kernel, reusable packages, internal starter, or fictional examples.
 
 ## Safety Rules
 
