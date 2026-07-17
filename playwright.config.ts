@@ -1,5 +1,11 @@
 import { defineConfig } from '@playwright/test'
 
+const frontendPort = Number(process.env.PEANUT_BROWSER_FRONTEND_PORT ?? '4173')
+if (!Number.isInteger(frontendPort) || frontendPort < 1 || frontendPort > 65_535) {
+  throw new Error('PEANUT_BROWSER_FRONTEND_PORT must be an integer between 1 and 65535')
+}
+const frontendUrl = `http://127.0.0.1:${frontendPort}`
+
 export default defineConfig({
   testDir: './frontend/tests/e2e',
   testMatch: '**/*.e2e.ts',
@@ -9,7 +15,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['line']],
   use: {
-    baseURL: 'http://127.0.0.1:4173',
+    baseURL: frontendUrl,
     colorScheme: 'light',
     locale: 'zh-CN',
     screenshot: 'only-on-failure',
@@ -48,8 +54,8 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command: "VITE_API_BASE_URL='' pnpm --filter @peanut-admin/reference-admin build && pnpm --filter @peanut-admin/reference-admin exec vite preview --config tests/fixtures/full-stack-vite.config.ts --host 127.0.0.1 --port 4173 --strictPort",
-      url: 'http://127.0.0.1:4173/login',
+      command: `VITE_API_BASE_URL='' pnpm --filter @peanut-admin/reference-admin build && pnpm --filter @peanut-admin/reference-admin exec vite preview --config tests/fixtures/full-stack-vite.config.ts --host 127.0.0.1 --port ${frontendPort} --strictPort`,
+      url: `${frontendUrl}/login`,
       reuseExistingServer: false,
       timeout: 120_000,
       stdout: 'ignore',
