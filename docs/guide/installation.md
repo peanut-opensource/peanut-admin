@@ -7,7 +7,7 @@ Use the [internal starter](./internal-starter.md) when the goal is to prove that
 ## Requirements
 
 - PHP 8.3 with `json`, `pdo`, `pdo_mysql`, `openssl`, and `mbstring`.
-- Composer dependencies installed from the committed lock file.
+- Composer 2.10.2, with dependencies installed from the committed lock file.
 - Node 24 and pnpm 11.13.0 for Admin Web and documentation builds.
 - MySQL 8.4 for the reference deployment.
 - Valkey for the non-authoritative cache health check.
@@ -24,6 +24,11 @@ Install dependencies from the repository root:
 composer install
 pnpm install --frozen-lockfile
 ```
+
+The repository qualification gate checks the exact Composer and pnpm versions.
+Run `composer --version` and `pnpm --version` before `./scripts/check`; using a
+different Composer release is not qualification evidence even when dependency
+installation succeeds.
 
 ## First Install
 

@@ -7,10 +7,13 @@ Run:
 ```bash
 php -v
 php -m
+composer --version
 composer install
 ```
 
-Use PHP 8.3 and confirm `pdo_mysql` is loaded. Do not bypass the preflight check.
+Use PHP 8.3 and Composer 2.10.2, and confirm `pdo_mysql` is loaded. The full
+repository gate also requires pnpm 11.13.0. Do not bypass or relax the preflight
+and workspace checks when a local tool version differs.
 
 ## Installer Cannot Connect To MySQL
 
