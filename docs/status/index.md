@@ -19,6 +19,10 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 - Real MySQL, ThinkPHP, and Vite full-stack browser evidence with no `/api/**` interception.
 - Fixed internal starter with reproducible clean-directory install, build, start, and test evidence.
 
+## Runtime Operation Coverage
+
+[`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies all 75 current OpenAPI operations as P0, records their concrete handlers and success schemas, and assigns each operation to an executable test owner. `./scripts/check-runtime-coverage` rejects missing, duplicate, stale, or unowned operations.
+
 ## Remaining P0 Gates
 
 - Recovery and clean-install requalification against the current Runtime and internal starter.
