@@ -43,9 +43,11 @@ The scripts never overwrite or drop the active database.
 
 The recovery fixture contains Alpha and Beta tenants. The drill corrupts a copy of the dump and proves rejection, restores a clean copy, validates schema and hashes, logs into both tenants, and proves Beta cannot resolve Alpha's typed target.
 
+`./scripts/test-recovery` also runs the internal starter qualification. That creates two projects in empty temporary directories, compares the generated files and lock files, installs the local versioned package snapshots, builds Admin Web, starts the ThinkPHP and Vite hosts, and checks their HTTP responses. Recovery qualification therefore covers both the complete reference host and the minimal package-consuming host.
+
 The report is written to `/tmp/peanut-admin-recovery-report.json` with measured backup and restore durations in milliseconds. Preserve the report produced by each drill. These values describe that fixture and machine only; they are not production RPO or RTO promises.
 
-The 2026-07-16 local reference acceptance run measured 797 ms to create the consistent dump and 1,225 ms to restore and compare its inventory. Its RPO observation is the snapshot at backup invocation; it does not measure production write loss between scheduled backups.
+The 2026-07-17 D03 local reference run measured 542 ms to create the consistent dump and 1,095 ms to restore and compare its inventory. Its RPO observation is the snapshot at backup invocation; it does not measure production write loss between scheduled backups.
 
 ## Separate Assets And Secrets
 
