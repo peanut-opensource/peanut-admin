@@ -50,7 +50,13 @@ final readonly class InstallProductProfileApplier
             if (!in_array($moduleKey, $profileKeys, true)) {
                 continue;
             }
-            $manager->enable($tenantId, $moduleKey, $profile->moduleConfig($moduleKey), $now);
+            $manager->enable(
+                $tenantId,
+                $moduleKey,
+                $profile->moduleConfig($moduleKey),
+                $now,
+                'product_profile',
+            );
             $enabled[] = $moduleKey;
         }
 
