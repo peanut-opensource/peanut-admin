@@ -22,17 +22,12 @@ final class DataPermissionRuntimeFactory
 {
     private function __construct() {}
 
-    public static function create(PDO $pdo, ?string $root = null): DataPermissionEngine
-    {
-        $root ??= dirname(__DIR__, 3);
-        $modules = RuntimeModuleRegistry::compile($root);
-        $runtime = new DataPermissionRuntimeRegistry();
-        foreach ($modules->modules as $module) {
-            $provider = self::moduleProvider($module);
-            if ($provider instanceof DataPermissionModuleProvider) {
-                $provider->registerDataPermission($runtime, $pdo);
-            }
-        }
+    public static function create(
+        PDO $pdo,
+        ?string $root = null,
+        ?DataPermissionRuntimeRegistry $runtime = null,
+    ): DataPermissionEngine {
+        $runtime ??= self::runtime($pdo, $root);
 
         return new DataPermissionEngine(
             new PdoResourceOperationCatalog($pdo),
@@ -47,6 +42,21 @@ final class DataPermissionRuntimeFactory
             $runtime->targetCatalogProviders,
             $runtime->sharedMasterProviders,
         );
+    }
+
+    public static function runtime(PDO $pdo, ?string $root = null): DataPermissionRuntimeRegistry
+    {
+        $root ??= dirname(__DIR__, 3);
+        $modules = RuntimeModuleRegistry::compile($root);
+        $runtime = new DataPermissionRuntimeRegistry();
+        foreach ($modules->modules as $module) {
+            $provider = self::moduleProvider($module);
+            if ($provider instanceof DataPermissionModuleProvider) {
+                $provider->registerDataPermission($runtime, $pdo);
+            }
+        }
+
+        return $runtime;
     }
 
     private static function moduleProvider(ManifestDocument $module): object

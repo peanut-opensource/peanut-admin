@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\controller\api\v1;
 
 use PDO;
+use PeanutAdmin\DataPermission\Exception\DataAuthorizationException;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\PageRequest;
+use PeanutAdmin\Kernel\Module\ModuleException;
 use RuntimeException;
 use think\Request;
 use think\Response;
@@ -94,6 +96,8 @@ final class MemberAdminRuntime
             return $response->header($headers);
         } catch (AdminAccessException $exception) {
             return self::problem($exception, $requestId);
+        } catch (DataAuthorizationException|ModuleException $exception) {
+            throw $exception;
         } catch (Throwable) {
             return self::problem(
                 new AdminAccessException('INTERNAL_ERROR', 500, 'The request could not be completed.'),

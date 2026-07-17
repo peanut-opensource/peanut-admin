@@ -172,8 +172,8 @@ paths:
       - { $ref: '#/components/parameters/RoleId' }
       - { in: path, name: resource_key, required: true, schema: { type: string } }
       - { in: path, name: operation, required: true, schema: { type: string } }
-    get: { operationId: getRoleDataPolicy, summary: getRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.role.data-policy.read, responses: *standardResponses }
-    put: { operationId: replaceRoleDataPolicy, summary: replaceRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle', x-permission: core.role.data-policy.manage, requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
+    get: { operationId: getRoleDataPolicy, summary: getRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::getRolePolicy', x-permission: core.role.data-policy.read, responses: *standardResponses }
+    put: { operationId: replaceRoleDataPolicy, summary: replaceRoleDataPolicy, x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::replaceRolePolicy', x-permission: core.role.data-policy.manage, parameters: [{ $ref: '#/components/parameters/IfMatchOptional' }], requestBody: { $ref: '#/components/requestBodies/GenericWrite' }, responses: *writeResponses }
   /api/v1/permissions:
     get: { operationId: listPermissions, summary: listPermissions, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::permissions', x-permission: core.permission.read, responses: *standardResponses }
   /api/v1/modules:
@@ -189,7 +189,7 @@ paths:
     get:
       operationId: listTargetCandidates
       summary: listTargetCandidates
-      x-handler: 'PeanutAdmin\App\controller\api\v1\ContractController::handle'
+      x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::targetCandidates'
       parameters:
         - { in: query, name: resource_key, required: true, schema: { type: string } }
         - { in: query, name: operation, required: true, schema: { type: string } }
@@ -334,6 +334,7 @@ components:
     Page: { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
     PageSize: { in: query, name: page_size, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
     IfMatch: { in: header, name: If-Match, required: true, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    IfMatchOptional: { in: header, name: If-Match, required: false, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
     IdempotencyKey: { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 16, maxLength: 128 } }
     TenantId: { in: path, name: tenant_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     MemberId: { in: path, name: member_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
