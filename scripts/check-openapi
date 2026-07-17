@@ -77,6 +77,12 @@ if (operationIds.size !== routes.length) {
 }
 const idempotentOperations = [
   'createPlatformTenant',
+  'createPlatformOperator',
+  'suspendPlatformOperator',
+  'activatePlatformOperator',
+  'closePlatformOperator',
+  'createPlatformRole',
+  'archivePlatformRole',
   'createExampleWorkItem',
   'updateExampleWorkItem',
   'publishExampleWorkItemPolicy',
