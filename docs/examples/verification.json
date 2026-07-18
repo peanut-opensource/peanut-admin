@@ -17,7 +17,7 @@
       "document": "docs/guide/authentication.md",
       "document_contains": "__Host-pa_tenant_refresh",
       "source": "packages/php/kernel/src/Http/TenantRefreshCookie.php",
-      "source_contains": "__Host-pa_tenant_refresh"
+      "source_contains": "return $client->refreshCookieName;"
     },
     {
       "document": "docs/guide/authorization.md",
