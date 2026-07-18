@@ -44,8 +44,8 @@ foreach ($expectedBaselines as $field => $expected) {
         exit(1);
     }
 }
-if (($baselines['downstream_consumption_status'] ?? null) !== 'not-qualified-until-d05') {
-    fwrite(STDERR, "ERROR: runtime operation coverage must preserve the D05 downstream stop line\n");
+if (($baselines['downstream_consumption_status'] ?? null) !== 'approved-for-pinned-internal-alpha-validation') {
+    fwrite(STDERR, "ERROR: runtime operation coverage must preserve the approved pinned internal-alpha status\n");
     exit(1);
 }
 

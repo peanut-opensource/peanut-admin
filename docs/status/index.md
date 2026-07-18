@@ -32,9 +32,11 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 - See the [P0 Runtime Qualification Review](../reviews/p0-runtime-qualification.md)
   and [P0 Candidate](../releases/p0-candidate.md) records.
 
-P0 qualification does not create a release. A separate decision is still
-required before a tag, package publication, production claim, or downstream
-consumption baseline.
+P0 qualification does not create a release. On 2026-07-18, a separate decision
+approved promotion to `dev` and exact-commit private downstream validation. Every
+consumer must pin the resulting 40-character commit and record its integration
+mapping. Tags, package publication, production claims, and public stable-release
+claims remain unapproved.
 
 ## Intentionally Not In P0
 

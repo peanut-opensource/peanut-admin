@@ -201,8 +201,17 @@ only. Product business models must remain in product-owned Modules.
 - The duplicated generic PHPUnit skip output should be made less confusing in a
   later engineering cleanup while preserving dedicated gate ownership.
 
+## Subsequent Internal Baseline Decision
+
+At review completion, the fixed P0 tree was qualified but not approved for
+downstream consumption. On 2026-07-18, a separate decision approved promotion
+to `dev` and exact-commit private downstream validation. The downstream
+integration mapping must pin the resulting 40-character commit and keep product
+business outside the Peanut Admin repository.
+
 ## Final Stop Line
 
-The fixed P0 tree is qualified for an independent release decision. It is not
-production ready, not released, not tagged, not published, and not yet approved
-as a downstream consumption baseline.
+The fixed P0 tree is qualified for pinned internal-alpha validation. It is not
+production ready, not released, not tagged, and not published. Public release,
+package publication, production deployment, and later Runtime changes require
+independent qualification and approval.

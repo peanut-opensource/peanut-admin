@@ -29,6 +29,8 @@ Before changing files, read in order:
 - The remediation history contains implementation evidence through R07 and the revised documentation and recovery gates; commit subjects alone do not prove qualification.
 - A candidate is qualified only when a fresh D04 aggregate check and the fixed-commit D05 nine-role review are both recorded against the same resulting tree.
 - Do not merge a remediation candidate, publish packages, create a tag or release, or provide a downstream-consumption baseline without the required qualification evidence and separate approval.
+- The Runtime tree fixed at `d26186dfb23af34c62c58b4da94fea77bd63d724` and the D05 closure at `b010803ccd0c99179c5f7b35fb7bd89b177ea455` satisfy that evidence requirement. The 2026-07-18 approval permits promotion to `dev` and exact-commit private downstream validation only.
+- That approval does not permit a tag, GitHub Release, package publication, production claim, or consumption of later unqualified Runtime changes.
 - Do not add product-specific business models, tables, pages, names, or workflows to the Kernel, reusable packages, internal starter, or fictional examples.
 
 ## Safety Rules

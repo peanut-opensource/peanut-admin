@@ -13,9 +13,9 @@ The project provides a P0 candidate foundation with:
 
 The original P0 sequence reached the historical D04 qualification commit `f351a21`, but a second-wave review found that contract and fixture evidence did not sufficiently prove a real HTTP Runtime, complete P0 handlers, non-intercepted full-stack E2E, or a consumable internal starter. That commit remains historical evidence and is not a qualified Runtime baseline.
 
-The remediation history now contains implementation and evidence for `PA-P0-R00` through `PA-P0-R07`, followed by the revised developer-guide and recovery gates. A candidate becomes qualified only after a fresh aggregate D04 run and a fixed-commit D05 nine-role review are both recorded against the resulting tree.
+The remediation history contains implementation and evidence for `PA-P0-R00` through `PA-P0-R07`, followed by the revised developer-guide and recovery gates. The aggregate D04 gate and fixed-commit D05 nine-role review qualify the Runtime tree fixed at `d26186dfb23af34c62c58b4da94fea77bd63d724` as a P0 internal-alpha foundation.
 
-Until those records exist and a separate release decision is made, do not describe Peanut Admin as P0 complete, production ready, released, or suitable as a downstream baseline. See `docs/status/index.md` for current implementation evidence.
+On 2026-07-18, the qualified candidate was approved for promotion to `dev` and pinned private downstream validation. A downstream project must record the exact 40-character commit and integration mapping; a branch name is not a dependency lock. This approval is not a production-readiness statement, tag, GitHub Release, or Composer/npm package publication. See `docs/status/index.md` for current implementation evidence.
 
 ## Principles
 

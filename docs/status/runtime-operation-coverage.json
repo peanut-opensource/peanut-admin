@@ -5,7 +5,7 @@
     "historical_d04_commit": "f351a21bff55b4d8a82ef39c12d8bf4d058a3e5c",
     "runtime_remediation_start_commit": "b927290",
     "candidate_branch": "codex/p0-d05-remediation",
-    "downstream_consumption_status": "not-qualified-until-d05"
+    "downstream_consumption_status": "approved-for-pinned-internal-alpha-validation"
   },
   "test_owners": {
     "RUNTIME-CONTRACT-001": {

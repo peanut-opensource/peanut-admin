@@ -11,9 +11,10 @@ d26186dfb23af34c62c58b4da94fea77bd63d724
 The complete evidence and nine-role review are recorded in
 [`P0 Runtime Qualification Review`](../reviews/p0-runtime-qualification.md).
 
-This candidate is not production ready and has not been released. No `main`
-branch, tag, GitHub Release, Composer package, npm package, or downstream
-baseline is created or approved by this record.
+This candidate is not production ready and has not been released. A subsequent
+2026-07-18 decision approved promotion to `dev` and exact-commit private downstream
+validation. It did not approve a `main` branch, tag, GitHub Release, Composer
+package, npm package, public stable baseline, or production deployment.
 
 ## Candidate Capability
 
@@ -49,10 +50,17 @@ notifications, jobs UI, import/export, plugins, marketplace, public project or
 CRUD generators, package publication, commercial control plane, POS/mobile
 clients, or product-specific business Modules.
 
-## Next Decision
+## Internal Downstream Decision
 
-An independent release decision must define the intended consumer, branch/tag
-policy, package strategy, deployment target, production hardening, support
-expectation, and downstream pinning rules. Until then, development may continue
-on an approved next-phase branch, but this candidate must not be represented as
-a public stable release or production baseline.
+The first approved consumer is a private validation project. It must pin the
+exact 40-character commit after promotion to `dev`, generate a formal
+integration mapping, and keep all product business Modules outside Peanut Admin.
+Consuming a branch name, an unqualified later commit, or unpublished package
+coordinates is not allowed.
+
+## Next Release Decision
+
+A separate public release decision must define branch/tag policy, package
+strategy, production hardening, support expectations, and compatibility rules.
+Until then, this candidate must not be represented as a public stable release
+or production baseline.
