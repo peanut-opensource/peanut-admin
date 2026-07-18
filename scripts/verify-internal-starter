@@ -26,6 +26,9 @@ trap cleanup EXIT
 ./scripts/create-internal-starter "$first"
 ./scripts/create-internal-starter "$second"
 diff -ru --exclude='.DS_Store' "$first" "$second"
+diff -ru "$ROOT/packages/php/kernel/database" "$first/packages/php/kernel/database"
+diff -ru "$ROOT/packages/php/kernel/resources" "$first/packages/php/kernel/resources"
+diff -ru "$ROOT/packages/php/data-permission/database" "$first/packages/php/data-permission/database"
 
 php tests/starter/assert-generated-starter.php "$first"
 
@@ -34,9 +37,7 @@ if rg -n '/Users/|/home/[^/]+/|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|password\s*
   exit 1
 fi
 if rg -ni '\bDCS\b|Finance Manager|门店|仓库|商品|库存|结算|\bwarehouse\b|\binventory\b|\btrade\b|\bsettlement\b' \
-  "$first/README.md" \
-  "$first/backend" \
-  "$first/frontend"; then
+  -g '!LICENSE' "$first"; then
   echo 'ERROR: generated starter contains product-specific language' >&2
   exit 1
 fi
@@ -57,6 +58,29 @@ cmp "$first/backend/composer.lock" "$second/backend/composer.lock"
 cmp "$first/pnpm-lock.yaml" "$second/pnpm-lock.yaml"
 
 php "$first/backend/tests/smoke.php"
+docker compose up -d mysql
+for attempt in $(seq 1 60); do
+  if php -r '
+    try {
+        new PDO(
+            "mysql:host=127.0.0.1;port=" . (getenv("MYSQL_PORT") ?: "3306"),
+            "root",
+            getenv("MYSQL_ROOT_PASSWORD") ?: "peanut_admin_root_dev",
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
+    } catch (Throwable) {
+        exit(1);
+    }
+  ' 2>/dev/null; then
+    break
+  fi
+  if [[ "$attempt" -eq 60 ]]; then
+    echo 'ERROR: MySQL 8 did not become ready for starter verification' >&2
+    exit 1
+  fi
+  sleep 2
+done
+php "$first/backend/tests/auth-clients.php"
 pnpm --dir "$first" typecheck
 pnpm --dir "$first" test
 pnpm --dir "$first" build
@@ -121,4 +145,4 @@ if (($health["status"] ?? null) !== "ok"
 }
 '
 
-echo 'Internal starter: OK (reproducible create, install, build, start, test)'
+echo 'Internal starter: OK (reproducible create, package schema, Module host, Client auth, build, start, test)'

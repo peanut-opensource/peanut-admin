@@ -30,6 +30,11 @@ copy_package() {
   cp "$source/$manifest" "$destination/$manifest"
   cp "$source/LICENSE" "$destination/LICENSE"
   cp -R "$source/src" "$destination/src"
+  for directory in database resources; do
+    if [[ -d "$source/$directory" ]]; then
+      cp -R "$source/$directory" "$destination/$directory"
+    fi
+  done
 }
 
 copy_package "$ROOT/packages/php/kernel" "$target/packages/php/kernel" composer.json

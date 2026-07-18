@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "key": "example.greeting",
+  "name": "Example Greeting",
+  "description": "Fictional greeting capability for starter verification",
+  "version": "1.0.0",
+  "kernel_constraint": "^0.1",
+  "license": "Apache-2.0",
+  "backend": {
+    "provider": "ExampleHost\\App\\Modules\\Example\\Greeting\\ExampleGreetingModuleProvider"
+  },
+  "frontend": {
+    "entry": "frontend/src/modules/example-greeting/index.ts"
+  },
+  "database": {"owned_tables": []},
+  "contracts": {
+    "exports": [],
+    "events": []
+  },
+  "tenant": {
+    "enableable": true,
+    "requires": []
+  }
+}

@@ -15,16 +15,25 @@ $required = [
     'backend/composer.lock',
     'backend/app/provider.php',
     'backend/config/cache.php',
+    'backend/config/auth.php',
     'backend/public/index.php',
-    'backend/src/ExampleGreetingModuleProvider.php',
+    'backend/src/Module/ModuleRegistryFactory.php',
+    'backend/src/Auth/TenantAuthRuntimeFactory.php',
+    'backend/src/Modules/Example/Greeting/ExampleGreetingModuleProvider.php',
+    'backend/src/Modules/Example/Greeting/module.json',
     'backend/src/StarterExceptionHandler.php',
+    'backend/tests/auth-clients.php',
     'backend/tests/smoke.php',
     'frontend/package.json',
     'frontend/src/App.vue',
+    'frontend/src/clients.ts',
     'frontend/src/modules/example-greeting/index.ts',
     'package.json',
     'packages/php/data-permission/composer.json',
+    'packages/php/data-permission/database/migrations/20260716020101_create_pa_data_permission_policy.php',
     'packages/php/kernel/composer.json',
+    'packages/php/kernel/database/migrations/20260718010101_generalize_pa_tenant_clients.php',
+    'packages/php/kernel/resources/schemas/module-manifest.schema.json',
     'packages/web/admin-core/package.json',
     'packages/web/admin-shell/package.json',
     'pnpm-workspace.yaml',
@@ -44,6 +53,8 @@ $composer = json_decode(
     JSON_THROW_ON_ERROR,
 );
 foreach ([
+    'composer/semver' => '3.4.4',
+    'opis/json-schema' => '2.6.0',
     'peanut-admin/kernel' => '0.1.0',
     'peanut-admin/data-permission' => '0.1.0',
 ] as $package => $version) {
@@ -69,19 +80,34 @@ foreach ([
     }
 }
 
-$hostFiles = array_merge(
-    glob($root . '/backend/{public,src,tests}/*', GLOB_BRACE) ?: [],
-    glob($root . '/frontend/src/**/*', GLOB_BRACE) ?: [],
+$hostRoots = [$root . '/backend/public', $root . '/backend/src', $root . '/backend/tests', $root . '/frontend/src'];
+foreach ($hostRoots as $hostRoot) {
+    $files = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($hostRoot, RecursiveDirectoryIterator::SKIP_DOTS),
+    );
+    foreach ($files as $file) {
+        if (!$file->isFile()) {
+            continue;
+        }
+        $path = $file->getPathname();
+        $contents = (string) file_get_contents($path);
+        if (preg_match('~@peanut-admin/[^\'\"]+/src/|packages/(?:php|web)/|PeanutAdmin\\\\App\\\\~', $contents) === 1) {
+            fwrite(STDERR, "ERROR: starter host deep-imports package internals: {$path}\n");
+            exit(1);
+        }
+    }
+}
+
+$manifest = json_decode(
+    (string) file_get_contents($root . '/backend/src/Modules/Example/Greeting/module.json'),
+    true,
+    512,
+    JSON_THROW_ON_ERROR,
 );
-foreach ($hostFiles as $path) {
-    if (!is_file($path)) {
-        continue;
-    }
-    $contents = (string) file_get_contents($path);
-    if (preg_match('~@peanut-admin/[^\'\"]+/src/|packages/(?:php|web)/|PeanutAdmin\\\\App\\\\~', $contents) === 1) {
-        fwrite(STDERR, "ERROR: starter host deep-imports package internals: {$path}\n");
-        exit(1);
-    }
+if (($manifest['backend']['provider'] ?? null)
+    !== 'ExampleHost\\App\\Modules\\Example\\Greeting\\ExampleGreetingModuleProvider') {
+    fwrite(STDERR, "ERROR: starter manifest does not use its external host namespace\n");
+    exit(1);
 }
 
 fwrite(STDOUT, "Generated starter contract: OK\n");

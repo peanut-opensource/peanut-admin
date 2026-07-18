@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace PeanutAdmin\InternalStarter;
+namespace ExampleHost\App\Modules\Example\Greeting;
 
 use PeanutAdmin\Kernel\Module\ModuleKey;
 use PeanutAdmin\Kernel\Module\ModuleProvider;

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
-use PeanutAdmin\InternalStarter\ExampleGreetingModuleProvider;
+use ExampleHost\App\Modules\Example\Greeting\ExampleGreetingModuleProvider;
 use PeanutAdmin\Kernel\Package as KernelPackage;
 use think\facade\Route;
 
