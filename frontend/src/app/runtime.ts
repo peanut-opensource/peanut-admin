@@ -55,6 +55,7 @@ const unwrap = (result: FetchResult): unknown => {
 }
 
 const apiBaseUrl = (): string => stringValue(import.meta.env.VITE_API_BASE_URL)
+const tenantClientKey = (): string => stringValue(import.meta.env.VITE_TENANT_CLIENT_KEY, 'admin-web')
 
 const endpoint = (path: string): string => `${apiBaseUrl()}${path}`
 
@@ -181,19 +182,22 @@ export const createAdminRuntime = (): AdminRuntime => {
       auth.clear()
       return null
     }
-    auth.replaceAccessToken(data.access_token)
     return data.access_token
   }
 
   const tenantClient = createTenantApiClient({
     baseUrl: apiBaseUrl(),
     getAccessToken: () => tenantAuth.accessToken,
+    setAccessToken: token => tenantAuth.replaceAccessToken(token),
     refresh: () => refresh('tenant'),
+    refreshScope: `${tenantClientKey()}:tenant`,
   })
   const platformClient = createPlatformApiClient({
     baseUrl: apiBaseUrl(),
     getAccessToken: () => platformAuth.accessToken,
+    setAccessToken: token => platformAuth.replaceAccessToken(token),
     refresh: () => refresh('platform'),
+    refreshScope: 'platform-web:platform',
   })
 
   const clearAudience = async (audience: ApiAudience): Promise<void> => {

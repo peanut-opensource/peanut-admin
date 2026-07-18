@@ -4,7 +4,11 @@ The reference Admin Web is one Vue 3 build with strictly separated tenant and pl
 
 ## Audience Clients
 
-Create tenant and platform clients separately. Each client rejects the other API prefix, stores access tokens only in memory, attaches request IDs, includes the matching refresh cookie, and uses a single-flight refresh operation for concurrent 401 responses.
+Create tenant and platform clients separately. Each client rejects the other API prefix, stores access tokens only in memory, attaches request IDs, includes the matching refresh cookie, and coordinates a single refresh rotation for concurrent 401 responses.
+
+Every Tenant Client supplies a stable refresh scope such as `single-store-web:tenant`. The default browser coordinator combines Web Locks and `BroadcastChannel` so independent tabs of the same Client can consume one rotated access token without reusing the old refresh token. Different Client keys use different scopes and never coordinate or exchange tokens.
+
+An application with its own OpenAPI schema uses the exported `createProtectedFetch()` with its own allowed-path predicate, credential-exchange predicate, and generated `openapi-fetch` Client. It does not need to reuse Peanut Admin's generated `paths` type or duplicate the authentication replay logic. Tests and non-browser hosts can inject `createMemoryRefreshCoordinator()`.
 
 Non-idempotent requests are replayed only when they carry an `Idempotency-Key`.
 
