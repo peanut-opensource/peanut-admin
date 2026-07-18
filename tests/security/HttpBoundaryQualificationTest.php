@@ -27,8 +27,11 @@ final class HttpBoundaryQualificationTest extends TestCase
         self::assertStringContainsString('SecurityHeadersMiddleware::class', $middleware);
         self::assertStringContainsString('ApiExceptionHandler::class', (string) file_get_contents($provider));
         $tenantCookie = (string) file_get_contents($root . '/packages/php/kernel/src/Http/TenantRefreshCookie.php');
+        $tenantClient = (string) file_get_contents($root . '/packages/php/kernel/src/Auth/TenantClient.php');
         $platformCookie = (string) file_get_contents($root . '/packages/php/kernel/src/Auth/PlatformRefreshCookie.php');
-        foreach (['__Host-', 'Secure', 'HttpOnly', 'SameSite=Lax'] as $required) {
+        self::assertStringContainsString('__Host-', $tenantClient);
+        self::assertStringContainsString('__Host-', $platformCookie);
+        foreach (['Secure', 'HttpOnly', 'SameSite=Lax'] as $required) {
             self::assertStringContainsString($required, $tenantCookie);
             self::assertStringContainsString($required, $platformCookie);
         }
