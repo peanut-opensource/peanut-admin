@@ -29,7 +29,7 @@ Role and member assignments never cross tenant composite keys. Platform roles ar
 
 ## Sessions And Audit
 
-Tenant and platform sessions, refresh tokens, and audit events use separate tables and audience checks. Security revisions invalidate stale sessions. Refresh token reuse revokes the session family.
+Tenant and platform sessions, refresh tokens, and audit events use separate tables and audience checks. Every tenant login challenge and session binds a host-registered Client key. Independent Clients receive independent session families and refresh cookies. Security revisions invalidate stale sessions. Refresh token reuse revokes the affected Client session family.
 
 Tenant audit events always have a target tenant. A platform operator acting on tenant governance records is represented as a platform actor in the tenant audit stream; this does not create a TenantMember.
 

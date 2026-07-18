@@ -47,6 +47,7 @@ final readonly class ModuleRegistryFactory
                 ...IdempotencySchema::tableNames(),
                 ...DataPermissionSchema::tableNames(),
             ],
+            ['admin-web', 'platform-web'],
         ))->compile(array_map($loader->load(...), $this->moduleRoots));
     }
 

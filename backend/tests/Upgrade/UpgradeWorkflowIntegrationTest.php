@@ -120,7 +120,7 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
         $result = (new UpgradeWorkflow($root, $this->database))->run();
 
         self::assertSame(3, $result['applied_module_migrations']);
-        self::assertSame(37, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
+        self::assertSame(38, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
         self::assertSame(1, $this->scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
             . self::DATABASE . "' AND table_name = 'pa_example_work_item'",

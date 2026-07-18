@@ -23,6 +23,8 @@ PA_MODULE_FRONTEND_ROOT='frontend/src/modules' \
 
 The same `ModuleHostLayout` instance must be supplied to the registry compiler and boundary checker. The boundary checker also receives every managed database prefix, including `pa_` and the host's business prefix, so an undeclared or cross-Module table reference fails closed.
 
+The compiler also receives the complete registered Client key list. Every menu contribution must target one or more registered Clients; a typo or undeclared Client fails compilation instead of creating an unreachable or accidentally shared menu.
+
 ## 2. Create `module.json`
 
 The manifest must pass the versioned JSON Schema. A minimal capability declares a provider, version, Kernel constraint, owned tables, public contracts, and tenant behavior. Dependencies refer to Module keys and SemVer constraints.

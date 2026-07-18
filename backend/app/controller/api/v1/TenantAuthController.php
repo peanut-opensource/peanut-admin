@@ -9,7 +9,6 @@ use PeanutAdmin\App\controller\api\WorkspaceContextRuntime;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Http\TenantAuthEndpoint;
-use PeanutAdmin\Kernel\Http\TenantRefreshCookie;
 use think\Request;
 use think\Response;
 
@@ -52,9 +51,10 @@ final class TenantAuthController
     #[OpenApiHandlerContract(headers: OpenApiHandlerContract::AUTHENTICATED_HEADERS)]
     public function refresh(Request $request): Response
     {
-        $refreshToken = AuthHttpRuntime::requiredCookie($request, TenantRefreshCookie::NAME);
+        $endpoint = $this->endpoint();
+        $refreshToken = AuthHttpRuntime::requiredCookie($request, $endpoint->refreshCookieName());
 
-        return AuthHttpRuntime::tenantResponse($this->endpoint()->refresh(
+        return AuthHttpRuntime::tenantResponse($endpoint->refresh(
             $refreshToken,
             AuthHttpRuntime::trustedOrigin($request),
             AuthHttpRuntime::ipAddress($request),
