@@ -23,11 +23,18 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 
 [`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies all 75 current OpenAPI operations as P0, records their concrete handlers and success schemas, and assigns each operation to an executable test owner. `./scripts/check-runtime-coverage` rejects missing, duplicate, stale, or unowned operations.
 
-## Remaining P0 Gates
+## P0 Qualification
 
-- Recovery and clean-install requalification against the current Runtime and internal starter.
-- Final aggregate Runtime gate.
-- Nine-role Runtime review and candidate qualification report.
+- The complete aggregate Runtime gate passed on the tree fixed by commit
+  `d26186dfb23af34c62c58b4da94fea77bd63d724`.
+- The fixed-commit nine-role review found and closed one documentation
+  reproducibility issue and has no remaining P0 finding.
+- See the [P0 Runtime Qualification Review](../reviews/p0-runtime-qualification.md)
+  and [P0 Candidate](../releases/p0-candidate.md) records.
+
+P0 qualification does not create a release. A separate decision is still
+required before a tag, package publication, production claim, or downstream
+consumption baseline.
 
 ## Intentionally Not In P0
 

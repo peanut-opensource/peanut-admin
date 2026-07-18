@@ -86,6 +86,20 @@
       "replacement": null
     },
     {
+      "path": "docs/reviews/p0-runtime-qualification.md",
+      "title": "P0 Runtime Qualification Review",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/releases/p0-candidate.md",
+      "title": "P0 Candidate",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/decisions/dependencies/index.md",
       "title": "P0 Dependency Decisions",
       "status": "canonical",
