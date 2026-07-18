@@ -11,17 +11,27 @@ Before changing files, read in order:
 3. `docs/content-status.json`
 4. `docs/status/index.md`
 5. `docs/status/runtime-operation-coverage.json`
-6. The task-specific files named by the controlling prompt.
+6. `docs/status/p1-execution-baseline.md` for P1 work.
+7. The task-specific files named by the controlling prompt.
 
 ## Current Boundary
 
-- Work only on the explicitly assigned P0 task.
+- Work only on an explicitly assigned P0 or P1 task.
 - Keep each write task in one independently reviewable commit.
 - Do not create runtime code before its task is approved.
 - Do not copy code, Git history, schemas, or documents from any legacy framework repository.
 - Do not add product-specific business logic, names, tables, pages, or examples.
 - Do not install dependencies without an accepted dependency decision record.
 - Prefer mature libraries when an accepted dependency exists; do not recreate established infrastructure without a recorded reason.
+
+## P1 Execution Stop Line
+
+- P1 starts from the fixed input recorded in `docs/status/p1-execution-baseline.md`.
+- Historical plans are not executable task definitions. Every P1 Runtime task must name its prerequisite commit, exact file whitelist, schema owner, API contract, security behavior, test owner, and stop line.
+- Existing P0 operations and models are inherited. Do not rebuild them under new names or weaken their fail-closed behavior.
+- A P1 operation must be classified as `p1` in the Runtime coverage ledger and must have executable test ownership.
+- A P1 dependency may be installed only after its decision record is accepted for the exact use case.
+- Later P1 commits are not downstream-consumption baselines until a new fixed-commit aggregate qualification and review explicitly approve them.
 
 ## Runtime Remediation Stop Line
 

@@ -61,3 +61,15 @@ or later unqualified Runtime changes.
 - Package publication, release tags, or a claim of production-ready public release.
 
 The repository checks are the authoritative evidence for completed implementation. Documentation never upgrades an unimplemented capability by description alone.
+
+## P1 Execution
+
+P1 planning starts from repository commit
+`c63e06e25e35855cfefab890d7ee43c6e0cf839d`. The current tree still has 75
+P0 operations and no qualified P1 Runtime operations. The canonical execution
+order, task contracts, dependency gates, and stop lines are recorded in the
+[P1 Execution Baseline](./p1-execution-baseline.md).
+
+P1 work does not change the external-host consumption lock above. A later P1
+commit remains unqualified for downstream consumption until a new fixed-commit
+aggregate check and review approve it.

@@ -86,6 +86,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-execution-baseline.md",
+      "title": "P1 Execution Baseline",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/reviews/p0-runtime-qualification.md",
       "title": "P0 Runtime Qualification Review",
       "status": "canonical",
