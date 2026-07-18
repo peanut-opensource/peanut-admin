@@ -2,19 +2,31 @@
 
 declare(strict_types=1);
 
-namespace PeanutAdmin\App\module;
+namespace PeanutAdmin\Kernel\Module;
 
-use PeanutAdmin\Kernel\Module\CompiledModuleRegistry;
-use PeanutAdmin\Kernel\Module\ManifestDocument;
-use PeanutAdmin\Kernel\Module\ModuleException;
-use PeanutAdmin\Kernel\Module\ModuleKey;
+use InvalidArgumentException;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
 
 final readonly class ModuleBoundaryChecker
 {
-    public function __construct(private CompiledModuleRegistry $registry) {}
+    /** @var non-empty-list<string> */
+    private array $managedTablePrefixes;
+
+    /** @param non-empty-list<string> $managedTablePrefixes */
+    public function __construct(
+        private CompiledModuleRegistry $registry,
+        private ModuleHostLayout $layout,
+        array $managedTablePrefixes,
+    ) {
+        foreach ($managedTablePrefixes as $prefix) {
+            if (preg_match('/^[a-z][a-z0-9_]*_$/D', $prefix) !== 1) {
+                throw new InvalidArgumentException('Invalid managed table prefix.');
+            }
+        }
+        $this->managedTablePrefixes = array_values(array_unique($managedTablePrefixes));
+    }
 
     public function check(): void
     {
@@ -25,7 +37,7 @@ final readonly class ModuleBoundaryChecker
             if (!is_string($moduleKey)) {
                 throw new ModuleException('MODULE_MANIFEST_INVALID', 'Module key is required for boundary checks.');
             }
-            $namespaceOwners[ModuleKey::fromString($moduleKey)->backendNamespace()] = $moduleKey;
+            $namespaceOwners[$this->layout->backendNamespace(ModuleKey::fromString($moduleKey))] = $moduleKey;
             $contracts = is_array($manifest->data['contracts'] ?? null) ? $manifest->data['contracts'] : [];
             foreach ($contracts['exports'] ?? [] as $contract) {
                 if (is_string($contract)) {
@@ -49,7 +61,7 @@ final readonly class ModuleBoundaryChecker
         if (!is_string($moduleKey)) {
             throw new ModuleException('MODULE_MANIFEST_INVALID', 'Module key is required for boundary checks.');
         }
-        $namespace = ModuleKey::fromString($moduleKey)->backendNamespace();
+        $namespace = $this->layout->backendNamespace(ModuleKey::fromString($moduleKey));
         $dependencies = [];
         $declaredDependencies = $manifest->data['dependencies'] ?? [];
         if (is_array($declaredDependencies)) {
@@ -99,7 +111,7 @@ final readonly class ModuleBoundaryChecker
             [$type, $text] = $token;
             if (in_array($type, [T_NAME_QUALIFIED, T_NAME_FULLY_QUALIFIED], true)) {
                 $reference = ltrim($text, '\\');
-                if (str_starts_with($reference, 'PeanutAdmin\\App\\Modules\\')
+                if (str_starts_with($reference . '\\', $this->layout->backendNamespaceRoot())
                     && !str_starts_with($reference . '\\', $moduleNamespace)) {
                     $this->assertCrossModuleContract(
                         $path,
@@ -175,22 +187,16 @@ final readonly class ModuleBoundaryChecker
     /** @return list<string> */
     private function tableCandidates(string $literal): array
     {
-        $candidates = [];
-        $offset = 0;
-        while (($start = strpos($literal, 'pa_', $offset)) !== false) {
-            $end = $start + 3;
-            $length = strlen($literal);
-            while ($end < $length) {
-                $character = $literal[$end];
-                if (!(ctype_lower($character) || ctype_digit($character) || $character === '_')) {
-                    break;
-                }
-                ++$end;
-            }
-            $candidates[] = substr($literal, $start, $end - $start);
-            $offset = $end;
-        }
+        $prefixPattern = implode('|', array_map(
+            static fn(string $prefix): string => preg_quote($prefix, '/'),
+            $this->managedTablePrefixes,
+        ));
+        preg_match_all(
+            '/(?<![a-z0-9_])(?:' . $prefixPattern . ')[a-z0-9_]*(?![a-z0-9_])/D',
+            $literal,
+            $matches,
+        );
 
-        return array_values(array_unique($candidates));
+        return array_values(array_unique($matches[0] ?? []));
     }
 }

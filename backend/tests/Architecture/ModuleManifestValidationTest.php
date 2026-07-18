@@ -53,4 +53,41 @@ final class ModuleManifestValidationTest extends TestCase
             'unexpected' => true,
         ]);
     }
+
+    public function testOpisValidatorAllowsHostOwnedBusinessTableNames(): void
+    {
+        $validator = new OpisManifestSchemaValidator(
+            dirname(__DIR__, 3) . '/packages/php/kernel/resources/schemas/module-manifest.schema.json',
+        );
+        $manifest = [
+            'schema_version' => 1,
+            'key' => 'example.target',
+            'name' => 'Example Target',
+            'description' => 'Fixture module',
+            'version' => '1.0.0',
+            'kernel_constraint' => '^1.0',
+            'license' => 'Apache-2.0',
+            'backend' => ['provider' => 'Example\\App\\Modules\\Example\\Target\\ModuleProvider'],
+            'frontend' => (object) [],
+            'database' => ['owned_tables' => ['example_target']],
+            'contracts' => ['exports' => [], 'events' => []],
+            'tenant' => ['enableable' => true, 'requires' => []],
+        ];
+
+        $validator->assertValid(json_decode(
+            (string) json_encode($manifest, JSON_THROW_ON_ERROR),
+            false,
+            512,
+            JSON_THROW_ON_ERROR,
+        ));
+        $manifest['database']['owned_tables'] = ['unsafe-table'];
+
+        $this->expectException(ModuleException::class);
+        $validator->assertValid(json_decode(
+            (string) json_encode($manifest, JSON_THROW_ON_ERROR),
+            false,
+            512,
+            JSON_THROW_ON_ERROR,
+        ));
+    }
 }

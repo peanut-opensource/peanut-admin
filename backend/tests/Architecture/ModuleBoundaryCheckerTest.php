@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\Tests\Architecture;
 
-use PeanutAdmin\App\module\ModuleBoundaryChecker;
 use PeanutAdmin\Kernel\Module\CompiledModuleRegistry;
 use PeanutAdmin\Kernel\Module\ManifestDocument;
+use PeanutAdmin\Kernel\Module\ModuleBoundaryChecker;
 use PeanutAdmin\Kernel\Module\ModuleException;
+use PeanutAdmin\Kernel\Module\ModuleHostLayout;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
@@ -51,7 +52,7 @@ PHP);
         );
 
         $this->expectException(ModuleException::class);
-        (new ModuleBoundaryChecker($registry))->check();
+        $this->checker($registry)->check();
     }
 
     public function testPublicContractsAndOwnedTablesPass(): void
@@ -84,7 +85,7 @@ PHP);
             'revision',
         );
 
-        (new ModuleBoundaryChecker($registry))->check();
+        $this->checker($registry)->check();
     }
 
     public function testContractImportRequiresDeclaredDependency(): void
@@ -93,8 +94,8 @@ PHP);
             'PeanutAdmin\\App\\Modules\\Example\\Other\\Contracts\\OtherQuery',
         ]);
 
-        $this->expectModuleCode('MODULE_DEPENDENCY_MISSING', static function () use ($other, $owner): void {
-            (new ModuleBoundaryChecker(new CompiledModuleRegistry([$other, $owner], [], [], [], 'revision')))->check();
+        $this->expectModuleCode('MODULE_DEPENDENCY_MISSING', function () use ($other, $owner): void {
+            $this->checker(new CompiledModuleRegistry([$other, $owner], [], [], [], 'revision'))->check();
         });
     }
 
@@ -102,8 +103,8 @@ PHP);
     {
         [$owner, $other] = $this->contractFixture(['example.other'], []);
 
-        $this->expectModuleCode('MODULE_CONTRACT_MISSING', static function () use ($other, $owner): void {
-            (new ModuleBoundaryChecker(new CompiledModuleRegistry([$other, $owner], [], [], [], 'revision')))->check();
+        $this->expectModuleCode('MODULE_CONTRACT_MISSING', function () use ($other, $owner): void {
+            $this->checker(new CompiledModuleRegistry([$other, $owner], [], [], [], 'revision'))->check();
         });
     }
 
@@ -127,7 +128,7 @@ PHP);
             [],
             'revision',
         );
-        (new ModuleBoundaryChecker($registry))->check();
+        $this->checker($registry)->check();
 
         file_put_contents($this->root . '/Bad.php', <<<'PHP'
 <?php
@@ -136,7 +137,42 @@ SELECT * FROM pa_example_other
 SQL;
 PHP);
         $this->expectException(ModuleException::class);
-        (new ModuleBoundaryChecker($registry))->check();
+        $this->checker($registry)->check();
+    }
+
+    public function testExternalNamespaceAndManagedBusinessPrefixAreEnforced(): void
+    {
+        file_put_contents($this->root . '/Bad.php', <<<'PHP'
+<?php
+use Dcs\App\Modules\Dcs\Other\Infrastructure\OtherRepository;
+$sql = 'SELECT * FROM dcs_other';
+PHP);
+        $manifest = ManifestDocument::fromArray($this->root, ['key' => 'dcs.owner']);
+        $registry = new CompiledModuleRegistry(
+            [$manifest],
+            [],
+            ['dcs_owner' => 'dcs.owner', 'dcs_other' => 'dcs.other'],
+            [],
+            'revision',
+        );
+        $layout = new ModuleHostLayout('backend/app/Modules', 'Dcs\\App\\Modules', 'frontend/src/modules');
+
+        $this->expectException(ModuleException::class);
+        (new ModuleBoundaryChecker($registry, $layout, ['pa_', 'dcs_']))->check();
+    }
+
+    public function testUnregisteredModuleNamespaceIsRejectedWithoutTableReference(): void
+    {
+        file_put_contents($this->root . '/Bad.php', <<<'PHP'
+<?php
+use PeanutAdmin\App\Modules\Unregistered\Infrastructure\Repository;
+PHP);
+        $manifest = ManifestDocument::fromArray($this->root, ['key' => 'example.owner']);
+        $registry = new CompiledModuleRegistry([$manifest], [], [], [], 'revision');
+
+        $this->expectModuleCode('MODULE_REGISTRY_CONFLICT', function () use ($registry): void {
+            $this->checker($registry)->check();
+        });
     }
 
     /**
@@ -176,6 +212,19 @@ PHP);
         mkdir($path, 0777, true);
 
         return $path;
+    }
+
+    private function checker(CompiledModuleRegistry $registry): ModuleBoundaryChecker
+    {
+        return new ModuleBoundaryChecker(
+            $registry,
+            new ModuleHostLayout(
+                'backend/app/Modules',
+                'PeanutAdmin\\App\\Modules',
+                'frontend/src/modules',
+            ),
+            ['pa_'],
+        );
     }
 
     private function expectModuleCode(string $errorCode, callable $operation): void

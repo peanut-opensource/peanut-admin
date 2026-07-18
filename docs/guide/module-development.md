@@ -6,11 +6,22 @@ Use the fictional modules under `backend/app/Modules/Example` as executable refe
 
 ## 1. Choose A Stable Key
 
-Module keys use lower-case dot-separated segments such as `example.work-item`. The key determines the trusted namespace and directory mapping. Validate a proposed key with:
+Module keys use lower-case dot-separated segments such as `example.work-item`. The host combines the key with its declared `ModuleHostLayout`; the key itself does not choose a repository path or PHP namespace. Validate the reference host mapping with:
 
 ```bash
 ./scripts/module-key example.work-item
 ```
+
+An external host provides its own roots without changing the key:
+
+```bash
+PA_MODULE_NAMESPACE_ROOT='Acme\Admin\Modules' \
+PA_MODULE_BACKEND_ROOT='backend/app/Modules' \
+PA_MODULE_FRONTEND_ROOT='frontend/src/modules' \
+./scripts/module-key example.work-item
+```
+
+The same `ModuleHostLayout` instance must be supplied to the registry compiler and boundary checker. The boundary checker also receives every managed database prefix, including `pa_` and the host's business prefix, so an undeclared or cross-Module table reference fails closed.
 
 ## 2. Create `module.json`
 
@@ -44,6 +55,8 @@ Run:
 ## 3. Own Migrations And Tables
 
 Every Module migration implements `OwnedMigration`, declares the Module key, lists owned tables, and states whether it is reversible. Applied files are immutable. New schema changes use new timestamped migration files.
+
+Owned table names are lower-case SQL identifiers up to 64 characters. They are not required to use `pa_`; an application should use a stable application prefix. A host must pass all Kernel and data-permission table names as reserved tables when compiling manifests, so a business Module cannot claim a framework-owned table.
 
 Module dependencies determine deployment migration order. Schema migration runs once per deployment, never once per tenant.
 

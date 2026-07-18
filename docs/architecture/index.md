@@ -42,7 +42,7 @@ Tenant isolation is always an intersection. Within a data authorization, differe
 
 ## Module Ownership
 
-A module owns each table, model, repository, migration, domain rule, API resource, permission, target type, and public service contract it defines. Another module may call that public contract but may not write, join, or migrate the owner's private tables.
+A module owns each table, model, repository, migration, domain rule, API resource, permission, target type, and public service contract it defines. Another module may call that public contract but may not write, join, or migrate the owner's private tables. The host owns its Module roots, PHP namespace, frontend root, managed table prefixes, and reserved framework-table list; none of those application conventions are inferred from the Module key.
 
 Cross-module writes are coordinated by application use cases with explicit transaction boundaries. Events are published after commit. A future service split may reuse ownership and API contracts, but P0 does not promise cost-free microservice extraction.
 
