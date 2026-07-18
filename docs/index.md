@@ -27,4 +27,4 @@ P0 is an internal alpha foundation that downstream teams can extend safely. It i
 
 Reusable PHP and web packages, Kernel and data-permission schema, tenant and platform authentication, authorization contracts, fictional example Modules, all 75 current P0 OpenAPI handlers, the reference Admin Shell, real full-stack browser tests, local installation/upgrade workflows, and the fixed internal starter are implemented.
 
-The internal starter proves package consumption from a clean directory but is not a public generator or long-term template upgrade promise. Recovery requalification, the final aggregate gate, and the nine-role Runtime review remain before P0 candidate qualification.
+The internal starter proves package consumption from a clean directory but is not a public generator or long-term template upgrade promise. The P0 Runtime and the subsequent external-host consumption changes have passed their fixed-commit internal qualification gates. Neither qualification is a public release or production-readiness claim.

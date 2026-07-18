@@ -53,8 +53,10 @@ clients, or product-specific business Modules.
 ## Internal Downstream Decision
 
 The first approved consumer is a private validation project. It must pin the
-exact 40-character commit after promotion to `dev`, generate a formal
-integration mapping, and keep all product business Modules outside Peanut Admin.
+exact qualified 40-character commit, generate a formal integration mapping,
+and keep all product business Modules outside Peanut Admin. The external-host
+path is qualified at `0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`; see the
+[External Host Consumption Qualification](../reviews/external-host-consumption-qualification.md).
 Consuming a branch name, an unqualified later commit, or unpublished package
 coordinates is not allowed.
 

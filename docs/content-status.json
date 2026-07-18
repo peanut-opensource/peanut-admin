@@ -93,6 +93,13 @@
       "replacement": null
     },
     {
+      "path": "docs/reviews/external-host-consumption-qualification.md",
+      "title": "External Host Consumption Qualification",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/releases/p0-candidate.md",
       "title": "P0 Candidate",
       "status": "canonical",

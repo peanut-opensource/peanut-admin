@@ -17,6 +17,12 @@ The remediation history contains implementation and evidence for `PA-P0-R00` thr
 
 On 2026-07-18, the qualified candidate was approved for promotion to `dev` and pinned private downstream validation. A downstream project must record the exact 40-character commit and integration mapping; a branch name is not a dependency lock. This approval is not a production-readiness statement, tag, GitHub Release, or Composer/npm package publication. See `docs/status/index.md` for current implementation evidence.
 
+The external-host consumption path is separately qualified at commit
+`0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`. It proves host-owned Module
+namespaces and layouts, server-registered Tenant Clients, Client-scoped
+authentication and refresh, and the fixed starter as a real downstream
+consumer. The same release and production stop lines continue to apply.
+
 ## Principles
 
 - Tenant and platform identities remain separate.

@@ -38,6 +38,18 @@ consumer must pin the resulting 40-character commit and record its integration
 mapping. Tags, package publication, production claims, and public stable-release
 claims remain unapproved.
 
+## External Host Consumption
+
+The subsequent [External Host Consumption Qualification](../reviews/external-host-consumption-qualification.md)
+fixes commit `0ab02a9b735ba9f4c23509cb366b9bf04039ebf8` for exact-commit
+private validation. It proves application-owned Module namespaces and layouts,
+server-registered Tenant Clients, Client-scoped authentication and refresh, an
+application-owned protected Web transport, and a real external-host starter.
+
+This qualification does not broaden P0 into product business logic and does not
+approve a public generator, package publication, release tag, production claim,
+or later unqualified Runtime changes.
+
 ## Intentionally Not In P0
 
 - Phone credentials, invitations, password recovery, MFA, and OIDC.
