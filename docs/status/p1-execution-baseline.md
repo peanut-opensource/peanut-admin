@@ -150,7 +150,8 @@ strictly self-scoped.
 - Read the authenticated account profile.
 - Update `display_name` and `avatar_uri` for the authenticated account.
 - Change the active email-password secret after verifying the current secret.
-- Revoke all tenant and platform sessions for the account after a secret change.
+- Revoke all tenant and platform sessions and unconsumed login challenges for
+  the account after a secret change.
 - Expose the behavior in the existing account page.
 
 Platform-audience self-service, device/session listing, phone credentials,
@@ -167,8 +168,9 @@ No new table is introduced.
 | `pa_tenant_session` | Active sessions for the account become `revoked` with reason `credential_changed`. |
 | `pa_platform_session` | Active sessions for the account become `revoked` with reason `credential_changed`. |
 | session token tables | Active tokens for revoked sessions become `revoked`; token material is never persisted or audited. |
+| `pa_login_challenge` | Active tenant-login and tenant-switch challenges for the account become `revoked`. |
 | `pa_tenant_audit_event` | Records `account.profile.changed` and successful `account.password.changed` actions with context-derived actor and target identifiers. |
-| `pa_auth_security_event` | Records `password_change_denied` or `password_changed` with redacted metadata. |
+| `pa_auth_security_event` | Records `password_change_denied`, `password_change_rate_limited`, or `password_changed` with redacted metadata. |
 
 `display_name` is trimmed UTF-8 text from 1 to 120 characters. `avatar_uri` is
 either null or an absolute `https` URI no longer than 512 characters. File
@@ -188,10 +190,17 @@ store. Password change is intentionally non-idempotent: replay after success
 fails current-secret verification. The service runs each write in one database
 transaction. Account identity comes only from validated tenant context.
 
+Current-password verification is limited to five denied attempts per account or
+source IP in a rolling 15-minute window. A later attempt in that window does not
+perform password hashing, records `password_change_rate_limited`, and returns
+`429 PASSWORD_CHANGE_RATE_LIMITED` with `Retry-After: 900`.
+
 Problem codes are `ACCOUNT_PROFILE_INVALID`, `AVATAR_URI_INVALID`,
 `CURRENT_PASSWORD_INVALID`, `NEW_PASSWORD_INVALID`, `PASSWORD_UNCHANGED`, and
-`ACCOUNT_CREDENTIAL_UNAVAILABLE`. Error responses never return credential
-identifiers, hashes, session tokens, or existence information for another account.
+`ACCOUNT_CREDENTIAL_UNAVAILABLE`. Rate limiting uses
+`PASSWORD_CHANGE_RATE_LIMITED`. Error responses never return credential
+identifiers, hashes, session tokens, or existence information for another
+account.
 
 ### File Whitelist
 
@@ -202,14 +211,22 @@ The implementation task may change only:
 - `packages/php/kernel/tests/Integration/Identity/*`;
 - `backend/app/controller/api/v1/AccountController.php`;
 - `backend/app/middleware/TenantAccountRuntimeFactory.php`;
-- `backend/tests/Http/AccountSelfServiceRuntimeTest.php`;
-- `backend/tests/Integration/AccountSelfServiceIntegrationTest.php`;
-- `docs/api/openapi.yaml` and `docs/api/schemas/auth.yaml`;
+- `backend/tests/Integration/AccountSelfServiceHttpIntegrationTest.php`;
+- `backend/tests/Contract/OpenApiArtifactTest.php` only for current operation-count
+  and account-route assertions;
+- `docs/api/openapi.yaml`, `docs/api/schemas/auth.yaml`, and
+  `docs/api/index.md`;
 - generated OpenAPI route and TypeScript artifacts;
 - `docs/status/runtime-operation-coverage.json`;
+- `docs/examples/verification.json` and `scripts/verify-doc-examples` only to
+  preserve executable documentation checks for 75 P0 and 3 P1 operations;
+- `README.md` and `docs/status/index.md` only for current P1 candidate status;
+- `docs/guide/troubleshooting.md` only for current operation-availability wording;
 - `scripts/check-openapi` only to replace the fixed total with explicit P0/P1 totals;
 - `frontend/src/pages/common/AccountPage.vue`;
-- focused frontend tests for the account page.
+- `frontend/tests/account-page.spec.ts` and
+  `frontend/tests/e2e/full-stack.e2e.ts` only for the account-page flows;
+- `vitest.config.ts` only to make the existing aggregate unit command compile Vue SFC tests with the already accepted Vue plugin.
 
 Changing Kernel schema, Module manifests, product profiles, dependency locks,
 starter templates, example domain code, or another administration resource is
@@ -220,9 +237,12 @@ outside this slice.
 - The three operations are classified as `p1` and have executable test ownership.
 - Cross-account IDs cannot be supplied by any request shape.
 - Wrong current password changes no state and records a denied security event.
+- Repeated wrong-current-password attempts stop before password hashing, return
+  a bounded retry interval, and record a redacted rate-limit event.
 - Successful profile update exposes no credential secret and records a tenant audit event with redacted evidence.
 - Successful secret change revokes tenant and platform sessions, invalidates old
-  access and refresh tokens, and never logs either password.
+  access and refresh tokens, invalidates active login challenges, and never logs
+  either password.
 - Desktop and mobile account-page flows pass against a real backend.
 - OpenAPI, Runtime coverage, unit, integration, security, browser, recovery,
   workspace, and aggregate checks pass without weakening P0 assertions.
