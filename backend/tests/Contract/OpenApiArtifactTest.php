@@ -14,8 +14,11 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(75, $routes);
-        self::assertCount(75, array_unique($operationIds));
+        self::assertCount(78, $routes);
+        self::assertCount(78, array_unique($operationIds));
+        self::assertArrayHasKey('GET /api/v1/account', $routes);
+        self::assertArrayHasKey('PATCH /api/v1/account', $routes);
+        self::assertArrayHasKey('POST /api/v1/account/password', $routes);
         self::assertArrayHasKey('GET /api/v1/authorization/target-candidates', $routes);
         self::assertArrayHasKey('GET /api/v1/example/reference-items/candidates', $routes);
         self::assertArrayHasKey('PUT /api/platform/v1/tenants/{tenant_id}/modules/{module_key}', $routes);

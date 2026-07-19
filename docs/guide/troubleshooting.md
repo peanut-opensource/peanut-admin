@@ -49,7 +49,12 @@ A degraded report currently means the cache probe is down while database and app
 
 ## Operation Is Missing From The API
 
-Only operations in the current P0 OpenAPI document are available. Do not call an unused fallback controller or infer availability from a planned name. Add the operation schema, concrete handler, authorization metadata, generated artifacts, and tests in one scoped change.
+Only operations present in the current OpenAPI document and classified in the
+Runtime coverage ledger are implemented. A P1 candidate remains unavailable to
+qualified downstream consumers until a fixed-commit aggregate review approves
+it. Do not call an unused fallback controller or infer availability from a
+planned name. Add the operation schema, concrete handler, authorization
+metadata, classification, generated artifacts, and tests in one scoped change.
 
 ## 403, 404, 412, And 429
 

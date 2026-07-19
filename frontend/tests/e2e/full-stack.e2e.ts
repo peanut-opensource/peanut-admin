@@ -1,4 +1,7 @@
+import { randomUUID } from 'node:crypto'
+
 import { expect, test } from '@playwright/test'
+import type { Page, Response } from '@playwright/test'
 
 import {
   browserPassword,
@@ -9,6 +12,46 @@ import {
 } from '../fixtures/full-stack'
 
 const email = 'browser-owner@example.test'
+
+const login = async (page: Page, password: string): Promise<Response> => {
+  await page.goto('/login')
+  await page.getByLabel('邮箱').fill(email)
+  await page.getByLabel('密码').fill(password)
+  const responsePromise = page.waitForResponse(response => (
+    response.request().method() === 'POST'
+    && new URL(response.url()).pathname === '/api/v1/auth/login'
+  ))
+  await page.getByRole('button', { name: '登录' }).click()
+
+  return responsePromise
+}
+
+const enterAlphaTeam = async (page: Page): Promise<void> => {
+  await expect(page).toHaveURL(/\/select-tenant/)
+  await page.getByText('Alpha Team', { exact: true }).click()
+  await page.getByRole('button', { name: '进入工作区' }).click()
+  await expect(page).toHaveURL(url => url.pathname === '/app')
+  await expect(page.locator('.workspace-summary').getByText('Alpha Team')).toBeVisible()
+}
+
+const submitPasswordChange = async (
+  page: Page,
+  currentPassword: string,
+  newPassword: string,
+): Promise<Response> => {
+  await page.goto('/app/account')
+  await expect(page.getByText('b***@example.test')).toBeVisible()
+  await page.getByTestId('current-password').fill(currentPassword)
+  await page.getByTestId('new-password').fill(newPassword)
+  await page.getByTestId('confirm-password').fill(newPassword)
+  const responsePromise = page.waitForResponse(response => (
+    response.request().method() === 'POST'
+    && new URL(response.url()).pathname === '/api/v1/account/password'
+  ))
+  await page.getByRole('button', { name: '修改密码' }).click()
+
+  return responsePromise
+}
 
 test('real tenant login reaches multi-target read and single-target write', async ({ page }, testInfo) => {
   const responses = observeApi(page)
@@ -22,7 +65,7 @@ test('real tenant login reaches multi-target read and single-target write', asyn
   await expect(page.getByText('Alpha Team')).toBeVisible()
   await expect(page.getByText('Beta Team')).toBeVisible()
   await page.getByRole('button', { name: '进入工作区' }).click()
-  await expect(page).toHaveURL(/\/app$/)
+  await expect(page).toHaveURL(url => url.pathname === '/app')
   await expect(page.locator('.workspace-summary').getByText('Alpha Team')).toBeVisible()
 
   await page.goto('/app/examples/work-items')
@@ -84,4 +127,82 @@ test('real platform login reaches the protected tenant collection', async ({ pag
   expectApiResponse(responses, 'GET', '/api/platform/v1/menus', 200)
   expectApiResponse(responses, 'GET', '/api/platform/v1/tenants', 200)
   expect(errors).toEqual([])
+})
+
+test('real tenant account profile loads and saves through the protected API', async ({ page }, testInfo) => {
+  const responses = observeApi(page)
+  const errors = monitorFullStackErrors(page)
+
+  await page.goto('/login')
+  await page.getByLabel('邮箱').fill(email)
+  await page.getByLabel('密码').fill(browserPassword())
+  await page.getByRole('button', { name: '登录' }).click()
+  await expect(page).toHaveURL(/\/select-tenant/)
+  await page.getByRole('button', { name: '进入工作区' }).click()
+  await expect(page).toHaveURL(url => url.pathname === '/app')
+  await expect(page.locator('.workspace-summary').getByText('Alpha Team')).toBeVisible()
+
+  await page.goto('/app/account')
+  await expect(page.getByText('b***@example.test')).toBeVisible()
+  const displayName = `Browser Owner ${testInfo.project.name}`
+  await page.getByTestId('profile-display-name').fill(displayName)
+  await page.getByTestId('profile-avatar-uri').fill('')
+  await page.getByRole('button', { name: '保存资料' }).click()
+  await expect(page.getByText('个人资料已保存。')).toBeVisible()
+  await expect(page.getByText(displayName).first()).toBeVisible()
+  await captureFullStackScreenshot(page, testInfo, 'real-account-profile')
+
+  expectApiResponse(responses, 'GET', '/api/v1/account', 200)
+  expectApiResponse(responses, 'PATCH', '/api/v1/account', 200)
+  expect(errors).toEqual([])
+})
+
+test('real tenant account password change revokes the old password and remains reversible', async ({ page }, testInfo) => {
+  const responses = observeApi(page)
+  const errors = monitorFullStackErrors(page)
+  const originalPassword = browserPassword()
+  const replacementPassword = `Peanut-${testInfo.project.name}-${randomUUID()}!`
+  let replacementIsActive = false
+
+  try {
+    const initialLogin = await login(page, originalPassword)
+    expect(initialLogin.status()).toBe(200)
+    await enterAlphaTeam(page)
+
+    const changed = await submitPasswordChange(page, originalPassword, replacementPassword)
+    expect(changed.status()).toBe(204)
+    replacementIsActive = true
+    await expect(page).toHaveURL(/\/login$/)
+
+    const rejectedOldLogin = await login(page, originalPassword)
+    expect(rejectedOldLogin.status()).toBe(401)
+    await expect(page).toHaveURL(/\/login$/)
+
+    const replacementLogin = await login(page, replacementPassword)
+    expect(replacementLogin.status()).toBe(200)
+    await enterAlphaTeam(page)
+
+    const restored = await submitPasswordChange(page, replacementPassword, originalPassword)
+    expect(restored.status()).toBe(204)
+    replacementIsActive = false
+    await expect(page).toHaveURL(/\/login$/)
+
+    const restoredLogin = await login(page, originalPassword)
+    expect(restoredLogin.status()).toBe(200)
+    await expect(page).toHaveURL(/\/select-tenant/)
+
+    expectApiResponse(responses, 'POST', '/api/v1/account/password', 204)
+    expectApiResponse(responses, 'POST', '/api/v1/auth/login', 401)
+    expect(errors).toEqual([])
+  } finally {
+    if (replacementIsActive) {
+      const replacementLogin = await login(page, replacementPassword)
+      expect(replacementLogin.status()).toBe(200)
+      await enterAlphaTeam(page)
+      const restored = await submitPasswordChange(page, replacementPassword, originalPassword)
+      expect(restored.status()).toBe(204)
+      replacementIsActive = false
+      await expect(page).toHaveURL(/\/login$/)
+    }
+  }
 })

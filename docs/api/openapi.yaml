@@ -1,6 +1,6 @@
 openapi: 3.1.2
 info:
-  title: Peanut Admin P0 API
+  title: Peanut Admin API
   version: 0.1.0
   description: Tenant and platform administration contracts for the Peanut Admin foundation.
   license:
@@ -43,6 +43,16 @@ x-platform-authenticated-responses: &platformAuthenticatedResponses
 x-platform-context-responses: &platformContextResponses
   <<: *readErrors
   '200': { $ref: './responses.yaml#/PlatformContextOk' }
+x-account-profile-responses: &accountProfileResponses
+  <<: *writeErrors
+  '200':
+    description: Authenticated account profile.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/auth.yaml#/AccountProfileResponse' }
 
 x-tenant-response: &tenantResponse
   <<: *readErrors
@@ -215,6 +225,37 @@ paths:
         <<: *readErrors
         '204':
           description: Sessions revoked
+          headers:
+            X-Request-Id: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: no-store } }
+            Set-Cookie: { schema: { type: string } }
+
+  /api/v1/account:
+    get:
+      operationId: getMyAccount
+      summary: getMyAccount
+      x-handler: 'PeanutAdmin\App\controller\api\v1\AccountController::show'
+      responses: *accountProfileResponses
+    patch:
+      operationId: updateMyAccount
+      summary: updateMyAccount
+      x-handler: 'PeanutAdmin\App\controller\api\v1\AccountController::update'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: './schemas/auth.yaml#/UpdateAccountProfileRequest' } } }
+      responses: *accountProfileResponses
+  /api/v1/account/password:
+    post:
+      operationId: changeMyPassword
+      summary: changeMyPassword
+      x-handler: 'PeanutAdmin\App\controller\api\v1\AccountController::changePassword'
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: './schemas/auth.yaml#/ChangePasswordRequest' } } }
+      responses:
+        <<: *writeErrors
+        '204':
+          description: Password changed and account sessions revoked.
           headers:
             X-Request-Id: { schema: { type: string } }
             Cache-Control: { schema: { type: string, const: no-store } }

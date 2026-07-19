@@ -139,3 +139,61 @@ TenantContextResponse:
   properties:
     data: { $ref: '#/TenantContextView' }
     meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+AccountCredentialSummary:
+  type: object
+  additionalProperties: false
+  required: [kind, identifier_type, identifier_masked, verified_at, secret_changed_at]
+  properties:
+    kind: { type: string, const: email_password }
+    identifier_type: { type: string, const: email }
+    identifier_masked: { type: string, minLength: 5 }
+    verified_at: { type: string }
+    secret_changed_at: { type: string }
+
+AccountProfile:
+  type: object
+  additionalProperties: false
+  required: [account_id, display_name, avatar_uri, credential]
+  properties:
+    account_id: { $ref: './common.yaml#/$defs/BigIntString' }
+    display_name: { type: string, minLength: 1, maxLength: 120 }
+    avatar_uri:
+      type: [string, 'null']
+      format: uri
+      pattern: '^[Hh][Tt][Tt][Pp][Ss]://'
+      maxLength: 512
+      description: Absolute HTTPS URI without user information.
+    credential: { $ref: '#/AccountCredentialSummary' }
+
+AccountProfileResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/AccountProfile' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
+UpdateAccountProfileRequest:
+  type: object
+  additionalProperties: false
+  required: [display_name, avatar_uri]
+  properties:
+    display_name: { type: string, minLength: 1, maxLength: 120 }
+    avatar_uri:
+      type: [string, 'null']
+      format: uri
+      pattern: '^[Hh][Tt][Tt][Pp][Ss]://'
+      maxLength: 512
+      description: Absolute HTTPS URI without user information.
+
+ChangePasswordRequest:
+  type: object
+  additionalProperties: false
+  required: [current_password, new_password]
+  properties:
+    current_password: { type: string, minLength: 1, maxLength: 1024, writeOnly: true }
+    new_password:
+      type: string
+      writeOnly: true
+      description: New password containing between 12 and 128 UTF-8 bytes.

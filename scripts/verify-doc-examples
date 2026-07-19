@@ -119,13 +119,39 @@ PEANUT_INTEGRATION=1 php vendor/bin/phpunit examples/module-contract/ExampleModu
 
 php -r '
 $routes = require "backend/route/openapi-generated.php";
-if (count($routes) !== 75) {
-    fwrite(STDERR, "ERROR: documentation expects exactly 75 current P0 operations\n");
+$ledger = json_decode(
+    (string) file_get_contents("docs/status/runtime-operation-coverage.json"),
+    true,
+    512,
+    JSON_THROW_ON_ERROR,
+);
+$operations = $ledger["operations"] ?? [];
+$p0Operations = array_values(array_filter(
+    $operations,
+    static fn(array $operation): bool => ($operation["scope"] ?? null) === "p0",
+));
+$p1OperationCount = count(array_filter(
+    $operations,
+    static fn(array $operation): bool => ($operation["scope"] ?? null) === "p1",
+));
+$p0OperationCount = count($p0Operations);
+if ($p0OperationCount !== 75 || $p1OperationCount !== 3 || count($routes) !== 78) {
+    fwrite(STDERR, "ERROR: documentation expects 75 P0 and 3 P1 Runtime operations\n");
     exit(1);
 }
-foreach ($routes as $route => $binding) {
+$routesByOperation = [];
+foreach ($routes as $binding) {
+    $routesByOperation[$binding[3] ?? ""] = $binding;
+}
+foreach ($p0Operations as $operation) {
+    $operationId = $operation["operation_id"] ?? "";
+    $binding = $routesByOperation[$operationId] ?? null;
+    if (!is_array($binding)) {
+        fwrite(STDERR, "ERROR: documented P0 operation has no generated route: {$operationId}\n");
+        exit(1);
+    }
     if (str_ends_with($binding[0], "\\ContractController")) {
-        fwrite(STDERR, "ERROR: documented P0 operation uses a fallback handler: {$route}\n");
+        fwrite(STDERR, "ERROR: documented P0 operation uses a fallback handler: {$operationId}\n");
         exit(1);
     }
 }

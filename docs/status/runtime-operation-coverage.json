@@ -94,6 +94,15 @@
         "packages/php/kernel/tests/Integration/Platform/PlatformTenantAdminServiceTest.php",
         "backend/tests/Contract/OpenApiArtifactTest.php"
       ]
+    },
+    "RUNTIME-ACCOUNT-SELF-SERVICE-001": {
+      "description": "Authenticated self-scoped account profile and password security behavior",
+      "evidence": [
+        "packages/php/kernel/tests/Integration/Identity/AccountSelfServiceIntegrationTest.php",
+        "backend/tests/Integration/AccountSelfServiceHttpIntegrationTest.php",
+        "frontend/tests/account-page.spec.ts",
+        "frontend/tests/e2e/full-stack.e2e.ts"
+      ]
     }
   },
   "operations": [
@@ -171,6 +180,9 @@
     {"operation_id":"enablePlatformTenantModule","scope":"p0","route":"PUT /api/platform/v1/tenants/{tenant_id}/modules/{module_key}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformTenantController::enableModule","response_schema":"#/components/schemas/TenantModuleResponse","test_owner":"RUNTIME-PLATFORM-TENANT-001"},
     {"operation_id":"replaceMemberRoles","scope":"p0","route":"PUT /api/v1/members/{member_id}/roles","handler":"PeanutAdmin\\App\\controller\\api\\v1\\MemberController::replaceRoles","response_schema":"#/components/schemas/MemberResponse","test_owner":"RUNTIME-TENANT-ADMIN-001"},
     {"operation_id":"replaceRoleDataPolicy","scope":"p0","route":"PUT /api/v1/roles/{role_id}/data-policies/{resource_key}/{operation}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\DataAuthorizationController::replaceRolePolicy","response_schema":"#/components/schemas/DataPolicyResponse","test_owner":"RUNTIME-DATA-AUTHORIZATION-001"},
-    {"operation_id":"replaceRolePermissions","scope":"p0","route":"PUT /api/v1/roles/{role_id}/permissions","handler":"PeanutAdmin\\App\\controller\\api\\v1\\RoleController::replacePermissions","response_schema":"#/components/schemas/RoleResponse","test_owner":"RUNTIME-TENANT-ADMIN-001"}
+    {"operation_id":"replaceRolePermissions","scope":"p0","route":"PUT /api/v1/roles/{role_id}/permissions","handler":"PeanutAdmin\\App\\controller\\api\\v1\\RoleController::replacePermissions","response_schema":"#/components/schemas/RoleResponse","test_owner":"RUNTIME-TENANT-ADMIN-001"},
+    {"operation_id":"getMyAccount","scope":"p1","route":"GET /api/v1/account","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::show","response_schema":"#/components/schemas/AccountProfileResponse","test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
+    {"operation_id":"updateMyAccount","scope":"p1","route":"PATCH /api/v1/account","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::update","response_schema":"#/components/schemas/AccountProfileResponse","test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
+    {"operation_id":"changeMyPassword","scope":"p1","route":"POST /api/v1/account/password","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::changePassword","response_schema":null,"test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"}
   ]
 }

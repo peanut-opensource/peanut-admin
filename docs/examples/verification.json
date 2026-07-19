@@ -63,9 +63,9 @@
     },
     {
       "document": "docs/api/index.md",
-      "document_contains": "All 75 operations",
-      "source": "backend/tests/Contract/OpenApiArtifactTest.php",
-      "source_contains": "assertCount(75, $routes)"
+      "document_contains": "All 75 P0 operations",
+      "source": "scripts/verify-doc-examples",
+      "source_contains": "$p0OperationCount !== 75"
     },
     {
       "document": "docs/guide/internal-starter.md",

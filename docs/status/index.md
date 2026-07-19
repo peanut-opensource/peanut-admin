@@ -21,7 +21,11 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 
 ## Runtime Operation Coverage
 
-[`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies all 75 current OpenAPI operations as P0, records their concrete handlers and success schemas, and assigns each operation to an executable test owner. `./scripts/check-runtime-coverage` rejects missing, duplicate, stale, or unowned operations.
+[`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies
+the current 78 OpenAPI operations as 75 P0 and 3 P1 operations, records their
+concrete handlers and success schemas, and assigns each operation to an
+executable test owner. `./scripts/check-runtime-coverage` rejects missing,
+duplicate, stale, or unowned operations.
 
 ## P0 Qualification
 
@@ -65,11 +69,13 @@ The repository checks are the authoritative evidence for completed implementatio
 ## P1 Execution
 
 P1 planning starts from repository commit
-`c63e06e25e35855cfefab890d7ee43c6e0cf839d`. The current tree still has 75
-P0 operations and no qualified P1 Runtime operations. The canonical execution
+`c63e06e25e35855cfefab890d7ee43c6e0cf839d` and is fixed by baseline commit
+`957e7b6`. The first candidate slice implements three tenant-audience operations
+for self-scoped account profile and password management. The canonical execution
 order, task contracts, dependency gates, and stop lines are recorded in the
 [P1 Execution Baseline](./p1-execution-baseline.md).
 
-P1 work does not change the external-host consumption lock above. A later P1
-commit remains unqualified for downstream consumption until a new fixed-commit
-aggregate check and review approve it.
+These P1 operations are implemented candidates, not qualified downstream
+capabilities. P1 work does not change the external-host consumption lock above.
+A later P1 commit remains unqualified for downstream consumption until a new
+fixed-commit aggregate check and review approve it.
