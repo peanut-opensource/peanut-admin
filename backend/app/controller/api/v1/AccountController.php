@@ -6,8 +6,8 @@ namespace PeanutAdmin\App\controller\api\v1;
 
 use PeanutAdmin\App\controller\api\AuthHttpRuntime;
 use PeanutAdmin\App\middleware\TenantAccountRuntimeFactory;
-use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
+use PeanutAdmin\Kernel\Auth\TenantClient;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Http\TenantRefreshCookie;
 use PeanutAdmin\Kernel\Identity\SelfService\AccountSelfService;
@@ -36,14 +36,25 @@ final class AccountController
         return MemberAdminRuntime::run($request, function () use ($request): array {
             $context = MemberAdminRuntime::context($request);
             $body = MemberAdminRuntime::body($request);
-            $displayName = $body['display_name'] ?? null;
-            $avatarUri = $body['avatar_uri'] ?? null;
-            if (!is_string($displayName)) {
+            self::assertDeclaredFields(
+                $body,
+                ['display_name', 'avatar_uri'],
+                'ACCOUNT_PROFILE_INVALID',
+                'The account profile request contains undeclared fields.',
+            );
+            if (!array_key_exists('display_name', $body) || !is_string($body['display_name'])) {
                 throw AdminAccessException::invalid(
                     'ACCOUNT_PROFILE_INVALID',
                     'The display name must be a string.',
                 );
             }
+            if (!array_key_exists('avatar_uri', $body)) {
+                throw AdminAccessException::invalid(
+                    'AVATAR_URI_INVALID',
+                    'The avatar URI field is required.',
+                );
+            }
+            $avatarUri = $body['avatar_uri'];
             if ($avatarUri !== null && !is_string($avatarUri)) {
                 throw AdminAccessException::invalid(
                     'AVATAR_URI_INVALID',
@@ -55,7 +66,7 @@ final class AccountController
                 $context->tenantId,
                 $context->memberId,
                 $context->accountId,
-                $displayName,
+                $body['display_name'],
                 $avatarUri,
                 $context->requestId,
             )];
@@ -71,29 +82,35 @@ final class AccountController
     {
         $context = MemberAdminRuntime::context($request);
         $body = MemberAdminRuntime::body($request);
-        $currentPassword = $body['current_password'] ?? null;
-        $newPassword = $body['new_password'] ?? null;
-        if (!is_string($currentPassword)) {
+        self::assertDeclaredFields(
+            $body,
+            ['current_password', 'new_password'],
+            'CURRENT_PASSWORD_INVALID',
+            'The password request contains undeclared fields.',
+        );
+        if (!array_key_exists('current_password', $body) || !is_string($body['current_password'])) {
             throw AdminAccessException::invalid(
                 'CURRENT_PASSWORD_INVALID',
                 'The current password is invalid.',
             );
         }
-        if (!is_string($newPassword)) {
+        if (!array_key_exists('new_password', $body) || !is_string($body['new_password'])) {
             throw AdminAccessException::invalid(
                 'NEW_PASSWORD_INVALID',
                 'The new password is invalid.',
             );
         }
+        $service = $this->service();
+        $clearRefreshCookie = TenantRefreshCookie::clear(new TenantClient($context->clientKey));
 
         try {
-            $this->service()->changePassword(
+            $service->changePassword(
                 $context->tenantId,
                 $context->memberId,
                 $context->accountId,
                 $context->sessionKey,
-                $currentPassword,
-                $newPassword,
+                $body['current_password'],
+                $body['new_password'],
                 AuthHttpRuntime::ipAddress($request),
                 AuthHttpRuntime::userAgent($request),
                 $context->requestId,
@@ -117,11 +134,25 @@ final class AccountController
                 'Retry-After' => (string) AccountSelfService::PASSWORD_CHANGE_RETRY_AFTER_SECONDS,
             ]);
         }
-        $client = TenantAuthRuntimeFactory::create($context->clientKey)->client();
 
         return AuthHttpRuntime::response(204, null, [
-            'Set-Cookie' => TenantRefreshCookie::clear($client),
+            'Set-Cookie' => $clearRefreshCookie,
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @param list<string> $declaredFields
+     */
+    private static function assertDeclaredFields(
+        array $body,
+        array $declaredFields,
+        string $errorCode,
+        string $message,
+    ): void {
+        if (array_diff(array_keys($body), $declaredFields) !== []) {
+            throw AdminAccessException::invalid($errorCode, $message);
+        }
     }
 
     private function service(): AccountSelfService

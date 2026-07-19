@@ -44,6 +44,7 @@ const loadFailure = ref<Failure | null>(null)
 const profileFailure = ref<Failure | null>(null)
 const passwordFailure = ref<Failure | null>(null)
 const profileSaved = ref(false)
+let profileLoadGeneration = 0
 
 const requiredString = (value: unknown): string => {
   if (typeof value !== 'string' || value === '') throw new Error('ACCOUNT_PROFILE_INVALID')
@@ -84,19 +85,32 @@ const applyProfile = (value: AccountProfile) => {
   profileForm.avatarUri = value.avatarUri ?? ''
 }
 
+const clearProfileSaved = () => {
+  profileSaved.value = false
+}
+
 const loadProfile = async () => {
+  const generation = ++profileLoadGeneration
   profileLoading.value = true
-  loadFailure.value = null
   try {
-    applyProfile(parseProfile(runtime.unwrap(await accountApi.GET('/api/v1/account'))))
+    const loadedProfile = parseProfile(runtime.unwrap(await accountApi.GET('/api/v1/account')))
+    if (generation !== profileLoadGeneration) return
+
+    applyProfile(loadedProfile)
+    loadFailure.value = null
   } catch (error) {
+    if (generation !== profileLoadGeneration) return
+
+    profile.value = null
     loadFailure.value = failureFrom(error, '账号资料暂时无法加载，请稍后重试。')
   } finally {
-    profileLoading.value = false
+    if (generation === profileLoadGeneration) profileLoading.value = false
   }
 }
 
 const saveProfile = async () => {
+  if (profile.value === null) return
+
   const displayName = profileForm.displayName.trim()
   if (displayName === '') {
     profileFailure.value = { message: '显示名不能为空。', requestId: '' }
@@ -182,11 +196,18 @@ onMounted(loadProfile)
       type="error"
       :closable="false"
     >
-      <template
-        v-if="loadFailure.requestId"
-        #default
-      >
-        请求编号：{{ loadFailure.requestId }}
+      <template #default>
+        <div v-if="loadFailure.requestId">
+          请求编号：{{ loadFailure.requestId }}
+        </div>
+        <el-button
+          data-testid="profile-load-retry"
+          native-type="button"
+          :disabled="profileLoading"
+          @click="loadProfile"
+        >
+          重新加载个人资料
+        </el-button>
       </template>
     </el-alert>
     <el-descriptions
@@ -259,6 +280,7 @@ onMounted(loadProfile)
           :closable="false"
         />
         <el-form
+          v-if="profile"
           data-testid="profile-form"
           class="account-form"
           label-position="top"
@@ -273,6 +295,7 @@ onMounted(loadProfile)
               data-testid="profile-display-name"
               autocomplete="name"
               :disabled="profileLoading"
+              @update:model-value="clearProfileSaved"
             />
           </el-form-item>
           <el-form-item label="头像地址">
@@ -283,6 +306,7 @@ onMounted(loadProfile)
               autocomplete="url"
               clearable
               :disabled="profileLoading"
+              @update:model-value="clearProfileSaved"
             />
           </el-form-item>
           <el-button

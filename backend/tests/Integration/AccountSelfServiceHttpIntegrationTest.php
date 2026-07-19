@@ -7,9 +7,11 @@ namespace PeanutAdmin\App\Tests\Integration;
 use PDO;
 use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
+use PeanutAdmin\App\controller\api\v1\AccountController;
 use PeanutAdmin\App\middleware\TenantAuthRuntimeFactory;
 use PeanutAdmin\Kernel\Auth\TenantAuthentication;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use think\App;
 use think\Request;
 use think\Response;
@@ -165,6 +167,106 @@ SQL));
 SELECT COUNT(*) FROM pa_auth_security_event
 WHERE event_type = 'password_change_rate_limited'
 SQL));
+    }
+
+    public function testProfileUpdateRejectsMissingAndUndeclaredFields(): void
+    {
+        $invalidBodies = [
+            'empty body' => [[], 'ACCOUNT_PROFILE_INVALID'],
+            'missing display name' => [['avatar_uri' => null], 'ACCOUNT_PROFILE_INVALID'],
+            'missing avatar URI' => [['display_name' => 'Boundary Owner'], 'AVATAR_URI_INVALID'],
+            'account identifier' => [[
+                'display_name' => 'Boundary Owner',
+                'avatar_uri' => null,
+                'account_id' => '999999',
+            ], 'ACCOUNT_PROFILE_INVALID'],
+            'tenant identifier' => [[
+                'display_name' => 'Boundary Owner',
+                'avatar_uri' => null,
+                'tenant_id' => '999999',
+            ], 'ACCOUNT_PROFILE_INVALID'],
+            'unknown field' => [[
+                'display_name' => 'Boundary Owner',
+                'avatar_uri' => null,
+                'unexpected' => true,
+            ], 'ACCOUNT_PROFILE_INVALID'],
+        ];
+
+        foreach ($invalidBodies as $description => [$body, $expectedCode]) {
+            $response = $this->request('PATCH', '/api/v1/account', $body);
+
+            self::assertSame(422, $response->getCode(), $description);
+            self::assertSame('application/problem+json', $response->getHeader('Content-Type'), $description);
+            self::assertSame($expectedCode, $response->getData()['code'], $description);
+        }
+
+        self::assertSame(0, $this->scalarCount(<<<'SQL'
+SELECT COUNT(*) FROM pa_tenant_audit_event
+WHERE action = 'account.profile.changed'
+SQL));
+    }
+
+    public function testPasswordChangeRejectsMissingAndUndeclaredFields(): void
+    {
+        $validBody = [
+            'current_password' => self::PASSWORD,
+            'new_password' => 'Replacement-HTTP-P1-2026!',
+        ];
+        $invalidBodies = [
+            'empty body' => [[], 'CURRENT_PASSWORD_INVALID'],
+            'missing current password' => [[
+                'new_password' => $validBody['new_password'],
+            ], 'CURRENT_PASSWORD_INVALID'],
+            'missing new password' => [[
+                'current_password' => $validBody['current_password'],
+            ], 'NEW_PASSWORD_INVALID'],
+            'account identifier' => [[...$validBody, 'account_id' => '999999'], 'CURRENT_PASSWORD_INVALID'],
+            'tenant identifier' => [[...$validBody, 'tenant_id' => '999999'], 'CURRENT_PASSWORD_INVALID'],
+            'unknown field' => [[...$validBody, 'unexpected' => true], 'CURRENT_PASSWORD_INVALID'],
+        ];
+
+        foreach ($invalidBodies as $description => [$body, $expectedCode]) {
+            $response = $this->request('POST', '/api/v1/account/password', $body);
+
+            self::assertSame(422, $response->getCode(), $description);
+            self::assertSame('application/problem+json', $response->getHeader('Content-Type'), $description);
+            self::assertSame($expectedCode, $response->getData()['code'], $description);
+            self::assertNull($response->getHeader('Retry-After'), $description);
+        }
+
+        self::assertSame(0, $this->scalarCount(<<<'SQL'
+SELECT COUNT(*) FROM pa_auth_security_event
+WHERE event_type IN ('password_change_denied', 'password_change_rate_limited', 'password_changed')
+SQL));
+    }
+
+    public function testPasswordChangePreparesCookieMetadataBeforeThePasswordMutation(): void
+    {
+        $method = new ReflectionMethod(AccountController::class, 'changePassword');
+        $fileName = $method->getFileName();
+        self::assertIsString($fileName);
+        $sourceLines = file($fileName);
+        self::assertIsArray($sourceLines);
+        $source = implode('', array_slice(
+            $sourceLines,
+            $method->getStartLine() - 1,
+            $method->getEndLine() - $method->getStartLine() + 1,
+        ));
+
+        $cookieMetadataPosition = strpos($source, 'TenantRefreshCookie::clear');
+        $passwordMutationPosition = strpos($source, '->changePassword(');
+        self::assertIsInt($cookieMetadataPosition);
+        self::assertIsInt($passwordMutationPosition);
+        self::assertLessThan(
+            $passwordMutationPosition,
+            $cookieMetadataPosition,
+            'Cookie metadata must be prepared before the transactional password mutation starts.',
+        );
+        self::assertStringNotContainsString(
+            'TenantAuthRuntimeFactory::',
+            $source,
+            'Password changes must not construct the database and password-hashing authentication Runtime.',
+        );
     }
 
     /** @param array<string, mixed>|null $body */

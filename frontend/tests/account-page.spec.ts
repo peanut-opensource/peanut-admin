@@ -110,6 +110,92 @@ describe('AccountPage', () => {
     expect(wrapper.text()).toContain('17')
   })
 
+  it('keeps the profile form unavailable until the profile loads', async () => {
+    let resolveProfile!: (value: { payload: ReturnType<typeof profile> }) => void
+    mocks.get.mockReturnValueOnce(new Promise((resolve) => {
+      resolveProfile = resolve
+    }))
+
+    const wrapper = mountPage()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.find('[data-testid="profile-form"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="password-form"]').exists()).toBe(true)
+
+    resolveProfile({ payload: profile() })
+    await flushPromises()
+
+    expect(wrapper.find('[data-testid="profile-form"]').exists()).toBe(true)
+  })
+
+  it('keeps the profile form unavailable after a load failure and retries the load', async () => {
+    mocks.get
+      .mockRejectedValueOnce(new Error('network unavailable'))
+      .mockResolvedValueOnce({ payload: profile() })
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('账号资料暂时无法加载，请稍后重试。')
+    expect(wrapper.find('[data-testid="profile-form"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="password-form"]').exists()).toBe(true)
+
+    await wrapper.get('[data-testid="profile-load-retry"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.get).toHaveBeenCalledTimes(2)
+    expect(wrapper.find('[data-testid="profile-form"]').exists()).toBe(true)
+    expect(wrapper.get('input[data-testid="profile-avatar-uri"]').element).toHaveProperty(
+      'value',
+      'https://cdn.example.test/avatars/101.png',
+    )
+    expect(mocks.patch).not.toHaveBeenCalled()
+  })
+
+  it('keeps the latest profile when overlapping retries settle out of order', async () => {
+    let resolveStaleProfile!: (value: { payload: ReturnType<typeof profile> }) => void
+    let rejectStaleFailure!: (reason: Error) => void
+    let resolveLatestProfile!: (value: { payload: ReturnType<typeof profile> }) => void
+    const staleProfile = new Promise<{ payload: ReturnType<typeof profile> }>((resolve) => {
+      resolveStaleProfile = resolve
+    })
+    const staleFailure = new Promise<{ payload: ReturnType<typeof profile> }>((_resolve, reject) => {
+      rejectStaleFailure = reject
+    })
+    const latestProfile = new Promise<{ payload: ReturnType<typeof profile> }>((resolve) => {
+      resolveLatestProfile = resolve
+    })
+    mocks.get
+      .mockRejectedValueOnce(new Error('network unavailable'))
+      .mockReturnValueOnce(staleProfile)
+      .mockReturnValueOnce(staleFailure)
+      .mockReturnValueOnce(latestProfile)
+
+    const wrapper = mountPage()
+    await flushPromises()
+
+    const retry = wrapper.get('[data-testid="profile-load-retry"]')
+    const firstRetry = retry.trigger('click')
+    const secondRetry = retry.trigger('click')
+    const latestRetry = retry.trigger('click')
+    await Promise.all([firstRetry, secondRetry, latestRetry])
+
+    expect(mocks.get).toHaveBeenCalledTimes(4)
+    expect(wrapper.get('[data-testid="profile-load-retry"]').attributes('disabled')).toBeDefined()
+
+    resolveLatestProfile({ payload: profile('Latest account') })
+    await flushPromises()
+    resolveStaleProfile({ payload: profile('Stale account') })
+    rejectStaleFailure(new Error('late network failure'))
+    await flushPromises()
+
+    expect(wrapper.get('input[data-testid="profile-display-name"]').element).toHaveProperty(
+      'value',
+      'Latest account',
+    )
+    expect(wrapper.text()).not.toContain('账号资料暂时无法加载，请稍后重试。')
+  })
+
   it('saves the editable profile and refreshes the account summary', async () => {
     const wrapper = mountPage()
     await flushPromises()
@@ -124,6 +210,22 @@ describe('AccountPage', () => {
     })
     expect(mocks.workspace.tenantIdentity.accountLabel).toBe('Updated account')
     expect(wrapper.text()).toContain('个人资料已保存')
+  })
+
+  it.each([
+    ['display name', 'profile-display-name', 'Edited account'],
+    ['avatar URI', 'profile-avatar-uri', 'https://cdn.example.test/avatars/edited.png'],
+  ])('clears saved feedback after editing the %s', async (_field, testId, value) => {
+    const wrapper = mountPage()
+    await flushPromises()
+
+    await wrapper.get('[data-testid="profile-form"]').trigger('submit')
+    await flushPromises()
+    expect(wrapper.text()).toContain('个人资料已保存')
+
+    await wrapper.get(`input[data-testid="${testId}"]`).setValue(value)
+
+    expect(wrapper.text()).not.toContain('个人资料已保存')
   })
 
   it('rejects a password confirmation mismatch without calling the API', async () => {
