@@ -6,6 +6,7 @@ namespace PeanutAdmin\App\Tests\Integration;
 
 use DateTimeImmutable;
 use PDO;
+use PDOException;
 use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
 use PeanutAdmin\App\module\RuntimeModuleRegistry;
@@ -20,6 +21,7 @@ use PeanutAdmin\Kernel\Module\ManifestLoader;
 use PeanutAdmin\Kernel\Module\Persistence\PdoModuleRuntimeRepository;
 use PeanutAdmin\ReferenceCodes\Database\Schema as ReferenceCodeSchema;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use RuntimeException;
 use think\Request;
 use think\Response;
@@ -137,6 +139,29 @@ final class ReferenceCodeModuleIntegrationTest extends TestCase
 
     public function testCreateCommitsIdentityVersionAuditAndIdempotencyOnOnePdo(): void
     {
+        self::assertSame('uk_module_installation_key', $this->queryPlan(<<<'SQL'
+EXPLAIN SELECT module_key FROM pa_module_installation
+WHERE module_key = :module_key FOR SHARE
+SQL, ['module_key' => 'peanut.reference-codes'])['key']);
+        self::assertSame('uk_tenant_module', $this->queryPlan(<<<'SQL'
+EXPLAIN SELECT tenant_id, module_key FROM pa_tenant_module
+WHERE tenant_id = :tenant_id AND module_key = :module_key FOR SHARE
+SQL, ['tenant_id' => $this->tenantId, 'module_key' => 'peanut.reference-codes'])['key']);
+        $this->pdo->beginTransaction();
+        try {
+            $lock = new ReflectionMethod(ReferenceCodeRuntimeFactory::class, 'lockModuleAvailability');
+            $lock->invoke(null, $this->pdo, $this->tenantId, 'peanut.reference-codes');
+            $this->assertModuleUpdateBlocked(<<<'SQL'
+UPDATE pa_module_installation SET updated_at = UTC_TIMESTAMP(3)
+WHERE module_key = :module_key
+SQL, ['module_key' => 'peanut.reference-codes']);
+            $this->assertModuleUpdateBlocked(<<<'SQL'
+UPDATE pa_tenant_module SET updated_at = UTC_TIMESTAMP(3)
+WHERE tenant_id = :tenant_id AND module_key = :module_key
+SQL, ['tenant_id' => $this->tenantId, 'module_key' => 'peanut.reference-codes']);
+        } finally {
+            $this->pdo->rollBack();
+        }
         $response = $this->create('sample-code', 'reference-create-0001', 'req_reference_create_0001');
 
         self::assertSame(201, $response->getCode(), json_encode($response->getData(), JSON_THROW_ON_ERROR));
@@ -160,7 +185,7 @@ final class ReferenceCodeModuleIntegrationTest extends TestCase
                 'metadata' => ['private-value' => 'must-not-be-audited'],
                 'status' => 'inactive',
                 'sort_order' => 7,
-                'effective_at' => '2026-07-20T00:00:00.000Z',
+                'effective_at' => '2020-01-01T00:00:00.000Z',
                 'expires_at' => null,
             ], [
                 'if-match' => '"rev-1"',
@@ -267,6 +292,7 @@ final class ReferenceCodeModuleIntegrationTest extends TestCase
         self::assertSame(404, $denied->getCode());
         self::assertSame('MODULE_UNAVAILABLE', $denied->getData()['code']);
         self::assertSame(1, $this->tableCount('pa_reference_code_entry'));
+        self::assertSame(1, $this->tableCount('pa_tenant_idempotency_record'));
     }
 
     public function testPermissionDenialOccursBeforeIdempotencyAndMutation(): void
@@ -359,7 +385,7 @@ SQL);
                 'metadata' => ['marker' => true],
                 'status' => 'active',
                 'sort_order' => 0,
-                'effective_at' => '2026-07-20T00:00:00.000Z',
+                'effective_at' => '2020-01-01T00:00:00.000Z',
                 'expires_at' => null,
             ], [
                 'if-none-match' => '*',
@@ -585,6 +611,40 @@ SQL);
         $statement->execute($parameters);
 
         return $statement->fetchColumn();
+    }
+
+    /** @param array<string, int|string> $parameters
+     * @return array<string, mixed>
+     */
+    private function queryPlan(string $sql, array $parameters): array
+    {
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($parameters);
+        $plan = $statement->fetch();
+        self::assertIsArray($plan);
+
+        return $plan;
+    }
+
+    /** @param array<string, int|string> $parameters */
+    private function assertModuleUpdateBlocked(string $sql, array $parameters): void
+    {
+        $rootPassword = getenv('MYSQL_ROOT_PASSWORD') ?: 'peanut_admin_root_dev';
+        $contender = new PDO(
+            'mysql:host=127.0.0.1;port=' . $this->requiredPort('DB_PORT') . ';dbname=' . self::DATABASE . ';charset=utf8mb4',
+            'root',
+            $rootPassword,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
+        $contender->exec('SET SESSION innodb_lock_wait_timeout = 1');
+        $statement = $contender->prepare($sql);
+        try {
+            $statement->execute($parameters);
+            self::fail('Module availability update was not blocked by the command guard lock.');
+        } catch (PDOException $exception) {
+            self::assertSame('HY000', $exception->getCode());
+            self::assertSame(1205, $exception->errorInfo[1] ?? null);
+        }
     }
 
     private function requiredPort(string $name): int

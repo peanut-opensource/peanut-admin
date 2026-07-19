@@ -38,12 +38,28 @@ final class ReferenceCodeSecurityTest extends TestCase
     {
         $factory = $this->source('backend/app/referencecode/ReferenceCodeRuntimeFactory.php');
         $guard = $this->functionSource($factory, 'commandGuard');
+        $availability = $this->functionSource($factory, 'assertModuleAvailable');
+        $locks = $this->functionSource($factory, 'lockModuleAvailability');
 
         self::assertStringContainsString('guard: self::commandGuard(', $factory);
-        self::assertStringContainsString('lockAvailabilityReads: $lockAvailabilityReads', $factory);
+        self::assertStringNotContainsString('lockAvailabilityReads:', $factory);
         self::assertStringContainsString("'peanut.reference-codes'", $guard);
         self::assertStringContainsString('assertCurrentDefinition($definition, true)', $guard);
         self::assertSame(2, substr_count($guard, "true,\n"));
+        self::assertStringContainsString(
+            'self::lockModuleAvailability($pdo, $context->tenantId, $moduleKey);',
+            $availability,
+        );
+        self::assertStringContainsString('new PdoModuleRuntimeRepository($pdo)', $availability);
+        self::assertSame(2, substr_count($locks, 'FOR SHARE'));
+        self::assertStringContainsString(
+            'FROM pa_module_installation WHERE module_key = :module_key',
+            $locks,
+        );
+        self::assertStringContainsString(
+            'FROM pa_tenant_module WHERE tenant_id = :tenant_id AND module_key = :module_key',
+            $locks,
+        );
     }
 
     public function testEveryDomainCommandRepeatsTheDefinitionAndOwnerCheck(): void
@@ -64,7 +80,7 @@ final class ReferenceCodeSecurityTest extends TestCase
             'metadata' => [],
             'status' => 'active',
             'sort_order' => 0,
-            'effective_at' => '2026-07-20T00:00:00.000Z',
+            'effective_at' => '2020-01-01T00:00:00.000Z',
             'expires_at' => null,
         ];
         foreach (['tenant_id', 'member_id', 'module_key', 'permission', 'target_id'] as $forbidden) {

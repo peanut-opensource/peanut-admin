@@ -722,12 +722,34 @@ final class ReferenceCodeRuntimeFactory
         DateTimeImmutable $comparisonTime,
         bool $lockAvailabilityReads = false,
     ): void {
-        $guard = new ModuleGuard(new PdoModuleRuntimeRepository(
-            $pdo,
-            lockAvailabilityReads: $lockAvailabilityReads,
-        ));
+        if ($lockAvailabilityReads) {
+            self::lockModuleAvailability($pdo, $context->tenantId, $moduleKey);
+        }
+        $guard = new ModuleGuard(new PdoModuleRuntimeRepository($pdo));
         $guard->assertDeployment($moduleKey);
         $guard->assertTenant($context->tenantId, $moduleKey, $comparisonTime);
+    }
+
+    private static function lockModuleAvailability(PDO $pdo, int $tenantId, string $moduleKey): void
+    {
+        if (!$pdo->inTransaction()) {
+            throw new LogicException('Module availability locks require the active command transaction.');
+        }
+        $installation = $pdo->prepare(<<<'SQL'
+SELECT module_key
+FROM pa_module_installation WHERE module_key = :module_key
+FOR SHARE
+SQL);
+        $installation->execute(['module_key' => $moduleKey]);
+        $installation->fetch(PDO::FETCH_ASSOC);
+
+        $tenantModule = $pdo->prepare(<<<'SQL'
+SELECT tenant_id, module_key
+FROM pa_tenant_module WHERE tenant_id = :tenant_id AND module_key = :module_key
+FOR SHARE
+SQL);
+        $tenantModule->execute(['tenant_id' => $tenantId, 'module_key' => $moduleKey]);
+        $tenantModule->fetch(PDO::FETCH_ASSOC);
     }
 
     private static function visibleDefinitionRegistry(
@@ -1090,6 +1112,8 @@ final class ReferenceCodeRuntimeFactory
      */
     private static function orderedEntryData(array $data): array
     {
+        $effective = $data['effective'] ?? null;
+
         return [
             'module_key' => $data['module_key'],
             'set_key' => $data['set_key'],
@@ -1097,10 +1121,26 @@ final class ReferenceCodeRuntimeFactory
             'lifecycle' => $data['lifecycle'] ?? null,
             'revision' => $data['revision'] ?? null,
             'etag' => $data['etag'] ?? null,
-            'effective' => $data['effective'] ?? null,
+            'effective' => is_array($effective) ? self::orderedEffectiveData($effective) : null,
             'created_at' => $data['created_at'] ?? null,
             'updated_at' => $data['updated_at'] ?? null,
             'retired_at' => $data['retired_at'] ?? null,
+        ];
+    }
+
+    /** @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    private static function orderedEffectiveData(array $data): array
+    {
+        return [
+            'revision' => $data['revision'] ?? null,
+            'label' => $data['label'] ?? null,
+            'metadata' => $data['metadata'] ?? [],
+            'status' => $data['status'] ?? null,
+            'sort_order' => $data['sort_order'] ?? null,
+            'effective_at' => $data['effective_at'] ?? null,
+            'expires_at' => $data['expires_at'] ?? null,
         ];
     }
 
