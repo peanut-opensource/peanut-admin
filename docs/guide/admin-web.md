@@ -6,9 +6,18 @@ The reference Admin Web is one Vue 3 build with strictly separated tenant and pl
 
 Create tenant and platform clients separately. Each client rejects the other API prefix, stores access tokens only in memory, attaches request IDs, includes the matching refresh cookie, and coordinates a single refresh rotation for concurrent 401 responses.
 
+The configured `baseUrl` also fixes the only HTTP(S) origin that may receive a
+protected request. Scheme, host, and effective port must match before the
+transport reads the in-memory token or invokes `fetch`; invalid configuration
+fails with `API_ORIGIN_INVALID`, while a different request origin fails with
+`API_ORIGIN_MISMATCH`. Protected requests use manual redirect handling so a
+browser cannot automatically forward their bearer token or refresh cookie to a
+redirect target. Audience-path rejection remains a separate
+`API_AUDIENCE_MISMATCH` boundary.
+
 Every Tenant Client supplies a stable refresh scope such as `single-store-web:tenant`. The default browser coordinator combines Web Locks and `BroadcastChannel` so independent tabs of the same Client can consume one rotated access token without reusing the old refresh token. Different Client keys use different scopes and never coordinate or exchange tokens.
 
-An application with its own OpenAPI schema uses the exported `createProtectedFetch()` with its own allowed-path predicate, credential-exchange predicate, and generated `openapi-fetch` Client. It does not need to reuse Peanut Admin's generated `paths` type or duplicate the authentication replay logic. Tests and non-browser hosts can inject `createMemoryRefreshCoordinator()`.
+An application with its own OpenAPI schema uses the exported `createProtectedFetch()` with its own `baseUrl` or exact `allowedOrigin`, allowed-path predicate, credential-exchange predicate, and generated `openapi-fetch` Client. It does not need to reuse Peanut Admin's generated `paths` type or duplicate the authentication replay logic. Tests and non-browser hosts can inject `createMemoryRefreshCoordinator()`.
 
 Non-idempotent requests are replayed only when they carry an `Idempotency-Key`.
 

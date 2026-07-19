@@ -29,4 +29,28 @@ describe('internal starter Tenant Clients', () => {
       transport(new Request('https://example.test/api/reporting/v1/items')),
     ).rejects.toThrow('API_AUDIENCE_MISMATCH')
   })
+
+  it('rejects a different API origin before invoking starter credentials or transport', async () => {
+    const fetcher = vi.fn(async () => new Response(null, { status: 200 }))
+    const getAccessToken = vi.fn(() => 'access-token')
+    const setAccessToken = vi.fn()
+    const refresh = vi.fn(async () => 'rotated-token')
+    const transport = createTenantClientTransport(tenantClients[0], {
+      baseUrl: 'https://example.test',
+      fetch: fetcher,
+      getAccessToken,
+      setAccessToken,
+      refresh,
+      refreshCoordinator: createMemoryRefreshCoordinator(),
+    })
+
+    await expect(
+      transport(new Request('https://other.test/api/operations/v1/items')),
+    ).rejects.toThrow('API_ORIGIN_MISMATCH')
+
+    expect(getAccessToken).not.toHaveBeenCalled()
+    expect(setAccessToken).not.toHaveBeenCalled()
+    expect(refresh).not.toHaveBeenCalled()
+    expect(fetcher).not.toHaveBeenCalled()
+  })
 })
