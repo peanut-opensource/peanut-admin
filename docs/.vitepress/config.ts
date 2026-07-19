@@ -76,6 +76,7 @@ export default defineConfig({
           { text: 'P0 Status', link: '/status/' },
           { text: 'P1 Execution Baseline', link: '/status/p1-execution-baseline' },
           { text: 'P1 Module Readiness', link: '/status/p1-downstream-module-readiness-plan' },
+          { text: 'P1-W01 Origin Contract', link: '/status/p1-w01-protected-transport-origin-contract' },
         ],
       },
     ],

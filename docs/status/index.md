@@ -83,6 +83,11 @@ and Shell behavior, minimal settings/reference-code infrastructure, and a new
 fixed-commit qualification gate without moving application-domain logic into
 Peanut Admin.
 
+The first independently executable Web security slice is defined by the
+[P1-W01 Protected Transport Origin Contract](./p1-w01-protected-transport-origin-contract.md).
+It prevents a protected client from attaching credentials outside its
+configured API origin while preserving existing audience and refresh behavior.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new
