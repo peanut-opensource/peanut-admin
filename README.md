@@ -28,7 +28,9 @@ slices add tenant-audience account profile and password self-service plus a
 permission-gated, current-state effective-access preview for Tenant members. P1
 candidate commits do not move the external-host consumption lock and remain
 unqualified for downstream consumption until a new aggregate review approves a
-fixed commit.
+fixed commit. P1-R01 additionally provides unqualified transaction,
+idempotency, audit-outcome, savepoint, and failure-atomicity primitives for
+external Module commands; the host still owns its domain and outbox schema.
 
 ## Principles
 

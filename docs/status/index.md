@@ -89,6 +89,12 @@ The first independently executable Web security slice is defined by the
 It prevents a protected client from attaching credentials outside its
 configured API origin while preserving existing audience and refresh behavior.
 
+P1-R01 is the first backend composition candidate. It supplies savepoint-aware
+PDO transactions, scoped idempotency lease rejection, typed audit outcomes,
+and a failure-injection harness for external Module commands. The external
+host continues to own domain and outbox schemas; this candidate has no Runtime
+operation or downstream qualification.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new

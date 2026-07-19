@@ -43,9 +43,14 @@ final class IdempotencyMiddleware
         $record = $audience === 'tenant'
             ? $this->beginTenant($repository, $routeValues['tenant_context'] ?? null, $operationId, $key, $requestHash, $expires)
             : $this->beginPlatform($repository, $routeValues['platform_context'] ?? null, $operationId, $key, $requestHash, $expires);
-        if (!$record->created) {
-            if ($record->status === 'completed' && $record->responseStatus !== null && $record->responseBody !== null) {
-                return Response::create($record->responseBody, 'json', $record->responseStatus)->header(['X-Idempotent-Replay' => 'true']);
+        if (!$record->acquiredForExecution()) {
+            $responseStatus = $record->responseStatus;
+            $responseBody = $record->responseBody;
+            if ($record->replayable() && $responseStatus !== null && $responseBody !== null) {
+                return Response::create($responseBody, 'json', $responseStatus)->header(['X-Idempotent-Replay' => 'true']);
+            }
+            if ($record->status !== 'processing') {
+                throw new ApiException('IDEMPOTENCY_STATE_CONFLICT', 409, 'Idempotency record has no replayable outcome.');
             }
             throw new ApiException('IDEMPOTENCY_REQUEST_PROCESSING', 409, 'The original request is still processing.');
         }

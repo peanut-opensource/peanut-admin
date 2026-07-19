@@ -82,3 +82,80 @@ PEANUT_INTEGRATION=1 php vendor/bin/phpunit \
 ```
 
 The tutorial fixture intentionally covers one Tenant with several Project and Queue targets. It demonstrates cross-Module calls through contracts, a unified shared reference, one-target writes, multi-target reads, policy publication, and fail-closed category checks.
+
+## 7. Compose An Atomic Command
+
+An external Module owns its domain callable and, when needed, its outbox
+schema. Peanut Admin provides the transaction, idempotency, and audit
+primitives; it does not own the Module's domain tables or outbox table. Pass
+one caller-owned PDO through the whole command so every state change shares
+one commit boundary:
+
+```php
+$transactions = new PdoTransactionManager($pdo);
+$idempotency = new PdoIdempotencyRepository($pdo);
+$audit = new PdoAuditRepository($pdo);
+
+$result = $transactions->run(function () use ($request, $moduleCommand, $outbox, $idempotency, $audit) {
+    $lease = $idempotency->beginTenant(
+        $request->tenantId,
+        $request->memberId,
+        $request->operationKey,
+        $request->idempotencyKey,
+        $request->requestHash,
+        $request->idempotencyExpiresAt,
+    );
+
+    if ($lease->replayable()) {
+        return [$lease->responseStatus, $lease->responseBody];
+    }
+    if (!$lease->acquiredForExecution()) {
+        throw new RuntimeException('IDEMPOTENCY_REQUEST_PROCESSING');
+    }
+
+    $domainResult = $moduleCommand->execute($request);
+    $audit->appendTenantMember(
+        $request->context,
+        $request->eventType,
+        $request->operationKey,
+        metadata: $domainResult->redactedAuditMetadata(),
+        outcome: AuditOutcome::Success,
+    );
+    $outbox->append($domainResult->events());
+    $idempotency->completeTenant(
+        $lease->id,
+        $domainResult->responseStatus(),
+        $domainResult->safeResponseBody(),
+    );
+
+    return $domainResult->response();
+});
+```
+
+The repository objects above all receive the same PDO. The application-owned
+command and outbox adapter must retain that PDO as well; creating another
+connection inside either callable breaks the atomicity guarantee.
+
+The host must store only a safe, redacted terminal response. It must not store
+credentials, secrets, SQL, stack traces, raw authorization input, or hidden
+target existence. An expected denial may record a redacted `denied` audit and
+a safe failed idempotency response; an unexpected exception rolls back the
+domain, in-transaction audit, outbox, and completion together. The host owns
+the policy for deciding which failures are safe to replay.
+
+An expired `processing` record is not automatically taken over. The current
+schema has no fencing token and cannot prove that an older executor stopped, so
+the host returns `IDEMPOTENCY_REQUEST_PROCESSING` until a separately governed
+cleanup or future fenced-recovery capability resolves the record.
+
+Nested transaction calls use unique savepoints. A caught nested failure rolls
+back only nested effects and leaves the outer command available to continue;
+an uncaught failure rolls back the outer command. Cross-connection or
+cross-database writes are outside this atomicity contract.
+
+For deterministic failure testing, use
+`PeanutAdmin\Testing\Operation\OperationAtomicityContractHarness`. The
+Module supplies its callable, state probes, and exact expected success state;
+the harness injects failures after idempotency acquisition, domain write,
+audit, outbox, and completion, requires all four probes to remain unchanged,
+then verifies one successful execution and the fixed checkpoint order.
