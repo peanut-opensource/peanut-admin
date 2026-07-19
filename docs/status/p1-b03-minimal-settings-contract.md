@@ -76,7 +76,7 @@ owned by the declaring Module.
 Each definition has exactly these fields:
 
 ```text
-key: <declaring-module-key>.<local-key>, maximum 160 characters
+key: local lower-case slug, maximum 64 characters
 name: non-empty display name, maximum 160 characters
 description: non-empty text, maximum 500 characters
 schema: JSON Schema draft 2020-12 object for one value
@@ -88,10 +88,12 @@ target_operation: null unless target is allowed
 default: absent or a schema-valid non-secret value
 ```
 
-`key` must start with the exact declaring Module key plus `.`. A target
-definition is valid only when the same manifest declares the target resource
-and an operation whose target cardinality accepts one explicit target. The
-operation is the authorization boundary for target writes and reads.
+The stable identity is the pair `(declaring Module key, local setting key)`;
+the API never accepts another owner for that pair. The local key matches
+`^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$`. A target definition is valid only when the
+same manifest declares the target resource and an operation whose target
+cardinality accepts one explicit target. The operation is the authorization
+boundary for target writes and reads.
 
 Secret definitions accept only a string schema with `minLength >= 1` and
 `maxLength <= 4096`; they cannot declare `default`. Definition digest is the
@@ -118,7 +120,7 @@ keeps the tables and returns to old code.
 ```text
 id BIGINT UNSIGNED primary key
 module_key VARCHAR(96) ASCII BINARY not null
-setting_key VARCHAR(160) ASCII BINARY not null
+setting_key VARCHAR(64) ASCII BINARY not null
 name VARCHAR(160) not null
 description VARCHAR(500) not null
 schema_json JSON not null
@@ -138,13 +140,56 @@ updated_at DATETIME(3) not null
 unique (module_key, setting_key)
 ```
 
-`pa_setting_deployment_value` has one row per definition. It contains
-`definition_id`, `value_state`, `value_json`, secret `ciphertext`, `nonce`,
-`key_id`, `revision`, `effective_at`, nullable `expires_at`, actor identity,
-and timestamps. `pa_setting_tenant_value` adds a required `tenant_id` and is
-unique on `(tenant_id, definition_id)`. `pa_setting_target_value` adds required
-`tenant_id`, `target_resource_key`, and `target_id` and is unique on
-`(tenant_id, definition_id, target_resource_key, target_id)`.
+`pa_setting_deployment_value` contains exactly:
+
+```text
+id BIGINT UNSIGNED primary key
+definition_id BIGINT UNSIGNED not null, foreign key pa_setting_definition(id) RESTRICT
+value_state VARCHAR(16) ASCII BINARY not null: set|unset
+value_json JSON null
+ciphertext VARBINARY(8192) null
+nonce BINARY(24) null
+key_id VARCHAR(64) ASCII BINARY null
+revision BIGINT UNSIGNED not null default 1
+effective_at DATETIME(3) not null
+expires_at DATETIME(3) null
+updated_by_operator_id BIGINT UNSIGNED not null, foreign key pa_platform_operator(id) RESTRICT
+created_at DATETIME(3) not null
+updated_at DATETIME(3) not null
+unique (definition_id)
+```
+
+`pa_setting_tenant_value` contains exactly:
+
+```text
+id BIGINT UNSIGNED primary key
+tenant_id BIGINT UNSIGNED not null, foreign key pa_tenant(id) RESTRICT
+definition_id BIGINT UNSIGNED not null, foreign key pa_setting_definition(id) RESTRICT
+value_state, value_json, ciphertext, nonce, key_id, revision, effective_at, expires_at
+updated_by_member_id BIGINT UNSIGNED not null, foreign key pa_tenant_member(id) RESTRICT
+created_at DATETIME(3) not null
+updated_at DATETIME(3) not null
+unique (tenant_id, definition_id)
+```
+
+`pa_setting_target_value` contains exactly:
+
+```text
+id BIGINT UNSIGNED primary key
+tenant_id BIGINT UNSIGNED not null, foreign key pa_tenant(id) RESTRICT
+definition_id BIGINT UNSIGNED not null, foreign key pa_setting_definition(id) RESTRICT
+target_resource_key VARCHAR(160) ASCII BINARY not null
+target_id VARCHAR(128) ASCII BINARY not null
+value_state, value_json, ciphertext, nonce, key_id, revision, effective_at, expires_at
+updated_by_member_id BIGINT UNSIGNED not null, foreign key pa_tenant_member(id) RESTRICT
+created_at DATETIME(3) not null
+updated_at DATETIME(3) not null
+unique (tenant_id, definition_id, target_resource_key, target_id)
+```
+
+The abbreviated value columns in the Tenant and target blocks have the exact
+types and constraints fixed by the deployment block. Sodium's authentication
+tag is part of `ciphertext`; it is not stored in a fourth secret column.
 
 For all value tables:
 
@@ -314,6 +359,8 @@ packages/php/settings/tests/Unit/Definition/SettingDefinitionLoaderTest.php
 packages/php/settings/tests/Unit/Secret/SodiumSecretProtectorTest.php
 packages/php/settings/tests/Integration/Application/SettingAdminServiceTest.php
 packages/php/settings/tests/Integration/Application/SettingResolverTest.php
+packages/php/settings/tests/Integration/Support/SettingsDatabaseTestCase.php
+packages/php/settings/tests/Integration/Schema/SettingsMigrationRunner.php
 packages/php/settings/tests/Integration/Schema/SettingsMigrationTest.php
 packages/php/settings/tests/Security/SettingsIsolationTest.php
 backend/app/Modules/Peanut/Settings/module.json
@@ -326,9 +373,13 @@ backend/app/Modules/Peanut/Settings/Resources/menus.json
 backend/app/Modules/Peanut/Settings/Resources/permissions.json
 backend/app/Modules/Peanut/Settings/Resources/protected-resources.json
 backend/app/Modules/Peanut/Settings/Resources/setting-definitions.json
+backend/app/Modules/Example/Target/module.json
+backend/app/Modules/Example/Target/Resources/setting-definitions.json
 backend/app/controller/api/v1/SettingsController.php
 backend/app/controller/api/platform/v1/PlatformSettingsController.php
 backend/app/setting/SettingsRuntimeFactory.php
+backend/app/command/InstallProductProfileApplier.php
+backend/app/command/UpgradeWorkflow.php
 backend/config/modules.php
 backend/tests/Architecture/ModuleManifestValidationTest.php
 backend/tests/Contract/OpenApiArtifactTest.php
@@ -336,6 +387,8 @@ backend/tests/Http/SettingsApiTest.php
 backend/tests/Integration/SettingsModuleIntegrationTest.php
 backend/tests/Security/SettingsSecurityTest.php
 backend/tests/Upgrade/SettingsUpgradeTest.php
+backend/tests/Install/InstallWorkflowTest.php
+backend/tests/Upgrade/UpgradeWorkflowTest.php
 profiles/reference-admin.json
 packages/web/settings/LICENSE
 packages/web/settings/package.json
