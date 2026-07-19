@@ -717,8 +717,10 @@ existing unique scope keys are sufficient for P1-R01.
 - participate in an already active PDO transaction, keeping the acquired row
   lock until the caller commits or rolls back;
 - otherwise own a short compatibility transaction so existing reference-host
-  callers still receive a concurrency-safe acquisition result;
+  callers still receive a concurrency-safe acquisition result, but that short
+  transaction cannot recover an expired lease;
 - atomically insert or lock the unique record before deciding its state;
+- determine insert ownership independently of `PDO::MYSQL_ATTR_FOUND_ROWS`;
 - require `expires_at` to be later than the comparison time;
 - accept an optional explicit comparison time for deterministic tests while
   defaulting to the current UTC time.
@@ -729,13 +731,17 @@ State handling is fixed as follows:
 | --- | --- | --- |
 | no record | acquire a new `processing` lease | not applicable |
 | unexpired `processing` | return not acquired; the host reports `IDEMPOTENCY_REQUEST_PROCESSING` | `IDEMPOTENCY_KEY_REUSED` |
-| expired `processing` | atomically renew the lease, clear response/resource fields, and return recovered ownership | `IDEMPOTENCY_KEY_REUSED` |
+| expired `processing` inside a caller-owned transaction | atomically renew the lease, clear response/resource fields, and return recovered ownership | `IDEMPOTENCY_KEY_REUSED` |
+| expired `processing` without a caller-owned transaction | return not acquired; the compatibility host reports `IDEMPOTENCY_REQUEST_PROCESSING` | `IDEMPOTENCY_KEY_REUSED` |
 | `completed` | return a terminal replay | `IDEMPOTENCY_KEY_REUSED` |
 | `failed` | return a terminal replay when a safe stored response exists | `IDEMPOTENCY_KEY_REUSED` |
 
 Expiry never permits a different payload to reuse the same scoped key. Cleanup
 and retention are separate lifecycle work and must not silently change the
-request hash binding.
+request hash binding. Recovery is safe only when the already-active caller
+transaction keeps the locked row, domain effects, audit, optional outbox, and
+terminal transition in one boundary. The short-transaction compatibility path
+cannot fence an old executor and therefore never claims recovered ownership.
 
 `IdempotencyRecord` distinguishes a newly inserted lease, a recovered lease,
 a non-owned processing lease, and a terminal replay. Existing constructor use
@@ -792,7 +798,8 @@ sufficient for this primitive. P1-R02 may provide host composition helpers but
 must not move an application outbox into Kernel.
 
 The existing reference `IdempotencyMiddleware` is updated only to understand
-new/recovered execution ownership and terminal failed replays. It remains a
+new execution ownership and terminal failed replays. It never recovers an
+expired lease because it does not own the domain transaction. It remains a
 compatibility adapter and does not prove external Module atomicity because it
 creates its own PDO and wraps an HTTP response rather than the domain callable.
 
@@ -801,8 +808,10 @@ creates its own PDO and wraps an HTTP response rather than the domain callable.
 - Two concurrent acquisitions of one scoped key and request hash yield exactly
   one execution owner. The other observes an unexpired `processing` lease or a
   terminal replay after the owner commits.
-- A stale same-hash acquisition is serialized by the idempotency row lock;
-  exactly one caller recovers it.
+- A stale same-hash acquisition inside an already-active caller transaction is
+  serialized by the idempotency row lock; exactly one caller recovers it.
+- A compatibility caller without an outer transaction observes the stale row
+  as non-owned and cannot race an old executor by taking over its lease.
 - A transaction rollback after a new or recovered acquisition restores the
   prior database state. A new row disappears; renewal of an old row reverts to
   its prior expiry and fields.
@@ -828,10 +837,11 @@ The harness injects one deterministic exception after each stage:
 - `idempotency_completed`.
 
 After every injection, all probes must equal their pre-operation values. The
-harness rejects unknown checkpoints, proves every required checkpoint was
-reached, and rethrows any exception that is not its own injected failure. It
-does not create tables, choose payloads, or hide a transaction left open by the
-host.
+harness rejects unknown, duplicate, or out-of-order checkpoints, proves every
+required checkpoint was reached in order, executes one non-injected success
+path, and requires the supplied probes to show committed state. It rethrows any
+exception that is not its own injected failure. It does not create tables,
+choose payloads, or hide a transaction left open by the host.
 
 ### Error And API Boundary
 
@@ -891,7 +901,8 @@ Tests are written to fail before the Runtime edit and must prove:
   externally owned transaction all preserve the specified savepoint boundary;
 - new acquisition, completed replay, failed replay, same-hash stale recovery,
   different-hash rejection, invalid expiry, duplicate terminal transition,
-  and rollback of a recovered lease;
+  `PDO::MYSQL_ATTR_FOUND_ROWS` independence, compatibility-path recovery
+  rejection, and rollback of a recovered lease;
 - two connections cannot both own one live or stale lease;
 - `success`, `denied`, and `error` audit outcomes persist only when their
   transaction commits;
@@ -900,6 +911,8 @@ Tests are written to fail before the Runtime edit and must prove:
 - injected failure at every required checkpoint leaves all four state probes
   unchanged;
 - the reusable testing harness detects a deliberately non-atomic operation;
+- the reusable testing harness rejects duplicate or out-of-order checkpoints
+  and proves one successful state transition;
 - no raw idempotency key, secret, target set, SQL, or stack trace is persisted
   by the fixture evidence.
 
