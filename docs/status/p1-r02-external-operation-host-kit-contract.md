@@ -4,8 +4,9 @@
 
 ```text
 task: P1-R02
-state: implementation-ready
+state: candidate
 prerequisite: 536bca2c0676f17c8d6405b4689b0d994ba3b38b
+contract_commit: efa2318c34d0f48b568381bc68672d9e94954851
 schema_owner: external host and fictional fixture Module
 migration: no Kernel migration
 dependency_change: none
@@ -293,6 +294,32 @@ are the affected PHPUnit unit and integration tests, the external-host example,
 `./scripts/test-unit`, `./scripts/test-integration`, PHPStan, Deptrac, PHP CS
 Fixer check, Module and documentation checks, `git diff --check`, and, once
 stable, `./scripts/check` in the isolated environment.
+
+## Implementation Evidence
+
+The candidate implementation adds only the whitelisted Kernel Host classes,
+unit and integration tests, and fictional external-host example. It adds no
+schema migration, dependency, reference-host route, generated artifact, or
+Runtime ledger row.
+
+Current executable evidence includes:
+
+- Host unit and external example: 24 tests and 58 assertions;
+- isolated MySQL R02 integration: 3 tests and 37 assertions;
+- aggregate PHP unit and contract suites: 162 tests and 2630 assertions;
+- aggregate PHP integration, install, upgrade, and health suites: 127 tests and
+  1193 assertions;
+- focused PHPStan with no errors and Deptrac with zero violations, skipped
+  violations, uncovered dependencies, warnings, or errors.
+
+The final isolated `./scripts/check` completed with `Repository checks: OK`.
+It retained 75 P0 and 4 existing P1 reference-host operations, passed 162 PHP
+unit/contract tests with 2630 assertions, 57 frontend unit tests, 127 PHP
+integration/install/upgrade/health tests with 1193 assertions, all four
+zero-skipped PHP security groups, 36 desktop/mobile browser tests, recovery,
+backup/restore, performance, starter, documentation, PHPStan, Deptrac,
+formatting, lint, typecheck, builds, and workspace checks. The final
+post-evidence checks are documentation status and `git diff --check`.
 
 ## Stop Line
 

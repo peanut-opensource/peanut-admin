@@ -31,6 +31,10 @@ unqualified for downstream consumption until a new aggregate review approves a
 fixed commit. P1-R01 additionally provides unqualified transaction,
 idempotency, audit-outcome, savepoint, and failure-atomicity primitives for
 external Module commands; the host still owns its domain and outbox schema.
+P1-R02 composes those primitives with trusted context, Module availability,
+existing functional and typed-target authorization, and stable Problem Details
+for a host-owned API. It remains an unqualified candidate and does not make the
+fictional example a generic domain engine.
 
 ## Principles
 

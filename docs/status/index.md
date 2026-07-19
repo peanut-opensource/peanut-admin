@@ -95,12 +95,14 @@ and a failure-injection harness for external Module commands. The external
 host continues to own domain and outbox schemas; this candidate has no Runtime
 operation or downstream qualification.
 
-The next backend slice is fixed by the
+The P1-R02 backend composition candidate is fixed by the
 [P1-R02 External Operation Host Kit Contract](./p1-r02-external-operation-host-kit-contract.md).
 It composes trusted context, Module availability, existing functional and data
 authorization, and R01 atomic commands while leaving application namespaces,
 API prefixes, OpenAPI, generated types, domain schema, and outbox ownership in
-the external host.
+the external host. Its fictional Module proves list, detail, create, update,
+status, Tenant isolation, typed targets, idempotency, and failure rollback
+without adding a generic domain engine or a reference-host operation.
 
 The reusable administration layout slice is fixed by the
 [P1-W03 Workspace Shell Contract](./p1-w03-workspace-shell-contract.md). It

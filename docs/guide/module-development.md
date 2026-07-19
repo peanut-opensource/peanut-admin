@@ -159,3 +159,57 @@ Module supplies its callable, state probes, and exact expected success state;
 the harness injects failures after idempotency acquisition, domain write,
 audit, outbox, and completion, requires all four probes to remain unchanged,
 then verifies one successful execution and the fixed checkpoint order.
+
+## 8. Compose An External Host Operation
+
+An external HTTP host keeps its own namespace, API prefixes, OpenAPI source,
+generated route artifact, generated TypeScript types, domain schema, and
+outbox. Configure those locations explicitly and pass the same
+`ModuleHostLayout` to the existing Module registry compiler:
+
+```php
+use PeanutAdmin\Kernel\Host\ExternalHostConfiguration;
+use PeanutAdmin\Kernel\Module\ModuleHostLayout;
+
+$hostConfiguration = new ExternalHostConfiguration(
+    new ModuleHostLayout(
+        'backend/app/Modules',
+        'Acme\\Admin\\Modules',
+        'frontend/src/modules',
+    ),
+    ['backend/app/Modules/Fixture/Record'],
+    '/api/v1',
+    '/api/platform/v1',
+    'docs/api/openapi.yaml',
+    'backend/route/openapi-generated.php',
+    'packages/web/generated/api.d.ts',
+    ['operations-web'],
+    'X-Request-ID',
+);
+```
+
+Register every HTTP operation with an explicit audience, owning Module,
+`PermissionRequirement`, protected resource, data-authorization mode, target
+cardinality, transaction requirement, and idempotency requirement. The
+`ExternalOperationHost` then enforces this order before a domain handler runs:
+
+```text
+host path and method
+  -> trusted Tenant or platform context
+  -> registered and active Module
+  -> existing functional permission
+  -> existing typed-target authorization
+  -> read handler or R01 atomic command
+```
+
+The request body, query, route parameters, and headers cannot establish a
+Tenant context. A command callable receives the caller-owned PDO from the Host
+kit and returns an `ExternalOperationResult` containing only its safe response
+and redacted audit evidence. An optional application-owned outbox callable
+receives the same PDO. Missing context, Module, permission, target declaration,
+Provider, or operation fails closed and maps to a stable Problem Details
+response.
+
+The executable fictional example is under `examples/external-host`. It proves
+five explicit operations and is not a generic repository, CRUD engine, route
+generator, or application domain model.
