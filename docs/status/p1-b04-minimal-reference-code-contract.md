@@ -285,6 +285,9 @@ backend/tests/Security/ReferenceCodeSecurityTest.php
 backend/tests/Upgrade/ReferenceCodeUpgradeTest.php
 backend/tests/Install/InstallWorkflowTest.php
 backend/tests/Upgrade/UpgradeWorkflowTest.php
+backend/tests/Install/ProductProfileTest.php
+backend/tests/Install/InstallWorkflowIntegrationTest.php
+backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php
 profiles/reference-admin.json
 packages/web/reference-code/LICENSE
 packages/web/reference-code/package.json
@@ -301,8 +304,10 @@ frontend/src/modules/peanut-reference-code/index.ts
 frontend/src/modules/peanut-reference-code/routes.ts
 frontend/tests/e2e/reference-code.e2e.ts
 frontend/tests/e2e/full-stack.e2e.ts
-frontend/tests/fixtures/server.ts
-frontend/tests/fixtures/seed-browser-fixture.php
+frontend/tests/fixtures/api.ts
+frontend/tests/fixtures/full-stack-setup.php
+frontend/tests/fixtures/full-stack.ts
+frontend/tests/fixtures/full-stack-vite.config.ts
 docs/api/openapi.yaml
 docs/api/schemas/reference-code.yaml
 backend/route/openapi-generated.php
@@ -346,6 +351,7 @@ starter/frontend/package.json
 starter/frontend/src/app/modules.ts
 starter/frontend/src/modules/peanut-reference-code.ts
 starter/frontend/tests/reference-code.spec.ts
+tests/recovery/RecoveryAcceptanceTest.php
 tests/security/g07-evidence.json
 ```
 
