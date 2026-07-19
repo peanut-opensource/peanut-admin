@@ -1,12 +1,24 @@
 import { runAdminRouteGuard } from '@peanut-admin/admin-core'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { peanutReferenceCodesModule } from '../src/modules/peanut-reference-codes'
+beforeEach(() => {
+  vi.doMock('@peanut-admin/reference-codes', () => import('../../packages/web/reference-codes/src/index'))
+})
 
-const route = peanutReferenceCodesModule.routes[0]!
+afterEach(() => {
+  vi.doUnmock('@peanut-admin/reference-codes')
+  vi.doUnmock('../src/app/runtime')
+  vi.resetModules()
+})
 
 describe('reference-code reference host route', () => {
-  it('registers only the Tenant route with exact Module and read permission guards', () => {
+  it('registers the guarded Tenant route without eagerly importing the circular app runtime', async () => {
+    vi.doMock('../src/app/runtime', () => {
+      throw new Error('APP_RUNTIME_IMPORTED_EAGERLY')
+    })
+    const { peanutReferenceCodesModule } = await import('../src/modules/peanut-reference-codes')
+    const route = peanutReferenceCodesModule.routes[0]!
+
     expect(peanutReferenceCodesModule).toMatchObject({
       key: 'peanut.reference-codes',
       disposeOnTenantChange: true,
@@ -24,6 +36,8 @@ describe('reference-code reference host route', () => {
   })
 
   it('does not load the page chunk when Module or permission checks fail closed', async () => {
+    const { peanutReferenceCodesModule } = await import('../src/modules/peanut-reference-codes')
+    const route = peanutReferenceCodesModule.routes[0]!
     const loadPage = vi.spyOn(route, 'component')
     const baseDependencies = {
       enterAudience: vi.fn(async () => undefined),

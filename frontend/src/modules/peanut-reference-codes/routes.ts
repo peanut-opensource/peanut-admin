@@ -18,15 +18,16 @@ import type {
 } from '@peanut-admin/reference-codes'
 import { defineComponent, h, provide } from 'vue'
 
-import { useAdminRuntime } from '../../app/runtime'
-
 interface ApiClientResult {
   readonly data?: unknown
   readonly error?: unknown
   readonly response: Response
 }
 
-const apiClient = () => useAdminRuntime().tenantClient
+const apiClient = async () => {
+  const { useAdminRuntime } = await import('../../app/runtime')
+  return useAdminRuntime().tenantClient
+}
 
 const transportResult = (result: ApiClientResult): ReferenceCodesTransportResult => ({
   body: result.response.ok ? result.data : result.error,
@@ -63,10 +64,10 @@ const mutationHeaders = (request: ReferenceCodeReplaceRequest | ReferenceCodeRet
 
 const transport: ReferenceCodesTransport = {
   async listSets(signal) {
-    return transportResult(await apiClient().GET('/api/v1/reference-code-sets', { signal }))
+    return transportResult(await (await apiClient()).GET('/api/v1/reference-code-sets', { signal }))
   },
   async listCodes(moduleKey, setKey, query, signal) {
-    return transportResult(await apiClient().GET(
+    return transportResult(await (await apiClient()).GET(
       '/api/v1/reference-code-sets/{module_key}/{set_key}/codes',
       {
         params: {
@@ -78,7 +79,7 @@ const transport: ReferenceCodesTransport = {
     ))
   },
   async getCode(moduleKey, setKey, code, asOf, signal) {
-    return transportResult(await apiClient().GET(
+    return transportResult(await (await apiClient()).GET(
       '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
       {
         params: {
@@ -90,7 +91,7 @@ const transport: ReferenceCodesTransport = {
     ))
   },
   async create(moduleKey, setKey, request) {
-    return transportResult(await apiClient().POST(
+    return transportResult(await (await apiClient()).POST(
       '/api/v1/reference-code-sets/{module_key}/{set_key}/codes',
       {
         body: { code: request.input.code, ...versionBody(request.input) },
@@ -103,7 +104,7 @@ const transport: ReferenceCodesTransport = {
     ))
   },
   async replace(moduleKey, setKey, code, request) {
-    return transportResult(await apiClient().PUT(
+    return transportResult(await (await apiClient()).PUT(
       '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
       {
         body: versionBody(request.input),
@@ -116,7 +117,7 @@ const transport: ReferenceCodesTransport = {
     ))
   },
   async retire(moduleKey, setKey, code, request) {
-    return transportResult(await apiClient().DELETE(
+    return transportResult(await (await apiClient()).DELETE(
       '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
       {
         params: {
