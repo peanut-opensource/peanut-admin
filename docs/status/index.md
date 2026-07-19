@@ -75,6 +75,14 @@ for self-scoped account profile and password management. The canonical execution
 order, task contracts, dependency gates, and stop lines are recorded in the
 [P1 Execution Baseline](./p1-execution-baseline.md).
 
+The active minimum capability sequence for reusable downstream Module
+development is recorded in the
+[P1 Downstream Module Readiness Plan](./p1-downstream-module-readiness-plan.md).
+It adds operation atomicity, external-host composition, reusable Web Runtime
+and Shell behavior, minimal settings/reference-code infrastructure, and a new
+fixed-commit qualification gate without moving application-domain logic into
+Peanut Admin.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new

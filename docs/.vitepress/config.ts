@@ -74,6 +74,8 @@ export default defineConfig({
         text: 'Delivery',
         items: [
           { text: 'P0 Status', link: '/status/' },
+          { text: 'P1 Execution Baseline', link: '/status/p1-execution-baseline' },
+          { text: 'P1 Module Readiness', link: '/status/p1-downstream-module-readiness-plan' },
         ],
       },
     ],
