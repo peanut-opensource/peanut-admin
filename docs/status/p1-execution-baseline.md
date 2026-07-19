@@ -145,6 +145,15 @@ The first Runtime slice is tenant-audience account self-service. It is selected
 because it closes a visible market gap, requires no new dependency, and remains
 strictly self-scoped.
 
+### Prerequisite Commits
+
+- The original implementation task starts from
+  `30f1fb8579d7a5fdec814b71c87b4b9c4617279f`.
+- The review-correction task starts from
+  `d612a85045e2e9eb017719cd42a2f781d35b1f69` and may only close the
+  request-validation, password-verification, rate-limit, tenant-switch, cookie,
+  and account-page findings listed below.
+
 ### Objective
 
 - Read the authenticated account profile.
@@ -195,6 +204,17 @@ source IP in a rolling 15-minute window. A later attempt in that window does not
 perform password hashing, records `password_change_rate_limited`, and returns
 `429 PASSWORD_CHANGE_RATE_LIMITED` with `Retry-After: 900`.
 
+The account and source-IP limits are independent buckets. A request is limited
+only when either bucket has reached five denied attempts; counts from the two
+buckets are never added together. The source-IP decision is serialized across
+accounts so concurrent requests cannot all pass the pre-hash check.
+
+Tenant-switch challenge creation must revalidate and lock the source session in
+the same transaction that inserts the challenge. A password change either sees
+and revokes the challenge or commits first and makes the source session invalid;
+an access token validated before the password change cannot create a usable
+challenge afterward.
+
 Problem codes are `ACCOUNT_PROFILE_INVALID`, `AVATAR_URI_INVALID`,
 `CURRENT_PASSWORD_INVALID`, `NEW_PASSWORD_INVALID`, `PASSWORD_UNCHANGED`, and
 `ACCOUNT_CREDENTIAL_UNAVAILABLE`. Rate limiting uses
@@ -206,9 +226,12 @@ account.
 
 The implementation task may change only:
 
-- `packages/php/kernel/src/Identity/SelfService/*`;
-- `packages/php/kernel/tests/Unit/Identity/*`;
-- `packages/php/kernel/tests/Integration/Identity/*`;
+- `packages/php/kernel/src/Identity/SelfService/AccountSelfService.php`;
+- `packages/php/kernel/tests/Integration/Identity/AccountSelfServiceIntegrationTest.php`;
+- `packages/php/kernel/src/Auth/TenantAuthService.php` only to make source-session
+  validation and tenant-switch challenge insertion one transaction;
+- `packages/php/kernel/tests/Integration/Auth/TenantAuthServiceIntegrationTest.php`
+  only for the password-change/tenant-switch race regression;
 - `backend/app/controller/api/v1/AccountController.php`;
 - `backend/app/middleware/TenantAccountRuntimeFactory.php`;
 - `backend/tests/Integration/AccountSelfServiceHttpIntegrationTest.php`;
@@ -236,13 +259,25 @@ outside this slice.
 
 - The three operations are classified as `p1` and have executable test ownership.
 - Cross-account IDs cannot be supplied by any request shape.
+- Request bodies reject missing required fields and undeclared fields instead of
+  silently clearing profile data or ignoring account and Tenant identifiers.
 - Wrong current password changes no state and records a denied security event.
+- Current-password verification happens before `PASSWORD_UNCHANGED`; equal but
+  incorrect values are denied and counted, while equal valid values change no state.
 - Repeated wrong-current-password attempts stop before password hashing, return
   a bounded retry interval, and record a redacted rate-limit event.
+- Account and source-IP buckets are tested independently, and concurrent
+  cross-account attempts from one IP cannot bypass the five-attempt limit.
 - Successful profile update exposes no credential secret and records a tenant audit event with redacted evidence.
 - Successful secret change revokes tenant and platform sessions, invalidates old
   access and refresh tokens, invalidates active login challenges, and never logs
   either password.
+- Tenant-switch challenge creation is atomic with source-session validation, and
+  a challenge cannot survive or cross a concurrent password change.
+- Refresh-cookie metadata is prepared without database, hash, or other fallible
+  Runtime construction after the password transaction commits.
+- The profile form stays unavailable until the current profile is loaded, offers
+  retry after load failure, and clears stale success feedback when edited.
 - Desktop and mobile account-page flows pass against a real backend.
 - OpenAPI, Runtime coverage, unit, integration, security, browser, recovery,
   workspace, and aggregate checks pass without weakening P0 assertions.
@@ -624,3 +659,7 @@ capability is blocked.
   deployment, production sizing, or a stable compatibility promise.
 - A failed security, isolation, upgrade, recovery, browser, or supply-chain gate
   blocks integration; checks are fixed rather than skipped or weakened.
+- P1-B01 adds no schema migration. A code rollback does not restore an old
+  password or revoked session; recovery uses a forward credential reset and new
+  authentication, while the database transaction rolls back any failed write
+  before commit.
