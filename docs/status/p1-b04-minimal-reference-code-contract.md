@@ -259,6 +259,8 @@ packages/php/reference-code/tests/Unit/Catalog/ReferenceCodeSetLoaderTest.php
 packages/php/reference-code/tests/Unit/Model/ReferenceCodeEntryTest.php
 packages/php/reference-code/tests/Integration/Application/ReferenceCodeAdminServiceTest.php
 packages/php/reference-code/tests/Integration/Application/ReferenceCodeQueryServiceTest.php
+packages/php/reference-code/tests/Integration/Support/ReferenceCodeDatabaseTestCase.php
+packages/php/reference-code/tests/Integration/Schema/ReferenceCodeMigrationRunner.php
 packages/php/reference-code/tests/Integration/Schema/ReferenceCodeMigrationTest.php
 packages/php/reference-code/tests/Security/ReferenceCodeIsolationTest.php
 backend/app/Modules/Peanut/ReferenceCode/module.json
@@ -268,8 +270,12 @@ backend/app/Modules/Peanut/ReferenceCode/Resources/menus.json
 backend/app/Modules/Peanut/ReferenceCode/Resources/permissions.json
 backend/app/Modules/Peanut/ReferenceCode/Resources/protected-resources.json
 backend/app/Modules/Peanut/ReferenceCode/Resources/reference-code-sets.json
+backend/app/Modules/Example/Target/module.json
+backend/app/Modules/Example/Target/Resources/reference-code-sets.json
 backend/app/controller/api/v1/ReferenceCodeController.php
 backend/app/reference/ReferenceCodeRuntimeFactory.php
+backend/app/command/InstallProductProfileApplier.php
+backend/app/command/UpgradeWorkflow.php
 backend/config/modules.php
 backend/tests/Architecture/ModuleManifestValidationTest.php
 backend/tests/Contract/OpenApiArtifactTest.php
@@ -277,6 +283,8 @@ backend/tests/Http/ReferenceCodeApiTest.php
 backend/tests/Integration/ReferenceCodeModuleIntegrationTest.php
 backend/tests/Security/ReferenceCodeSecurityTest.php
 backend/tests/Upgrade/ReferenceCodeUpgradeTest.php
+backend/tests/Install/InstallWorkflowTest.php
+backend/tests/Upgrade/UpgradeWorkflowTest.php
 profiles/reference-admin.json
 packages/web/reference-code/LICENSE
 packages/web/reference-code/package.json
