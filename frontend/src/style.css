@@ -217,11 +217,13 @@ button:focus-visible {
   align-items: baseline;
   gap: 10px;
   min-width: 0;
+  max-width: min(42vw, 520px);
   margin-left: 24px;
 }
 
 .shell-context span,
-.shell-context strong {
+.shell-context strong,
+.shell-context small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -234,6 +236,11 @@ button:focus-visible {
 
 .shell-context strong {
   font-size: 13px;
+}
+
+.shell-context small {
+  color: var(--pa-shell-muted-text-color);
+  font-size: 11px;
 }
 
 .shell-commands {
@@ -273,6 +280,32 @@ button:focus-visible {
 .mobile-navigation-commands .el-button {
   width: 100%;
   margin: 0;
+}
+
+.pa-shell-mobile-content {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.pa-shell-mobile-identity {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 10px 14px;
+  border-bottom: 1px solid var(--pa-shell-border-color);
+}
+
+.pa-shell-mobile-identity > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pa-shell-mobile-identity span,
+.pa-shell-mobile-identity small {
+  color: var(--pa-shell-muted-text-color);
+  font-size: 12px;
 }
 
 .pa-shell__workspace {
@@ -606,8 +639,19 @@ button:focus-visible {
   }
 
   .shell-brand small,
-  .shell-context {
+  .shell-context span,
+  .shell-context strong {
     display: none;
+  }
+
+  .shell-context {
+    display: block;
+    max-width: 96px;
+    margin-left: auto;
+  }
+
+  .shell-context small {
+    display: block;
   }
 
   .shell-commands .el-button {
