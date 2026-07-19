@@ -631,11 +631,295 @@ commit. Completion makes P1-B02 only an unqualified candidate. It does not move
 publish a package, create a tag or release, claim production readiness, trigger
 deployment, or assert that any downstream product can consume the commit.
 
+## P1-R01: Operation Atomicity Primitives Contract
+
+This slice closes the transaction boundary required before an external Module
+command can be used as downstream evidence. Peanut Admin already has a PDO
+transaction manager, idempotency tables, idempotency repository, and audit
+repository, but they are not yet a complete reusable contract: nested
+transactions silently share the caller transaction, an abandoned
+`processing` record cannot be reclaimed, audit writes expose only a success
+outcome, and the reference HTTP middleware acquires idempotency on a separate
+PDO from the domain command.
+
+P1-R01 provides the primitives and test harness needed to compose one explicit
+transaction on one caller-supplied PDO. P1-R02 remains responsible for the
+external HTTP host kit and for wiring trusted context, authorization, and these
+primitives together without copying the reference middleware.
+
+### Status, Objective, And Non-Goals
+
+```text
+task: P1-R01
+state: implementation-ready
+prerequisite: 04643b30875febccf46c972fba1d851e02b36612
+migration: none
+dependency_change: none
+openapi_operation: none
+qualification: candidate only
+```
+
+The objective is to make one PDO and one explicit transaction boundary
+authoritative for idempotency acquisition, application-owned domain effects,
+audit evidence, an optional application-owned outbox write, and idempotency
+completion.
+
+This slice does not:
+
+- define an application's domain command, repository, table, or transaction
+  semantics;
+- add a Kernel outbox table, event schema, dispatcher, queue, or delivery
+  worker;
+- add an HTTP route, OpenAPI operation, Permission, data policy, Module,
+  product profile, menu, or Web page;
+- replace authentication, functional authorization, typed-target resolution,
+  Provider execution, or the Tenant hard boundary;
+- make the current reference `IdempotencyMiddleware` an external-host API;
+- add automatic deadlock retries, distributed transactions, two-phase commit,
+  or cross-database atomicity;
+- publish a package, stabilize a public version, or move the downstream lock.
+
+### Transaction And Savepoint Contract
+
+`PdoTransactionManager::run()` remains the public transaction entry point.
+
+- When no transaction is active, it begins, commits, or rolls back the outer
+  PDO transaction and returns the callable result.
+- When a transaction is already active, every nested `run()` creates a unique
+  MySQL savepoint on the same PDO.
+- Nested success releases only its savepoint. It never commits the caller's
+  transaction.
+- Nested failure rolls back to and releases only its savepoint, then rethrows
+  the original exception. The caller may catch it and continue the outer
+  transaction.
+- An uncaught nested failure still reaches the outer manager and rolls back the
+  entire outer transaction.
+- A callable must not commit or roll back the manager-owned boundary. Loss of
+  the expected active transaction is an infrastructure error, not successful
+  completion.
+- Savepoint names are generated internally, contain no request or business
+  value, are never supplied by a caller, and are not exposed in an API error.
+
+The manager does not retry the callable. A host that later introduces a
+deadlock retry must prove that the whole command, including authorization and
+idempotency acquisition, is safe to execute again.
+
+### Idempotency Lease And Outcome Contract
+
+The existing Tenant and platform tables remain authoritative. No table or
+column is added. `expires_at`, `status`, request hash, response fields, and the
+existing unique scope keys are sufficient for P1-R01.
+
+`beginTenant()` and `beginPlatform()`:
+
+- use their existing scope tuple and store only the SHA-256 idempotency-key
+  hash, never the raw header;
+- participate in an already active PDO transaction, keeping the acquired row
+  lock until the caller commits or rolls back;
+- otherwise own a short compatibility transaction so existing reference-host
+  callers still receive a concurrency-safe acquisition result;
+- atomically insert or lock the unique record before deciding its state;
+- require `expires_at` to be later than the comparison time;
+- accept an optional explicit comparison time for deterministic tests while
+  defaulting to the current UTC time.
+
+State handling is fixed as follows:
+
+| Existing state | Same request hash | Different request hash |
+| --- | --- | --- |
+| no record | acquire a new `processing` lease | not applicable |
+| unexpired `processing` | return not acquired; the host reports `IDEMPOTENCY_REQUEST_PROCESSING` | `IDEMPOTENCY_KEY_REUSED` |
+| expired `processing` | atomically renew the lease, clear response/resource fields, and return recovered ownership | `IDEMPOTENCY_KEY_REUSED` |
+| `completed` | return a terminal replay | `IDEMPOTENCY_KEY_REUSED` |
+| `failed` | return a terminal replay when a safe stored response exists | `IDEMPOTENCY_KEY_REUSED` |
+
+Expiry never permits a different payload to reuse the same scoped key. Cleanup
+and retention are separate lifecycle work and must not silently change the
+request hash binding.
+
+`IdempotencyRecord` distinguishes a newly inserted lease, a recovered lease,
+a non-owned processing lease, and a terminal replay. Existing constructor use
+remains compatible through a default `recovered=false` value.
+
+`completeTenant()` and `completePlatform()` continue to transition only a
+`processing` record to `completed`. New matching `failTenant()` and
+`failPlatform()` methods transition only `processing` to `failed` and store a
+caller-supplied safe response. A second transition fails with
+`IDEMPOTENCY_STATE_CONFLICT`; invalid stored JSON fails closed with
+`IDEMPOTENCY_RESPONSE_INVALID`.
+
+The repository does not decide which application errors are terminal. The host
+may store only a response that is safe to replay and contains no credential,
+secret, SQL, stack trace, hidden target existence, or raw authorization input.
+
+### Audit Outcome Contract
+
+The existing audit tables already permit `success`, `denied`, and `error`; no
+migration is required. Kernel adds a type-safe `AuditOutcome` value and optional
+outcome argument to the four existing `AuditRepository` append methods. The
+default remains `success`, preserving current callers.
+
+- A successful command records `success` inside the domain transaction.
+- An expected denial may commit a redacted `denied` audit and a safe failed
+  idempotency response without applying a domain effect.
+- An unexpected exception rolls back domain, in-transaction audit, outbox, and
+  idempotency completion together. A host may record a separate redacted
+  `error` outcome only after that rollback in a new explicit transaction.
+- A denial or error must omit a target identifier when revealing it would leak
+  whether a protected object exists.
+- Metadata remains limited to scalar redacted evidence accepted by the current
+  repository contract. P1-R01 adds no secret scanner at runtime and does not
+  make arbitrary payloads safe.
+
+### Composition Order And Outbox Boundary
+
+An application command that needs generic idempotency composes these steps on
+the same PDO:
+
+1. enter `PdoTransactionManager::run()`;
+2. acquire the scoped idempotency lease;
+3. return a terminal replay or reject a live non-owned lease without running
+   the command;
+4. execute the application-owned domain callable;
+5. append the redacted audit evidence;
+6. optionally call the application-owned outbox adapter using the same PDO;
+7. complete or deliberately fail the idempotency record;
+8. return from the callable so the outer manager commits.
+
+The outbox adapter and schema remain application-owned. Kernel does not define
+an outbox interface because a callback using the same caller-owned PDO is
+sufficient for this primitive. P1-R02 may provide host composition helpers but
+must not move an application outbox into Kernel.
+
+The existing reference `IdempotencyMiddleware` is updated only to understand
+new/recovered execution ownership and terminal failed replays. It remains a
+compatibility adapter and does not prove external Module atomicity because it
+creates its own PDO and wraps an HTTP response rather than the domain callable.
+
+### Concurrency, Failure, And Recovery
+
+- Two concurrent acquisitions of one scoped key and request hash yield exactly
+  one execution owner. The other observes an unexpired `processing` lease or a
+  terminal replay after the owner commits.
+- A stale same-hash acquisition is serialized by the idempotency row lock;
+  exactly one caller recovers it.
+- A transaction rollback after a new or recovered acquisition restores the
+  prior database state. A new row disappears; renewal of an old row reverts to
+  its prior expiry and fields.
+- Failure after domain, audit, outbox, or idempotency completion but before
+  commit leaves no partial row from that attempted command.
+- A nested failure that is caught by the outer command removes only nested
+  effects and leaves earlier and later outer effects available for commit.
+- Cross-connection and cross-database commands are not atomic under this
+  contract and must not be presented as such.
+
+### Reusable Test Harness
+
+`peanut-admin/testing` adds `OperationAtomicityContractHarness`. A downstream
+Module supplies one operation callable that accepts a checkpoint callback and
+state probes for its domain, audit, outbox, and idempotency state.
+
+The harness injects one deterministic exception after each stage:
+
+- `idempotency_acquired`;
+- `domain_written`;
+- `audit_written`;
+- `outbox_written`;
+- `idempotency_completed`.
+
+After every injection, all probes must equal their pre-operation values. The
+harness rejects unknown checkpoints, proves every required checkpoint was
+reached, and rethrows any exception that is not its own injected failure. It
+does not create tables, choose payloads, or hide a transaction left open by the
+host.
+
+### Error And API Boundary
+
+P1-R01 creates no HTTP operation and no Runtime ledger row. Existing stable
+idempotency codes remain authoritative:
+
+| Code | Meaning |
+| --- | --- |
+| `IDEMPOTENCY_KEY_INVALID` | The raw key is missing or invalid before hashing. |
+| `IDEMPOTENCY_KEY_REUSED` | The scoped key is bound to another request hash. |
+| `IDEMPOTENCY_REQUEST_PROCESSING` | A matching unexpired execution lease is owned elsewhere. |
+| `IDEMPOTENCY_STATE_CONFLICT` | A terminal transition no longer matches `processing`. |
+| `IDEMPOTENCY_RESPONSE_INVALID` | A stored terminal response cannot be decoded safely. |
+
+Transaction/savepoint failures are infrastructure exceptions. P1-R02 owns
+their eventual Problem Details mapping and must not expose SQL, savepoint names,
+connection details, or stack traces.
+
+### Exact Implementation File Whitelist
+
+After this contract is committed independently, implementation may change only:
+
+- `packages/php/kernel/src/Persistence/Pdo/PdoTransactionManager.php`;
+- `packages/php/kernel/src/Idempotency/IdempotencyRecord.php`;
+- `packages/php/kernel/src/Idempotency/PdoIdempotencyRepository.php`;
+- `packages/php/kernel/src/Audit/AuditOutcome.php`;
+- `packages/php/kernel/src/Audit/AuditRepository.php`;
+- `packages/php/kernel/src/Persistence/Pdo/PdoAuditRepository.php`;
+- `backend/app/middleware/IdempotencyMiddleware.php`;
+- `packages/php/kernel/tests/Integration/Persistence/PdoTransactionManagerTest.php`;
+- `packages/php/kernel/tests/Integration/Idempotency/IdempotencyRepositoryTest.php`;
+- `packages/php/kernel/tests/Integration/Operation/OperationAtomicityPrimitivesTest.php`;
+- `packages/php/kernel/tests/Unit/Idempotency/IdempotencyContractTest.php`;
+- `packages/php/testing/src/Operation/InjectedOperationFailure.php`;
+- `packages/php/testing/src/Operation/OperationAtomicityContractHarness.php`;
+- `packages/php/testing/tests/Unit/Operation/OperationAtomicityContractHarnessTest.php`;
+- `packages/php/data-permission/tests/Integration/Application/EffectiveAccessPreviewServiceTest.php`
+  only to keep its failing audit test double compatible with the optional
+  outcome argument;
+- `docs/guide/module-development.md`;
+- `README.md` and `docs/status/index.md` only for candidate status.
+
+No schema, migration, dependency manifest, lockfile, OpenAPI, generated route,
+generated TypeScript, Runtime coverage ledger, authorization engine, Provider,
+resolver, Module manifest, product profile, starter, frontend, release, or
+downstream-lock file may change. If this whitelist is insufficient, work stops
+and a separate planning correction is committed before expanding it.
+
+### Test Ownership And Acceptance
+
+`P1-OPERATION-ATOMICITY-001` owns the package and integration evidence. It has
+no OpenAPI operation and therefore no Runtime coverage ledger entry.
+
+Tests are written to fail before the Runtime edit and must prove:
+
+- nested success, caught nested failure, uncaught nested failure, and an
+  externally owned transaction all preserve the specified savepoint boundary;
+- new acquisition, completed replay, failed replay, same-hash stale recovery,
+  different-hash rejection, invalid expiry, duplicate terminal transition,
+  and rollback of a recovered lease;
+- two connections cannot both own one live or stale lease;
+- `success`, `denied`, and `error` audit outcomes persist only when their
+  transaction commits;
+- a successful fictional operation commits exactly one domain, audit, outbox,
+  and completed idempotency row;
+- injected failure at every required checkpoint leaves all four state probes
+  unchanged;
+- the reusable testing harness detects a deliberately non-atomic operation;
+- no raw idempotency key, secret, target set, SQL, or stack trace is persisted
+  by the fixture evidence.
+
+Focused gates are the affected Kernel and testing unit/integration tests. Final
+acceptance also requires architecture, dependency, supply-chain, clean-install,
+upgrade, security, recovery, performance, starter, workspace, `./scripts/check`,
+and `git diff --check` to pass on an isolated Compose project.
+
+Implementation is one independently reviewable commit after this planning
+commit. Completion makes P1-R01 only an unqualified candidate. It does not move
+`0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`, qualify an external Module, publish
+a package, create a tag or release, claim production readiness, or authorize a
+downstream project to consume the resulting commit.
+
 ## Dependency Gates
 
-No dependency is added by P1-B01 or P1-B02. Every later direct dependency starts
-with a decision that records exact version, license, official sources,
-alternatives, adapter boundary, removal plan, and current security status.
+No dependency is added by P1-B01, P1-B02, or P1-R01. Every later direct
+dependency starts with a decision that records exact version, license, official
+sources, alternatives, adapter boundary, removal plan, and current security
+status.
 
 The following capabilities are blocked until their decisions are accepted:
 
