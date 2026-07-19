@@ -129,6 +129,35 @@ test('real platform login reaches the protected tenant collection', async ({ pag
   expect(errors).toEqual([])
 })
 
+test('real tenant member effective access preview is authoritative and responsive', async ({ page }, testInfo) => {
+  const errors = monitorFullStackErrors(page)
+  const initialLogin = await login(page, browserPassword())
+  expect(initialLogin.status()).toBe(200)
+  await enterAlphaTeam(page)
+
+  await page.goto('/app/members')
+  const previewResponsePromise = page.waitForResponse(response => (
+    response.request().method() === 'GET'
+    && /^\/api\/v1\/members\/[1-9][0-9]*\/effective-access$/.test(new URL(response.url()).pathname)
+  ))
+  await page.getByRole('link', { name: '有效访问' }).click()
+  const previewResponse = await previewResponsePromise
+
+  expect(previewResponse.status()).toBe(200)
+  expect(previewResponse.headers()['x-request-id']).toMatch(/^req_[a-zA-Z0-9_-]+$/)
+  await expect(page).toHaveURL(/\/app\/members\/[1-9][0-9]*\/effective-access$/)
+  await expect(page.locator('.pa-page-header__title').getByText('有效访问预览', { exact: true })).toBeVisible()
+  await expect(page.getByText('core.member.effective-access.read')).toBeVisible()
+
+  const dimensions = await page.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    document: document.documentElement.scrollWidth,
+  }))
+  expect(dimensions.document).toBeLessThanOrEqual(dimensions.viewport + 1)
+  await captureFullStackScreenshot(page, testInfo, 'real-member-effective-access')
+  expect(errors).toEqual([])
+})
+
 test('real tenant account profile loads and saves through the protected API', async ({ page }, testInfo) => {
   const responses = observeApi(page)
   const errors = monitorFullStackErrors(page)

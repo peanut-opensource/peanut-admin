@@ -24,6 +24,7 @@ export interface ApiFixtureState {
   refreshCount: number
   refreshDelayMs: number
   memberDelayMs: number
+  effectiveAccessEmpty: boolean
   policySelectionForbidden: boolean
   nextProblems: Map<string, FixtureProblem>
   requestCounts: Map<string, number>
@@ -32,6 +33,7 @@ export interface ApiFixtureState {
 
 const tenantPermissions = [
   'core.member.read',
+  'core.member.effective-access.read',
   'core.department.read',
   'core.role.read',
   'core.module.read',
@@ -65,6 +67,7 @@ export const createApiFixtureState = (overrides: Partial<ApiFixtureState> = {}):
   refreshCount: 0,
   refreshDelayMs: 100,
   memberDelayMs: 0,
+  effectiveAccessEmpty: false,
   policySelectionForbidden: false,
   nextProblems: new Map(),
   requestCounts: new Map(),
@@ -278,6 +281,78 @@ const handleApi = async (route: Route, state: ApiFixtureState): Promise<void> =>
     const tenantAtRequest = state.activeTenantId
     if (state.memberDelayMs > 0) await sleep(state.memberDelayMs)
     await fulfillJson(route, { data: [{ id: '9007199254740993123', display_name: `Member ${tenantAtRequest}`, member_no: `M-${tenantAtRequest}`, status: 'active', role_keys: ['core.tenant-owner'] }], meta: { total: 1 } })
+    return
+  }
+  if (method === 'GET' && /^\/api\/v1\/members\/[1-9][0-9]*\/effective-access$/.test(path)) {
+    const memberId = path.split('/').at(-2) ?? '0'
+    const page = Number.parseInt(url.searchParams.get('page') ?? '1', 10)
+    const pageSize = Number.parseInt(url.searchParams.get('page_size') ?? '20', 10)
+    const operations = state.effectiveAccessEmpty ? [] : page === 1 ? [{
+      resource_key: 'example.authorization-resource-with-a-very-long-resource-key',
+      module_key: 'example.work-item',
+      operation: 'list',
+      ownership: 'business_target_owned',
+      access_mode: 'explicit_targets',
+      target_cardinality: 'many_readable',
+      permission_match: 'all',
+      required_permission_keys: ['example.work-item.read'],
+      functional_allowed: true,
+      data_access: {
+        mode: 'conditional',
+        runtime_decision_required: true,
+        group_match: 'any',
+        groups: [{
+          source_role_key: 'core.tenant-owner',
+          condition_match: 'all',
+          conditions: [{
+            condition_key: 'core.specified_objects',
+            target_resource_key: 'example.project',
+            target_count: 2,
+          }],
+        }],
+      },
+    }] : [{
+      resource_key: 'example.reference-item',
+      module_key: 'example.reference',
+      operation: 'use',
+      ownership: 'shared_master',
+      access_mode: 'global_reference_read',
+      target_cardinality: 'none',
+      permission_match: 'all',
+      required_permission_keys: ['example.reference.use'],
+      functional_allowed: true,
+      data_access: {
+        mode: 'global_reference_read',
+        runtime_decision_required: false,
+        group_match: 'any',
+        groups: [],
+      },
+    }]
+    await fulfillJson(route, {
+      data: {
+        preview_kind: 'authorization_inputs',
+        evaluated_at: '2026-07-19T09:30:00.000Z',
+        snapshot_revision: 'a'.repeat(64),
+        member: {
+          id: memberId,
+          display_name: 'Member 101',
+          status: state.effectiveAccessEmpty ? 'suspended' : 'active',
+          primary_department_id: state.effectiveAccessEmpty ? null : '11',
+          effective: !state.effectiveAccessEmpty,
+        },
+        roles: state.effectiveAccessEmpty
+          ? []
+          : [{ id: '21', key: 'core.tenant-owner', name: 'Tenant Owner', is_builtin: true }],
+        permission_keys: state.effectiveAccessEmpty ? [] : [
+          'core.member.effective-access.read',
+          'example.work-item.authorization-preview-with-a-very-long-permission-key.read',
+        ],
+        resource_operations: operations,
+      },
+      meta: state.effectiveAccessEmpty
+        ? { request_id: requestId, page: 1, page_size: pageSize, total: 0, total_pages: 0 }
+        : { request_id: requestId, page, page_size: pageSize, total: 21, total_pages: 2 },
+    })
     return
   }
   if (operation === 'GET /api/v1/departments') {

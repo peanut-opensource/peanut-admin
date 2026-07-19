@@ -12,6 +12,7 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'tenant.home', path: '/app', audience: 'tenant' },
   { name: 'tenant.account', path: '/app/account', audience: 'tenant' },
   { name: 'tenant.members.list', path: '/app/members', audience: 'tenant', permission: 'core.member.read' },
+  { name: 'tenant.members.effective-access', path: '/app/members/:member_id/effective-access', audience: 'tenant', permission: 'core.member.effective-access.read' },
   { name: 'tenant.departments.list', path: '/app/departments', audience: 'tenant', permission: 'core.department.read' },
   { name: 'tenant.roles.list', path: '/app/roles', audience: 'tenant', permission: 'core.role.read' },
   { name: 'tenant.modules.list', path: '/app/modules', audience: 'tenant', permission: 'core.module.read' },

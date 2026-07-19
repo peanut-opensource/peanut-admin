@@ -6,15 +6,39 @@ namespace PeanutAdmin\App\controller\api\v1;
 
 use PeanutAdmin\App\authorization\DataPermissionRuntimeFactory;
 use PeanutAdmin\DataPermission\Application\DataPolicyAdminService;
+use PeanutAdmin\DataPermission\Application\EffectiveAccessPreviewService;
+use PeanutAdmin\DataPermission\Catalog\PdoResourceOperationCatalog;
+use PeanutAdmin\DataPermission\Policy\PdoPolicyRepository;
 use PeanutAdmin\DataPermission\Target\TargetCatalogQuery;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
 use PeanutAdmin\Kernel\Authorization\Application\Etag;
+use PeanutAdmin\Kernel\Authorization\PdoTenantAuthorizationRepository;
+use PeanutAdmin\Kernel\Persistence\Pdo\PdoAuditRepository;
 use think\Request;
 use think\Response;
 
 final class DataAuthorizationController
 {
+    #[OpenApiHandlerContract]
+    public function effectiveAccess(Request $request, string $memberId): Response
+    {
+        return MemberAdminRuntime::run($request, function () use ($request, $memberId): array {
+            $validatedMemberId = self::memberId($memberId);
+            $context = MemberAdminRuntime::context($request);
+            $pdo = MemberAdminRuntime::pdo();
+            $result = (new EffectiveAccessPreviewService(
+                $pdo,
+                new PdoTenantAuthorizationRepository($pdo),
+                new PdoResourceOperationCatalog($pdo),
+                new PdoPolicyRepository($pdo),
+                new PdoAuditRepository($pdo),
+            ))->preview($context, $validatedMemberId, MemberAdminRuntime::page($request));
+
+            return ['data' => $result['data'], 'meta' => $result['meta']];
+        });
+    }
+
     #[OpenApiHandlerContract]
     public function targetCandidates(Request $request): Response
     {
@@ -143,5 +167,22 @@ final class DataAuthorizationController
             $pdo,
             DataPermissionRuntimeFactory::runtime($pdo)->targetResolvers,
         );
+    }
+
+    private static function memberId(string $value): int
+    {
+        $maximum = (string) PHP_INT_MAX;
+        if (
+            preg_match('/^[1-9][0-9]*$/', $value) !== 1
+            || strlen($value) > strlen($maximum)
+            || (strlen($value) === strlen($maximum) && strcmp($value, $maximum) > 0)
+        ) {
+            throw AdminAccessException::invalid(
+                'MEMBER_ID_INVALID',
+                'Member ID must be a canonical positive integer within the supported range.',
+            );
+        }
+
+        return (int) $value;
     }
 }

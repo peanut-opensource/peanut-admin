@@ -119,6 +119,13 @@ x-owner-response: &ownerResponse
 x-target-candidate-list-response: &targetCandidateListResponse
   <<: *readErrors
   '200': { $ref: './responses.yaml#/TargetCandidateListOk' }
+x-member-effective-access-response: &memberEffectiveAccessResponse
+  '200': { $ref: './responses.yaml#/MemberEffectiveAccessOk' }
+  '401': { $ref: '#/components/responses/Problem' }
+  '403': { $ref: '#/components/responses/Problem' }
+  '404': { $ref: '#/components/responses/Problem' }
+  '422': { $ref: '#/components/responses/Problem' }
+  '500': { $ref: '#/components/responses/Problem' }
 x-data-policy-response: &dataPolicyResponse
   <<: *writeErrors
   '200': { $ref: './responses.yaml#/DataPolicyOk' }
@@ -299,6 +306,15 @@ paths:
       parameters: [{ $ref: '#/components/parameters/IfMatch' }]
       requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/member.yaml#/ReplaceMemberRolesRequest' } } } }
       responses: *memberResponse
+  /api/v1/members/{member_id}/effective-access:
+    parameters: [{ $ref: '#/components/parameters/EffectiveAccessMemberId' }]
+    get:
+      operationId: getMemberEffectiveAccess
+      summary: getMemberEffectiveAccess
+      x-handler: 'PeanutAdmin\App\controller\api\v1\DataAuthorizationController::effectiveAccess'
+      x-permission: core.member.effective-access.read
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
+      responses: *memberEffectiveAccessResponse
   /api/v1/members/{member_id}/activate:
     parameters: [{ $ref: '#/components/parameters/MemberId' }]
     post: { operationId: activateMember, summary: activateMember, x-handler: 'PeanutAdmin\App\controller\api\v1\MemberController::activate', x-permission: core.member.activate, parameters: [{ $ref: '#/components/parameters/IfMatch' }], responses: *memberResponse }
@@ -527,6 +543,12 @@ components:
     IdempotencyKey: { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 16, maxLength: 128 } }
     TenantId: { in: path, name: tenant_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     MemberId: { in: path, name: member_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
+    EffectiveAccessMemberId:
+      in: path
+      name: member_id
+      required: true
+      description: Canonical positive decimal member ID no greater than the server PHP_INT_MAX value.
+      schema: { type: string, pattern: '^[1-9][0-9]*$', maxLength: 19 }
     DepartmentId: { in: path, name: department_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     RoleId: { in: path, name: role_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     OperatorId: { in: path, name: operator_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }

@@ -132,6 +132,10 @@ TargetCandidateListOk:
   description: Authorized target candidate page.
   headers: *baseHeaders
   content: { application/json: { schema: { $ref: './schemas/authorization.yaml#/TargetCandidateListResponse' } } }
+MemberEffectiveAccessOk:
+  description: Current effective authorization inputs for one tenant member.
+  headers: *baseHeaders
+  content: { application/json: { schema: { $ref: './schemas/authorization.yaml#/MemberEffectiveAccessResponse' } } }
 DataPolicyOk:
   description: Role data policy.
   headers: *versionedHeaders

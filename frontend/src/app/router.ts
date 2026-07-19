@@ -50,6 +50,7 @@ const routes: RouteRecordRaw[] = [
       { path: '', name: 'tenant.home', component: () => import('../pages/common/DashboardPage.vue'), meta: { audience: 'tenant', title: '工作台' } },
       { path: 'account', name: 'tenant.account', component: () => import('../pages/common/AccountPage.vue'), meta: { audience: 'tenant', title: '账号信息' } },
       { path: 'members', name: 'tenant.members.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'tenant', title: '成员管理', permission: 'core.member.read', resourcePage: 'tenant-members' } },
+      { path: 'members/:member_id/effective-access', name: 'tenant.members.effective-access', component: () => import('../pages/common/EffectiveAccessPreviewPage.vue'), meta: { audience: 'tenant', title: '有效访问预览', permission: 'core.member.effective-access.read' } },
       { path: 'departments', name: 'tenant.departments.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'tenant', title: '部门管理', permission: 'core.department.read', resourcePage: 'tenant-departments' } },
       { path: 'roles', name: 'tenant.roles.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'tenant', title: '角色管理', permission: 'core.role.read', resourcePage: 'tenant-roles' } },
       { path: 'modules', name: 'tenant.modules.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'tenant', title: '模块管理', permission: 'core.module.read', resourcePage: 'tenant-modules' } },

@@ -8,6 +8,15 @@ All BIGINT identifiers cross the API boundary as decimal strings. Tenant request
 
 ## Implementation Status
 
-All 75 P0 operations in the current OpenAPI document bind to concrete reference-host handlers. The three additional P1 account self-service operations are candidate capabilities and remain outside the qualified downstream-consumption baseline. `./scripts/check-openapi` verifies that each handler exists, accepts the declared path parameters, returns `think\Response`, and carries success status, body, and header metadata matching the generated route.
+All 75 P0 operations in the current OpenAPI document bind to concrete reference-host handlers. Four additional P1 operations provide account self-service and tenant-member effective-access inspection. These remain candidate capabilities outside the qualified downstream-consumption baseline. `./scripts/check-openapi` verifies that each handler exists, accepts the declared path parameters, returns `think\Response`, and carries success status, body, and header metadata matching the generated route.
+
+`GET /api/v1/members/{member_id}/effective-access` requires the tenant-audience
+`core.member.effective-access.read` Permission. It pages the member's current
+resource-operation authorization inputs and returns `X-Request-Id` with
+`Cache-Control: no-store`. The response is deliberately not an impersonation or
+an object-level allow decision: it never exposes Provider details, SQL, policy
+record identifiers, account identifiers, or raw target IDs. Concrete Runtime
+requests still apply target cardinality, resolvers, Providers, the Tenant hard
+boundary, and shared-master scope.
 
 This statement applies only to operations classified in the current Runtime coverage ledger. A future operation is unavailable until its OpenAPI schema, concrete handler, authorization metadata, classification, and automated evidence land together. The unused fail-closed contract fallback classes do not publish an operation.

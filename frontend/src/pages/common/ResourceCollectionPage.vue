@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { hasPermission, useTenantContext } from '@peanut-admin/admin-core'
 import { EmptyState, ForbiddenState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -9,6 +10,7 @@ import { RESOURCE_PAGES } from './resources'
 
 const route = useRoute()
 const runtime = useAdminRuntime()
+const tenantContext = useTenantContext()
 const definition = computed(() => RESOURCE_PAGES[stringPageKey.value] ?? null)
 const stringPageKey = computed(() => typeof route.meta.resourcePage === 'string' ? route.meta.resourcePage : '')
 const rows = ref<UnknownRecord[]>([])
@@ -18,6 +20,10 @@ const pageSize = ref(20)
 const total = ref(0)
 const problem = ref<AdminApiError | null>(null)
 const retryRemaining = ref(0)
+const canPreviewEffectiveAccess = computed(() => (
+  stringPageKey.value === 'tenant-members'
+  && hasPermission(tenantContext.permissionSet, 'core.member.effective-access.read')
+))
 let retryTimer: ReturnType<typeof setInterval> | null = null
 
 const clearRetryTimer = () => {
@@ -129,14 +135,23 @@ onUnmounted(clearRetryTimer)
         </template>
       </el-table-column>
       <el-table-column
-        v-if="stringPageKey === 'platform-tenants'"
+        v-if="stringPageKey === 'platform-tenants' || canPreviewEffectiveAccess"
         label="操作"
-        width="100"
+        width="112"
         fixed="right"
       >
         <template #default="scope">
-          <RouterLink :to="`/platform/tenants/${String(scope.row.id)}`">
+          <RouterLink
+            v-if="stringPageKey === 'platform-tenants'"
+            :to="`/platform/tenants/${String(scope.row.id)}`"
+          >
             查看
+          </RouterLink>
+          <RouterLink
+            v-else
+            :to="`/app/members/${String(scope.row.id)}/effective-access`"
+          >
+            有效访问
           </RouterLink>
         </template>
       </el-table-column>

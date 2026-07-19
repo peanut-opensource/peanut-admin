@@ -51,3 +51,32 @@ The compiled SQL is appended only to the owning Module repository query. A contr
 ## Policy Administration
 
 Target candidates for runtime use are already restricted to the member's effective scope. Policy-configuration candidates additionally require `core.role.data-policy.manage` and the operation's policy-selection permission. This prevents a role editor from becoming a target enumeration bypass.
+
+## Effective Access Preview
+
+An administrator with `core.member.effective-access.read` can inspect the
+current authorization inputs for one member in the active Tenant at
+`GET /api/v1/members/{member_id}/effective-access`. The resource-operation list
+uses the normal `page` and `page_size` parameters. Tenant identity always comes
+from the validated session; the request cannot supply an account, Tenant, role,
+Permission, target, hypothetical policy, or evaluation time.
+
+The preview uses the existing RBAC union and effective-policy repositories. It
+shows active effective roles, sorted effective Permission keys, functional
+Permission matching, and redacted policy conditions with typed target counts.
+Inactive members have no effective roles, Permissions, or policy groups.
+Unavailable Modules and inactive, future, expired, disabled, or empty policy
+inputs do not become effective.
+
+The response kind is `authorization_inputs`, not an authorization decision.
+`conditional` means that an effective policy input exists. A real operation
+still validates cardinality and typed targets and asks its registered Provider
+for the query constraint, create decision, or target decision. The preview does
+not forge a session for the inspected member, compile SQL, return raw target
+IDs, or widen access when a Runtime contract is missing.
+
+Each successful preview records a redacted
+`tenant.member.effective-access.viewed` Tenant audit event. Authentication,
+permission, member-not-found, and validation failures do not create a successful
+preview event, and the operation does not write an authentication security
+event.

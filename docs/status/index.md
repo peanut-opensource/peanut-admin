@@ -22,7 +22,7 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 ## Runtime Operation Coverage
 
 [`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies
-the current 78 OpenAPI operations as 75 P0 and 3 P1 operations, records their
+the current 79 OpenAPI operations as 75 P0 and 4 P1 operations, records their
 concrete handlers and success schemas, and assigns each operation to an
 executable test owner. `./scripts/check-runtime-coverage` rejects missing,
 duplicate, stale, or unowned operations.
@@ -70,10 +70,11 @@ The repository checks are the authoritative evidence for completed implementatio
 
 P1 planning starts from repository commit
 `c63e06e25e35855cfefab890d7ee43c6e0cf839d` and is fixed by baseline commit
-`957e7b6`. The first candidate slice implements three tenant-audience operations
-for self-scoped account profile and password management. The canonical execution
-order, task contracts, dependency gates, and stop lines are recorded in the
-[P1 Execution Baseline](./p1-execution-baseline.md).
+`957e7b6`. The current candidate slices implement three tenant-audience
+operations for self-scoped account profile and password management and one
+permission-gated operation for current Tenant-member effective-access
+inspection. The canonical execution order, task contracts, dependency gates,
+and stop lines are recorded in the [P1 Execution Baseline](./p1-execution-baseline.md).
 
 The active minimum capability sequence for reusable downstream Module
 development is recorded in the

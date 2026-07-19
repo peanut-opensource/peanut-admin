@@ -11,6 +11,7 @@ describe('reference admin route contract', () => {
   it('registers every P0 workspace route at build time', () => {
     for (const routeName of [
       'tenant.members.list',
+      'tenant.members.effective-access',
       'tenant.departments.list',
       'tenant.roles.list',
       'tenant.modules.list',
@@ -24,6 +25,12 @@ describe('reference admin route contract', () => {
     ]) {
       expect(APP_ROUTE_REGISTRY.has(routeName), routeName).toBe(true)
     }
+    expect(APP_ROUTE_REGISTRY.get('tenant.members.effective-access')).toEqual({
+      name: 'tenant.members.effective-access',
+      path: '/app/members/:member_id/effective-access',
+      audience: 'tenant',
+      permission: 'core.member.effective-access.read',
+    })
   })
 
   it('uses route_name instead of a backend-provided path or component', () => {

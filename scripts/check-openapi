@@ -149,8 +149,8 @@ const compareRoutes = (left, right) => {
   return leftSegments.length - rightSegments.length
 }
 routes.sort(compareRoutes)
-if (routes.length !== 78) {
-  throw new Error(`Expected 78 classified P0/P1 operations, found ${routes.length}`)
+if (routes.length !== 79) {
+  throw new Error(`Expected 79 classified P0/P1 operations, found ${routes.length}`)
 }
 const operationIds = new Set(routes.map(route => route.operationId))
 if (operationIds.size !== routes.length) {

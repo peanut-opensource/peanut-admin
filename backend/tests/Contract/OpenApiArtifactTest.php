@@ -14,12 +14,13 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(78, $routes);
-        self::assertCount(78, array_unique($operationIds));
+        self::assertCount(79, $routes);
+        self::assertCount(79, array_unique($operationIds));
         self::assertArrayHasKey('GET /api/v1/account', $routes);
         self::assertArrayHasKey('PATCH /api/v1/account', $routes);
         self::assertArrayHasKey('POST /api/v1/account/password', $routes);
         self::assertArrayHasKey('GET /api/v1/authorization/target-candidates', $routes);
+        self::assertArrayHasKey('GET /api/v1/members/{member_id}/effective-access', $routes);
         self::assertArrayHasKey('GET /api/v1/example/reference-items/candidates', $routes);
         self::assertArrayHasKey('PUT /api/platform/v1/tenants/{tenant_id}/modules/{module_key}', $routes);
 
@@ -27,9 +28,33 @@ final class OpenApiArtifactTest extends TestCase
         self::assertStringContainsString('listExampleWorkItems', $types);
         self::assertStringContainsString('TargetSet', $types);
         self::assertStringContainsString('SelectTenantRequest', $types);
+        self::assertStringContainsString('MemberEffectiveAccessResponse', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
         self::assertStringNotContainsString('data: unknown', $types);
         self::assertDoesNotMatchRegularExpression('/(?:\| unknown|unknown \|)/', $types);
+    }
+
+    public function testEffectiveAccessPreviewKeepsItsSensitiveReadContract(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+        $route = $routes['GET /api/v1/members/{member_id}/effective-access'] ?? null;
+
+        self::assertIsArray($route);
+        self::assertSame(
+            'PeanutAdmin\\App\\controller\\api\\v1\\DataAuthorizationController',
+            $route[0],
+        );
+        self::assertSame('effectiveAccess', $route[1]);
+        self::assertSame('core.member.effective-access.read', $route[2]);
+        self::assertSame('getMemberEffectiveAccess', $route[3]);
+        self::assertSame('tenant', $route[4]);
+        self::assertTrue($route[5]);
+        self::assertFalse($route[6]);
+        self::assertNull($route[7]);
+        self::assertSame(200, $route[8]);
+        self::assertSame('application/json', $route[9]);
+        self::assertSame(['Cache-Control', 'X-Request-Id'], $route[10]);
+        self::assertSame('#/components/schemas/MemberEffectiveAccessResponse', $route[11]);
     }
 
     public function testGeneratedRoutesCarryTypedSuccessContracts(): void

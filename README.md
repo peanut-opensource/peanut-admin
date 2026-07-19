@@ -23,8 +23,9 @@ namespaces and layouts, server-registered Tenant Clients, Client-scoped
 authentication and refresh, and the fixed starter as a real downstream
 consumer. The same release and production stop lines continue to apply.
 
-P1 execution planning is fixed by commit `957e7b6`. The first P1 candidate
-slice adds tenant-audience account profile and password self-service. P1
+P1 execution planning is fixed by commit `957e7b6`. The current P1 candidate
+slices add tenant-audience account profile and password self-service plus a
+permission-gated, current-state effective-access preview for Tenant members. P1
 candidate commits do not move the external-host consumption lock and remain
 unqualified for downstream consumption until a new aggregate review approves a
 fixed commit.

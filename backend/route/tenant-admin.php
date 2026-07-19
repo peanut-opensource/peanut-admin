@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use PeanutAdmin\App\controller\api\v1\DataAuthorizationController;
 use PeanutAdmin\App\controller\api\v1\DepartmentController;
 use PeanutAdmin\App\controller\api\v1\MemberController;
 use PeanutAdmin\App\controller\api\v1\RoleController;
@@ -10,6 +11,11 @@ return [
     'GET /api/v1/members' => [MemberController::class, 'index', 'core.member.read'],
     'POST /api/v1/members' => [MemberController::class, 'create', 'core.member.create'],
     'GET /api/v1/members/{member_id}' => [MemberController::class, 'show', 'core.member.read'],
+    'GET /api/v1/members/{member_id}/effective-access' => [
+        DataAuthorizationController::class,
+        'effectiveAccess',
+        'core.member.effective-access.read',
+    ],
     'PATCH /api/v1/members/{member_id}' => [MemberController::class, 'update', 'core.member.update'],
     'PUT /api/v1/members/{member_id}/roles' => [MemberController::class, 'replaceRoles', 'core.member.role.assign'],
     'POST /api/v1/members/{member_id}/suspend' => [MemberController::class, 'suspend', 'core.member.suspend'],

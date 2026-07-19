@@ -64,7 +64,82 @@ test('manual unauthorized route does not load protected collection', async ({ pa
   expect(errors).toEqual([])
 })
 
+test('member row opens the responsive effective access preview', async ({ page }, testInfo) => {
+  const state = createApiFixtureState()
+  const errors = monitorPageErrors(page)
+  await installApiFixture(page, state)
+  await loginTenant(page)
+
+  await page.goto('/app/members')
+  await page.getByRole('link', { name: '有效访问' }).click()
+  await expect(page).toHaveURL(/\/app\/members\/9007199254740993123\/effective-access$/)
+  await expect(page.getByText('Member 101')).toBeVisible()
+  await expect(page.getByText('core.member.effective-access.read')).toBeVisible()
+  await expect(page.getByText('example.authorization-resource-with-a-very-long-resource-key')).toBeVisible()
+  await expect(page.getByText('仍需运行时判定')).toBeVisible()
+  await expectNoViewportOverflow(page)
+  await captureAcceptanceScreenshot(page, testInfo, 'member-effective-access')
+
+  const endpoint = 'GET /api/v1/members/9007199254740993123/effective-access'
+  const refresh = page.getByRole('toolbar', { name: '预览操作' }).getByRole('button', { name: '刷新' })
+  await page.locator('.el-pagination .btn-next').click()
+  await expect(page.getByText('example.reference-item')).toBeVisible()
+  await refresh.click()
+  await expect(page.getByText('example.reference-item')).toBeVisible()
+
+  state.effectiveAccessEmpty = true
+  await refresh.click()
+  await expect(page.getByText('暂无可预览的资源操作')).toBeVisible()
+
+  state.effectiveAccessEmpty = false
+  state.nextProblems.set(endpoint, {
+    status: 500,
+    code: 'INTERNAL_ERROR',
+    detail: 'Preview unavailable.',
+  })
+  await refresh.click()
+  await expect(page.getByText('有效访问暂不可用')).toBeVisible()
+
+  state.nextProblems.set(endpoint, {
+    status: 403,
+    code: 'AUTHZ_PERMISSION_DENIED',
+    detail: 'Preview permission denied.',
+  })
+  await refresh.click()
+  await expect(page.getByText('无权查看')).toBeVisible()
+
+  state.nextProblems.set(endpoint, {
+    status: 404,
+    code: 'RESOURCE_NOT_FOUND',
+    detail: 'Member not found.',
+  })
+  await refresh.click()
+  await expect(page.getByText('成员不可用')).toBeVisible()
+
+  await expectNoViewportOverflow(page)
+  expect(state.requestCounts.get(endpoint)).toBe(7)
+  expect(errors).toEqual([])
+})
+
+test('effective access permission hides the row action and blocks direct navigation before fetch', async ({ page }) => {
+  const state = createApiFixtureState({
+    tenantPermissions: tenantPermissionsWithout('core.member.effective-access.read'),
+  })
+  const errors = monitorPageErrors(page)
+  await installApiFixture(page, state)
+  await loginTenant(page)
+
+  await page.goto('/app/members')
+  await expect(page.getByRole('link', { name: '有效访问' })).toHaveCount(0)
+  await page.goto('/app/members/9007199254740993123/effective-access')
+  await expect(page).toHaveURL(/\/403$/)
+  expect(state.requestCounts.get('GET /api/v1/members/9007199254740993123/effective-access') ?? 0).toBe(0)
+  expect(errors).toEqual([])
+})
+
 const tenantPermissionsWithout = (permission: string): string[] => [
+  'core.member.read',
+  'core.member.effective-access.read',
   'core.department.read',
   'core.role.read',
   'core.module.read',

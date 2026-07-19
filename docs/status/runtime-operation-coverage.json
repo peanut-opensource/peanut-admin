@@ -103,6 +103,15 @@
         "frontend/tests/account-page.spec.ts",
         "frontend/tests/e2e/full-stack.e2e.ts"
       ]
+    },
+    "RUNTIME-EFFECTIVE-ACCESS-PREVIEW-001": {
+      "description": "Tenant-admin current effective RBAC and redacted data-policy input inspection",
+      "evidence": [
+        "packages/php/data-permission/tests/Integration/Application/EffectiveAccessPreviewServiceTest.php",
+        "backend/tests/Integration/EffectiveAccessPreviewHttpIntegrationTest.php",
+        "frontend/tests/effective-access-preview-page.spec.ts",
+        "frontend/tests/e2e/full-stack.e2e.ts"
+      ]
     }
   },
   "operations": [
@@ -183,6 +192,7 @@
     {"operation_id":"replaceRolePermissions","scope":"p0","route":"PUT /api/v1/roles/{role_id}/permissions","handler":"PeanutAdmin\\App\\controller\\api\\v1\\RoleController::replacePermissions","response_schema":"#/components/schemas/RoleResponse","test_owner":"RUNTIME-TENANT-ADMIN-001"},
     {"operation_id":"getMyAccount","scope":"p1","route":"GET /api/v1/account","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::show","response_schema":"#/components/schemas/AccountProfileResponse","test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
     {"operation_id":"updateMyAccount","scope":"p1","route":"PATCH /api/v1/account","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::update","response_schema":"#/components/schemas/AccountProfileResponse","test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
-    {"operation_id":"changeMyPassword","scope":"p1","route":"POST /api/v1/account/password","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::changePassword","response_schema":null,"test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"}
+    {"operation_id":"changeMyPassword","scope":"p1","route":"POST /api/v1/account/password","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::changePassword","response_schema":null,"test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
+    {"operation_id":"getMemberEffectiveAccess","scope":"p1","route":"GET /api/v1/members/{member_id}/effective-access","handler":"PeanutAdmin\\App\\controller\\api\\v1\\DataAuthorizationController::effectiveAccess","response_schema":"#/components/schemas/MemberEffectiveAccessResponse","test_owner":"RUNTIME-EFFECTIVE-ACCESS-PREVIEW-001"}
   ]
 }

@@ -7,6 +7,7 @@ return [
         'GET /api/v1/members' => 'core.member.read',
         'POST /api/v1/members' => 'core.member.create',
         'GET /api/v1/members/{member_id}' => 'core.member.read',
+        'GET /api/v1/members/{member_id}/effective-access' => 'core.member.effective-access.read',
         'PATCH /api/v1/members/{member_id}' => 'core.member.update',
         'PUT /api/v1/members/{member_id}/roles' => 'core.member.role.assign',
         'POST /api/v1/members/{member_id}/suspend' => 'core.member.suspend',
