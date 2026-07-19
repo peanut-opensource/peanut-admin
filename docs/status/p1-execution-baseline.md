@@ -247,6 +247,352 @@ outside this slice.
 - OpenAPI, Runtime coverage, unit, integration, security, browser, recovery,
   workspace, and aggregate checks pass without weakening P0 assertions.
 
+## P1-B02: Effective Access Preview Contract
+
+This slice adds a current-state, tenant-administration inspection view for one
+member. Contract verification against the P0 RBAC repository, resource
+operation catalog, effective policy repository, typed-target rules, Provider
+contracts, OpenAPI Runtime, Admin Web, and test gates found no dependency or
+schema prerequisite.
+
+The preview is an authoritative summary of the inputs that the existing
+authorization Runtime will use. It is not an impersonation or object-level
+authorization decision. The implementation must not create a synthetic
+`ValidatedTenantSession` or `TenantContext` for the target member. A real
+resource request remains subject to target cardinality, the owning resolver,
+the Module Provider, the tenant hard boundary, and shared-master scope.
+
+### Objective And Non-Goals
+
+- Let an authorized tenant administrator inspect one member in the current
+  Tenant.
+- Return the member's current active roles and effective functional Permission
+  keys using the existing tenant RBAC repository.
+- Return a paginated summary of currently available protected-resource
+  operations and their current effective data-policy inputs.
+- Expose the result from the existing member list through a dedicated,
+  responsive read-only Admin Web page.
+- Preserve active-role union, condition `AND`, group/role `OR`, Module
+  availability, time-window, typed-target, and fail-closed semantics.
+
+This slice does not:
+
+- accept an account ID, Tenant ID, role override, Permission override,
+  `as_of` time, hypothetical policy, or target object as request input;
+- simulate adding or removing a role, temporary authorization, delegation, or
+  a platform support session;
+- compile or expose SQL, query constraints, Provider keys, Provider classes,
+  target labels, raw target IDs, credentials, sessions, or account identifiers;
+- decide whether a concrete row, shared-master record, create descriptor, or
+  command target is allowed;
+- change Provider, resolver, condition-provider, typed-target, shared-master,
+  menu-manifest, or Module contracts;
+- add a product-domain permission, resource, object, page, or example.
+
+Concrete object/row simulation is a later design task. It requires an explicit
+read-only authorization-subject contract and must not be implemented by forging
+a target member session.
+
+### Prerequisite And Data Contract
+
+The exact implementation prerequisite is
+`d612a85045e2e9eb017719cd42a2f781d35b1f69`. The planning commit that records
+this contract may be the direct parent of the implementation, but it must not
+change Runtime behavior.
+
+No table, column, index, unique constraint, check constraint, foreign key,
+state transition, retention rule, or deletion rule is added or changed.
+
+| Existing table | P1-B02 behavior |
+| --- | --- |
+| `pa_permission` | The existing catalog synchronizer upserts `core.member.effective-access.read` as an active `core` API Permission with `sensitive` risk. Existing unique keys, defaults, and lifecycle rules remain authoritative. |
+| Tenant, member, role, role-Permission, Module, resource-operation, data-policy, group, condition, and typed-target tables | Read through the existing RBAC, catalog, and effective-policy repositories. Disabled, inactive, unavailable, future, and expired inputs do not become effective. |
+| `pa_tenant_audit_event` | Each successful preview appends one `tenant.member.effective-access.viewed` event using the existing schema and retention policy. |
+| `pa_auth_security_event` | No row is written. An authorized cross-member administration read is not an authentication or credential event. |
+
+Pending, suspended, and left members remain visible to an administrator who
+already holds the preview Permission, but their effective roles, Permissions,
+and policy groups are empty. This makes inactive state explicit without
+presenting configured assignments as usable access. A member absent from the
+current Tenant is indistinguishable from an unknown member.
+
+There is no schema migration. Kernel owns the release catalog synchronization.
+Clean install and upgrade evidence must show that the new Permission is
+created or updated idempotently and that all migration counts remain unchanged.
+A code rollback does not delete catalog data: the additional Permission row may
+remain inert because the prior Runtime has no route that consumes it and the
+prior tenant-owner catalog does not imply it. No destructive down migration is
+introduced.
+
+### API And Response Contract
+
+| Field | Contract |
+| --- | --- |
+| Operation | `getMemberEffectiveAccess` |
+| Method and path | `GET /api/v1/members/{member_id}/effective-access` |
+| Audience | Authenticated tenant audience only |
+| Permission | `core.member.effective-access.read` |
+| Path input | `member_id` is a canonical positive decimal string matching `^[1-9][0-9]*$`, is no greater than `PHP_INT_MAX`, and is resolved only inside the context Tenant |
+| Query input | Existing `page` and `page_size`; `page >= 1`, `1 <= page_size <= 100`; pagination applies to resource operations |
+| Request body | None |
+| Success | `200 application/json`, schema `MemberEffectiveAccessResponse` |
+| Success headers | `X-Request-Id` and `Cache-Control: no-store`; no `ETag` or `Set-Cookie` |
+
+`MemberEffectiveAccessResponse.data` contains exactly:
+
+- `preview_kind`, fixed to `authorization_inputs`;
+- `evaluated_at`, a server UTC date-time;
+- `snapshot_revision`, a lowercase 64-character digest derived from the
+  authoritative RBAC revision, catalog revision, and policy revisions included
+  in this page;
+- `member`: `id`, nullable `display_name`, `status`, nullable
+  `primary_department_id`, and boolean `effective`, where `effective` is true
+  exactly when `status` is `active`;
+- `roles`: sorted active effective role summaries with `id`, `key`, `name`, and
+  `is_builtin`;
+- `permission_keys`: the sorted, unique keys returned by
+  `PdoTenantAuthorizationRepository::permissions()`;
+- `resource_operations`: the current page of operation summaries.
+
+Each resource-operation summary contains `resource_key`, `module_key`,
+`operation`, `ownership`, `access_mode`, `target_cardinality`,
+`permission_match`, sorted `required_permission_keys`, `functional_allowed`,
+and `data_access`.
+
+`data_access` contains:
+
+- `mode`: one of `functional_denied`, `tenant_wide`,
+  `global_reference_read`, `conditional`, `no_effective_policy`, or
+  `tenant_actor_denied`;
+- `runtime_decision_required`: true only when a concrete Runtime request still
+  requires target, Provider, tenant-boundary, or shared-master evaluation;
+- `group_match`, fixed to `any`;
+- `groups`: the current effective groups. Each group contains
+  `source_role_key`, `condition_match` fixed to `all`, and conditions containing
+  only `condition_key`, nullable `target_resource_key`, and `target_count`.
+
+The operation mode mapping is deterministic and follows this priority:
+
+1. A missing functional binding, or a failed `all`/`any` Permission match, is
+   `functional_denied`.
+2. Otherwise `system_internal` access or `platform_internal` ownership is
+   `tenant_actor_denied`.
+3. Otherwise `global_reference_read` access is `global_reference_read`.
+4. Otherwise `tenant_wide` access is `tenant_wide`.
+5. Otherwise one or more effective policy groups is `conditional`.
+6. Otherwise the mode is `no_effective_policy`.
+
+`runtime_decision_required` is an informational warning, never an allow/deny
+answer. It is true exactly when `functional_allowed` is true, the mode is not
+`tenant_actor_denied`, and at least one of these conditions holds:
+
+- `target_cardinality` is not `none`;
+- `ownership` is `tenant_owned`, `business_target_owned`, or `shared_master`;
+- `access_mode` is `rule_filtered` or `explicit_targets`.
+
+This preserves the fact that target cardinality and resolvers run before the
+access-mode branch, while Tenant and shared-master boundaries may still apply
+after a Tenant-wide branch. A `global_reference_read` operation is false only
+when it has `none` cardinality and `global_reference` ownership. `groups` is
+always the redacted projection returned by `PdoPolicyRepository::load()`; the
+mode mapping must not hide, add, or reinterpret groups.
+
+The response never returns policy, group, condition, or target-set database IDs
+and never returns raw target IDs. `target_count` comes from the authoritative
+effective policy repository, including its greater-than-500 normalized target
+set behavior. `conditional` means that an effective policy input exists; it is
+not a concrete object allow decision.
+
+Response `meta` is the existing page meta with `request_id`, `page`,
+`page_size`, `total`, and `total_pages`. Only active catalog operations from
+`core` or an installed, enabled, currently effective Tenant Module are counted.
+
+The snapshot digest input is the UTF-8 string joined by `|` in this exact order:
+`p1-b02-v1`, context Tenant ID, target member ID, authoritative RBAC revision,
+catalog revision, page, page size, then each returned operation's resource key,
+operation name, and policy revision in response order. The digest is lowercase
+SHA-256. This defines reproducible ordering without exposing the input values.
+
+### Permission And Data-Policy Behavior
+
+The dedicated Permission is required because the response reveals more
+sensitive authorization topology than `core.member.read`. It is not implied for
+custom roles. The built-in `core.tenant-owner` receives it only through the
+existing fixed `CorePermissionCatalog::TENANT` behavior. Tenant Permissions
+never enter platform access, and platform Permissions never enter this preview.
+
+Functional Permission output must come from the existing tenant authorization
+repository. Active roles union their allows; P0 still has no explicit deny,
+role inheritance, member-level policy, or super-user bypass. A resource
+operation with `permission_match=all` requires every declared Permission;
+`any` requires at least one. An operation with no binding remains fail closed.
+
+Effective data-policy groups must come from `PdoPolicyRepository::load()`.
+The preview does not reinterpret core conditions. Active conditions in a group
+are an `AND`; active groups across policies and roles are an `OR`. Missing
+effective groups never fall back to Tenant-wide access. Requested targets,
+target cardinality, target resolvers, Module Providers, the Tenant hard
+boundary, and shared-master scope remain authoritative only in the real
+Runtime operation.
+
+### Audit, Security, Concurrency, And Retry
+
+The successful audit event uses the request `TenantContext` as actor and the
+previewed member as target:
+
+- event type: `tenant.member.effective-access.viewed`;
+- action: `core.member.effective-access.read`;
+- actor: context Tenant, member, and account;
+- target resource type: `member`;
+- target resource ID: the path `member_id` after current-Tenant resolution;
+- target count: `1`;
+- before/after values: absent;
+- metadata: `snapshot_revision`, role count, Permission count, total operation
+  count, page, and page size only.
+
+Audit metadata must not contain raw Permission keys, role keys, target IDs,
+condition configuration, Provider information, SQL, account identifiers, or
+session material. A 401, 403, 404, or input-validation failure does not create a
+successful preview audit event. Audit persistence failure fails the request;
+it does not silently return an unaudited snapshot.
+
+The service reads the member, RBAC result, catalog page, and effective policies
+in one database transaction and appends the audit before commit. The database
+snapshot is internally consistent; a concurrent authorization change appears
+on a later request and changes `snapshot_revision`. No row is locked for
+editing, and no optimistic precondition is accepted.
+
+The GET does not use the generic idempotency store or `Idempotency-Key`.
+Duplicate successful requests may return the same authorization snapshot but
+produce distinct audit events. Clients may retry a network failure or 5xx as a
+new GET. They do not automatically retry 401, 403, 404, or 422. This slice has
+no 429 or `Retry-After` contract.
+
+### Problem Details
+
+- `AUTH_TOKEN_INVALID` (`401`) covers missing, invalid, expired, or wrong-audience
+  authentication.
+- `AUTHZ_PERMISSION_DENIED` (`403`) covers the missing dedicated Permission.
+- `RESOURCE_NOT_FOUND` (`404`) covers an unknown member and a member outside the
+  context Tenant with the same title, detail, and shape.
+- `MEMBER_ID_INVALID` (`422`) covers malformed, zero, negative, leading-zero,
+  or greater-than-`PHP_INT_MAX` member IDs. The controller validates before any
+  `int` conversion and before any preview-service member, catalog, or policy
+  read or audit creation; it must not cast an unvalidated path string to `int`.
+- `PAGE_INVALID` and `PAGE_SIZE_INVALID` (`422`) use the existing pagination
+  validation.
+- `INTERNAL_ERROR` (`500`) covers database, catalog, policy, or audit
+  inconsistency without exposing SQL, Provider names, or authorization data.
+
+Every error uses RFC 9457 `application/problem+json`, `X-Request-Id`, and
+`Cache-Control: no-store`. No new error distinguishes cross-Tenant existence,
+inactive assignments, missing Provider internals, or target-set contents.
+
+### Exact Implementation File Whitelist
+
+After the independent planning commit, implementation may change only:
+
+- `packages/php/kernel/src/Authorization/CorePermissionCatalog.php`;
+- `packages/php/kernel/src/Authorization/CorePermissionCatalogSynchronizer.php`;
+- `packages/php/kernel/src/Authorization/TenantAuthorizationRepository.php`;
+- `packages/php/kernel/src/Authorization/PdoTenantAuthorizationRepository.php`;
+- `packages/php/kernel/tests/Integration/Authorization/FunctionalAuthorizationTest.php`;
+- `packages/php/data-permission/src/Catalog/ResourceOperationCatalog.php`;
+- `packages/php/data-permission/src/Catalog/PdoResourceOperationCatalog.php`;
+- `packages/php/data-permission/src/Application/EffectiveAccessPreviewService.php`;
+- `packages/php/data-permission/tests/Integration/Application/EffectiveAccessPreviewServiceTest.php`;
+- `backend/app/controller/api/v1/DataAuthorizationController.php`;
+- `backend/config/permission.php`;
+- `backend/route/tenant-admin.php`;
+- `backend/tests/Integration/EffectiveAccessPreviewHttpIntegrationTest.php`;
+- `backend/tests/Contract/OpenApiArtifactTest.php`;
+- `backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php`;
+- `packages/php/kernel/tests/Unit/Authorization/AdminRouteContractTest.php`;
+- `docs/api/openapi.yaml`;
+- `docs/api/responses.yaml`;
+- `docs/api/schemas/authorization.yaml`;
+- `docs/api/index.md`;
+- `docs/guide/authorization.md`;
+- `backend/route/openapi-generated.php` generated only by
+  `./scripts/check-openapi --write`;
+- `packages/web/admin-core/src/generated/api.d.ts` generated only by
+  `./scripts/check-openapi --write`;
+- `docs/status/runtime-operation-coverage.json`;
+- `scripts/check-openapi` and `scripts/verify-doc-examples` only for the exact
+  `75` P0, `4` P1, `79` total operation assertions;
+- `README.md` and `docs/status/index.md` only for current P1 candidate status;
+- `frontend/src/app/router.ts`;
+- `frontend/src/app/routes.ts`;
+- `frontend/src/pages/common/ResourceCollectionPage.vue`;
+- `frontend/src/pages/common/EffectiveAccessPreviewPage.vue`;
+- `frontend/tests/effective-access-preview-page.spec.ts`;
+- `frontend/tests/routing.spec.ts`;
+- `frontend/tests/fixtures/api.ts`;
+- `frontend/tests/e2e/tenant-workspace.e2e.ts`;
+- `frontend/tests/e2e/full-stack.e2e.ts`.
+
+No other file may change. In particular, Kernel or data-permission schemas and
+migrations, dependency manifests and lock files, Provider/resolver/condition
+contracts, Module manifests, product profiles, menu catalogs, starter files,
+example product-domain Modules, fixed ports and database names, release records,
+and downstream-consumption locks must not change. If this whitelist proves
+insufficient, implementation stops and the contract is amended in a separate
+planning commit before any additional Runtime file changes.
+
+### Test Ownership And Acceptance
+
+Tests are written to fail for the missing capability before implementation.
+`RUNTIME-EFFECTIVE-ACCESS-PREVIEW-001` owns `getMemberEffectiveAccess` and names
+the service integration test, HTTP integration test, page unit test, and real
+full-stack browser test as executable evidence. Existing
+`RUNTIME-TENANT-ADMIN-001`, `RUNTIME-DATA-AUTHORIZATION-001`, and
+`RUNTIME-CONTRACT-001` owners remain unchanged.
+
+Acceptance requires:
+
+- multiple active roles union and de-duplicate Permissions, while inactive
+  roles, inactive members, platform Permissions, unavailable Modules, and
+  future, expired, disabled, or empty policies do not become effective;
+- tenant-owner implicit fixed core Permissions use the same repository path;
+- policy summaries preserve group `AND`, group/role `OR`, condition type, typed
+  target resource type, and target count without exposing raw target IDs;
+- tenant-wide, global-reference, conditional, missing-policy, functional-denied,
+  and tenant-actor-denied modes are distinguished without claiming a Provider
+  decision;
+- service-versus-`DataPermissionEngine` parity tests cover empty, `all`, and
+  `any` Permission bindings plus system-internal, platform-internal,
+  global-reference, tenant-wide, conditional, and missing-policy behavior;
+- cross-Tenant and unknown member requests are identical 404 responses, a
+  caller without the dedicated Permission receives 403 before preview data, and
+  a platform token cannot enter the tenant route;
+- malformed, zero, negative, leading-zero, and overflow member IDs return
+  `422 MEMBER_ID_INVALID` before any preview-service read or audit event;
+- successful reads create exactly one redacted tenant audit event, while denied
+  and not-found reads create none and no auth security event is written;
+- clean install and repeated upgrade synchronize the new sensitive Permission
+  without a migration, dependency, or permission-boundary regression;
+- the member-list row action opens
+  `/app/members/:member_id/effective-access` only when the dedicated Permission
+  is present; direct unauthorized navigation is blocked before the API call;
+- the page renders member state, roles, functional Permissions, paginated
+  operation scopes, refresh/error/empty states, and long keys without document
+  overflow at desktop `1440x900` and mobile `390x844`;
+- mock-browser and real-backend desktop/mobile tests pass with no `/api/**`
+  interception in the full-stack suite and no console or page errors;
+- the new operation is classified `p1`, the ledger reports `75` P0 and `4` P1,
+  generated routes and TypeScript types are current, and no P0 assertion is
+  removed or weakened;
+- focused PHP and Web tests, `./scripts/check-openapi`,
+  `./scripts/check-runtime-coverage`, `PEANUT_RUNTIME_STAGE=runtime
+  ./scripts/check-architecture`, `./scripts/test-security`, focused desktop and
+  mobile browser tests, `./scripts/check`, and `git diff --check` all pass.
+
+Implementation is one independently reviewable commit after the planning
+commit. Completion makes P1-B02 only an unqualified candidate. It does not move
+`0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`, approve downstream consumption,
+publish a package, create a tag or release, claim production readiness, trigger
+deployment, or assert that any downstream product can consume the commit.
+
 ## Dependency Gates
 
 No dependency is added by P1-B01 or P1-B02. Every later direct dependency starts
