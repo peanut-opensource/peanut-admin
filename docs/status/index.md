@@ -102,6 +102,13 @@ authorization, and R01 atomic commands while leaving application namespaces,
 API prefixes, OpenAPI, generated types, domain schema, and outbox ownership in
 the external host.
 
+The reusable administration layout slice is fixed by the
+[P1-W03 Workspace Shell Contract](./p1-w03-workspace-shell-contract.md). It
+defines host-owned branding, strict Tenant/platform presentation separation,
+desktop Sidebar and mobile Drawer behavior, identity and breadcrumb display,
+P1-W02 command delegation, explicit status views, accessibility checks, and
+the candidate-only stop line.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new

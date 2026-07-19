@@ -127,6 +127,10 @@ Required behavior:
 Objective: provide a usable administration shell without requiring every host
 to copy the reference frontend.
 
+The exact prerequisite, host configuration, audience boundary, file whitelist,
+test contract, and stop line are fixed by the
+[P1-W03 Workspace Shell Contract](./p1-w03-workspace-shell-contract.md).
+
 Required behavior:
 
 - configurable desktop and mobile Workspace layout, navigation, identity area,
