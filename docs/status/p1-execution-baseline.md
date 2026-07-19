@@ -470,8 +470,11 @@ no 429 or `Retry-After` contract.
 
 ### Problem Details
 
-- `AUTH_TOKEN_INVALID` (`401`) covers missing, invalid, expired, or wrong-audience
+- `AUTH_TOKEN_INVALID` (`401`) covers missing, invalid, or expired
   authentication.
+- `AUTH_AUDIENCE_MISMATCH` (`401`) covers a valid credential presented to the
+  wrong audience, including a platform credential presented to this tenant
+  route.
 - `AUTHZ_PERMISSION_DENIED` (`403`) covers the missing dedicated Permission.
 - `RESOURCE_NOT_FOUND` (`404`) covers an unknown member and a member outside the
   context Tenant with the same title, detail, and shape.
