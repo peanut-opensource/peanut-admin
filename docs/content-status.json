@@ -107,6 +107,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-b03-minimal-settings-contract.md",
+      "title": "P1-B03 Minimal Settings Module Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-w03-workspace-shell-contract.md",
       "title": "P1-W03 Workspace Shell Contract",
       "status": "canonical",

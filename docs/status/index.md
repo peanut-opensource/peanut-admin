@@ -111,6 +111,12 @@ desktop Sidebar and mobile Drawer behavior, identity and breadcrumb display,
 P1-W02 command delegation, explicit status views, accessibility checks, and
 the candidate-only stop line.
 
+The next backend administration slice is fixed by the
+[P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
+It defines reusable first-party settings packages, trusted Module-owned typed
+definitions, explicit target/Tenant/deployment precedence, secret redaction,
+optimistic concurrency, Tenant Web behavior, and a candidate-only stop line.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new

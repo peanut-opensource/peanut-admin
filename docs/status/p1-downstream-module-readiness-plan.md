@@ -159,6 +159,10 @@ Objective: provide Module-owned typed setting definitions and Tenant-owned
 values without turning environment variables or opaque JSON into a policy
 store.
 
+The exact prerequisite, ownership boundary, schema, API, Web behavior, file
+whitelist, test owner, isolated namespace, and stop line are fixed by the
+[P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
+
 Minimum contract:
 
 - stable Module/key ownership, JSON Schema validation, revision and ETag;
