@@ -117,6 +117,12 @@ It defines reusable first-party settings packages, trusted Module-owned typed
 definitions, explicit target/Tenant/deployment precedence, secret redaction,
 optimistic concurrency, Tenant Web behavior, and a candidate-only stop line.
 
+The minimal reusable code-set slice is fixed by the
+[P1-B04 Minimal Reference-Code Module Contract](./p1-b04-minimal-reference-code-contract.md).
+It defines trusted Module-owned sets, Tenant-isolated immutable code identity,
+effective as-of options, optimistic concurrency, Tenant Web behavior, and a
+candidate-only stop line without reusing the fictional shared-master fixture.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new

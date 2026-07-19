@@ -179,6 +179,10 @@ Application-specific keys and values remain in the application Module.
 Objective: provide stable code-set infrastructure for administrative reference
 values that do not deserve an application-owned domain aggregate.
 
+The exact prerequisite, ownership boundary, schema, API, Web behavior, file
+whitelist, test owner, isolated namespace, and stop line are fixed by the
+[P1-B04 Minimal Reference-Code Module Contract](./p1-b04-minimal-reference-code-contract.md).
+
 Minimum contract:
 
 - Module-owned code sets and Tenant-isolated entries;

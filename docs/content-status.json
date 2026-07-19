@@ -114,6 +114,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-b04-minimal-reference-code-contract.md",
+      "title": "P1-B04 Minimal Reference-Code Module Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-w03-workspace-shell-contract.md",
       "title": "P1-W03 Workspace Shell Contract",
       "status": "canonical",
