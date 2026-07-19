@@ -26,13 +26,14 @@ import { createApp } from 'vue'
 import type { Component } from 'vue'
 
 import App from './App.vue'
+import { readAdminHostConfig } from './app/host-config'
 import { createAdminRouter } from './app/router'
 import { createAdminRuntime, installAdminRuntime } from './app/runtime'
 import './style.css'
 
 const pinia = createPinia()
 setActivePinia(pinia)
-const runtime = createAdminRuntime()
+const runtime = createAdminRuntime(readAdminHostConfig())
 const router = createAdminRouter(runtime)
 installAdminRuntime(runtime)
 

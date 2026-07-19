@@ -1,6 +1,7 @@
 import {
   createPlatformApiClient,
   createTenantApiClient,
+  defineAdminHostConfig,
   disposeTenantState,
   useOperationTargets,
   usePlatformAuth,
@@ -9,6 +10,7 @@ import {
   useTenantContext,
 } from '@peanut-admin/admin-core'
 import type {
+  AdminHostConfig,
   ApiAudience,
   AudienceApiClient,
   PlatformContextData,
@@ -28,6 +30,8 @@ import {
 } from './contracts'
 import type { AdminMenuItem, TenantLoginResult } from './contracts'
 import { createContextGeneration } from './context-generation'
+import { readAdminHostConfig } from './host-config'
+import { APP_NAVIGATION } from './routes'
 import { useWorkspaceStore } from './store'
 import type { WorkspaceIdentity } from './store'
 
@@ -53,11 +57,6 @@ const unwrap = (result: FetchResult): unknown => {
     result.response.headers.get('Retry-After'),
   )
 }
-
-const apiBaseUrl = (): string => stringValue(import.meta.env.VITE_API_BASE_URL)
-const tenantClientKey = (): string => stringValue(import.meta.env.VITE_TENANT_CLIENT_KEY, 'admin-web')
-
-const endpoint = (path: string): string => `${apiBaseUrl()}${path}`
 
 const responseJson = async (response: Response): Promise<unknown> => {
   const text = await response.text()
@@ -138,6 +137,7 @@ const platformContextView = (value: unknown): PlatformContextView => {
 }
 
 export interface AdminRuntime {
+  config: AdminHostConfig
   tenantClient: AudienceApiClient
   platformClient: AudienceApiClient
   generation: ReturnType<typeof createContextGeneration>
@@ -152,9 +152,18 @@ export interface AdminRuntime {
   unwrap: (result: FetchResult) => unknown
 }
 
+export interface AdminRuntimeDependencies {
+  fetch?: (request: Request) => Promise<Response>
+}
+
 let installedRuntime: AdminRuntime | null = null
 
-export const createAdminRuntime = (): AdminRuntime => {
+export const createAdminRuntime = (
+  inputConfig: AdminHostConfig = readAdminHostConfig(),
+  dependencies: AdminRuntimeDependencies = {},
+): AdminRuntime => {
+  const config = defineAdminHostConfig(inputConfig)
+  const fetcher = dependencies.fetch ?? globalThis.fetch.bind(globalThis)
   const tenantAuth = useTenantAuth()
   const platformAuth = usePlatformAuth()
   const tenantContext = useTenantContext()
@@ -165,13 +174,15 @@ export const createAdminRuntime = (): AdminRuntime => {
 
   const refresh = async (audience: ApiAudience): Promise<string | null> => {
     const auth = audience === 'tenant' ? tenantAuth : platformAuth
+    const audienceConfig = config[audience]
     auth.markRefreshing()
     const path = audience === 'tenant' ? '/api/v1/auth/refresh' : '/api/platform/v1/auth/refresh'
-    const response = await fetch(endpoint(path), {
+    const response = await fetcher(new Request(new URL(path, audienceConfig.baseUrl), {
       method: 'POST',
       credentials: 'include',
+      redirect: 'manual',
       headers: { Accept: 'application/json' },
-    })
+    }))
     const body = await responseJson(response)
     if (!response.ok) {
       auth.clear()
@@ -186,29 +197,55 @@ export const createAdminRuntime = (): AdminRuntime => {
   }
 
   const tenantClient = createTenantApiClient({
-    baseUrl: apiBaseUrl(),
+    baseUrl: config.tenant.baseUrl,
+    allowedOrigin: config.tenant.allowedOrigin,
+    fetch: fetcher,
     getAccessToken: () => tenantAuth.accessToken,
     setAccessToken: token => tenantAuth.replaceAccessToken(token),
     refresh: () => refresh('tenant'),
-    refreshScope: `${tenantClientKey()}:tenant`,
+    refreshScope: `${config.tenant.clientKey}:tenant`,
   })
   const platformClient = createPlatformApiClient({
-    baseUrl: apiBaseUrl(),
+    baseUrl: config.platform.baseUrl,
+    allowedOrigin: config.platform.allowedOrigin,
+    fetch: fetcher,
     getAccessToken: () => platformAuth.accessToken,
     setAccessToken: token => platformAuth.replaceAccessToken(token),
     refresh: () => refresh('platform'),
-    refreshScope: 'platform-web:platform',
+    refreshScope: `${config.platform.clientKey}:platform`,
   })
 
-  const clearAudience = async (audience: ApiAudience): Promise<void> => {
+  const disposeRegisteredTenantState = async (): Promise<void> => {
+    const results = await Promise.allSettled([
+      disposeTenantState(),
+      APP_NAVIGATION.disposeTenantState(),
+    ])
+    const failure = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
+    if (failure !== undefined) throw failure.reason
+  }
+
+  const clearTenantState = async (clearAuth: boolean): Promise<void> => {
     generation.advance()
-    if (audience === 'tenant') {
-      tenantAuth.clear()
+    let disposalFailure: unknown = null
+    try {
+      await disposeRegisteredTenantState()
+    } catch (error) {
+      disposalFailure = error
+    } finally {
+      if (clearAuth) tenantAuth.clear()
       tenantContext.clear()
       workspace.clearTenant()
       targets.clearAll()
-      await disposeTenantState()
+      APP_NAVIGATION.clearDiagnostics()
+    }
+    if (disposalFailure !== null) throw disposalFailure
+  }
+
+  const clearAudience = async (audience: ApiAudience): Promise<void> => {
+    if (audience === 'tenant') {
+      await clearTenantState(true)
     } else {
+      generation.advance()
       platformAuth.clear()
       platformContext.clear()
       workspace.clearPlatform()
@@ -216,17 +253,16 @@ export const createAdminRuntime = (): AdminRuntime => {
   }
 
   const runtime: AdminRuntime = {
+    config,
     tenantClient,
     platformClient,
     generation,
     unwrap,
     async tenantLogin(email, password, tenantCode) {
+      await clearTenantState(true)
       const result = tenantLoginResult(unwrap(await tenantClient.POST('/api/v1/auth/login', {
         body: { email, password, tenant_code: tenantCode },
       })))
-      tenantContext.clear()
-      workspace.clearTenant()
-      generation.advance()
       if (result.state === 'authenticated') {
         tenantAuth.replaceAccessToken(result.accessToken)
       } else {
@@ -241,39 +277,50 @@ export const createAdminRuntime = (): AdminRuntime => {
       return result
     },
     async selectTenant(challengeToken, tenantId) {
-      await disposeTenantState()
-      targets.clearAll()
-      const result = authenticatedLogin(unwrap(await tenantClient.POST('/api/v1/auth/tenants/select', {
-        body: { challenge_token: challengeToken, tenant_id: tenantId },
-      })))
-      tenantAuth.replaceAccessToken(result.accessToken)
-      tenantContext.clear()
-      workspace.clearTenant()
-      generation.advance()
+      await clearTenantState(false)
+      try {
+        const result = authenticatedLogin(unwrap(await tenantClient.POST('/api/v1/auth/tenants/select', {
+          body: { challenge_token: challengeToken, tenant_id: tenantId },
+        })))
+        tenantAuth.replaceAccessToken(result.accessToken)
+      } catch (error) {
+        tenantAuth.clear()
+        throw error
+      }
     },
     async platformLogin(email, password) {
+      generation.advance()
+      platformAuth.clear()
+      platformContext.clear()
+      workspace.clearPlatform()
       const result = authenticatedLogin(unwrap(await platformClient.POST('/api/platform/v1/auth/login', {
         body: { email, password },
       })))
       platformAuth.replaceAccessToken(result.accessToken)
-      platformContext.clear()
-      workspace.clearPlatform()
-      generation.advance()
     },
     async ensureContext(audience) {
       if (audience === 'tenant' && tenantContext.value !== null) return
       if (audience === 'platform' && platformContext.value !== null) return
       const ticket = generation.capture()
-      if (audience === 'tenant') {
-        const view = tenantContextView(unwrap(await tenantClient.GET('/api/v1/auth/context')))
+      try {
+        if (audience === 'tenant') {
+          const view = tenantContextView(unwrap(await tenantClient.GET('/api/v1/auth/context', {
+            signal: ticket.signal,
+          })))
+          if (!ticket.isCurrent()) return
+          tenantContext.replace(view.context)
+          workspace.tenantIdentity = view.identity
+        } else {
+          const view = platformContextView(unwrap(await platformClient.GET('/api/platform/v1/auth/context', {
+            signal: ticket.signal,
+          })))
+          if (!ticket.isCurrent()) return
+          platformContext.replace(view.context)
+          workspace.platformIdentity = view.identity
+        }
+      } catch (error) {
         if (!ticket.isCurrent()) return
-        tenantContext.replace(view.context)
-        workspace.tenantIdentity = view.identity
-      } else {
-        const view = platformContextView(unwrap(await platformClient.GET('/api/platform/v1/auth/context')))
-        if (!ticket.isCurrent()) return
-        platformContext.replace(view.context)
-        workspace.platformIdentity = view.identity
+        throw error
       }
     },
     async loadMenus(audience, force = false) {
@@ -286,9 +333,15 @@ export const createAdminRuntime = (): AdminRuntime => {
       const existing = audience === 'tenant' ? workspace.tenantMenus : workspace.platformMenus
       if (!force && existing.length > 0 && revision === currentRevision) return existing
       const ticket = generation.capture()
-      const response = audience === 'tenant'
-        ? await tenantClient.GET('/api/v1/menus')
-        : await platformClient.GET('/api/platform/v1/menus')
+      let response: FetchResult
+      try {
+        response = audience === 'tenant'
+          ? await tenantClient.GET('/api/v1/menus', { signal: ticket.signal })
+          : await platformClient.GET('/api/platform/v1/menus', { signal: ticket.signal })
+      } catch (error) {
+        if (!ticket.isCurrent()) return []
+        throw error
+      }
       const menus = menuItems(unwrap(response))
       if (!ticket.isCurrent()) return []
       if (audience === 'tenant') {

@@ -10,6 +10,7 @@ describe('context generation', () => {
     generation.advance()
 
     expect(oldRequest.isCurrent()).toBe(false)
+    expect(oldRequest.signal.aborted).toBe(true)
     expect(generation.capture().isCurrent()).toBe(true)
   })
 })

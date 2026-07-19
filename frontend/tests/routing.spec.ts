@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  APP_NAVIGATION,
   APP_ROUTE_REGISTRY,
   audienceForPath,
   resolveMenuDestination,
@@ -44,6 +45,7 @@ describe('reference admin route contract', () => {
       route_path: '/app/members',
       component: 'tenant.members.list',
     })).toBeNull()
+    expect(APP_NAVIGATION.diagnostics()).toContain('unknown-route')
   })
 
   it('accepts return_to only inside the same protected audience', () => {

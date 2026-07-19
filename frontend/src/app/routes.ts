@@ -1,4 +1,9 @@
-import type { ApiAudience } from '@peanut-admin/admin-core'
+import { createAdminNavigationRegistry } from '@peanut-admin/admin-core'
+import type { AdminNavigationRoute, ApiAudience } from '@peanut-admin/admin-core'
+
+import { exampleReferenceModule } from '../modules/example-reference'
+import { exampleTargetModule } from '../modules/example-target'
+import { exampleWorkItemModule } from '../modules/example-work-item'
 
 export interface AppRouteRegistration {
   name: string
@@ -17,10 +22,6 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'tenant.roles.list', path: '/app/roles', audience: 'tenant', permission: 'core.role.read' },
   { name: 'tenant.modules.list', path: '/app/modules', audience: 'tenant', permission: 'core.module.read' },
   { name: 'tenant.audit.list', path: '/app/audit', audience: 'tenant', permission: 'core.audit.read' },
-  { name: 'example-target-list', path: '/app/examples/targets', audience: 'tenant', permission: 'example.target.read', moduleKey: 'example.target' },
-  { name: 'example-reference-list', path: '/app/examples/references', audience: 'tenant', permission: 'example.reference.read', moduleKey: 'example.reference' },
-  { name: 'example-work-item-list', path: '/app/examples/work-items', audience: 'tenant', permission: 'example.work-item.read', moduleKey: 'example.work-item' },
-  { name: 'example-work-item-policy', path: '/app/examples/work-item-policies', audience: 'tenant', permission: 'example.work-item.policy-publish', moduleKey: 'example.work-item' },
   { name: 'platform.home', path: '/platform', audience: 'platform' },
   { name: 'platform.tenants.list', path: '/platform/tenants', audience: 'platform', permission: 'platform.tenant.read' },
   { name: 'platform.tenants.detail', path: '/platform/tenants/:tenant_id', audience: 'platform', permission: 'platform.tenant.read' },
@@ -29,7 +30,11 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'platform.audit.list', path: '/platform/audit', audience: 'platform', permission: 'platform.audit.read' },
 ]
 
-export const APP_ROUTE_REGISTRY = new Map(registrations.map(route => [route.name, route]))
+export const APP_MODULES = [exampleTargetModule, exampleReferenceModule, exampleWorkItemModule] as const
+export const APP_NAVIGATION = createAdminNavigationRegistry({ routes: registrations, modules: APP_MODULES })
+export const APP_ROUTE_REGISTRY = new Map<string, AdminNavigationRoute>(
+  APP_NAVIGATION.routes().map(route => [route.name, route]),
+)
 
 export const audienceForPath = (path: string): ApiAudience | null => {
   const pathname = new URL(path, 'https://peanut-admin.test').pathname
@@ -59,6 +64,5 @@ export const resolveMenuDestination = (menu: {
   route_path?: unknown
   component?: unknown
 }): string | null => {
-  if (typeof menu.route_name !== 'string') return null
-  return APP_ROUTE_REGISTRY.get(menu.route_name)?.path ?? null
+  return APP_NAVIGATION.resolveMenu(menu)?.path ?? null
 }

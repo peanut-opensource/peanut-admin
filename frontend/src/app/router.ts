@@ -1,16 +1,19 @@
-import { hasAllPermissions, hasPermission, usePlatformContext, useTenantContext } from '@peanut-admin/admin-core'
+import {
+  hasAllPermissions,
+  mapAdminRuntimeError,
+  runAdminRouteGuard,
+  usePlatformContext,
+  useTenantContext,
+} from '@peanut-admin/admin-core'
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
 
-import { exampleReferenceModule } from '../modules/example-reference'
-import { exampleTargetModule } from '../modules/example-target'
-import { exampleWorkItemModule } from '../modules/example-work-item'
 import { AdminApiError } from './runtime'
 import type { AdminRuntime } from './runtime'
-import { safeReturnTo } from './routes'
+import { APP_MODULES, safeReturnTo } from './routes'
 import { useWorkspaceStore } from './store'
 
-const moduleRoutes: RouteRecordRaw[] = [exampleTargetModule, exampleReferenceModule, exampleWorkItemModule]
+const moduleRoutes: RouteRecordRaw[] = APP_MODULES
   .flatMap(module => module.routes.map((route): RouteRecordRaw => ({
     path: route.path.slice('/app/'.length),
     name: route.name,
@@ -97,37 +100,51 @@ export const createAdminRouter = (runtime: AdminRuntime) => {
 
     workspace.booting = true
     try {
-      await runtime.enterAudience(audience)
-      await runtime.ensureContext(audience)
-      const context = audience === 'tenant' ? useTenantContext() : usePlatformContext()
-      if (context.value === null) throw new Error('CONTEXT_STALE_RESPONSE')
-      await runtime.loadMenus(audience)
+      const permissionKeys = to.meta.permissions
+        ?? (to.meta.permission === undefined ? [] : [to.meta.permission])
+      const guard = await runAdminRouteGuard({
+        audience,
+        ...(to.meta.moduleKey === undefined ? {} : { moduleKey: to.meta.moduleKey }),
+        permissionKeys,
+      }, {
+        enterAudience: runtime.enterAudience,
+        ensureContext: async currentAudience => {
+          await runtime.ensureContext(currentAudience)
+          const context = currentAudience === 'tenant' ? useTenantContext() : usePlatformContext()
+          if (context.value === null) throw new Error('CONTEXT_STALE_RESPONSE')
+        },
+        loadNavigation: async currentAudience => { await runtime.loadMenus(currentAudience) },
+        hasModule: moduleKey => audience === 'tenant' && useTenantContext().moduleSet.has(moduleKey),
+        hasPermissions: required => {
+          const context = audience === 'tenant' ? useTenantContext() : usePlatformContext()
+          return hasAllPermissions(context.permissionSet, required)
+        },
+      })
 
-      if (to.meta.permission !== undefined && !hasPermission(context.permissionSet, to.meta.permission)) {
-        return { name: 'state.forbidden' }
+      if (guard.status === 'module-unavailable') {
+        return { name: 'state.unavailable', query: { code: guard.code } }
       }
-      if (to.meta.permissions !== undefined && !hasAllPermissions(context.permissionSet, to.meta.permissions)) {
-        return { name: 'state.forbidden' }
-      }
-      if (audience === 'tenant'
-        && to.meta.moduleKey !== undefined
-        && !useTenantContext().moduleSet.has(to.meta.moduleKey)) {
-        return { name: 'state.unavailable', query: { code: 'MODULE_TENANT_DISABLED' } }
-      }
+      if (guard.status === 'forbidden') return { name: 'state.forbidden' }
 
       return true
     } catch (error) {
+      const mapped = mapAdminRuntimeError(error, audience)
       if (error instanceof AdminApiError) {
         workspace.problem = error.problem
-        if (error.problem.status === 401) {
-          const name = audience === 'tenant' ? 'tenant.login' : 'platform.login'
-          return { name, query: { return_to: protectedReturnTo(to) } }
-        }
-        if (error.problem.status === 403) return { name: 'state.forbidden' }
-        if (error.problem.status === 404) return { name: 'state.not-found' }
-        return { name: 'state.unavailable', query: { code: error.problem.code } }
       }
-      return { name: 'state.unavailable', query: { code: 'CLIENT_BOOT_FAILED' } }
+      if (mapped.kind === 'login') {
+        const name = audience === 'tenant' ? 'tenant.login' : 'platform.login'
+        return { name, query: { return_to: protectedReturnTo(to) } }
+      }
+      if (mapped.kind === 'forbidden') return { name: 'state.forbidden' }
+      if (mapped.kind === 'not-found') return { name: 'state.not-found' }
+      return {
+        name: 'state.unavailable',
+        query: {
+          code: mapped.code,
+          ...(mapped.retryAfter === null ? {} : { retry_after: mapped.retryAfter }),
+        },
+      }
     } finally {
       workspace.booting = false
     }

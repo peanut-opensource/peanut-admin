@@ -1,5 +1,8 @@
+import { createTenantLifecycle } from '@peanut-admin/admin-core'
+
 export interface ContextGenerationTicket {
   value: number
+  signal: AbortSignal
   isCurrent: () => boolean
 }
 
@@ -10,17 +13,14 @@ export interface ContextGeneration {
 }
 
 export const createContextGeneration = (): ContextGeneration => {
-  let generation = 0
+  const lifecycle = createTenantLifecycle()
 
   return {
-    current: () => generation,
+    current: lifecycle.current,
     capture: () => {
-      const value = generation
-      return { value, isCurrent: () => value === generation }
+      const ticket = lifecycle.capture()
+      return { value: ticket.generation, signal: ticket.signal, isCurrent: ticket.isCurrent }
     },
-    advance: () => {
-      generation += 1
-      return generation
-    },
+    advance: lifecycle.invalidate,
   }
 }

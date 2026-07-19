@@ -47,11 +47,13 @@ export const useWorkspaceStore = defineStore('peanut-admin-reference-workspace',
       this.tenantMenus = []
       this.tenantMenuRevision = null
       this.tenantSelection = null
+      this.menuDiagnostics = []
     },
     clearPlatform(): void {
       this.platformIdentity = null
       this.platformMenus = []
       this.platformMenuRevision = null
+      this.menuDiagnostics = []
     },
     setProblem(problem: ProblemDetails | null): void {
       this.problem = problem
