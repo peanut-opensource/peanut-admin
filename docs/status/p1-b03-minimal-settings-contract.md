@@ -389,6 +389,9 @@ backend/tests/Security/SettingsSecurityTest.php
 backend/tests/Upgrade/SettingsUpgradeTest.php
 backend/tests/Install/InstallWorkflowTest.php
 backend/tests/Upgrade/UpgradeWorkflowTest.php
+backend/tests/Install/ProductProfileTest.php
+backend/tests/Install/InstallWorkflowIntegrationTest.php
+backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php
 profiles/reference-admin.json
 packages/web/settings/LICENSE
 packages/web/settings/package.json
@@ -405,8 +408,10 @@ frontend/src/modules/peanut-settings/index.ts
 frontend/src/modules/peanut-settings/routes.ts
 frontend/tests/e2e/settings.e2e.ts
 frontend/tests/e2e/full-stack.e2e.ts
-frontend/tests/fixtures/server.ts
-frontend/tests/fixtures/seed-browser-fixture.php
+frontend/tests/fixtures/api.ts
+frontend/tests/fixtures/full-stack-setup.php
+frontend/tests/fixtures/full-stack.ts
+frontend/tests/fixtures/full-stack-vite.config.ts
 docs/api/openapi.yaml
 docs/api/schemas/settings.yaml
 backend/route/openapi-generated.php
@@ -453,6 +458,7 @@ starter/frontend/package.json
 starter/frontend/src/app/modules.ts
 starter/frontend/src/modules/peanut-settings.ts
 starter/frontend/tests/settings.spec.ts
+tests/recovery/RecoveryAcceptanceTest.php
 tests/security/g07-evidence.json
 ```
 
