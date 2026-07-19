@@ -77,6 +77,10 @@ Objective: let an external host compose trusted context, Module availability,
 functional permission, typed-target data authorization, transaction primitives,
 and stable HTTP errors without copying the reference host.
 
+The exact prerequisite, API and security behavior, file whitelist, test owner,
+and stop line are fixed by the
+[P1-R02 External Operation Host Kit Contract](./p1-r02-external-operation-host-kit-contract.md).
+
 Required behavior:
 
 - host-owned Module namespaces, API prefixes, OpenAPI documents, and generated

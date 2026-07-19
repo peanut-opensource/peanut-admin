@@ -95,6 +95,13 @@ and a failure-injection harness for external Module commands. The external
 host continues to own domain and outbox schemas; this candidate has no Runtime
 operation or downstream qualification.
 
+The next backend slice is fixed by the
+[P1-R02 External Operation Host Kit Contract](./p1-r02-external-operation-host-kit-contract.md).
+It composes trusted context, Module availability, existing functional and data
+authorization, and R01 atomic commands while leaving application namespaces,
+API prefixes, OpenAPI, generated types, domain schema, and outbox ownership in
+the external host.
+
 These P1 operations are implemented candidates, not qualified downstream
 capabilities. P1 work does not change the external-host consumption lock above.
 A later P1 commit remains unqualified for downstream consumption until a new
