@@ -111,6 +111,9 @@ desktop Sidebar and mobile Drawer behavior, identity and breadcrumb display,
 P1-W02 command delegation, explicit status views, accessibility checks, and
 the candidate-only stop line.
 
+The execution reality and the next reusable capability waves are summarized in
+[P1 Execution Reality And Post-Q01 Roadmap](./p1-execution-and-post-q01-roadmap.md).
+
 The next backend administration slice is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed
