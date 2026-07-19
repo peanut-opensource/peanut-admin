@@ -717,8 +717,7 @@ existing unique scope keys are sufficient for P1-R01.
 - participate in an already active PDO transaction, keeping the acquired row
   lock until the caller commits or rolls back;
 - otherwise own a short compatibility transaction so existing reference-host
-  callers still receive a concurrency-safe acquisition result, but that short
-  transaction cannot recover an expired lease;
+  callers still receive a concurrency-safe acquisition result;
 - atomically insert or lock the unique record before deciding its state;
 - determine insert ownership independently of `PDO::MYSQL_ATTR_FOUND_ROWS`;
 - require `expires_at` to be later than the comparison time;
@@ -731,21 +730,19 @@ State handling is fixed as follows:
 | --- | --- | --- |
 | no record | acquire a new `processing` lease | not applicable |
 | unexpired `processing` | return not acquired; the host reports `IDEMPOTENCY_REQUEST_PROCESSING` | `IDEMPOTENCY_KEY_REUSED` |
-| expired `processing` inside a caller-owned transaction | atomically renew the lease, clear response/resource fields, and return recovered ownership | `IDEMPOTENCY_KEY_REUSED` |
-| expired `processing` without a caller-owned transaction | return not acquired; the compatibility host reports `IDEMPOTENCY_REQUEST_PROCESSING` | `IDEMPOTENCY_KEY_REUSED` |
+| expired `processing` | return not acquired; the host reports `IDEMPOTENCY_REQUEST_PROCESSING` | `IDEMPOTENCY_KEY_REUSED` |
 | `completed` | return a terminal replay | `IDEMPOTENCY_KEY_REUSED` |
 | `failed` | return a terminal replay when a safe stored response exists | `IDEMPOTENCY_KEY_REUSED` |
 
-Expiry never permits a different payload to reuse the same scoped key. Cleanup
-and retention are separate lifecycle work and must not silently change the
-request hash binding. Recovery is safe only when the already-active caller
-transaction keeps the locked row, domain effects, audit, optional outbox, and
-terminal transition in one boundary. The short-transaction compatibility path
-cannot fence an old executor and therefore never claims recovered ownership.
+Expiry never permits a different payload to reuse the same scoped key. P1-R01
+uses deterministic rejection instead of automatic takeover because the
+existing schema has no fencing token and cannot prove an old executor stopped.
+Cleanup, retention, and a future fenced recovery design are separate lifecycle
+work and must not silently change the request hash binding.
 
-`IdempotencyRecord` distinguishes a newly inserted lease, a recovered lease,
-a non-owned processing lease, and a terminal replay. Existing constructor use
-remains compatible through a default `recovered=false` value.
+`IdempotencyRecord` distinguishes a newly inserted lease, a non-owned
+processing lease, and a terminal replay. Expiry does not create execution
+ownership.
 
 `completeTenant()` and `completePlatform()` continue to transition only a
 `processing` record to `completed`. New matching `failTenant()` and
@@ -762,8 +759,9 @@ secret, SQL, stack trace, hidden target existence, or raw authorization input.
 
 The existing audit tables already permit `success`, `denied`, and `error`; no
 migration is required. Kernel adds a type-safe `AuditOutcome` value and optional
-outcome argument to the four existing `AuditRepository` append methods. The
-default remains `success`, preserving current callers.
+outcome argument to the four concrete `PdoAuditRepository` append methods. The
+default remains `success`. The existing `AuditRepository` interface remains
+unchanged so external implementations stay source-compatible.
 
 - A successful command records `success` inside the domain transaction.
 - An expected denial may commit a redacted `denied` audit and a safe failed
@@ -798,8 +796,7 @@ sufficient for this primitive. P1-R02 may provide host composition helpers but
 must not move an application outbox into Kernel.
 
 The existing reference `IdempotencyMiddleware` is updated only to understand
-new execution ownership and terminal failed replays. It never recovers an
-expired lease because it does not own the domain transaction. It remains a
+new execution ownership and terminal failed replays. It remains a
 compatibility adapter and does not prove external Module atomicity because it
 creates its own PDO and wraps an HTTP response rather than the domain callable.
 
@@ -808,13 +805,10 @@ creates its own PDO and wraps an HTTP response rather than the domain callable.
 - Two concurrent acquisitions of one scoped key and request hash yield exactly
   one execution owner. The other observes an unexpired `processing` lease or a
   terminal replay after the owner commits.
-- A stale same-hash acquisition inside an already-active caller transaction is
-  serialized by the idempotency row lock; exactly one caller recovers it.
-- A compatibility caller without an outer transaction observes the stale row
-  as non-owned and cannot race an old executor by taking over its lease.
-- A transaction rollback after a new or recovered acquisition restores the
-  prior database state. A new row disappears; renewal of an old row reverts to
-  its prior expiry and fields.
+- A stale same-hash acquisition is serialized by the idempotency row lock and
+  remains non-owned. No caller can race an old executor by taking over its
+  lease.
+- A transaction rollback after a new acquisition removes the inserted row.
 - Failure after domain, audit, outbox, or idempotency completion but before
   commit leaves no partial row from that attempted command.
 - A nested failure that is caught by the outer command removes only nested
@@ -868,7 +862,6 @@ After this contract is committed independently, implementation may change only:
 - `packages/php/kernel/src/Idempotency/IdempotencyRecord.php`;
 - `packages/php/kernel/src/Idempotency/PdoIdempotencyRepository.php`;
 - `packages/php/kernel/src/Audit/AuditOutcome.php`;
-- `packages/php/kernel/src/Audit/AuditRepository.php`;
 - `packages/php/kernel/src/Persistence/Pdo/PdoAuditRepository.php`;
 - `backend/app/middleware/IdempotencyMiddleware.php`;
 - `packages/php/kernel/tests/Integration/Persistence/PdoTransactionManagerTest.php`;
@@ -878,9 +871,6 @@ After this contract is committed independently, implementation may change only:
 - `packages/php/testing/src/Operation/InjectedOperationFailure.php`;
 - `packages/php/testing/src/Operation/OperationAtomicityContractHarness.php`;
 - `packages/php/testing/tests/Unit/Operation/OperationAtomicityContractHarnessTest.php`;
-- `packages/php/data-permission/tests/Integration/Application/EffectiveAccessPreviewServiceTest.php`
-  only to keep its failing audit test double compatible with the optional
-  outcome argument;
 - `docs/guide/module-development.md`;
 - `README.md` and `docs/status/index.md` only for candidate status.
 
@@ -899,10 +889,10 @@ Tests are written to fail before the Runtime edit and must prove:
 
 - nested success, caught nested failure, uncaught nested failure, and an
   externally owned transaction all preserve the specified savepoint boundary;
-- new acquisition, completed replay, failed replay, same-hash stale recovery,
+- new acquisition, completed replay, failed replay, same-hash stale rejection,
   different-hash rejection, invalid expiry, duplicate terminal transition,
   `PDO::MYSQL_ATTR_FOUND_ROWS` independence, compatibility-path recovery
-  rejection, and rollback of a recovered lease;
+  rejection, and rollback of a new lease;
 - two connections cannot both own one live or stale lease;
 - `success`, `denied`, and `error` audit outcomes persist only when their
   transaction commits;
