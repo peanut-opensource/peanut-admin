@@ -6,13 +6,16 @@ This repository is the clean implementation home for Peanut Admin.
 
 Before changing files, read in order:
 
-1. `README.md`
-2. `docs/README.md`
-3. `docs/content-status.json`
-4. `docs/status/index.md`
-5. `docs/status/runtime-operation-coverage.json`
-6. `docs/status/p1-execution-baseline.md` for P1 work.
-7. The task-specific files named by the controlling prompt.
+1. `company-rules/core.md` and `company-rules/code-repository.md` when the local company-only directory exists.
+2. `README.md`
+3. `docs/README.md`
+4. `docs/content-status.json`
+5. `docs/status/index.md`
+6. `docs/status/runtime-operation-coverage.json`
+7. `docs/status/p1-execution-baseline.md` for P1 work.
+8. The task-specific files named by the controlling prompt.
+
+`company-rules/` is synchronized by CompanyOS for internal work and is intentionally Git-ignored in this public repository. External clones remain governed by this public `AGENTS.md` when that local directory is absent.
 
 ## Current Boundary
 

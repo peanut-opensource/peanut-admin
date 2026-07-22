@@ -16,3 +16,6 @@ dist/
 .cache/
 /backend/runtime/
 *.log
+
+# Company-internal Agent rules are synchronized locally and never published.
+company-rules/
