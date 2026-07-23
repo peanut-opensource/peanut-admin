@@ -39,7 +39,8 @@ for path in "${required[@]}"; do
   fi
 done
 
-composer_version="$(composer --version --no-ansi | sed -E 's/^Composer version ([0-9.]+).*/\1/')"
+composer_bin="${PEANUT_COMPOSER:-composer}"
+composer_version="$("$composer_bin" --version --no-ansi | sed -E 's/^Composer version ([0-9.]+).*/\1/')"
 pnpm_version="$(pnpm --version)"
 if [[ "$composer_version" != '2.10.2' ]]; then
   echo "ERROR: Composer 2.10.2 is required, found $composer_version" >&2
@@ -67,6 +68,59 @@ foreach ([
     if (!is_string($expected) || hash_file("sha256", $path) !== $expected) {
         fwrite(STDERR, "ERROR: dependency lock evidence is stale for {$path}\n");
         exit(1);
+    }
+}
+'
+
+php -r '
+$root = json_decode((string) file_get_contents("composer.lock"), true, 512, JSON_THROW_ON_ERROR);
+$starter = json_decode((string) file_get_contents("starter/backend/composer.lock"), true, 512, JSON_THROW_ON_ERROR);
+foreach (["composer.lock" => $root, "starter/backend/composer.lock" => $starter] as $path => $lock) {
+    if (($lock["plugin-api-version"] ?? null) !== "2.9.0") {
+        fwrite(STDERR, "ERROR: {$path} was not generated with the Composer 2.10.2 plugin API\n");
+        exit(1);
+    }
+}
+
+$index = static function (array $lock): array {
+    $packages = [];
+    foreach ([...($lock["packages"] ?? []), ...($lock["packages-dev"] ?? [])] as $package) {
+        $packages[$package["name"]] = $package;
+    }
+
+    return $packages;
+};
+$rootPackages = $index($root);
+$starterPackages = $index($starter);
+foreach ($starterPackages as $name => $package) {
+    if (!isset($rootPackages[$name])) {
+        fwrite(STDERR, "ERROR: starter Composer lock package is missing from the root lock: {$name}\n");
+        exit(1);
+    }
+    if (($rootPackages[$name]["version"] ?? null) !== ($package["version"] ?? null)) {
+        fwrite(STDERR, "ERROR: root and starter Composer lock versions differ for {$name}\n");
+        exit(1);
+    }
+}
+
+foreach ([
+    "peanut-admin/file-media",
+    "peanut-admin/task-job",
+    "peanut-admin/notification-sms",
+] as $name) {
+    foreach (["root" => $rootPackages, "starter" => $starterPackages] as $label => $packages) {
+        $package = $packages[$name] ?? null;
+        $expectedSymlink = $label === "root";
+        if (!is_array($package) || ($package["version"] ?? null) !== "0.1.0") {
+            fwrite(STDERR, "ERROR: {$label} Composer lock is missing {$name}@0.1.0\n");
+            exit(1);
+        }
+        if (($package["dist"]["type"] ?? null) !== "path"
+            || ($package["transport-options"]["symlink"] ?? null) !== $expectedSymlink
+            || ($package["transport-options"]["relative"] ?? null) !== true) {
+            fwrite(STDERR, "ERROR: {$label} Composer lock has invalid path transport for {$name}\n");
+            exit(1);
+        }
     }
 }
 '
@@ -193,7 +247,27 @@ for package_license in packages/php/*/LICENSE packages/web/*/LICENSE; do
   fi
 done
 
-composer validate --strict --no-check-publish
+"$composer_bin" validate --strict --no-check-publish
+"$composer_bin" validate --working-dir starter/backend --strict --no-check-publish
+
+if [[ -n "${PNPM_STORE_DIR:-}" ]]; then
+  pnpm_store="$(pnpm --store-dir "$PNPM_STORE_DIR" store path)"
+else
+  pnpm_store="$(pnpm store path)"
+fi
+pnpm --store-dir "$pnpm_store" install --lockfile-only --frozen-lockfile --offline
+
+lock_check_dir="$(mktemp -d "${TMPDIR:-/tmp}/peanut-admin-workspace-locks.XXXXXX")"
+cleanup_workspace_lock_check() {
+  rm -rf -- "$lock_check_dir"
+}
+trap cleanup_workspace_lock_check EXIT
+./scripts/create-internal-starter "$lock_check_dir/starter"
+pnpm --dir "$lock_check_dir/starter" \
+  --store-dir "$pnpm_store" \
+  install --lockfile-only --frozen-lockfile --offline
+cmp starter/pnpm-lock.yaml "$lock_check_dir/starter/pnpm-lock.yaml"
+
 php vendor/bin/phpunit
 php vendor/bin/phpstan analyse --no-progress --memory-limit=512M
 php vendor/bin/deptrac analyse --no-progress --fail-on-uncovered --cache-file=.cache/deptrac.cache
