@@ -37,12 +37,14 @@ network service.
 
 Generation also fails before creating or claiming the target when its source is
 dirty or has drifted from `tools/project-generator/source-baseline.json`. The
-baseline separates a non-self-referential controlled-content anchor from the
-package release identity. In a Git checkout, ancestry, clean HEAD, and the
-controlled source digest are verified, and generated metadata records the
-actual HEAD commit/tree. A release archive without `.git` records its explicit
-package identity after verifying the same controlled digest; editing the copied
-starter or package snapshot invalidates it.
+baseline fixes a non-self-referential controlled-content anchor. The separate
+`package-identity.json` uses Git `export-subst`, so a real `git archive` records
+the candidate commit/tree without asking a committed file to contain its own
+future identity. In a Git checkout, ancestry, clean HEAD, the export contract,
+and the controlled source digest are verified, and generated metadata records
+the actual HEAD commit/tree. An archive without `.git` accepts only an expanded
+40-character package identity and verifies the same controlled digest; editing
+the copied starter or package snapshot invalidates it.
 
 The generated `peanut-project.json` is deterministic and records:
 

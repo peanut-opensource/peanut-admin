@@ -38,6 +38,31 @@ function runGenerator(string $root, array $arguments): array
     ];
 }
 
+/** @param list<string> $command @return array{code: int, stdout: string, stderr: string} */
+function runFixtureCommand(array $command, string $workingDirectory): array
+{
+    $pipes = [];
+    $process = proc_open($command, [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ], $pipes, $workingDirectory);
+    if (!is_resource($process)) {
+        throw new RuntimeException('Could not start fixture command.');
+    }
+    fclose($pipes[0]);
+    $stdout = stream_get_contents($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+
+    return [
+        'code' => proc_close($process),
+        'stdout' => is_string($stdout) ? $stdout : '',
+        'stderr' => is_string($stderr) ? $stderr : '',
+    ];
+}
+
 function gitValue(string $root, string $revision): string
 {
     $pipes = [];
@@ -125,36 +150,6 @@ function removeFixture(string $path): void
         }
     }
     rmdir($path);
-}
-
-function copyFixtureTree(string $source, string $destination): void
-{
-    if (is_link($source)) {
-        throw new RuntimeException("Fixture source contains a symbolic link: {$source}");
-    }
-    if (is_file($source)) {
-        $parent = dirname($destination);
-        if (!is_dir($parent) && !mkdir($parent, 0700, true) && !is_dir($parent)) {
-            throw new RuntimeException("Could not create fixture directory: {$parent}");
-        }
-        if (!copy($source, $destination)) {
-            throw new RuntimeException("Could not copy fixture file: {$source}");
-        }
-        chmod($destination, fileperms($source) & 0777);
-
-        return;
-    }
-    if (!is_dir($source)) {
-        throw new RuntimeException("Fixture source is missing: {$source}");
-    }
-    if (!is_dir($destination) && !mkdir($destination, 0700, true) && !is_dir($destination)) {
-        throw new RuntimeException("Could not create fixture directory: {$destination}");
-    }
-    foreach (scandir($source) ?: [] as $entry) {
-        if ($entry !== '.' && $entry !== '..') {
-            copyFixtureTree($source . '/' . $entry, $destination . '/' . $entry);
-        }
-    }
 }
 
 try {
@@ -255,53 +250,28 @@ try {
     assertTrue(scandir($emptyTarget) === ['.', '..'], 'Failed generation left partial output.');
 
     $packageSource = $temporaryRoot . '/package-source';
-    copyFixtureTree($root . '/starter', $packageSource . '/starter');
-    foreach ([
-        'packages/php/kernel',
-        'packages/php/data-permission',
-        'packages/php/settings',
-        'packages/php/reference-codes',
-        'packages/php/file-media',
-        'packages/web/admin-core',
-        'packages/web/admin-shell',
-        'packages/web/settings',
-        'packages/web/reference-codes',
-        'packages/web/file-media',
-    ] as $package) {
-        $manifest = str_starts_with($package, 'packages/php/') ? 'composer.json' : 'package.json';
-        foreach ([$manifest, 'LICENSE', 'src', 'database', 'resources'] as $entry) {
-            if (file_exists($root . '/' . $package . '/' . $entry)) {
-                copyFixtureTree(
-                    $root . '/' . $package . '/' . $entry,
-                    $packageSource . '/' . $package . '/' . $entry,
-                );
-            }
-        }
-    }
-    copyFixtureTree(
-        $root . '/tools/project-generator/source-baseline.json',
-        $packageSource . '/tools/project-generator/source-baseline.json',
+    $archive = $temporaryRoot . '/candidate.tar';
+    $archiveResult = runFixtureCommand(
+        ['git', 'archive', '--format=tar', '--output=' . $archive, 'HEAD'],
+        $root,
     );
-    $packageTarget = $temporaryRoot . '/package-output';
-    $packageRequest = new GenerationRequest(
-        $packageTarget,
-        'package-admin',
-        'Package Admin',
-        'Package\\Admin',
-        'Package',
-        'standard-admin',
-        [['key' => 'field-console', 'api_prefix' => '/api/field/v1/']],
-        'field-console',
-        ['settings'],
-    );
-    (new ProjectGenerator($packageSource))->generate($packageRequest);
-    assertTrue(is_file($packageTarget . '/peanut-project.json'), 'Validated no-Git package did not generate.');
-    $baseline = json_decode(
-        (string) file_get_contents($root . '/tools/project-generator/source-baseline.json'),
+    assertTrue($archiveResult['code'] === 0, 'Could not create candidate archive: ' . $archiveResult['stderr']);
+    mkdir($packageSource, 0700);
+    $extractResult = runFixtureCommand(['tar', '-xf', $archive, '-C', $packageSource], $root);
+    assertTrue($extractResult['code'] === 0, 'Could not extract candidate archive: ' . $extractResult['stderr']);
+    assertTrue(!file_exists($packageSource . '/.git'), 'Candidate archive contains Git state.');
+    $packageIdentity = json_decode(
+        (string) file_get_contents($packageSource . '/tools/project-generator/package-identity.json'),
         true,
         512,
         JSON_THROW_ON_ERROR,
     );
+    assertTrue(($packageIdentity['commit'] ?? null) === gitValue($root, 'HEAD^{commit}'), 'Archive commit identity was not expanded.');
+    assertTrue(($packageIdentity['tree'] ?? null) === gitValue($root, 'HEAD^{tree}'), 'Archive tree identity was not expanded.');
+    $packageTarget = $temporaryRoot . '/package-output';
+    $packageResult = runGenerator($packageSource, validArguments($packageTarget));
+    assertTrue($packageResult['code'] === 0, 'Archived generator failed: ' . $packageResult['stderr']);
+    assertTrue(is_file($packageTarget . '/peanut-project.json'), 'Validated candidate archive did not generate.');
     $packageMetadata = json_decode(
         (string) file_get_contents($packageTarget . '/peanut-project.json'),
         true,
@@ -309,33 +279,19 @@ try {
         JSON_THROW_ON_ERROR,
     );
     assertTrue(
-        ($packageMetadata['peanut_admin']['input_commit'] ?? null) === ($baseline['package_identity']['commit'] ?? null),
+        ($packageMetadata['peanut_admin']['input_commit'] ?? null) === ($packageIdentity['commit'] ?? null),
         'No-Git package commit identity drifted.',
     );
     assertTrue(
-        ($packageMetadata['peanut_admin']['input_tree'] ?? null) === ($baseline['package_identity']['tree'] ?? null),
+        ($packageMetadata['peanut_admin']['input_tree'] ?? null) === ($packageIdentity['tree'] ?? null),
         'No-Git package tree identity drifted.',
     );
 
     file_put_contents($packageSource . '/starter/frontend/src/App.vue', "\nsource drift\n", FILE_APPEND);
     $driftTarget = $temporaryRoot . '/drift-output';
-    $driftRequest = new GenerationRequest(
-        $driftTarget,
-        'drift-admin',
-        'Drift Admin',
-        'Drift\\Admin',
-        'Drift',
-        'standard-admin',
-        [['key' => 'field-console', 'api_prefix' => '/api/field/v1/']],
-        'field-console',
-        ['settings'],
-    );
-    try {
-        (new ProjectGenerator($packageSource))->generate($driftRequest);
-        throw new RuntimeException('Drifted no-Git source must fail generation.');
-    } catch (Throwable $exception) {
-        assertTrue(str_contains($exception->getMessage(), 'PROJECT_SOURCE_DRIFT'), 'Packaged source drift error is unstable.');
-    }
+    $driftResult = runGenerator($packageSource, validArguments($driftTarget));
+    assertTrue($driftResult['code'] !== 0, 'Drifted no-Git source must fail generation.');
+    assertTrue(str_contains($driftResult['stderr'], 'PROJECT_SOURCE_DRIFT'), 'Packaged source drift error is unstable.');
     assertTrue(!file_exists($driftTarget), 'Drifted no-Git source claimed the target.');
 
     $first = $temporaryRoot . '/first';

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { createGovernanceIconPresentation } from '../../src/features/governance/icon'
 import { createGovernanceWorkbenchModel } from '../../src/features/governance/model'
+import { resolveGovernanceRoleSelection } from '../../src/features/governance/role-selection'
 
 describe('governance workbench feature model', () => {
   it('keeps tenant and platform workbench state separate and exposes safe audit fields', () => {
@@ -36,5 +37,31 @@ describe('governance workbench feature model', () => {
       role: 'img',
     })
     expect(() => createGovernanceIconPresentation('', 'Roles')).toThrow('GOVERNANCE_ICON_INVALID')
+  })
+
+  it('loads the complete platform role before allowing an existing permission set to be saved', async () => {
+    const loaded: string[] = []
+    const selection = await resolveGovernanceRoleSelection(
+      'platform',
+      '7',
+      { id: '7', revision: '4', permission_count: 2 },
+      async roleId => {
+        loaded.push(roleId)
+        return {
+          id: '7',
+          revision: '4',
+          permission_keys: ['platform.audit.read', 'platform.role.read'],
+        }
+      },
+    )
+
+    expect(loaded).toEqual(['7'])
+    expect(selection.permissionKeys).toEqual(['platform.audit.read', 'platform.role.read'])
+    await expect(resolveGovernanceRoleSelection(
+      'platform',
+      '7',
+      { id: '7', revision: '4', permission_count: 2 },
+      async () => ({ id: '7', revision: '4' }),
+    )).rejects.toThrow('GOVERNANCE_ROLE_SNAPSHOT_INCOMPLETE')
   })
 })

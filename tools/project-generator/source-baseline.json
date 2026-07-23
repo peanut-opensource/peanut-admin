@@ -1,10 +1,6 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "content_anchor": {
-    "commit": "52839955478d87ab148bfc7e02b5cbc2e3c3b313",
-    "tree": "d526f18902113a54cafce566013f0712658cc142"
-  },
-  "package_identity": {
     "commit": "52839955478d87ab148bfc7e02b5cbc2e3c3b313",
     "tree": "d526f18902113a54cafce566013f0712658cc142"
   },

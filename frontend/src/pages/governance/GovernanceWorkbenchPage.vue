@@ -20,6 +20,7 @@ import { AdminApiError, useAdminRuntime } from '../../app/runtime'
 import { APP_NAVIGATION, TRUSTED_MENU_ROUTE_CONTRACTS } from '../../app/routes'
 import { createGovernanceIconPresentation } from '../../features/governance/icon'
 import { createGovernanceWorkbenchModel } from '../../features/governance/model'
+import { resolveGovernanceRoleSelection } from '../../features/governance/role-selection'
 
 const runtime = useAdminRuntime()
 const route = useRoute()
@@ -33,7 +34,9 @@ const permissions = ref<UnknownRecord[]>([])
 const auditEvents = ref<UnknownRecord[]>([])
 const menus = ref<UnknownRecord[]>([])
 const selectedRoleId = ref('')
+const selectedRoleDetail = ref<UnknownRecord | null>(null)
 const selectedPermissionKeys = ref<string[]>([])
+const roleSelectionReady = ref(false)
 const policyResource = ref('')
 const policyOperation = ref('')
 const policyJson = ref(JSON.stringify({ status: 'disabled', reason: null, valid_from: null, valid_until: null, groups: [] }, null, 2))
@@ -60,7 +63,7 @@ const canAssign = computed(() => has('core.role.permission.assign', 'platform.ro
 const canReadPolicy = computed(() => audience.value === 'tenant' && hasPermission(permissionSet.value, 'core.role.data-policy.read'))
 const canManagePolicy = computed(() => audience.value === 'tenant' && hasPermission(permissionSet.value, 'core.role.data-policy.manage'))
 const canAudit = computed(() => has('core.audit.read', 'platform.audit.read'))
-const selectedRole = computed(() => roles.value.find(role => role.id === selectedRoleId.value) ?? null)
+const selectedRole = computed(() => selectedRoleDetail.value)
 
 const errorView = (error: unknown) => error instanceof AdminApiError
   ? { detail: error.problem.detail, requestId: error.problem.request_id }
@@ -95,17 +98,34 @@ const loadAudit = async () => {
   selectedAudit.value = null
 }
 
-const selectRole = (roleId: string) => {
+const selectRole = async (roleId: string) => {
   selectedRoleId.value = roleId
+  selectedRoleDetail.value = null
+  roleSelectionReady.value = false
+  selectedPermissionKeys.value = []
   const role = roles.value.find(item => item.id === roleId)
-  selectedPermissionKeys.value = role === undefined ? [] : stringArray(role.permission_keys)
   policyRevision.value = null
-  if (role !== undefined) {
-    model.value.setRoleDraft({
+  if (role === undefined) return
+  try {
+    const selection = await resolveGovernanceRoleSelection(
+      audience.value,
       roleId,
-      revision: Number.parseInt(stringValue(role.revision, '0'), 10),
-      permissionKeys: selectedPermissionKeys.value,
+      role,
+      async selectedId => envelopeData(runtime.unwrap(await runtime.platformClient.GET('/api/platform/v1/roles/{role_id}', {
+        params: { path: { role_id: selectedId } },
+      }))),
+    )
+    if (selectedRoleId.value !== roleId) return
+    selectedRoleDetail.value = selection.role
+    selectedPermissionKeys.value = selection.permissionKeys
+    model.value.setRoleDraft({
+      roleId: selection.roleId,
+      revision: selection.revision,
+      permissionKeys: selection.permissionKeys,
     })
+    roleSelectionReady.value = true
+  } catch (error) {
+    if (selectedRoleId.value === roleId) failure.value = errorView(error)
   }
 }
 
@@ -129,9 +149,9 @@ const load = async () => {
     permissions.value = permissionResponse === null ? [] : apiCollection(runtime.unwrap(permissionResponse)).items
     menus.value = apiCollection(runtime.unwrap(menuResponse)).items
     if (selectedRoleId.value !== '' && roles.value.some(role => role.id === selectedRoleId.value)) {
-      selectRole(selectedRoleId.value)
+      await selectRole(selectedRoleId.value)
     } else if (roles.value[0]?.id !== undefined) {
-      selectRole(String(roles.value[0].id))
+      await selectRole(String(roles.value[0].id))
     }
     await loadAudit()
   } catch (error) {
@@ -165,7 +185,10 @@ const governanceCatalog = () => createGovernanceCatalog({
 
 const savePermissions = async () => {
   const role = selectedRole.value
-  if (role === null) return
+  if (role === null || !roleSelectionReady.value) {
+    failure.value = { detail: '角色权限快照尚未完整加载，未发送保存请求。', requestId: '' }
+    return
+  }
   saving.value = true
   failure.value = null
   success.value = ''
@@ -343,7 +366,7 @@ onMounted(load)
           </el-checkbox>
         </el-checkbox-group>
         <el-alert v-else type="info" :closable="false" :title="audience === 'tenant' ? '缺少 core.permission.read，权限目录不可见。' : '缺少 platform.permission.read，权限目录不可见。'" />
-        <el-button type="primary" :disabled="!canAssign || !canPermissions || selectedRoleId === ''" :loading="saving" @click="savePermissions">保存角色权限</el-button>
+        <el-button type="primary" :disabled="!canAssign || !canPermissions || !roleSelectionReady || selectedRoleId === ''" :loading="saving" @click="savePermissions">保存角色权限</el-button>
       </el-tab-pane>
 
       <el-tab-pane v-if="audience === 'tenant'" label="数据策略">
