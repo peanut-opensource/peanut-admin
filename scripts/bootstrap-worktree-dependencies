@@ -36,9 +36,22 @@ resolve_store_path() {
 
 assert_store_is_external() {
   local store_path="$1"
-  if [[ "$store_path" == "$ROOT" || "$store_path" == "$ROOT/"* ]]; then
-    echo "ERROR: refusing worktree-local pnpm content store: $store_path" >&2
-    echo 'Configure store-dir or set PNPM_STORE_DIR to a persistent path outside the worktree.' >&2
+  local existing_ancestor suffix='' segment canonical_store containing_git_root canonical_git_root
+  existing_ancestor="$store_path"
+  while [[ ! -d "$existing_ancestor" ]]; do
+    segment="$(basename "$existing_ancestor")"
+    suffix="/$segment$suffix"
+    existing_ancestor="$(dirname "$existing_ancestor")"
+  done
+  canonical_store="$(cd "$existing_ancestor" && pwd -P)$suffix"
+  containing_git_root="$(git -C "$existing_ancestor" rev-parse --show-toplevel 2>/dev/null || true)"
+  if [[ -z "$containing_git_root" ]]; then
+    return
+  fi
+  canonical_git_root="$(cd "$containing_git_root" && pwd -P)"
+  if [[ "$canonical_store" == "$canonical_git_root" || "$canonical_store" == "$canonical_git_root/"* ]]; then
+    echo "ERROR: refusing pnpm content store inside a repository/worktree tree: $store_path" >&2
+    echo 'Configure store-dir or set PNPM_STORE_DIR to a persistent path outside any Git worktree.' >&2
     exit 1
   fi
 }

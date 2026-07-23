@@ -5,7 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 workdir="$(mktemp -d "${TMPDIR:-/tmp}/peanut-admin-worktree-bootstrap.XXXXXX")"
 trap 'rm -rf "$workdir"' EXIT
 
-repo="$workdir/repo"
+outer="$workdir/outer-project"
+repo="$outer/repositories/repo"
 bin="$workdir/bin"
 store="$workdir/store/v11"
 log="$workdir/pnpm.log"
@@ -22,7 +23,9 @@ printf 'lockfileVersion: 9.0\n' >"$repo/pnpm-lock.yaml"
 printf 'packages:\n  - frontend\n  - packages/web/*\n' >"$repo/pnpm-workspace.yaml"
 printf '{"name":"fixture-frontend","private":true}\n' >"$repo/frontend/package.json"
 printf '{"name":"fixture-package","private":true}\n' >"$repo/packages/web/example/package.json"
+git -C "$outer" init -q
 git -C "$repo" init -q
+ln -s "$outer" "$workdir/outer-alias"
 
 cat >"$bin/node" <<'NODE'
 #!/usr/bin/env bash
@@ -106,20 +109,33 @@ run_warm() {
   "$repo/scripts/warm-worktree-dependencies"
 }
 
-repo_store="$repo/.pnpm-store/v11"
-for command in bootstrap warm; do
-  set +e
-  default_local_output="$(cd "$repo" && FAKE_STORE_PATH="$repo_store" "run_$command" 2>&1)"
-  default_local_status=$?
-  explicit_local_output="$(cd "$repo" && PNPM_STORE_DIR="$repo_store" "run_$command" 2>&1)"
-  explicit_local_status=$?
-  set -e
-  [[ "$default_local_status" -ne 0 ]]
-  [[ "$explicit_local_status" -ne 0 ]]
-  [[ "$default_local_output" == *'refusing worktree-local pnpm content store'* ]]
-  [[ "$explicit_local_output" == *'set PNPM_STORE_DIR to a persistent path outside the worktree'* ]]
-  [[ ! -e "$repo/.pnpm-store" ]]
+for local_store in \
+  "$repo/.pnpm-store/v11" \
+  "$outer/.pnpm-store/v11" \
+  "$workdir/outer-alias/.pnpm-store/v11"; do
+  for command in bootstrap warm; do
+    set +e
+    default_local_output="$(cd "$repo" && FAKE_STORE_PATH="$local_store" "run_$command" 2>&1)"
+    default_local_status=$?
+    explicit_local_output="$(cd "$repo" && PNPM_STORE_DIR="$local_store" "run_$command" 2>&1)"
+    explicit_local_status=$?
+    set -e
+    [[ "$default_local_status" -ne 0 ]]
+    [[ "$explicit_local_status" -ne 0 ]]
+    [[ "$default_local_output" == *'refusing pnpm content store inside a repository/worktree tree'* ]]
+    [[ "$explicit_local_output" == *'outside any Git worktree'* ]]
+    [[ ! -e "$repo/.pnpm-store" ]]
+    [[ ! -e "$outer/.pnpm-store" ]]
+  done
 done
+
+missing_external_store="$workdir/non-git-parent/missing-store/v11"
+mkdir -p "$workdir/non-git-parent"
+missing_external_output="$(cd "$repo" && FAKE_STORE_PATH="$missing_external_store" run_bootstrap)"
+[[ "$missing_external_output" == *'Worktree dependency bootstrap complete'* ]]
+[[ ! -e "$missing_external_store" ]]
+rm -rf "$repo/node_modules" "$repo/frontend/node_modules" "$repo/packages/web/example/node_modules"
+: >"$log"
 
 cold_output="$(cd "$repo" && run_bootstrap)"
 [[ -d "$repo/node_modules/.pnpm" && ! -L "$repo/node_modules/.pnpm" ]]

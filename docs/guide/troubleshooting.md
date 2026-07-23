@@ -25,9 +25,10 @@ content store explicitly, then retry the offline bootstrap:
 ./scripts/bootstrap-worktree-dependencies
 ```
 
-The persistent content store must be outside the current worktree. If a sandbox
-cannot write the normal home-directory store, set `PNPM_STORE_DIR` to an
-explicit external path; never fall back to `.pnpm-store` in the project root.
+The persistent content store must not be inside any Git repository or worktree
+tree. If a sandbox cannot write the normal home-directory store, set
+`PNPM_STORE_DIR` to an explicit external path; never fall back to a project or
+repository `.pnpm-store`.
 The scripts do not modify global pnpm or npm configuration. If bootstrap
 reports a broken or cross-worktree dependency link, it prints a bounded sample,
 removes only ignored `node_modules` layouts inside the current worktree, and
