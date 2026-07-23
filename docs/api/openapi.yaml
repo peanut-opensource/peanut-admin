@@ -100,9 +100,49 @@ x-tenant-module-list-response: &tenantModuleListResponse
 x-tenant-audit-list-response: &tenantAuditListResponse
   <<: *readErrors
   '200': { $ref: './responses.yaml#/TenantAuditListOk' }
+x-tenant-audit-response: &tenantAuditResponse
+  <<: *readErrors
+  '200':
+    description: Redacted Tenant audit event detail.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/workspace.yaml#/TenantAuditEventResponse' }
+x-platform-audit-response: &platformAuditResponse
+  <<: *readErrors
+  '200':
+    description: Redacted platform audit event detail.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/platform.yaml#/PlatformAuditEventResponse' }
 x-menu-list-response: &menuListResponse
   <<: *readErrors
   '200': { $ref: './responses.yaml#/MenuListOk' }
+x-menu-diagnostic-list-response: &menuDiagnosticListResponse
+  <<: *readErrors
+  '200':
+    description: Permission-gated menu declaration diagnostics.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/workspace.yaml#/MenuDiagnosticListResponse' }
+x-upgrade-status-response: &upgradeStatusResponse
+  <<: *readErrors
+  '200':
+    description: Read-only operator upgrade preparation status.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/upgrade.yaml#/UpgradeStatusResponse' }
 
 x-member-response: &memberResponse
   <<: *writeErrors
@@ -678,9 +718,14 @@ paths:
         - { $ref: '#/components/parameters/ReferenceCodeIfMatch' }
       responses: *referenceCodeWriteResponse
   /api/v1/audit-events:
-    get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *tenantAuditListResponse }
+    get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/AuditEventType' }, { $ref: '#/components/parameters/AuditAction' }, { $ref: '#/components/parameters/AuditOutcome' }, { $ref: '#/components/parameters/AuditRequestId' }, { $ref: '#/components/parameters/AuditTargetType' }, { $ref: '#/components/parameters/AuditTargetId' }, { $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *tenantAuditListResponse }
+  /api/v1/audit-events/{event_id}:
+    parameters: [{ $ref: '#/components/parameters/AuditEventId' }]
+    get: { operationId: getTenantAuditEvent, summary: getTenantAuditEvent, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvent', x-permission: core.audit.read, responses: *tenantAuditResponse }
   /api/v1/menus:
     get: { operationId: getTenantMenus, summary: getTenantMenus, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::menus', responses: *menuListResponse }
+  /api/v1/menu-diagnostics:
+    get: { operationId: listTenantMenuDiagnostics, summary: listTenantMenuDiagnostics, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::menuDiagnostics', x-permission: core.role.read, responses: *menuDiagnosticListResponse }
   /api/v1/authorization/target-candidates:
     get:
       operationId: listTargetCandidates
@@ -782,6 +827,13 @@ paths:
       x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformSettingsController::listDeploymentSettings'
       x-permission: platform.settings.read
       responses: *settingListResponses
+  /api/platform/v1/upgrade:
+    get:
+      operationId: getPlatformUpgradeStatus
+      summary: getPlatformUpgradeStatus
+      x-handler: 'PeanutAdmin\App\controller\api\platform\v1\UpgradeStatusController::show'
+      x-permission: platform.upgrade.read
+      responses: *upgradeStatusResponse
   /api/platform/v1/settings/{module_key}/{setting_key}:
     parameters:
       - { $ref: '#/components/parameters/SettingModuleKey' }
@@ -878,9 +930,14 @@ paths:
   /api/platform/v1/permissions:
     get: { operationId: listPlatformPermissions, summary: listPlatformPermissions, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::permissions', x-permission: platform.permission.read, responses: *permissionListResponse }
   /api/platform/v1/audit-events:
-    get: { operationId: listPlatformAuditEvents, summary: listPlatformAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::auditEvents', x-permission: platform.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *platformAuditListResponse }
+    get: { operationId: listPlatformAuditEvents, summary: listPlatformAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::auditEvents', x-permission: platform.audit.read, parameters: [{ $ref: '#/components/parameters/AuditEventType' }, { $ref: '#/components/parameters/AuditAction' }, { $ref: '#/components/parameters/AuditOutcome' }, { $ref: '#/components/parameters/AuditRequestId' }, { $ref: '#/components/parameters/AuditTargetType' }, { $ref: '#/components/parameters/AuditTargetId' }, { $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *platformAuditListResponse }
+  /api/platform/v1/audit-events/{event_id}:
+    parameters: [{ $ref: '#/components/parameters/AuditEventId' }]
+    get: { operationId: getPlatformAuditEvent, summary: getPlatformAuditEvent, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::auditEvent', x-permission: platform.audit.read, responses: *platformAuditResponse }
   /api/platform/v1/menus:
     get: { operationId: getPlatformMenus, summary: getPlatformMenus, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::menus', responses: *menuListResponse }
+  /api/platform/v1/menu-diagnostics:
+    get: { operationId: listPlatformMenuDiagnostics, summary: listPlatformMenuDiagnostics, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::menuDiagnostics', x-permission: platform.role.read, responses: *menuDiagnosticListResponse }
 
 components:
   securitySchemes:
@@ -891,6 +948,13 @@ components:
   parameters:
     Page: { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
     PageSize: { in: query, name: page_size, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    AuditEventId: { in: path, name: event_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
+    AuditEventType: { in: query, name: event_type, schema: { type: string, minLength: 1, maxLength: 160 } }
+    AuditAction: { in: query, name: action, schema: { type: string, minLength: 1, maxLength: 160 } }
+    AuditOutcome: { in: query, name: outcome, schema: { type: string, enum: [success, denied, error] } }
+    AuditRequestId: { in: query, name: request_id, schema: { type: string, minLength: 1, maxLength: 160 } }
+    AuditTargetType: { in: query, name: target_type, schema: { type: string, minLength: 1, maxLength: 160 } }
+    AuditTargetId: { in: query, name: target_id, schema: { type: string, minLength: 1, maxLength: 160 } }
     IfMatch: { in: header, name: If-Match, required: true, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
     IfMatchOptional: { in: header, name: If-Match, required: false, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
     IfNoneMatchAny: { in: header, name: If-None-Match, required: false, schema: { type: string, const: '*' } }

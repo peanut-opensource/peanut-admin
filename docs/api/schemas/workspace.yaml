@@ -83,18 +83,32 @@ TenantAuditEvent:
     target_set_digest: { type: [string, 'null'] }
     request_id: { type: string }
     operation_id: { type: [string, 'null'] }
+    metadata:
+      type: object
+      additionalProperties:
+        type: [boolean, integer, string, 'null']
     created_at: { type: string }
+
+TenantAuditEventDetail:
+  allOf:
+    - { $ref: '#/TenantAuditEvent' }
+    - type: object
+      required: [metadata]
 
 MenuItem:
   type: object
   additionalProperties: false
-  required: [key, type, name, route_name, route_path, icon, children]
+  required: [key, module_key, type, name, route_name, route_path, component_key, required_permission, client_keys, icon, children]
   properties:
     key: { type: string }
+    module_key: { type: string }
     type: { type: string }
     name: { type: string }
     route_name: { type: [string, 'null'] }
     route_path: { type: [string, 'null'] }
+    component_key: { type: [string, 'null'] }
+    required_permission: { type: [string, 'null'] }
+    client_keys: { type: array, uniqueItems: true, items: { type: string } }
     icon: { type: [string, 'null'] }
     children:
       type: array
@@ -148,6 +162,14 @@ TenantAuditListResponse:
     data: { type: array, items: { $ref: '#/TenantAuditEvent' } }
     meta: { $ref: './common.yaml#/$defs/PageMeta' }
 
+TenantAuditEventResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/TenantAuditEventDetail' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
+
 MenuListResponse:
   type: object
   additionalProperties: false
@@ -160,3 +182,30 @@ MenuListResponse:
         - type: object
           properties:
             authorization_revision: { $ref: './common.yaml#/$defs/BigIntString' }
+
+MenuDiagnosticItem:
+  type: object
+  additionalProperties: false
+  required: [key, module_key, type, name, route_name, route_path, component_key, required_permission, client_keys, icon, visible, reason, trusted_route_path]
+  properties:
+    key: { type: string }
+    module_key: { type: string }
+    type: { type: string }
+    name: { type: string }
+    route_name: { type: [string, 'null'] }
+    route_path: { type: [string, 'null'] }
+    component_key: { type: [string, 'null'] }
+    required_permission: { type: [string, 'null'] }
+    client_keys: { type: array, uniqueItems: true, items: { type: string } }
+    icon: { type: [string, 'null'] }
+    visible: { type: boolean }
+    reason: { type: string, enum: [visible, audience_mismatch, client_unavailable, deployment_module_unavailable, tenant_module_disabled, permission_not_granted, parent_hidden, empty_group] }
+    trusted_route_path: { type: [string, 'null'] }
+
+MenuDiagnosticListResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { type: array, items: { $ref: '#/MenuDiagnosticItem' } }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }

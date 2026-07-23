@@ -6,7 +6,7 @@
     "type": "page",
     "name": "Example Targets",
     "route_name": "example-target-list",
-    "route_path": "/examples/targets",
+    "route_path": "/app/examples/targets",
     "component_key": "example.target.list",
     "required_permission": "example.target.read",
     "icon": "PanelsTopLeft",

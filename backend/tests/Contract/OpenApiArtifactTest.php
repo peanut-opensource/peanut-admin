@@ -14,8 +14,8 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(96, $routes);
-        self::assertCount(96, array_unique($operationIds));
+        self::assertCount(101, $routes);
+        self::assertCount(101, array_unique($operationIds));
         self::assertArrayHasKey('GET /api/v1/account', $routes);
         self::assertArrayHasKey('PATCH /api/v1/account', $routes);
         self::assertArrayHasKey('POST /api/v1/account/password', $routes);
@@ -40,6 +40,11 @@ final class OpenApiArtifactTest extends TestCase
         self::assertArrayHasKey('GET /api/v1/files/{file_key}', $routes);
         self::assertArrayHasKey('GET /api/v1/files/{file_key}/content', $routes);
         self::assertArrayHasKey('DELETE /api/v1/files/{file_key}', $routes);
+        self::assertArrayHasKey('GET /api/v1/audit-events/{event_id}', $routes);
+        self::assertArrayHasKey('GET /api/v1/menu-diagnostics', $routes);
+        self::assertArrayHasKey('GET /api/platform/v1/audit-events/{event_id}', $routes);
+        self::assertArrayHasKey('GET /api/platform/v1/menu-diagnostics', $routes);
+        self::assertArrayHasKey('GET /api/platform/v1/upgrade', $routes);
 
         $types = (string) file_get_contents($root . '/packages/web/admin-core/src/generated/api.d.ts');
         self::assertStringContainsString('listExampleWorkItems', $types);
@@ -51,6 +56,8 @@ final class OpenApiArtifactTest extends TestCase
         self::assertStringContainsString('ReferenceCodeListResponse', $types);
         self::assertStringContainsString('ReferenceCodeReplaceRequest', $types);
         self::assertStringContainsString('FileListResponse', $types);
+        self::assertStringContainsString('UpgradeStatusResponse', $types);
+        self::assertStringContainsString('MenuDiagnosticListResponse', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
         self::assertStringNotContainsString('data: unknown', $types);
         self::assertDoesNotMatchRegularExpression('/(?:\| unknown|unknown \|)/', $types);

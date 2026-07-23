@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\v1;
 
+use PeanutAdmin\App\controller\api\MenuDiagnosticRuntime;
 use PeanutAdmin\App\module\OpisTenantModuleConfigValidator;
 use PeanutAdmin\App\module\RuntimeModuleRegistry;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
@@ -89,7 +90,11 @@ final class TenantWorkspaceController
         return MemberAdminRuntime::run($request, function () use ($request): array {
             $context = MemberAdminRuntime::context($request);
             $page = MemberAdminRuntime::page($request);
-            $result = $this->service()->auditEvents($context->tenantId, $page);
+            $result = $this->service()->auditEvents(
+                $context->tenantId,
+                $page,
+                MemberAdminRuntime::auditFilter($request),
+            );
 
             return [
                 'data' => $result['items'],
@@ -100,6 +105,16 @@ final class TenantWorkspaceController
                     'total_pages' => (int) ceil($result['total'] / $page->pageSize),
                 ],
             ];
+        });
+    }
+
+    #[OpenApiHandlerContract]
+    public function auditEvent(Request $request, string $eventId): Response
+    {
+        return MemberAdminRuntime::run($request, function () use ($request, $eventId): array {
+            $context = MemberAdminRuntime::context($request);
+
+            return ['data' => $this->service()->auditEvent($context->tenantId, $eventId)];
         });
     }
 
@@ -130,6 +145,31 @@ final class TenantWorkspaceController
         });
     }
 
+    #[OpenApiHandlerContract]
+    public function menuDiagnostics(Request $request): Response
+    {
+        return MemberAdminRuntime::run($request, function () use ($request): array {
+            $context = MemberAdminRuntime::context($request);
+            $pdo = MemberAdminRuntime::pdo();
+            $repository = new PdoMenuCatalogRepository($pdo);
+            $deployment = array_fill_keys($repository->activeDeploymentModules(), true);
+            $tenant = array_fill_keys($repository->activeTenantModules($context->tenantId), true);
+            $permissions = new TenantAuthorizationEvaluator(
+                new PdoTenantAuthorizationRepository($pdo),
+                new RevisionPermissionCache(),
+            );
+
+            return ['data' => MenuDiagnosticRuntime::explain(
+                $repository->activeDefinitions('tenant'),
+                'tenant',
+                $context->clientKey,
+                static fn(string $module): bool => $module === 'core' || isset($deployment[$module]),
+                static fn(string $module): bool => $module === 'core' || isset($tenant[$module]),
+                static fn(string $permission): bool => $permissions->allows($context, $permission),
+            )];
+        });
+    }
+
     private function service(): TenantWorkspaceQueryService
     {
         return new TenantWorkspaceQueryService(MemberAdminRuntime::pdo());
@@ -154,10 +194,14 @@ final class TenantWorkspaceController
         $render = function (MenuDefinition $definition) use (&$render, $children): array {
             return [
                 'key' => $definition->key,
+                'module_key' => $definition->moduleKey,
                 'type' => $definition->type,
                 'name' => $definition->name,
                 'route_name' => $definition->routeName,
                 'route_path' => $definition->routePath,
+                'component_key' => $definition->componentKey,
+                'required_permission' => $definition->requiredPermission,
+                'client_keys' => $definition->clientKeys,
                 'icon' => $definition->icon,
                 'children' => array_map($render, $children[$definition->key] ?? []),
             ];

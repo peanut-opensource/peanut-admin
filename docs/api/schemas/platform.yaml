@@ -146,7 +146,17 @@ PlatformAuditEvent:
     target_tenant_id: { type: [string, 'null'] }
     request_id: { type: string }
     operation_id: { type: [string, 'null'] }
+    metadata:
+      type: object
+      additionalProperties:
+        type: [boolean, integer, string, 'null']
     created_at: { type: string }
+
+PlatformAuditEventDetail:
+  allOf:
+    - { $ref: '#/PlatformAuditEvent' }
+    - type: object
+      required: [metadata]
 
 PlatformAuditListResponse:
   type: object
@@ -155,6 +165,14 @@ PlatformAuditListResponse:
   properties:
     data: { type: array, items: { $ref: '#/PlatformAuditEvent' } }
     meta: { $ref: './common.yaml#/$defs/PageMeta' }
+
+PlatformAuditEventResponse:
+  type: object
+  additionalProperties: false
+  required: [data, meta]
+  properties:
+    data: { $ref: '#/PlatformAuditEventDetail' }
+    meta: { $ref: './common.yaml#/$defs/RequestMeta' }
 
 CreatePlatformTenantRequest:
   type: object

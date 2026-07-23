@@ -16,6 +16,11 @@ export interface AppRouteRegistration {
   moduleKey?: string
 }
 
+export interface TrustedMenuRouteContract {
+  componentKey: string
+  clientKeys: readonly string[]
+}
+
 const registrations: readonly AppRouteRegistration[] = [
   { name: 'tenant.home', path: '/app', audience: 'tenant' },
   { name: 'tenant.account', path: '/app/account', audience: 'tenant' },
@@ -23,6 +28,7 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'tenant.members.effective-access', path: '/app/members/:member_id/effective-access', audience: 'tenant', permission: 'core.member.effective-access.read' },
   { name: 'tenant.departments.list', path: '/app/departments', audience: 'tenant', permission: 'core.department.read' },
   { name: 'tenant.roles.list', path: '/app/roles', audience: 'tenant', permission: 'core.role.read' },
+  { name: 'tenant.governance.workbench', path: '/app/governance', audience: 'tenant', permission: 'core.role.read' },
   { name: 'tenant.modules.list', path: '/app/modules', audience: 'tenant', permission: 'core.module.read' },
   { name: 'tenant.audit.list', path: '/app/audit', audience: 'tenant', permission: 'core.audit.read' },
   { name: 'platform.home', path: '/platform', audience: 'platform' },
@@ -30,8 +36,34 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'platform.tenants.detail', path: '/platform/tenants/:tenant_id', audience: 'platform', permission: 'platform.tenant.read' },
   { name: 'platform.operators.list', path: '/platform/operators', audience: 'platform', permission: 'platform.operator.read' },
   { name: 'platform.roles.list', path: '/platform/roles', audience: 'platform', permission: 'platform.role.read' },
+  { name: 'platform.governance.workbench', path: '/platform/governance', audience: 'platform', permission: 'platform.role.read' },
   { name: 'platform.audit.list', path: '/platform/audit', audience: 'platform', permission: 'platform.audit.read' },
+  { name: 'platform.upgrade.status', path: '/platform/upgrade', audience: 'platform', permission: 'platform.upgrade.read' },
 ]
+
+export const APP_ROUTE_REGISTRATIONS = registrations
+
+export const TRUSTED_MENU_ROUTE_CONTRACTS: Readonly<Record<string, TrustedMenuRouteContract>> = {
+  'tenant.members.list': { componentKey: 'core.member.list', clientKeys: ['admin-web'] },
+  'tenant.departments.list': { componentKey: 'core.department.list', clientKeys: ['admin-web'] },
+  'tenant.roles.list': { componentKey: 'core.role.list', clientKeys: ['admin-web'] },
+  'tenant.governance.workbench': { componentKey: 'core.governance.workbench', clientKeys: ['admin-web'] },
+  'tenant.modules.list': { componentKey: 'core.module.list', clientKeys: ['admin-web'] },
+  'tenant.audit.list': { componentKey: 'core.audit.list', clientKeys: ['admin-web'] },
+  'platform.tenants.list': { componentKey: 'platform.tenant.list', clientKeys: ['platform-web'] },
+  'platform.operators.list': { componentKey: 'platform.operator.list', clientKeys: ['platform-web'] },
+  'platform.roles.list': { componentKey: 'platform.role.list', clientKeys: ['platform-web'] },
+  'platform.governance.workbench': { componentKey: 'platform.governance.workbench', clientKeys: ['platform-web'] },
+  'platform.audit.list': { componentKey: 'platform.audit.list', clientKeys: ['platform-web'] },
+  'platform.upgrade.status': { componentKey: 'platform.upgrade.status', clientKeys: ['platform-web'] },
+  'peanut.settings.list': { componentKey: 'peanut.settings.page', clientKeys: ['admin-web'] },
+  'peanut.reference-codes.list': { componentKey: 'peanut.reference-codes.page', clientKeys: ['admin-web'] },
+  'peanut.file-media.list': { componentKey: 'peanut.file-media.page', clientKeys: ['admin-web'] },
+  'example-target-list': { componentKey: 'example.target.list', clientKeys: ['admin-web'] },
+  'example-reference-list': { componentKey: 'example.reference.list', clientKeys: ['admin-web'] },
+  'example-work-item-list': { componentKey: 'example.work-item.list', clientKeys: ['admin-web'] },
+  'example-work-item-policy': { componentKey: 'example.work-item.policy', clientKeys: ['admin-web'] },
+}
 
 export const APP_MODULES = [
   exampleTargetModule,

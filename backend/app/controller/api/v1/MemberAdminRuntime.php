@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\v1;
 
+use InvalidArgumentException;
 use PDO;
+use PeanutAdmin\Kernel\Audit\AuditOutcome;
+use PeanutAdmin\Kernel\Audit\GovernanceAuditFilter;
 use PeanutAdmin\DataPermission\Exception\DataAuthorizationException;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
@@ -65,11 +68,45 @@ final class MemberAdminRuntime
         );
     }
 
+    public static function auditFilter(Request $request): GovernanceAuditFilter
+    {
+        $outcome = self::queryString($request, 'outcome');
+        $parsedOutcome = $outcome === null ? null : AuditOutcome::tryFrom($outcome);
+        if ($outcome !== null && $parsedOutcome === null) {
+            throw AdminAccessException::invalid('AUDIT_FILTER_INVALID', 'The audit filter is invalid.');
+        }
+        try {
+            return new GovernanceAuditFilter(
+                self::queryString($request, 'event_type'),
+                self::queryString($request, 'action'),
+                $parsedOutcome,
+                self::queryString($request, 'request_id'),
+                self::queryString($request, 'target_type'),
+                self::queryString($request, 'target_id'),
+            );
+        } catch (InvalidArgumentException) {
+            throw AdminAccessException::invalid('AUDIT_FILTER_INVALID', 'The audit filter is invalid.');
+        }
+    }
+
     public static function header(Request $request, string $name): ?string
     {
         $value = $request->header($name);
 
         return is_string($value) ? $value : null;
+    }
+
+    private static function queryString(Request $request, string $name): ?string
+    {
+        $value = $request->get($name);
+        if ($value === null) {
+            return null;
+        }
+        if (!is_string($value)) {
+            throw AdminAccessException::invalid('AUDIT_FILTER_INVALID', 'The audit filter is invalid.');
+        }
+
+        return $value;
     }
 
     /**

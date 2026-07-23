@@ -219,12 +219,18 @@ final class ProjectGenerator
         } catch (Throwable) {
             $baseline = null;
         }
-        $commit = is_array($baseline) ? ($baseline['input_commit'] ?? null) : null;
-        $tree = is_array($baseline) ? ($baseline['input_tree'] ?? null) : null;
+        $anchor = is_array($baseline) ? ($baseline['content_anchor'] ?? null) : null;
+        $commit = is_array($anchor) ? ($anchor['commit'] ?? null) : null;
+        $tree = is_array($anchor) ? ($anchor['tree'] ?? null) : null;
+        $packageIdentity = is_array($baseline) ? ($baseline['package_identity'] ?? null) : null;
+        $packageCommit = is_array($packageIdentity) ? ($packageIdentity['commit'] ?? null) : null;
+        $packageTree = is_array($packageIdentity) ? ($packageIdentity['tree'] ?? null) : null;
         $content = is_array($baseline) ? ($baseline['controlled_content'] ?? null) : null;
-        if (($baseline['schema_version'] ?? null) !== 2
+        if (($baseline['schema_version'] ?? null) !== 3
             || !is_string($commit) || preg_match('/^[0-9a-f]{40}$/D', $commit) !== 1
             || !is_string($tree) || preg_match('/^[0-9a-f]{40}$/D', $tree) !== 1
+            || !is_string($packageCommit) || preg_match('/^[0-9a-f]{40}$/D', $packageCommit) !== 1
+            || !is_string($packageTree) || preg_match('/^[0-9a-f]{40}$/D', $packageTree) !== 1
             || !is_array($content)
             || ($content['algorithm'] ?? null) !== 'sha256-git-blob-manifest-v1'
             || !is_int($content['file_count']) || $content['file_count'] < 1
@@ -253,6 +259,11 @@ final class ProjectGenerator
                 throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline commit and tree do not match.');
             }
             $this->git(['merge-base', '--is-ancestor', $commit, $head]);
+            $packageCommitObject = trim($this->git(['rev-parse', $packageCommit . '^{commit}']));
+            $packageTreeObject = trim($this->git(['rev-parse', $packageCommit . '^{tree}']));
+            if (!hash_equals($packageCommit, $packageCommitObject) || !hash_equals($packageTree, $packageTreeObject)) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package release identity does not match.');
+            }
             $committed = $this->controlledGitManifest($commit);
             if ($committed !== $expected) {
                 throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline controlled-content digest does not match its commit.');
@@ -264,7 +275,9 @@ final class ProjectGenerator
             throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Generator controlled source differs from the fixed baseline.');
         }
 
-        return ['input_commit' => $commit, 'input_tree' => $tree];
+        return file_exists($this->sourceRoot . '/.git')
+            ? ['input_commit' => $head, 'input_tree' => $headTree]
+            : ['input_commit' => $packageCommit, 'input_tree' => $packageTree];
     }
 
     /** @return list<string> */

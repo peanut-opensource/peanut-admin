@@ -21,6 +21,7 @@ final readonly class ReleaseManifest
     /** @param array<string, mixed> $data */
     public static function fromArray(array $data): self
     {
+        self::exactKeys($data, ['schema_version', 'release_id', 'source', 'target', 'migrations']);
         if (($data['schema_version'] ?? null) !== 1
             || !is_string($data['release_id'] ?? null)
             || preg_match('/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/D', $data['release_id']) !== 1) {
@@ -35,6 +36,7 @@ final readonly class ReleaseManifest
         if (!is_array($migrations) || !is_array($migrations['source'] ?? null) || !is_array($migrations['target'] ?? null)) {
             throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
         }
+        self::exactKeys($migrations, ['source', 'target']);
 
         /** @var list<array{owner: string, key: string, checksum: string}> $sourceEntries */
         $sourceEntries = array_values($migrations['source']);
@@ -87,6 +89,7 @@ final readonly class ReleaseManifest
         if (!is_array($value)) {
             throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
         }
+        self::exactKeys($value, ['commit', 'tree']);
         $commit = $value['commit'] ?? null;
         $tree = $value['tree'] ?? null;
         if (!is_string($commit) || preg_match('/^[a-f0-9]{40}$/D', $commit) !== 1
@@ -95,5 +98,18 @@ final readonly class ReleaseManifest
         }
 
         return ['commit' => $commit, 'tree' => $tree];
+    }
+
+    /** @param array<string, mixed> $value
+     *  @param list<string> $expected
+     */
+    private static function exactKeys(array $value, array $expected): void
+    {
+        $keys = array_keys($value);
+        sort($keys, SORT_STRING);
+        sort($expected, SORT_STRING);
+        if ($keys !== $expected) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
     }
 }

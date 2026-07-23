@@ -36,11 +36,13 @@ does not run Composer or pnpm, initialize Git, create a remote, or contact a
 network service.
 
 Generation also fails before creating or claiming the target when its source is
-dirty or has drifted from `tools/project-generator/source-baseline.json`. In a
-Git checkout, the fixed commit/tree, ancestry, clean HEAD, and controlled source
-digest are verified. A release archive without `.git` must contain the same
-baseline-fixed controlled source digest; editing the copied starter or package
-snapshot invalidates it.
+dirty or has drifted from `tools/project-generator/source-baseline.json`. The
+baseline separates a non-self-referential controlled-content anchor from the
+package release identity. In a Git checkout, ancestry, clean HEAD, and the
+controlled source digest are verified, and generated metadata records the
+actual HEAD commit/tree. A release archive without `.git` records its explicit
+package identity after verifying the same controlled digest; editing the copied
+starter or package snapshot invalidates it.
 
 The generated `peanut-project.json` is deterministic and records:
 

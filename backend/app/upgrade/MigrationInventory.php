@@ -14,6 +14,11 @@ final readonly class MigrationInventory
     {
         $normalized = [];
         foreach ($entries as $entry) {
+            $keys = is_array($entry) ? array_keys($entry) : [];
+            sort($keys, SORT_STRING);
+            if ($keys !== ['checksum', 'key', 'owner']) {
+                throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+            }
             $owner = $entry['owner'] ?? '';
             $key = $entry['key'] ?? '';
             $checksum = $entry['checksum'] ?? '';

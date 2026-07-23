@@ -4,6 +4,13 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+PHP_BIN="${PEANUT_PHP83:-php}"
+COMPOSER_AUTOLOAD="${PEANUT_COMPOSER_AUTOLOAD:-$ROOT/vendor/autoload.php}"
+if [[ ! -f "$COMPOSER_AUTOLOAD" ]]; then
+  echo "ERROR: Composer autoload is unavailable; set PEANUT_COMPOSER_AUTOLOAD to an existing vendor/autoload.php." >&2
+  exit 1
+fi
+
 write=false
 if [[ "${1:-}" == '--write' ]]; then
   write=true
@@ -152,8 +159,8 @@ const compareRoutes = (left, right) => {
   return leftSegments.length - rightSegments.length
 }
 routes.sort(compareRoutes)
-if (routes.length !== 96) {
-  throw new Error(`Expected 96 classified P0/P1 operations, found ${routes.length}`)
+if (routes.length !== 101) {
+  throw new Error(`Expected 101 classified P0/P1 operations, found ${routes.length}`)
 }
 const operationIds = new Set(routes.map(route => route.operationId))
 if (operationIds.size !== routes.length) {
@@ -265,8 +272,8 @@ else
   }
 fi
 
-php -r '
-require "vendor/autoload.php";
+"$PHP_BIN" -r '
+require $argv[1];
 $routes = require "backend/route/openapi-generated.php";
 $seen = [];
 foreach ($routes as $route => $binding) {
@@ -341,6 +348,6 @@ foreach ($routes as $route => $binding) {
         exit(1);
     }
 }
-'
+' "$COMPOSER_AUTOLOAD"
 
 echo 'OpenAPI contract: OK'

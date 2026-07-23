@@ -6,7 +6,7 @@
     "type": "page",
     "name": "Settings",
     "route_name": "peanut.settings.list",
-    "route_path": "/settings",
+    "route_path": "/app/settings",
     "component_key": "peanut.settings.page",
     "required_permission": "peanut.settings.read",
     "icon": "Settings",

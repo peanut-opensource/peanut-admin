@@ -29,6 +29,8 @@ return [
         'GET /api/v1/modules' => 'core.module.read',
         'PATCH /api/v1/modules/{module_key}/config' => 'core.module.configure',
         'GET /api/v1/audit-events' => 'core.audit.read',
+        'GET /api/v1/audit-events/{event_id}' => 'core.audit.read',
+        'GET /api/v1/menu-diagnostics' => 'core.role.read',
     ],
     'platform_routes' => [
         'GET /api/platform/v1/tenants' => 'platform.tenant.read',
@@ -58,5 +60,8 @@ return [
         'PUT /api/platform/v1/roles/{role_id}/permissions' => 'platform.role.permission.assign',
         'GET /api/platform/v1/permissions' => 'platform.permission.read',
         'GET /api/platform/v1/audit-events' => 'platform.audit.read',
+        'GET /api/platform/v1/audit-events/{event_id}' => 'platform.audit.read',
+        'GET /api/platform/v1/menu-diagnostics' => 'platform.role.read',
+        'GET /api/platform/v1/upgrade' => 'platform.upgrade.read',
     ],
 ];

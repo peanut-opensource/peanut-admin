@@ -23,6 +23,10 @@ final readonly class BackupManifest
     /** @param array<string, mixed> $data */
     public static function fromArray(array $data): self
     {
+        self::exactKeys($data, [
+            'schema_version', 'backup_id', 'environment', 'source', 'artifact_sha256',
+            'created_at', 'verified_at', 'restore_tested_at',
+        ]);
         if (($data['schema_version'] ?? null) !== 1
             || !is_string($data['backup_id'] ?? null)
             || preg_match('/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/D', $data['backup_id']) !== 1
@@ -38,6 +42,7 @@ final readonly class BackupManifest
             || !is_string($source['tree'] ?? null) || preg_match('/^[a-f0-9]{40}$/D', $source['tree']) !== 1) {
             throw new UpgradeFailure('UPGRADE_BACKUP_MANIFEST_INVALID');
         }
+        self::exactKeys($source, ['commit', 'tree']);
         $timestamps = [];
         $normalizedTimestamps = [];
         foreach (['created_at', 'verified_at', 'restore_tested_at'] as $field) {
@@ -116,5 +121,18 @@ final readonly class BackupManifest
         }
 
         return [$timestamp, $timestamp->setTimezone(new \DateTimeZone('UTC'))->format('Y-m-d\TH:i:s.u\Z')];
+    }
+
+    /** @param array<string, mixed> $value
+     *  @param list<string> $expected
+     */
+    private static function exactKeys(array $value, array $expected): void
+    {
+        $keys = array_keys($value);
+        sort($keys, SORT_STRING);
+        sort($expected, SORT_STRING);
+        if ($keys !== $expected) {
+            throw new UpgradeFailure('UPGRADE_BACKUP_MANIFEST_INVALID');
+        }
     }
 }

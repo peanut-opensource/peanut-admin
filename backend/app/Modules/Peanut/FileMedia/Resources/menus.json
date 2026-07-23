@@ -6,7 +6,7 @@
     "type": "page",
     "name": "Files",
     "route_name": "peanut.file-media.list",
-    "route_path": "/files",
+    "route_path": "/app/files",
     "component_key": "peanut.file-media.page",
     "required_permission": "peanut.file-media.read",
     "icon": "Files",

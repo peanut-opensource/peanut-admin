@@ -150,10 +150,32 @@
         "packages/web/file-media/tests/page.spec.ts",
         "frontend/tests/file-media-page.spec.ts"
       ]
+    },
+    "RUNTIME-GOVERNANCE-001": {
+      "description": "Tenant and platform governance menu diagnostics plus redacted audit detail behavior",
+      "evidence": [
+        "packages/php/kernel/tests/Unit/Governance/GovernanceWorkbenchTest.php",
+        "backend/tests/Unit/MenuDiagnosticRuntimeTest.php",
+        "frontend/tests/stage-a-integration.spec.ts",
+        "backend/tests/Contract/OpenApiArtifactTest.php"
+      ]
+    },
+    "RUNTIME-UPGRADE-001": {
+      "description": "Read-only platform upgrade readiness projection backed by operator-controlled preflight evidence",
+      "evidence": [
+        "backend/tests/Upgrade/UpgradeStatusServiceTest.php",
+        "backend/tests/Contract/OpenApiArtifactTest.php",
+        "frontend/tests/stage-a-integration.spec.ts"
+      ]
     }
   },
   "operations": [
     {"operation_id":"disablePlatformTenantModule","scope":"p0","route":"DELETE /api/platform/v1/tenants/{tenant_id}/modules/{module_key}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformTenantController::disableModule","response_schema":"#/components/schemas/TenantModuleResponse","test_owner":"RUNTIME-PLATFORM-TENANT-001"},
+    {"operation_id":"getPlatformAuditEvent","scope":"p1","route":"GET /api/platform/v1/audit-events/{event_id}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformWorkspaceController::auditEvent","response_schema":"#/components/schemas/PlatformAuditEventResponse","test_owner":"RUNTIME-GOVERNANCE-001"},
+    {"operation_id":"listPlatformMenuDiagnostics","scope":"p1","route":"GET /api/platform/v1/menu-diagnostics","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformWorkspaceController::menuDiagnostics","response_schema":"#/components/schemas/MenuDiagnosticListResponse","test_owner":"RUNTIME-GOVERNANCE-001"},
+    {"operation_id":"getPlatformUpgradeStatus","scope":"p1","route":"GET /api/platform/v1/upgrade","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\UpgradeStatusController::show","response_schema":"#/components/schemas/UpgradeStatusResponse","test_owner":"RUNTIME-UPGRADE-001"},
+    {"operation_id":"getTenantAuditEvent","scope":"p1","route":"GET /api/v1/audit-events/{event_id}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\TenantWorkspaceController::auditEvent","response_schema":"#/components/schemas/TenantAuditEventResponse","test_owner":"RUNTIME-GOVERNANCE-001"},
+    {"operation_id":"listTenantMenuDiagnostics","scope":"p1","route":"GET /api/v1/menu-diagnostics","handler":"PeanutAdmin\\App\\controller\\api\\v1\\TenantWorkspaceController::menuDiagnostics","response_schema":"#/components/schemas/MenuDiagnosticListResponse","test_owner":"RUNTIME-GOVERNANCE-001"},
     {"operation_id":"listPlatformAuditEvents","scope":"p0","route":"GET /api/platform/v1/audit-events","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformWorkspaceController::auditEvents","response_schema":"#/components/schemas/PlatformAuditListResponse","test_owner":"RUNTIME-PLATFORM-WORKSPACE-001"},
     {"operation_id":"getPlatformContext","scope":"p0","route":"GET /api/platform/v1/auth/context","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformAuthController::context","response_schema":"#/components/schemas/PlatformContextResponse","test_owner":"RUNTIME-PLATFORM-AUTH-001"},
     {"operation_id":"getPlatformMenus","scope":"p0","route":"GET /api/platform/v1/menus","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformWorkspaceController::menus","response_schema":"#/components/schemas/MenuListResponse","test_owner":"RUNTIME-PLATFORM-WORKSPACE-001"},

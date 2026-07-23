@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\platform\v1;
 
+use PeanutAdmin\App\controller\api\MenuDiagnosticRuntime;
 use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use PeanutAdmin\Kernel\Authorization\Application\AdminAccessException;
@@ -103,7 +104,20 @@ final class PlatformWorkspaceController
         return MemberAdminRuntime::run($request, function () use ($request): array {
             $this->context($request);
 
-            return $this->pageResult($request, $this->service()->auditEvents(MemberAdminRuntime::page($request)));
+            return $this->pageResult($request, $this->service()->auditEvents(
+                MemberAdminRuntime::page($request),
+                MemberAdminRuntime::auditFilter($request),
+            ));
+        });
+    }
+
+    #[OpenApiHandlerContract]
+    public function auditEvent(Request $request, string $eventId): Response
+    {
+        return MemberAdminRuntime::run($request, function () use ($request, $eventId): array {
+            $this->context($request);
+
+            return ['data' => $this->service()->auditEvent($eventId)];
         });
     }
 
@@ -129,6 +143,32 @@ final class PlatformWorkspaceController
             );
 
             return ['data' => $this->tree($visible)];
+        });
+    }
+
+    #[OpenApiHandlerContract]
+    public function menuDiagnostics(Request $request): Response
+    {
+        return MemberAdminRuntime::run($request, function () use ($request): array {
+            $context = $this->context($request);
+            $pdo = MemberAdminRuntime::pdo();
+            $repository = new PdoMenuCatalogRepository($pdo);
+            $deployment = array_fill_keys($repository->activeDeploymentModules(), true);
+            $permissions = new PlatformAuthorizationEvaluator(
+                new PdoPlatformAuthorizationRepository($pdo),
+                new RevisionPermissionCache(),
+            );
+            $available = static fn(string $module): bool => in_array($module, ['core', 'platform'], true)
+                || isset($deployment[$module]);
+
+            return ['data' => MenuDiagnosticRuntime::explain(
+                $repository->activeDefinitions('platform'),
+                'platform',
+                $context->clientKey,
+                $available,
+                $available,
+                static fn(string $permission): bool => $permissions->allows($context, $permission),
+            )];
         });
     }
 
@@ -186,10 +226,14 @@ final class PlatformWorkspaceController
         $render = function (MenuDefinition $definition) use (&$render, $children): array {
             return [
                 'key' => $definition->key,
+                'module_key' => $definition->moduleKey,
                 'type' => $definition->type,
                 'name' => $definition->name,
                 'route_name' => $definition->routeName,
                 'route_path' => $definition->routePath,
+                'component_key' => $definition->componentKey,
+                'required_permission' => $definition->requiredPermission,
+                'client_keys' => $definition->clientKeys,
                 'icon' => $definition->icon,
                 'children' => array_map($render, $children[$definition->key] ?? []),
             ];

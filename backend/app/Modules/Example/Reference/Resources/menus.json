@@ -6,7 +6,7 @@
     "type": "page",
     "name": "Example References",
     "route_name": "example-reference-list",
-    "route_path": "/examples/references",
+    "route_path": "/app/examples/references",
     "component_key": "example.reference.list",
     "required_permission": "example.reference.read",
     "icon": "BookOpen",

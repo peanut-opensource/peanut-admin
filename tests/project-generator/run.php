@@ -38,6 +38,29 @@ function runGenerator(string $root, array $arguments): array
     ];
 }
 
+function gitValue(string $root, string $revision): string
+{
+    $pipes = [];
+    $process = proc_open(['git', '-C', $root, 'rev-parse', $revision], [
+        0 => ['pipe', 'r'],
+        1 => ['pipe', 'w'],
+        2 => ['pipe', 'w'],
+    ], $pipes, $root);
+    if (!is_resource($process)) {
+        throw new RuntimeException('Could not inspect generator source identity.');
+    }
+    fclose($pipes[0]);
+    $stdout = stream_get_contents($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    if (proc_close($process) !== 0 || !is_string($stdout)) {
+        throw new RuntimeException('Could not inspect generator source identity: ' . $stderr);
+    }
+
+    return trim($stdout);
+}
+
 /** @return list<string> */
 function validArguments(string $target): array
 {
@@ -265,6 +288,26 @@ try {
     );
     (new ProjectGenerator($packageSource))->generate($packageRequest);
     assertTrue(is_file($packageTarget . '/peanut-project.json'), 'Validated no-Git package did not generate.');
+    $baseline = json_decode(
+        (string) file_get_contents($root . '/tools/project-generator/source-baseline.json'),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
+    $packageMetadata = json_decode(
+        (string) file_get_contents($packageTarget . '/peanut-project.json'),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
+    assertTrue(
+        ($packageMetadata['peanut_admin']['input_commit'] ?? null) === ($baseline['package_identity']['commit'] ?? null),
+        'No-Git package commit identity drifted.',
+    );
+    assertTrue(
+        ($packageMetadata['peanut_admin']['input_tree'] ?? null) === ($baseline['package_identity']['tree'] ?? null),
+        'No-Git package tree identity drifted.',
+    );
 
     file_put_contents($packageSource . '/starter/frontend/src/App.vue', "\nsource drift\n", FILE_APPEND);
     $driftTarget = $temporaryRoot . '/drift-output';
@@ -313,8 +356,12 @@ try {
 
     $metadata = json_decode((string) file_get_contents($first . '/peanut-project.json'), true, 512, JSON_THROW_ON_ERROR);
     assertTrue(($metadata['schema_version'] ?? null) === 1, 'Generator schema is missing.');
-    assertTrue(($metadata['peanut_admin']['input_commit'] ?? null) === '1865be64048cb0f79ce374e76e8407faca7d21d1', 'Input commit drifted.');
-    assertTrue(($metadata['peanut_admin']['input_tree'] ?? null) === 'd7b8c4550604a16f344432a0c0b3c8accb3f451f', 'Input tree drifted.');
+    $headCommit = gitValue($root, 'HEAD^{commit}');
+    $headTree = gitValue($root, 'HEAD^{tree}');
+    assertTrue(preg_match('/^[0-9a-f]{40}$/D', $headCommit) === 1, 'Git HEAD commit identity is unavailable.');
+    assertTrue(preg_match('/^[0-9a-f]{40}$/D', $headTree) === 1, 'Git HEAD tree identity is unavailable.');
+    assertTrue(($metadata['peanut_admin']['input_commit'] ?? null) === $headCommit, 'Input commit drifted.');
+    assertTrue(($metadata['peanut_admin']['input_tree'] ?? null) === $headTree, 'Input tree drifted.');
     assertTrue(($metadata['project']['features'] ?? null) === ['settings', 'file-media'], 'Features are not canonical.');
     assertTrue(($metadata['secrets']['embedded'] ?? null) === false, 'Metadata claims embedded secrets.');
     assertTrue(!file_exists($first . '/.peanut-project-generation'), 'Ownership marker leaked into output.');
