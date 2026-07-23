@@ -15,7 +15,6 @@ final readonly class ReleaseManifest
         public array $target,
         public MigrationInventory $sourceMigrations,
         public MigrationInventory $targetMigrations,
-        public ?string $releaseRegistrySha256,
         public string $manifestDigest,
     ) {}
 
@@ -41,11 +40,6 @@ final readonly class ReleaseManifest
         $sourceEntries = array_values($migrations['source']);
         /** @var list<array{owner: string, key: string, checksum: string}> $targetEntries */
         $targetEntries = array_values($migrations['target']);
-        $registryDigest = $data['release_registry_sha256'] ?? null;
-        if ($registryDigest !== null
-            && (!is_string($registryDigest) || preg_match('/^[a-f0-9]{64}$/D', $registryDigest) !== 1)) {
-            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
-        }
         $sourceMigrations = new MigrationInventory($sourceEntries);
         $targetMigrations = new MigrationInventory($targetEntries);
         $normalized = [
@@ -57,7 +51,6 @@ final readonly class ReleaseManifest
                 'source' => $sourceMigrations->entries,
                 'target' => $targetMigrations->entries,
             ],
-            'release_registry_sha256' => $registryDigest,
         ];
 
         return new self(
@@ -66,7 +59,6 @@ final readonly class ReleaseManifest
             $target,
             $sourceMigrations,
             $targetMigrations,
-            $registryDigest,
             hash('sha256', json_encode($normalized, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)),
         );
     }

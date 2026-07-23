@@ -12,7 +12,6 @@ use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
 use PeanutAdmin\App\upgrade\UpgradePreflight;
-use PeanutAdmin\App\upgrade\UpgradeTargetVerifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -200,6 +199,7 @@ SQL));
         $root = dirname(__DIR__, 3);
         $temporary = sys_get_temp_dir() . '/peanut-admin-p1-b03-old-lock-' . bin2hex(random_bytes(8));
         $oldRoot = $temporary . '/old-lock';
+        $targetRoot = $temporary . '/target';
         $backup = $temporary . '/pre-upgrade-backup';
         $runner = $temporary . '/old-lock-runner.php';
         self::assertTrue(mkdir($temporary, 0700, true));
@@ -207,6 +207,7 @@ SQL));
 
         $worktreeAttached = false;
         try {
+            $this->runCommand(['git', 'clone', '--quiet', '--no-hardlinks', $root, $targetRoot], $root);
             $this->runCommand(['git', 'worktree', 'add', '--detach', $oldRoot, self::OLD_LOCK], $root);
             $worktreeAttached = true;
             self::assertSame(self::OLD_LOCK, $this->runCommand(['git', 'rev-parse', 'HEAD'], $oldRoot));
@@ -230,7 +231,8 @@ SQL));
             self::assertFileExists($backup . '/dump.sql');
 
             $preUpgradeTableSignatures = $this->tableSignatures($this->database);
-            $upgrade = $this->evidenceBoundWorkflow($root)->run($this->upgradePlan($root, $oldRoot));
+            $upgrade = (new UpgradeWorkflow($targetRoot, $this->database))
+                ->run($this->upgradePlan($targetRoot, $oldRoot));
             self::assertSame(8, $upgrade['applied_module_migrations']);
             self::assertSame(4, $this->settingsTableCount($this->database));
             self::assertSame(self::SETTINGS_MIGRATIONS, $this->columnValues(
@@ -324,17 +326,6 @@ SQL));
             'OLD_LOCK_FIXTURE_PASSWORD' => self::FIXTURE_PASSWORD,
             'OLD_LOCK_FIXTURE_TENANT' => self::FIXTURE_TENANT,
         ];
-    }
-
-    private function evidenceBoundWorkflow(string $root): UpgradeWorkflow
-    {
-        $verifier = new class implements UpgradeTargetVerifier {
-            public function verify(string $root, UpgradePlan $plan): void
-            {
-            }
-        };
-
-        return new UpgradeWorkflow($root, $this->database, $verifier);
     }
 
     private function upgradePlan(string $root, string $oldRoot): UpgradePlan

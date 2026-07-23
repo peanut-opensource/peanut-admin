@@ -9,26 +9,39 @@ use PeanutAdmin\App\command\UpgradeWorkflow;
 use PeanutAdmin\App\upgrade\BackupManifest;
 use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\ReleaseManifest;
+use PeanutAdmin\App\upgrade\RepositoryInspector;
 use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
 use PeanutAdmin\App\upgrade\UpgradePreflight;
-use PeanutAdmin\App\upgrade\UpgradeTargetVerifier;
 use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
 use PeanutAdmin\Kernel\Module\ModuleException;
-use Phinx\Config\Config;
-use Phinx\Migration\Manager;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use think\console\Input;
-use think\migration\NullOutput;
 
 final class UpgradeWorkflowIntegrationTest extends TestCase
 {
     private const DATABASE = 'peanut_admin_ops_upgrade_test';
+    private const OLD_RELEASE = '0ab02a9b735ba9f4c23509cb366b9bf04039ebf8';
 
     private PDO $admin;
     private PDO $database;
+    private static string $repositoryRoot;
+
+    public static function setUpBeforeClass(): void
+    {
+        self::$repositoryRoot = '/private/tmp/peanut-upgrade-git-' . bin2hex(random_bytes(8));
+        self::runCommand([
+            'git', 'clone', '--quiet', '--no-hardlinks', dirname(__DIR__, 3), self::$repositoryRoot,
+        ]);
+    }
+
+    public static function tearDownAfterClass(): void
+    {
+        if (isset(self::$repositoryRoot)) {
+            self::removeDirectory(self::$repositoryRoot);
+        }
+    }
 
     protected function setUp(): void
     {
@@ -56,7 +69,7 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
 
     public function testUpgradeRunsKernelDataAndModulesInDependencyOrderAndIsIdempotent(): void
     {
-        $root = dirname(__DIR__, 3);
+        $root = self::$repositoryRoot;
         $workflow = new UpgradeWorkflow($root, $this->database);
 
         $first = $workflow->installEmptyDatabase();
@@ -112,18 +125,11 @@ SQL));
 
     public function testEvidenceBoundUpgradeRejectsTheWrongSourceDatabaseBeforeMutation(): void
     {
-        $root = dirname(__DIR__, 3);
-        $target = (new TargetMigrationInventory())->scan($root);
-        $sourceEntry = array_values(array_filter(
-            $target->entries,
-            static fn(array $entry): bool => $entry['owner'] === 'kernel'
-                && $entry['key'] === '20260716010101_create_pa_account',
-        ));
-        self::assertCount(1, $sourceEntry);
-        $source = new MigrationInventory($sourceEntry);
+        $root = self::$repositoryRoot;
+        $source = $this->sourceInventory($root);
 
         try {
-            $this->upgradeWorkflow($root)->run($this->plan($root, $source));
+            (new UpgradeWorkflow($root, $this->database))->run($this->plan($root, $source));
         } catch (ModuleException $exception) {
             self::assertSame('UPGRADE_SOURCE_DATABASE_MISMATCH', $exception->errorCode);
             self::assertSame(0, $this->scalar(<<<'SQL'
@@ -139,7 +145,7 @@ SQL));
 
     public function testAppliedMigrationChecksumDriftStopsBeforeFurtherChanges(): void
     {
-        $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
+        $workflow = new UpgradeWorkflow(self::$repositoryRoot, $this->database);
         $workflow->installEmptyDatabase();
         $this->database->exec(
             "UPDATE pa_module_migration SET checksum = REPEAT('0', 64)"
@@ -160,38 +166,31 @@ SQL));
         self::fail('Checksum drift must stop the upgrade.');
     }
 
-    public function testOldKernelSchemaUpgradesToTheCurrentRelease(): void
+    public function testEvidenceBoundOldReleaseUpgradesToCurrentAndRepeatsAsNoop(): void
     {
-        $root = dirname(__DIR__, 3);
-        $manager = new Manager(new Config([
-            'paths' => ['migrations' => $root . '/packages/php/kernel/database/migrations'],
-            'environments' => [
-                'default_environment' => 'kernel',
-                'kernel' => [
-                    'adapter' => 'mysql',
-                    'connection' => $this->database,
-                    'name' => self::DATABASE,
-                    'migration_table' => 'pa_kernel_migration',
-                ],
-            ],
-            'version_order' => Config::VERSION_ORDER_CREATION_TIME,
-        ]), new Input([]), new NullOutput());
-        $manager->migrate('kernel', 20260716010110);
+        $root = self::$repositoryRoot;
+        $oldRoot = '/private/tmp/peanut-upgrade-old-' . bin2hex(random_bytes(8));
+        try {
+            self::runCommand(['git', 'clone', '--quiet', '--no-hardlinks', $root, $oldRoot]);
+            self::runCommand(['git', '-C', $oldRoot, 'checkout', '--quiet', '--detach', self::OLD_RELEASE]);
+            $old = $this->installOldRelease($oldRoot);
+            $source = (new TargetMigrationInventory())->scan($oldRoot);
 
-        $target = (new TargetMigrationInventory())->scan($root);
-        $source = new MigrationInventory(array_values(array_filter(
-            $target->entries,
-            static fn(array $entry): bool => $entry['owner'] === 'kernel'
-                && strcmp($entry['key'], '20260716010110_create_pa_tenant_member') <= 0,
-        )));
-        $result = $this->upgradeWorkflow($root)->run($this->plan($root, $source));
+            $result = (new UpgradeWorkflow($root, $this->database))->run(
+                $this->plan($root, $source, $oldRoot),
+            );
+            $repeat = (new UpgradeWorkflow($root, $this->database))->assertCurrentReleaseNoop();
 
-        self::assertSame(11, $result['applied_module_migrations']);
-        self::assertSame(38, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
-        self::assertSame(1, $this->scalar(
-            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
-            . self::DATABASE . "' AND table_name = 'pa_example_work_item'",
-        ));
+            self::assertSame(3, $old['applied_module_migrations']);
+            self::assertSame(8, $result['applied_module_migrations']);
+            self::assertSame(0, $repeat['applied_module_migrations']);
+            self::assertSame(1, $this->scalar(
+                "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
+                . self::DATABASE . "' AND table_name = 'pa_file_object'",
+            ));
+        } finally {
+            self::removeDirectory($oldRoot);
+        }
     }
 
     public function testConcurrentUpgradeLockFailsBeforeChangingSchema(): void
@@ -203,7 +202,7 @@ SQL));
 
         try {
             (new UpgradeWorkflow(
-                dirname(__DIR__, 3),
+                self::$repositoryRoot,
                 $this->connect('DB_PORT', self::DATABASE),
             ))->installEmptyDatabase();
         } catch (ModuleException $exception) {
@@ -224,7 +223,7 @@ SQL));
 
     public function testCurrentReleaseNoopRejectsDefinitionDigestDrift(): void
     {
-        $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
+        $workflow = new UpgradeWorkflow(self::$repositoryRoot, $this->database);
         $workflow->installEmptyDatabase();
         $this->database->exec("UPDATE pa_setting_definition SET definition_digest = REPEAT('0', 64) LIMIT 1");
 
@@ -241,7 +240,7 @@ SQL));
 
     public function testCurrentReleaseNoopRejectsAnExtraModuleInstallation(): void
     {
-        $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
+        $workflow = new UpgradeWorkflow(self::$repositoryRoot, $this->database);
         $workflow->installEmptyDatabase();
         $this->database->exec(<<<'SQL'
 INSERT INTO pa_module_installation (
@@ -261,25 +260,50 @@ SQL);
         self::fail('An extra Module installation must not be accepted as current.');
     }
 
-    private function upgradeWorkflow(string $root): UpgradeWorkflow
+    public function testCurrentReleaseNoopAllowsRetiredHistoryButRequiresCurrentDefinitionsActive(): void
     {
-        $verifier = new class implements UpgradeTargetVerifier {
-            public function verify(string $root, UpgradePlan $plan): void
-            {
-            }
-        };
+        $workflow = new UpgradeWorkflow(self::$repositoryRoot, $this->database);
+        $workflow->installEmptyDatabase();
+        $this->database->exec(<<<'SQL'
+INSERT INTO pa_reference_code_set (
+  module_key, set_key, name, description, definition_digest,
+  lifecycle, revision, created_at, updated_at
+) VALUES (
+  'retired.module', 'legacy', 'Legacy', 'Retired history', REPEAT('a', 64),
+  'retired', 1, NOW(3), NOW(3)
+)
+SQL);
 
-        return new UpgradeWorkflow($root, $this->database, $verifier);
+        self::assertSame(0, $workflow->assertCurrentReleaseNoop()['applied_module_migrations']);
+
+        $this->database->exec("UPDATE pa_setting_definition SET status = 'retired' LIMIT 1");
+        try {
+            $workflow->assertCurrentReleaseNoop();
+        } catch (ModuleException $exception) {
+            self::assertSame('UPGRADE_EVIDENCE_REQUIRED', $exception->errorCode);
+
+            return;
+        }
+
+        self::fail('A definition required by the current registry must remain active.');
     }
 
-    private function plan(string $root, MigrationInventory $source): UpgradePlan
+    private function plan(string $root, MigrationInventory $source, ?string $sourceRoot = null): UpgradePlan
     {
         $target = (new TargetMigrationInventory())->scan($root);
+        $sourceRepository = $sourceRoot ?? $root;
+        $sourceRevision = $sourceRoot === null ? 'HEAD^' : 'HEAD';
+        $sourceCommit = self::runCommand(['git', '-C', $sourceRepository, 'rev-parse', $sourceRevision]);
+        $sourceTree = self::runCommand([
+            'git', '-C', $sourceRepository, 'rev-parse', $sourceCommit . '^{tree}',
+        ]);
+        $targetCommit = self::runCommand(['git', '-C', $root, 'rev-parse', 'HEAD']);
+        $targetTree = self::runCommand(['git', '-C', $root, 'rev-parse', 'HEAD^{tree}']);
         $release = ReleaseManifest::fromArray([
             'schema_version' => 1,
             'release_id' => 'integration-upgrade',
-            'source' => ['commit' => str_repeat('1', 40), 'tree' => str_repeat('2', 40)],
-            'target' => ['commit' => str_repeat('3', 40), 'tree' => str_repeat('4', 40)],
+            'source' => ['commit' => $sourceCommit, 'tree' => $sourceTree],
+            'target' => ['commit' => $targetCommit, 'tree' => $targetTree],
             'migrations' => ['source' => $source->entries, 'target' => $target->entries],
         ]);
         $backup = BackupManifest::fromArray([
@@ -300,6 +324,85 @@ SQL);
             $target,
             'test',
         );
+    }
+
+    /** @return array{modules: list<string>, applied_module_migrations: int} */
+    private function installOldRelease(string $root): array
+    {
+        $code = <<<'PHP'
+require $argv[1];
+$pdo = new PDO(
+    sprintf('mysql:host=127.0.0.1;port=%d;dbname=%s;charset=utf8mb4', getenv('DB_PORT'), getenv('DB_DATABASE')),
+    'root',
+    getenv('MYSQL_ROOT_PASSWORD') ?: 'peanut_admin_root_dev',
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+);
+$result = (new PeanutAdmin\App\command\UpgradeWorkflow($argv[2], $pdo))->installEmptyDatabase();
+fwrite(STDOUT, json_encode($result, JSON_THROW_ON_ERROR));
+PHP;
+        $command = [PHP_BINARY, '-r', $code, dirname(__DIR__, 3) . '/vendor/autoload.php', $root];
+        $environment = [
+            'DB_PORT' => (string) getenv('DB_PORT'),
+            'DB_DATABASE' => self::DATABASE,
+            'MYSQL_ROOT_PASSWORD' => (string) (getenv('MYSQL_ROOT_PASSWORD') ?: 'peanut_admin_root_dev'),
+        ];
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, null, $environment);
+        if (!is_resource($process)) {
+            self::fail('Old release installer could not start.');
+        }
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        self::assertSame(0, proc_close($process), (string) $stderr);
+        $result = json_decode((string) $stdout, true, 512, JSON_THROW_ON_ERROR);
+        self::assertIsArray($result);
+
+        /** @var array{modules: list<string>, applied_module_migrations: int} $result */
+        return $result;
+    }
+
+    private function sourceInventory(string $root): MigrationInventory
+    {
+        $sourceCommit = self::runCommand(['git', '-C', $root, 'rev-parse', 'HEAD^']);
+
+        return (new RepositoryInspector())->inventoryAtCommit($root, $sourceCommit);
+    }
+
+    /** @param list<string> $command */
+    private static function runCommand(array $command): string
+    {
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($process)) {
+            self::fail('Git fixture command could not start.');
+        }
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        $exit = proc_close($process);
+        self::assertSame(0, $exit, is_string($stderr) ? $stderr : 'Git fixture command failed.');
+
+        return trim((string) $stdout);
+    }
+
+    private static function removeDirectory(string $path): void
+    {
+        if (!is_dir($path)) {
+            return;
+        }
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        );
+        foreach ($iterator as $entry) {
+            if ($entry->isDir() && !$entry->isLink()) {
+                rmdir($entry->getPathname());
+            } else {
+                unlink($entry->getPathname());
+            }
+        }
+        rmdir($path);
     }
 
     private function connect(string $portEnvironment, ?string $database = null): PDO

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\upgrade;
 
-final class RepositoryUpgradeTargetVerifier implements UpgradeTargetVerifier
+final class RepositoryUpgradeTargetVerifier
 {
     public function verify(string $root, UpgradePlan $plan): void
     {
@@ -17,7 +17,6 @@ final class RepositoryUpgradeTargetVerifier implements UpgradeTargetVerifier
                 'source' => $plan->sourceMigrations->entries,
                 'target' => $plan->targetMigrations->entries,
             ],
-            'release_registry_sha256' => $plan->releaseRegistrySha256,
         ]);
         if (!hash_equals($plan->releaseManifestDigest, $release->manifestDigest)) {
             throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_MISMATCH');

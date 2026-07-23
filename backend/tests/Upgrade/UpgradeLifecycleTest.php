@@ -8,12 +8,14 @@ use PeanutAdmin\App\upgrade\BackupManifest;
 use PeanutAdmin\App\upgrade\ExecutionReport;
 use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\ReleaseManifest;
+use PeanutAdmin\App\upgrade\RepositoryInspector;
 use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradeFailure;
 use PeanutAdmin\App\upgrade\UpgradePreflight;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 
 final class UpgradeLifecycleTest extends TestCase
 {
@@ -225,6 +227,58 @@ final class UpgradeLifecycleTest extends TestCase
             (new TargetMigrationInventory())->scan($root);
         } finally {
             @unlink($root . '/packages/php/kernel/database/migrations/20260724010101_external.php');
+            @unlink($root . '/backend/config/modules.php');
+            @rmdir($root . '/packages/php/kernel/database/migrations');
+            @rmdir($root . '/packages/php/kernel/database');
+            @rmdir($root . '/packages/php/kernel');
+            @rmdir($root . '/packages/php/data-permission/database/migrations');
+            @rmdir($root . '/packages/php/data-permission/database');
+            @rmdir($root . '/packages/php/data-permission');
+            @rmdir($root . '/packages/php');
+            @rmdir($root . '/packages');
+            @rmdir($root . '/backend/config');
+            @rmdir($root . '/backend');
+            @rmdir($root);
+            @unlink($external);
+        }
+    }
+
+    public function testUpgradePlanIsOpaqueAndProductionWorkflowHasNoVerifierInjection(): void
+    {
+        $plan = new ReflectionClass(\PeanutAdmin\App\upgrade\UpgradePlan::class);
+        self::assertTrue($plan->getConstructor()?->isPrivate());
+
+        $workflow = new ReflectionClass(\PeanutAdmin\App\command\UpgradeWorkflow::class);
+        self::assertCount(2, $workflow->getConstructor()?->getParameters() ?? []);
+    }
+
+    public function testReleaseInspectionRejectsAPackageWithoutGitMetadata(): void
+    {
+        $root = '/private/tmp/peanut-upgrade-no-git-' . bin2hex(random_bytes(8));
+        self::assertTrue(mkdir($root, 0700, true));
+        try {
+            $this->expectException(UpgradeFailure::class);
+            $this->expectExceptionMessage('Upgrade preflight failed.');
+            (new RepositoryInspector())->inspectRelease($root, $this->release());
+        } finally {
+            rmdir($root);
+        }
+    }
+
+    public function testTargetInventoryRejectsASymlinkedModuleConfig(): void
+    {
+        $root = '/private/tmp/peanut-upgrade-config-' . bin2hex(random_bytes(8));
+        $external = $root . '-modules.php';
+        try {
+            self::assertTrue(mkdir($root . '/packages/php/kernel/database/migrations', 0700, true));
+            self::assertTrue(mkdir($root . '/packages/php/data-permission/database/migrations', 0700, true));
+            self::assertTrue(mkdir($root . '/backend/config', 0700, true));
+            self::assertNotFalse(file_put_contents($external, "<?php return ['roots' => []];\n"));
+            self::assertTrue(symlink($external, $root . '/backend/config/modules.php'));
+
+            $this->expectException(UpgradeFailure::class);
+            (new TargetMigrationInventory())->scan($root);
+        } finally {
             @unlink($root . '/backend/config/modules.php');
             @rmdir($root . '/packages/php/kernel/database/migrations');
             @rmdir($root . '/packages/php/kernel/database');

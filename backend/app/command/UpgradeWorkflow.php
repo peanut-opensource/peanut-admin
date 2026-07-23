@@ -15,7 +15,6 @@ use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\RepositoryUpgradeTargetVerifier;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
-use PeanutAdmin\App\upgrade\UpgradeTargetVerifier;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
 use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
 use PeanutAdmin\Kernel\Menu\MenuCatalogSynchronizer;
@@ -36,16 +35,12 @@ use Throwable;
 
 final readonly class UpgradeWorkflow
 {
-    private UpgradeTargetVerifier $targetVerifier;
-
     public function __construct(
         private string $root,
         private PDO $pdo,
-        ?UpgradeTargetVerifier $targetVerifier = null,
     ) {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $this->targetVerifier = $targetVerifier ?? new RepositoryUpgradeTargetVerifier();
     }
 
     public static function fromEnvironment(string $root): self
@@ -141,7 +136,8 @@ final readonly class UpgradeWorkflow
             throw new ModuleException('MODULE_UPGRADE_LOCKED', 'Another upgrade is already running.');
         }
         try {
-            $this->targetVerifier->verify($this->root, $plan);
+            $plan->assertInternallyConsistent();
+            (new RepositoryUpgradeTargetVerifier())->verify($this->root, $plan);
             $this->assertSourceMigrationState($plan->sourceMigrations);
 
             return $this->runLocked();
@@ -192,8 +188,12 @@ final readonly class UpgradeWorkflow
             new PdoAuthorizationCatalogRepository($this->pdo),
         ))->synchronize($registry);
         (new MenuCatalogSynchronizer(new PdoMenuCatalogRepository($this->pdo)))->synchronize($registry);
-        SettingsRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
-        ReferenceCodeRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
+        if ($this->tableExists('pa_setting_definition')) {
+            SettingsRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
+        }
+        if ($this->tableExists('pa_reference_code_set')) {
+            ReferenceCodeRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
+        }
 
         return [
             'modules' => $registry->moduleKeys(),
@@ -364,7 +364,7 @@ SQL);
         $this->assertDefinitionRows(
             'pa_setting_definition',
             'SELECT module_key, setting_key AS definition_key, definition_digest, status AS lifecycle'
-                . ' FROM pa_setting_definition',
+                . " FROM pa_setting_definition WHERE status = 'active'",
             $expectedSettings,
         );
 
@@ -375,7 +375,7 @@ SQL);
         $this->assertDefinitionRows(
             'pa_reference_code_set',
             'SELECT module_key, set_key AS definition_key, definition_digest, lifecycle'
-                . ' FROM pa_reference_code_set',
+                . " FROM pa_reference_code_set WHERE lifecycle = 'active'",
             $expectedReferenceCodes,
         );
     }
@@ -476,7 +476,16 @@ SQL);
     private function registry(): CompiledModuleRegistry
     {
         /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>} $config */
-        $config = require $this->root . '/backend/config/modules.php';
+        $repositoryRoot = realpath($this->root);
+        $configPath = $this->root . '/backend/config/modules.php';
+        $physicalConfig = realpath($configPath);
+        if ($repositoryRoot === false
+            || $physicalConfig !== $repositoryRoot . '/backend/config/modules.php'
+            || is_link($configPath)
+            || !is_file($configPath)) {
+            throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration path is unsafe.');
+        }
+        $config = require $physicalConfig;
         $roots = array_map(
             fn(string $path): string => $this->root . '/' . ltrim($path, '/'),
             $config['roots'],

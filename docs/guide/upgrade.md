@@ -89,8 +89,7 @@ accepted as the declared source release.
         "checksum": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
       }
     ]
-  },
-  "release_registry_sha256": null
+  }
 }
 ```
 
@@ -98,12 +97,11 @@ Owners are `kernel`, `data-permission`, or `module:<module-key>`. The committed
 stage release process owns this manifest; an application operator must not
 silently regenerate it from a dirty or moving branch.
 
-In a Git checkout, both commit objects must resolve locally and each declared
-tree must be the actual tree of its commit. A packaged distribution without
-`.git` must instead contain `release/release-registry.json` and set
-`release_registry_sha256` to its SHA-256. The registry fixes schema version,
-release ID, source, target, and target migration-inventory digest. A missing or
-mismatched registry fails closed.
+Both commit objects must resolve locally and each declared tree must be the
+actual tree of its commit. Database upgrade currently requires a clean Git
+checkout. A packaged distribution without `.git` fails closed because Starter
+v1 does not yet publish a complete executable-file and lockfile artifact
+inventory; a partial release registry is not accepted as equivalent evidence.
 
 ## Backup Evidence Manifest
 

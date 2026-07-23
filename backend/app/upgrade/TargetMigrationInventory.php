@@ -30,8 +30,13 @@ final class TargetMigrationInventory
             $this->ownedDirectory($repositoryRoot, $dataPermissionRoot, 'database/migrations'),
         );
 
-        $config = is_readable($repositoryRoot . '/backend/config/modules.php')
-            ? require $repositoryRoot . '/backend/config/modules.php'
+        $configPath = $repositoryRoot . '/backend/config/modules.php';
+        $physicalConfig = realpath($configPath);
+        if ($physicalConfig !== $configPath || is_link($configPath) || !is_file($configPath)) {
+            throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+        }
+        $config = is_readable($configPath)
+            ? require $configPath
             : null;
         if (!is_array($config) || !is_array($config['roots'] ?? null)) {
             throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');

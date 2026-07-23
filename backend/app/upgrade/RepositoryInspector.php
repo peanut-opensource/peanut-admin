@@ -8,16 +8,17 @@ final class RepositoryInspector
 {
     public function inspectRelease(string $root, ReleaseManifest $release): RepositoryState
     {
-        if (file_exists($root . '/.git') || is_link($root . '/.git')) {
-            $this->assertCommitTree($root, $release->source);
-            $this->assertCommitTree($root, $release->target);
-
-            return $this->inspect($root);
+        if (!file_exists($root . '/.git') || is_link($root . '/.git')) {
+            throw new UpgradeFailure('UPGRADE_GIT_METADATA_REQUIRED');
+        }
+        $this->assertCommitTree($root, $release->source);
+        $this->assertCommitTree($root, $release->target);
+        $sourceInventory = $this->inventoryAtCommit($root, $release->source['commit']);
+        if (!hash_equals($release->sourceMigrations->digest(), $sourceInventory->digest())) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_MISMATCH');
         }
 
-        $this->assertPackagedReleaseRegistry($root, $release);
-
-        return new RepositoryState($release->target['commit'], $release->target['tree'], true);
+        return $this->inspect($root);
     }
 
     public function inspect(string $root): RepositoryState
@@ -60,29 +61,66 @@ final class RepositoryInspector
         }
     }
 
-    private function assertPackagedReleaseRegistry(string $root, ReleaseManifest $release): void
+    public function inventoryAtCommit(string $root, string $commit): MigrationInventory
     {
-        if ($release->releaseRegistrySha256 === null) {
-            throw new UpgradeFailure('UPGRADE_RELEASE_REGISTRY_REQUIRED');
+        if (preg_match('/^[a-f0-9]{40}$/D', $commit) !== 1) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_IDENTITY_INVALID');
         }
-        $path = $root . '/release/release-registry.json';
-        $contents = is_readable($path) ? file_get_contents($path) : false;
-        if (!is_string($contents)
-            || !hash_equals($release->releaseRegistrySha256, hash('sha256', $contents))) {
-            throw new UpgradeFailure('UPGRADE_RELEASE_REGISTRY_INVALID');
+        $temporary = rtrim(sys_get_temp_dir(), '/') . '/peanut-upgrade-source-' . bin2hex(random_bytes(12));
+        $archive = $temporary . '/source.tar';
+        $extracted = $temporary . '/source';
+        if (!mkdir($temporary, 0700, true)) {
+            throw new UpgradeFailure('UPGRADE_SOURCE_INVENTORY_UNAVAILABLE');
         }
         try {
-            $registry = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
-            throw new UpgradeFailure('UPGRADE_RELEASE_REGISTRY_INVALID');
-        }
-        if (!is_array($registry)
-            || ($registry['schema_version'] ?? null) !== 1
-            || ($registry['release_id'] ?? null) !== $release->releaseId
-            || ($registry['source'] ?? null) !== $release->source
-            || ($registry['target'] ?? null) !== $release->target
-            || ($registry['migration_inventory_sha256'] ?? null) !== $release->targetMigrations->digest()) {
-            throw new UpgradeFailure('UPGRADE_RELEASE_REGISTRY_INVALID');
+            if (!mkdir($extracted, 0700, true)) {
+                throw new UpgradeFailure('UPGRADE_SOURCE_INVENTORY_UNAVAILABLE');
+            }
+            $this->process([
+                'git', '-C', $root, 'archive', '--format=tar', '--output=' . $archive, $commit,
+            ]);
+            $this->process(['tar', '-xf', $archive, '-C', $extracted]);
+
+            return (new TargetMigrationInventory())->scan($extracted);
+        } finally {
+            $this->removeDirectory($temporary);
         }
     }
+
+    /** @param list<string> $command */
+    private function process(array $command): void
+    {
+        $pipes = [];
+        $process = proc_open($command, [1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+        if (!is_resource($process)) {
+            throw new UpgradeFailure('UPGRADE_SOURCE_INVENTORY_UNAVAILABLE');
+        }
+        stream_get_contents($pipes[1]);
+        stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        if (proc_close($process) !== 0) {
+            throw new UpgradeFailure('UPGRADE_SOURCE_INVENTORY_UNAVAILABLE');
+        }
+    }
+
+    private function removeDirectory(string $path): void
+    {
+        if (!is_dir($path)) {
+            return;
+        }
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($path, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        );
+        foreach ($iterator as $entry) {
+            if ($entry->isDir() && !$entry->isLink()) {
+                rmdir($entry->getPathname());
+            } else {
+                unlink($entry->getPathname());
+            }
+        }
+        rmdir($path);
+    }
+
 }
