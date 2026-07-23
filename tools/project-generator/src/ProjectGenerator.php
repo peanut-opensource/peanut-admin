@@ -1,0 +1,1056 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PeanutAdmin\ProjectGenerator;
+
+use FilesystemIterator;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use RuntimeException;
+use Throwable;
+
+final class ProjectGeneratorException extends RuntimeException
+{
+    public function __construct(public readonly string $errorCode, string $detail)
+    {
+        parent::__construct($errorCode . ': ' . $detail);
+    }
+}
+
+final class GenerationRequest
+{
+    private const FEATURES = ['settings', 'reference-codes', 'file-media'];
+
+    /**
+     * @param list<array{key: string, api_prefix: string}> $tenantClients
+     * @param list<string> $features
+     */
+    public function __construct(
+        public readonly string $target,
+        public readonly string $slug,
+        public readonly string $displayName,
+        public readonly string $phpNamespace,
+        public readonly string $brand,
+        public readonly string $profile,
+        public readonly array $tenantClients,
+        public readonly array $features,
+    ) {
+        if (preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/D', $slug) !== 1 || strlen($slug) > 63) {
+            throw new ProjectGeneratorException('PROJECT_SLUG_INVALID', 'Use a lowercase hyphenated slug up to 63 characters.');
+        }
+        self::assertLabel($displayName, 'PROJECT_DISPLAY_NAME_INVALID', 120);
+        self::assertLabel($brand, 'PROJECT_BRAND_INVALID', 80);
+        if (preg_match('/^[A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)+$/D', $phpNamespace) !== 1
+            || strlen($phpNamespace) > 160) {
+            throw new ProjectGeneratorException('PROJECT_NAMESPACE_INVALID', 'Use a multi-segment PSR-4 namespace.');
+        }
+        if ($profile !== 'standard-admin') {
+            throw new ProjectGeneratorException('PROJECT_PROFILE_UNKNOWN', 'Only standard-admin is available in this generator schema.');
+        }
+        if ($tenantClients === [] || count($tenantClients) > 8) {
+            throw new ProjectGeneratorException('PROJECT_TENANT_CLIENT_INVALID', 'Define between one and eight Tenant Clients.');
+        }
+        $keys = [];
+        $prefixes = [];
+        foreach ($tenantClients as $client) {
+            $key = $client['key'] ?? '';
+            $prefix = $client['api_prefix'] ?? '';
+            if (preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/D', $key) !== 1 || strlen($key) > 64) {
+                throw new ProjectGeneratorException('PROJECT_TENANT_CLIENT_INVALID', 'Tenant Client key is invalid.');
+            }
+            if (preg_match('~^/api(?:/[a-z][a-z0-9-]*)+/v[1-9][0-9]*/$~D', $prefix) !== 1
+                || str_contains($prefix, '//') || str_contains($prefix, '..')) {
+                throw new ProjectGeneratorException('PROJECT_TENANT_CLIENT_INVALID', 'Tenant Client API prefix is invalid.');
+            }
+            if (isset($keys[$key]) || isset($prefixes[$prefix])) {
+                throw new ProjectGeneratorException('PROJECT_TENANT_CLIENT_INVALID', 'Tenant Client keys and prefixes must be unique.');
+            }
+            $keys[$key] = true;
+            $prefixes[$prefix] = true;
+        }
+        $canonical = [];
+        foreach (self::FEATURES as $feature) {
+            if (in_array($feature, $features, true)) {
+                $canonical[] = $feature;
+            }
+        }
+        foreach ($features as $feature) {
+            if (!in_array($feature, self::FEATURES, true)) {
+                throw new ProjectGeneratorException('PROJECT_FEATURE_UNKNOWN', "Unknown first-party feature: {$feature}.");
+            }
+        }
+        if (count(array_unique($features)) !== count($features)) {
+            throw new ProjectGeneratorException('PROJECT_FEATURE_UNKNOWN', 'A first-party feature was selected more than once.');
+        }
+        if ($canonical !== $features) {
+            throw new ProjectGeneratorException('PROJECT_FEATURE_ORDER_INVALID', 'Features must use canonical order.');
+        }
+        if ($target === '' || str_contains($target, "\0")) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target path is empty or invalid.');
+        }
+    }
+
+    private static function assertLabel(string $value, string $errorCode, int $maximum): void
+    {
+        if ($value === '' || trim($value) !== $value || strlen($value) > $maximum
+            || preg_match('//u', $value) !== 1 || preg_match('/[\x00-\x1F\x7F]/', $value) === 1) {
+            throw new ProjectGeneratorException($errorCode, 'Value is empty, malformed, padded, or too long.');
+        }
+    }
+}
+
+final class ProjectGenerator
+{
+    private const MARKER = '.peanut-project-generation';
+
+    /** @var array<string, array{backend_root: string, frontend_component: string, frontend_host: string, backend_test: string, frontend_test: string}> */
+    private const FEATURES = [
+        'settings' => [
+            'backend_root' => 'backend/src/Modules/Peanut/Settings',
+            'frontend_component' => 'peanut.settings.page',
+            'frontend_host' => 'frontend/src/modules/peanut-settings.ts',
+            'backend_test' => 'backend/tests/settings.php',
+            'frontend_test' => 'frontend/tests/settings.spec.ts',
+        ],
+        'reference-codes' => [
+            'backend_root' => 'backend/src/Modules/Peanut/ReferenceCodes',
+            'frontend_component' => 'peanut.reference-codes.page',
+            'frontend_host' => 'frontend/src/modules/peanut-reference-codes.ts',
+            'backend_test' => 'backend/tests/reference-codes.php',
+            'frontend_test' => 'frontend/tests/reference-codes.spec.ts',
+        ],
+        'file-media' => [
+            'backend_root' => 'backend/src/Modules/Peanut/FileMedia',
+            'frontend_component' => 'peanut.file-media.page',
+            'frontend_host' => 'frontend/src/modules/peanut-file-media.ts',
+            'backend_test' => 'backend/tests/file-media.php',
+            'frontend_test' => 'frontend/tests/file-media.spec.ts',
+        ],
+    ];
+
+    private string $sourceRoot;
+
+    public function __construct(string $sourceRoot)
+    {
+        $physical = realpath($sourceRoot);
+        if (!is_string($physical) || !is_dir($physical)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Generator source root is unavailable.');
+        }
+        $this->sourceRoot = rtrim($physical, DIRECTORY_SEPARATOR);
+    }
+
+    /** @return array<string, mixed> */
+    public function generate(GenerationRequest $request): array
+    {
+        [$target, $targetCreated] = $this->prepareTarget($request->target);
+        $owner = bin2hex(random_bytes(24));
+        $marker = $target . '/' . self::MARKER;
+        $markerHandle = @fopen($marker, 'x');
+        if (!is_resource($markerHandle)) {
+            if ($targetCreated) {
+                @rmdir($target);
+            }
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Could not claim the target directory.');
+        }
+        fwrite($markerHandle, $owner . "\n");
+        fclose($markerHandle);
+        $claimedEntries = scandir($target);
+        if (!is_array($claimedEntries)
+            || array_values(array_diff($claimedEntries, ['.', '..', self::MARKER])) !== []) {
+            @unlink($marker);
+            if ($targetCreated) {
+                @rmdir($target);
+            }
+            throw new ProjectGeneratorException('PROJECT_TARGET_NOT_EMPTY', 'Target changed while it was being claimed.');
+        }
+
+        try {
+            $this->copyTree($this->sourceRoot . '/starter', $target);
+            $this->copyPackageSnapshots($target);
+            $this->selectFeatures($target, $request->features);
+            $this->replaceNamespaces($target, $request->phpNamespace);
+            $this->writeProjectFiles($target, $request);
+            $this->assertGeneratedBoundary($target);
+            if (!@unlink($marker)) {
+                throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not release target ownership marker.');
+            }
+
+            return $this->metadata($request);
+        } catch (Throwable $exception) {
+            $this->cleanupOwnedTarget($target, $marker, $owner, $targetCreated);
+            if ($exception instanceof ProjectGeneratorException) {
+                throw $exception;
+            }
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Generation stopped without publishing a partial project.');
+        }
+    }
+
+    /** @return array{string, bool} */
+    private function prepareTarget(string $requested): array
+    {
+        $segments = preg_split('~[\\\\/]~', $requested);
+        if (!is_array($segments) || in_array('..', $segments, true)) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Parent traversal is not allowed.');
+        }
+        $absolute = str_starts_with($requested, DIRECTORY_SEPARATOR)
+            ? $requested
+            : ((getcwd() ?: $this->sourceRoot) . DIRECTORY_SEPARATOR . $requested);
+        $parts = preg_split('~[\\\\/]+~', $absolute, -1, PREG_SPLIT_NO_EMPTY);
+        if (!is_array($parts) || $parts === []) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target path is invalid.');
+        }
+        if (is_link($absolute)) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target itself must not be a symbolic link.');
+        }
+        $target = $this->physicalFuturePath($absolute);
+        if ($this->contains($this->sourceRoot, $target) || $this->contains($target, $this->sourceRoot)) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target overlaps the generator source tree.');
+        }
+        if (file_exists($target) || is_link($target)) {
+            if (is_link($target) || !is_dir($target)) {
+                throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target is not a regular directory.');
+            }
+            $entries = scandir($target);
+            if (!is_array($entries) || array_values(array_diff($entries, ['.', '..'])) !== []) {
+                throw new ProjectGeneratorException('PROJECT_TARGET_NOT_EMPTY', 'Target directory must be empty.');
+            }
+
+            return [$target, false];
+        }
+        if (!@mkdir($target, 0755, true) && !is_dir($target)) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target directory could not be created.');
+        }
+        $physical = realpath($target);
+        if (!is_string($physical) || $physical !== $target || $this->contains($this->sourceRoot, $physical)) {
+            @rmdir($target);
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Created target did not preserve the validated boundary.');
+        }
+
+        return [$target, true];
+    }
+
+    private function physicalFuturePath(string $path): string
+    {
+        $suffix = [];
+        $cursor = rtrim($path, DIRECTORY_SEPARATOR);
+        while (!file_exists($cursor) && !is_link($cursor)) {
+            $base = basename($cursor);
+            if ($base === '' || $base === '.' || $base === '..') {
+                throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target path cannot be normalized.');
+            }
+            array_unshift($suffix, $base);
+            $parent = dirname($cursor);
+            if ($parent === $cursor) {
+                throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target ancestor is unavailable.');
+            }
+            $cursor = $parent;
+        }
+        $physical = realpath($cursor);
+        if (!is_string($physical)) {
+            throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target ancestor cannot be resolved.');
+        }
+
+        return rtrim($physical, DIRECTORY_SEPARATOR)
+            . ($suffix === [] ? '' : DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $suffix));
+    }
+
+    private function contains(string $root, string $candidate): bool
+    {
+        $root = rtrim($root, DIRECTORY_SEPARATOR);
+        $candidate = rtrim($candidate, DIRECTORY_SEPARATOR);
+
+        return $candidate === $root || str_starts_with($candidate, $root . DIRECTORY_SEPARATOR);
+    }
+
+    private function copyPackageSnapshots(string $target): void
+    {
+        foreach ([
+            ['packages/php/kernel', 'composer.json'],
+            ['packages/php/data-permission', 'composer.json'],
+            ['packages/php/settings', 'composer.json'],
+            ['packages/php/reference-codes', 'composer.json'],
+            ['packages/php/file-media', 'composer.json'],
+            ['packages/web/admin-core', 'package.json'],
+            ['packages/web/admin-shell', 'package.json'],
+            ['packages/web/settings', 'package.json'],
+            ['packages/web/reference-codes', 'package.json'],
+            ['packages/web/file-media', 'package.json'],
+        ] as [$relative, $manifest]) {
+            $source = $this->sourceRoot . '/' . $relative;
+            $destination = $target . '/' . $relative;
+            foreach ([$manifest, 'LICENSE', 'src'] as $required) {
+                if (!file_exists($source . '/' . $required)) {
+                    throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Package snapshot is incomplete: {$relative}.");
+                }
+            }
+            $this->copyFile($source . '/' . $manifest, $destination . '/' . $manifest);
+            $this->copyFile($source . '/LICENSE', $destination . '/LICENSE');
+            $this->copyTree($source . '/src', $destination . '/src');
+            foreach (['database', 'resources'] as $optional) {
+                if (is_dir($source . '/' . $optional)) {
+                    $this->copyTree($source . '/' . $optional, $destination . '/' . $optional);
+                }
+            }
+        }
+    }
+
+    private function copyTree(string $source, string $destination): void
+    {
+        if (!is_dir($source) || is_link($source)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Template directory is missing or unsafe.');
+        }
+        if (!is_dir($destination) && !mkdir($destination, 0755, true) && !is_dir($destination)) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not create a generated directory.');
+        }
+        $entries = scandir($source);
+        if (!is_array($entries)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Template directory cannot be scanned.');
+        }
+        foreach ($entries as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $sourcePath = $source . '/' . $entry;
+            $destinationPath = $destination . '/' . $entry;
+            if (is_link($sourcePath)) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Template symbolic links are not supported.');
+            }
+            if (is_dir($sourcePath)) {
+                $this->copyTree($sourcePath, $destinationPath);
+            } elseif (is_file($sourcePath)) {
+                $this->copyFile($sourcePath, $destinationPath);
+            } else {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Template contains an unsupported entry.');
+            }
+        }
+    }
+
+    private function copyFile(string $source, string $destination): void
+    {
+        if (!is_file($source) || is_link($source)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Template file is missing or unsafe.');
+        }
+        $directory = dirname($destination);
+        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not create a generated directory.');
+        }
+        $contents = file_get_contents($source);
+        if (!is_string($contents) || file_put_contents($destination, $contents, LOCK_EX) === false) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not copy a template file.');
+        }
+        $mode = fileperms($source);
+        if (is_int($mode)) {
+            chmod($destination, $mode & 0777);
+        }
+    }
+
+    /** @param list<string> $selected */
+    private function selectFeatures(string $target, array $selected): void
+    {
+        foreach (self::FEATURES as $key => $feature) {
+            if (in_array($key, $selected, true)) {
+                continue;
+            }
+            foreach (['backend_root', 'frontend_host', 'backend_test', 'frontend_test'] as $pathKey) {
+                $this->removePath($target . '/' . $feature[$pathKey]);
+            }
+            if ($key === 'file-media') {
+                $this->removePath($target . '/backend/config/file-media.php');
+            }
+        }
+    }
+
+    private function replaceNamespaces(string $target, string $namespace): void
+    {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($target, FilesystemIterator::SKIP_DOTS),
+        );
+        $doubleNamespace = str_replace('\\', '\\\\', $namespace);
+        $moduleNamespace = $namespace . '\\Modules';
+        $doubleModuleNamespace = str_replace('\\', '\\\\', $moduleNamespace);
+        foreach ($iterator as $file) {
+            if (!$file->isFile() || $file->isLink()) {
+                continue;
+            }
+            if (!in_array($file->getExtension(), ['php', 'json', 'md'], true)) {
+                continue;
+            }
+            $contents = file_get_contents($file->getPathname());
+            if (!is_string($contents)) {
+                throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not read a generated source file.');
+            }
+            $contents = str_replace('PeanutAdmin\\\\InternalStarter', $doubleNamespace, $contents);
+            $contents = str_replace('ExampleHost\\\\App\\\\Modules', $doubleModuleNamespace, $contents);
+            $contents = str_replace('PeanutAdmin\\InternalStarter', $namespace, $contents);
+            $contents = str_replace('ExampleHost\\App\\Modules', $moduleNamespace, $contents);
+            if (file_put_contents($file->getPathname(), $contents, LOCK_EX) === false) {
+                throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not write a generated source file.');
+            }
+        }
+    }
+
+    private function writeProjectFiles(string $target, GenerationRequest $request): void
+    {
+        $this->writeJson($target . '/peanut-project.json', $this->metadata($request));
+        $this->writePhpConfig($target . '/backend/config/auth.php', [
+            'tenant_clients' => array_column($request->tenantClients, 'key'),
+        ]);
+        $moduleRoots = ['backend/src/Modules/Example/Greeting'];
+        $frontendComponents = ['example.greeting.page'];
+        foreach ($request->features as $feature) {
+            $moduleRoots[] = self::FEATURES[$feature]['backend_root'];
+            $frontendComponents[] = self::FEATURES[$feature]['frontend_component'];
+        }
+        $registeredClients = array_values(array_unique([
+            ...array_column($request->tenantClients, 'key'),
+            'platform-web',
+        ]));
+        $this->writePhpConfig($target . '/backend/config/modules.php', [
+            'roots' => $moduleRoots,
+            'frontend_components' => $frontendComponents,
+            'registered_client_keys' => $registeredClients,
+        ]);
+        $this->writeClients($target . '/frontend/src/clients.ts', $request->tenantClients);
+        $this->writeClientVerification($target . '/frontend/verification/clients.spec.ts', $request->tenantClients);
+        $this->writeFrontendModules($target . '/frontend/src/app/modules.ts', $request->features);
+        $this->writeFrontendApp($target . '/frontend/src/App.vue', $request);
+        $this->writeFrontendIndex($target . '/frontend/index.html', $request->displayName);
+        $this->writeEnvironment($target . '/.env.example', $request);
+        $this->writeReadme($target . '/README.md', $request);
+        $this->writeBackendSmoke($target . '/backend/tests/smoke.php', $request->features, $request->phpNamespace);
+        $this->adaptAuthFixture($target, $request->tenantClients);
+        $this->adaptFeatureFixtures($target, $request->features);
+        $this->adaptPackageManifests($target, $request);
+    }
+
+    /** @return array<string, mixed> */
+    private function metadata(GenerationRequest $request): array
+    {
+        $baselinePath = $this->sourceRoot . '/tools/project-generator/source-baseline.json';
+        $baseline = is_file($baselinePath)
+            ? json_decode((string) file_get_contents($baselinePath), true, 512, JSON_THROW_ON_ERROR)
+            : null;
+        if (!is_array($baseline)
+            || ($baseline['schema_version'] ?? null) !== 1
+            || preg_match('/^[0-9a-f]{40}$/D', (string) ($baseline['input_commit'] ?? '')) !== 1
+            || preg_match('/^[0-9a-f]{40}$/D', (string) ($baseline['input_tree'] ?? '')) !== 1) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Generator source identity is invalid.');
+        }
+
+        return [
+            'schema_version' => 1,
+            'generator' => ['name' => 'peanut-admin/create-project', 'schema_version' => 1],
+            'peanut_admin' => [
+                'input_commit' => $baseline['input_commit'],
+                'input_tree' => $baseline['input_tree'],
+            ],
+            'project' => [
+                'slug' => $request->slug,
+                'display_name' => $request->displayName,
+                'php_namespace' => $request->phpNamespace,
+                'brand' => $request->brand,
+                'profile' => $request->profile,
+                'tenant_clients' => $request->tenantClients,
+                'features' => $request->features,
+            ],
+            'secrets' => [
+                'embedded' => false,
+                'policy' => 'supply-outside-generated-source',
+            ],
+        ];
+    }
+
+    /** @param array<string, mixed> $values */
+    private function writePhpConfig(string $path, array $values): void
+    {
+        $contents = "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($values, true) . ";\n";
+        $contents = preg_replace('/^ {2}/m', '    ', $contents) ?? $contents;
+        $this->write($path, $contents);
+    }
+
+    /** @param list<array{key: string, api_prefix: string}> $clients */
+    private function writeClients(string $path, array $clients): void
+    {
+        $rows = array_map(
+            static fn(array $client): string => sprintf(
+                "  { key: '%s', apiPrefix: '%s' },",
+                $client['key'],
+                $client['api_prefix'],
+            ),
+            $clients,
+        );
+        $contents = <<<'TS'
+import { createProtectedFetch } from '@peanut-admin/admin-core'
+import type { RefreshCoordinator } from '@peanut-admin/admin-core'
+
+export interface TenantClientDefinition {
+  key: string
+  apiPrefix: string
+}
+
+export const tenantClients = [
+__CLIENTS__
+] as const satisfies readonly TenantClientDefinition[]
+
+export interface TenantClientTransportOptions {
+  baseUrl: string
+  fetch?: (request: Request) => Promise<Response>
+  getAccessToken: () => string | null
+  setAccessToken: (token: string) => void
+  refresh: () => Promise<string | null>
+  refreshCoordinator?: RefreshCoordinator
+}
+
+export const createTenantClientTransport = (
+  definition: TenantClientDefinition,
+  options: TenantClientTransportOptions,
+): ((request: Request) => Promise<Response>) => createProtectedFetch({
+  ...options,
+  refreshScope: `${definition.key}:tenant`,
+  isAllowedPath: pathname => pathname.startsWith(definition.apiPrefix),
+  isCredentialExchange: pathname => /\/auth\/(?:login|refresh|tenants\/select)$/.test(pathname),
+})
+TS;
+        $this->write($path, str_replace('__CLIENTS__', implode("\n", $rows), $contents) . "\n");
+    }
+
+    /** @param list<string> $features */
+    private function writeFrontendModules(string $path, array $features): void
+    {
+        $imports = ["import { exampleGreetingModule } from '../modules/example-greeting'"];
+        $types = [];
+        $setup = [];
+        $modules = ['exampleGreetingModule'];
+        $returns = [];
+        $map = [
+            'settings' => ['PeanutSettingsHostOptions', 'createPeanutSettingsHost', 'settings'],
+            'reference-codes' => ['PeanutReferenceCodesHostOptions', 'createPeanutReferenceCodesHost', 'referenceCodes'],
+            'file-media' => ['PeanutFileMediaHostOptions', 'createPeanutFileMediaHost', 'fileMedia'],
+        ];
+        foreach ($features as $feature) {
+            [$type, $factory, $variable] = $map[$feature];
+            $host = 'peanut-' . $feature;
+            $imports[] = "import { {$factory} } from '../modules/{$host}'";
+            $imports[] = "import type { {$type} } from '../modules/{$host}'";
+            $types[] = $type;
+            $setup[] = "  const {$variable} = {$factory}(options)";
+            $modules[] = "{$variable}.module";
+            $returns[] = "    {$variable}Module: {$variable}.module,";
+            $returns[] = "    {$variable}Runtime: {$variable}.runtime,";
+        }
+        $typeExpression = $types === [] ? 'Record<string, never>' : implode(' & ', $types);
+        $contents = implode("\n", $imports)
+            . ($imports === [] ? '' : "\n\n")
+            . "export type StarterModuleOptions = {$typeExpression}\n\n"
+            . "export const createStarterModules = (options: StarterModuleOptions) => {\n"
+            . ($setup === [] ? "  void options\n" : implode("\n", $setup) . "\n")
+            . "\n  return {\n"
+            . '    modules: [' . implode(', ', $modules) . "] as const,\n"
+            . ($returns === [] ? '' : implode("\n", $returns) . "\n")
+            . "  }\n}\n";
+        $this->write($path, $contents);
+    }
+
+    private function writeFrontendApp(string $path, GenerationRequest $request): void
+    {
+        $brand = htmlspecialchars($request->brand, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $name = htmlspecialchars($request->displayName, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $slug = htmlspecialchars($request->slug, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $contents = <<<VUE
+<script setup lang="ts">
+import { ADMIN_CORE_PACKAGE } from '@peanut-admin/admin-core'
+import { AdminShell, PageContent, PageHeader, ShellHeader, ShellSidebar } from '@peanut-admin/admin-shell'
+</script>
+
+<template>
+  <AdminShell class="starter-shell">
+    <template #header>
+      <ShellHeader>{$brand}</ShellHeader>
+    </template>
+    <template #sidebar>
+      <ShellSidebar>{$name}</ShellSidebar>
+    </template>
+    <PageHeader>{$name}</PageHeader>
+    <PageContent>
+      <p data-testid="project-slug">{$slug}</p>
+      <p data-testid="package-name">{{ ADMIN_CORE_PACKAGE }}</p>
+    </PageContent>
+  </AdminShell>
+</template>
+VUE;
+        $this->write($path, $contents . "\n");
+    }
+
+    private function writeFrontendIndex(string $path, string $displayName): void
+    {
+        $contents = file_get_contents($path);
+        if (!is_string($contents) || preg_match('/<title>.*?<\/title>/s', $contents) !== 1) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Frontend title template is missing.');
+        }
+        $title = htmlspecialchars($displayName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $this->write($path, preg_replace('/<title>.*?<\/title>/s', "<title>{$title}</title>", $contents) ?? $contents);
+    }
+
+    private function writeEnvironment(string $path, GenerationRequest $request): void
+    {
+        $contents = "APP_ENV=development\n"
+            . "APP_DEBUG=false\n"
+            . "APP_SLUG={$request->slug}\n"
+            . "VITE_API_BASE_URL=/api\n"
+            . "APP_KEY=\n"
+            . "PEANUT_IDENTIFIER_HMAC_KEY=\n"
+            . "PEANUT_SETTINGS_ACTIVE_SECRET_KEY_ID=\n"
+            . "PEANUT_SETTINGS_SECRET_KEYS=\n";
+        $this->write($path, $contents);
+    }
+
+    private function writeReadme(string $path, GenerationRequest $request): void
+    {
+        $features = $request->features === [] ? 'none' : implode(', ', $request->features);
+        $clients = implode(', ', array_column($request->tenantClients, 'key'));
+        $authCheck = count($request->tenantClients) >= 2 ? "php backend/tests/auth-clients.php\n" : '';
+        $contents = <<<MD
+# {$request->displayName}
+
+Generated from Peanut Admin's `standard-admin` profile.
+
+- Project slug: `{$request->slug}`
+- PHP namespace: `{$request->phpNamespace}`
+- Brand: `{$request->brand}`
+- Tenant Clients: {$clients}
+- Enabled first-party Modules: {$features}
+- Removable fictional Module: `example.greeting`
+
+`peanut-project.json` records the exact Peanut Admin input commit and tree. The
+generator never writes credentials. Fill the blank values in `.env.example`
+through the deployment's secret system before running the application.
+
+## Local verification
+
+After installing from approved package sources or the included snapshots:
+
+```bash
+composer install --working-dir backend
+pnpm install --frozen-lockfile
+php backend/tests/smoke.php
+{$authCheck}pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Application-specific Modules belong under this project's namespace. Regenerating
+into this directory is intentionally rejected; the generator never overwrites an
+existing project.
+MD;
+        $this->write($path, $contents . "\n");
+    }
+
+    /** @param list<string> $features */
+    private function writeBackendSmoke(string $path, array $features, string $namespace): void
+    {
+        $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features)];
+        sort($keys);
+        $tables = [];
+        $owned = [
+            'settings' => [
+                'pa_setting_definition', 'pa_setting_deployment_value',
+                'pa_setting_tenant_value', 'pa_setting_target_value',
+            ],
+            'reference-codes' => [
+                'pa_reference_code_set', 'pa_reference_code_entry', 'pa_reference_code_entry_version',
+            ],
+            'file-media' => ['pa_file_object'],
+        ];
+        foreach ($features as $feature) {
+            foreach ($owned[$feature] as $table) {
+                $tables[$table] = 'peanut.' . $feature;
+            }
+        }
+        ksort($tables);
+        $keysExport = var_export($keys, true);
+        $tablesExport = var_export($tables, true);
+        $contents = <<<PHP
+<?php
+
+declare(strict_types=1);
+
+use Composer\InstalledVersions;
+use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
+use {$namespace}\Module\ModuleRegistryFactory;
+use PeanutAdmin\Kernel\Package as KernelPackage;
+
+require dirname(__DIR__) . '/vendor/autoload.php';
+
+\$root = dirname(__DIR__, 2);
+\$registry = (new ModuleRegistryFactory(\$root))->compile();
+\$ownedTableOwners = \$registry->ownedTableOwners;
+ksort(\$ownedTableOwners);
+\$kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
+\$dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
+\$valid = KernelPackage::VERSION === '0.1.0'
+    && DataPermissionPackage::VERSION === '0.1.0'
+    && \$registry->moduleKeys() === {$keysExport}
+    && \$ownedTableOwners === {$tablesExport}
+    && is_string(\$kernelRoot)
+    && is_dir(\$kernelRoot . '/database/migrations')
+    && is_file(\$kernelRoot . '/resources/schemas/module-manifest.schema.json')
+    && is_string(\$dataPermissionRoot)
+    && is_dir(\$dataPermissionRoot . '/database/migrations');
+
+if (!\$valid) {
+    fwrite(STDERR, "ERROR: generated project package smoke failed\n");
+    exit(1);
+}
+
+fwrite(STDOUT, "Generated project backend test: OK\n");
+PHP;
+        $this->write($path, $contents . "\n");
+    }
+
+    /** @param list<array{key: string, api_prefix: string}> $clients */
+    private function adaptAuthFixture(string $target, array $clients): void
+    {
+        $path = $target . '/backend/tests/auth-clients.php';
+        if (count($clients) < 2) {
+            $this->removePath($path);
+
+            return;
+        }
+        $contents = file_get_contents($path);
+        if (!is_string($contents)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Tenant Client fixture is missing.');
+        }
+        $contents = str_replace('operations-web', $clients[0]['key'], $contents);
+        $contents = str_replace('reporting-web', $clients[1]['key'], $contents);
+        $this->write($path, $contents);
+    }
+
+    /** @param list<array{key: string, api_prefix: string}> $clients */
+    private function writeClientVerification(string $path, array $clients): void
+    {
+        $keys = json_encode(array_column($clients, 'key'), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        $prefixes = json_encode(array_column($clients, 'api_prefix'), JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        $allowedPath = $clients[0]['api_prefix'] . 'items';
+        $rejectedPath = count($clients) > 1 ? $clients[1]['api_prefix'] . 'items' : '/api/unregistered/v1/items';
+        $contents = <<<TS
+import { createMemoryRefreshCoordinator } from '@peanut-admin/admin-core'
+import { describe, expect, it, vi } from 'vitest'
+
+import { createTenantClientTransport, tenantClients } from '../src/clients'
+
+describe('generated project Tenant Clients', () => {
+  it('defines the requested Client keys and API prefixes', () => {
+    expect(tenantClients.map(client => client.key)).toEqual({$keys})
+    expect(tenantClients.map(client => client.apiPrefix)).toEqual({$prefixes})
+  })
+
+  it('keeps a protected transport inside its Client API prefix and origin', async () => {
+    let token = 'fixture-access-token'
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }))
+    const getAccessToken = vi.fn(() => token)
+    const refresh = vi.fn(async () => 'fixture-rotated-token')
+    const transport = createTenantClientTransport(tenantClients[0], {
+      baseUrl: 'https://example.test',
+      fetch: fetcher,
+      getAccessToken,
+      setAccessToken: value => { token = value },
+      refresh,
+      refreshCoordinator: createMemoryRefreshCoordinator(),
+    })
+
+    await expect(transport(new Request('https://example.test{$allowedPath}'))).resolves.toMatchObject({ ok: true })
+    await expect(
+      transport(new Request('https://example.test{$rejectedPath}')),
+    ).rejects.toThrow('API_AUDIENCE_MISMATCH')
+    await expect(
+      transport(new Request('https://other.test{$allowedPath}')),
+    ).rejects.toThrow('API_ORIGIN_MISMATCH')
+  })
+})
+TS;
+        $this->write($path, $contents . "\n");
+    }
+
+    /** @param list<string> $features */
+    private function adaptFeatureFixtures(string $target, array $features): void
+    {
+        $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features)];
+        sort($keys);
+        $phpExpected = var_export($keys, true);
+        foreach (['backend/tests/settings.php', 'backend/tests/reference-codes.php'] as $relative) {
+            $path = $target . '/' . $relative;
+            if (!is_file($path)) {
+                continue;
+            }
+            $contents = (string) file_get_contents($path);
+            $updated = preg_replace(
+                "~\\[\\s*'example\\.greeting',\\s*'peanut\\.reference-codes',\\s*'peanut\\.settings',?\\s*\\]~",
+                $phpExpected,
+                $contents,
+                1,
+                $count,
+            );
+            if (!is_string($updated) || $count !== 1) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Feature fixture contract drifted: {$relative}.");
+            }
+            $this->write($path, $updated);
+        }
+        $tsExpected = json_encode($keys, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
+        foreach ([
+            'frontend/tests/settings.spec.ts',
+            'frontend/tests/reference-codes.spec.ts',
+            'frontend/tests/file-media.spec.ts',
+        ] as $relative) {
+            $path = $target . '/' . $relative;
+            if (!is_file($path)) {
+                continue;
+            }
+            $contents = (string) file_get_contents($path);
+            $updated = preg_replace(
+                '~expect\(host\.modules\.map\(module => module\.key\)\)\.toEqual\(\[[\s\S]*?\]\)~',
+                "expect(host.modules.map(module => module.key)).toEqual({$tsExpected})",
+                $contents,
+                1,
+                $count,
+            );
+            if (!is_string($updated) || $count !== 1) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Web feature fixture contract drifted: {$relative}.");
+            }
+            $this->write($path, $updated);
+        }
+    }
+
+    private function adaptPackageManifests(string $target, GenerationRequest $request): void
+    {
+        $composerPath = $target . '/backend/composer.json';
+        $composer = json_decode((string) file_get_contents($composerPath), true, 512, JSON_THROW_ON_ERROR);
+        $composer['name'] = $request->slug . '/backend';
+        $composer['description'] = $request->displayName . ' ThinkPHP host';
+        $composer['autoload']['psr-4'] = [$request->phpNamespace . '\\' => 'src/'];
+        $this->writeJson($composerPath, $composer);
+        $lockPath = $target . '/backend/composer.lock';
+        $lock = json_decode((string) file_get_contents($lockPath), true, 512, JSON_THROW_ON_ERROR);
+        $lock['content-hash'] = self::composerContentHash($composer);
+        $this->writeJson($lockPath, $lock);
+
+        $frontendPath = $target . '/frontend/package.json';
+        $frontend = json_decode((string) file_get_contents($frontendPath), true, 512, JSON_THROW_ON_ERROR);
+        $frontend['name'] = '@' . $request->slug . '/admin';
+        $this->writeJson($frontendPath, $frontend);
+
+        $rootPath = $target . '/package.json';
+        $package = json_decode((string) file_get_contents($rootPath), true, 512, JSON_THROW_ON_ERROR);
+        $package['name'] = $request->slug;
+        foreach (['build', 'test', 'typecheck'] as $script) {
+            $package['scripts'][$script] = "pnpm --filter @{$request->slug}/admin {$script}";
+        }
+        $this->writeJson($rootPath, $package);
+    }
+
+    /** @param array<string, mixed> $composer */
+    private static function composerContentHash(array $composer): string
+    {
+        $relevant = [];
+        foreach ([
+            'name', 'version', 'require', 'require-dev', 'conflict', 'replace',
+            'provide', 'minimum-stability', 'prefer-stable', 'repositories', 'extra',
+        ] as $key) {
+            if (array_key_exists($key, $composer)) {
+                $relevant[$key] = $composer[$key];
+            }
+        }
+        if (isset($composer['config']['platform']) && is_array($composer['config']['platform'])) {
+            $platform = $composer['config']['platform'];
+            ksort($platform);
+            $relevant['config']['platform'] = $platform;
+        }
+        ksort($relevant);
+        $encoded = json_encode($relevant, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        if (!is_string($encoded)) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not hash the Composer contract.');
+        }
+
+        return md5($encoded);
+    }
+
+    private function assertGeneratedBoundary(string $target): void
+    {
+        foreach (['peanut-project.json', 'backend/composer.lock', 'pnpm-lock.yaml'] as $relative) {
+            if (!is_file($target . '/' . $relative)) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Required generated file is missing: {$relative}.");
+            }
+        }
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($target, FilesystemIterator::SKIP_DOTS),
+        );
+        foreach ($iterator as $file) {
+            if ($file->isLink()) {
+                throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Generated output contains a symbolic link.');
+            }
+            if (!$file->isFile()) {
+                continue;
+            }
+            $contents = file_get_contents($file->getPathname());
+            if (is_string($contents) && str_contains($contents, $this->sourceRoot)) {
+                throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Generated output contains its source path.');
+            }
+        }
+    }
+
+    /** @param array<string, mixed> $value */
+    private function writeJson(string $path, array $value): void
+    {
+        $encoded = json_encode($value, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $this->write($path, $encoded . "\n");
+    }
+
+    private function write(string $path, string $contents): void
+    {
+        if (file_put_contents($path, $contents, LOCK_EX) === false) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not write a generated project file.');
+        }
+    }
+
+    private function cleanupOwnedTarget(string $target, string $marker, string $owner, bool $targetCreated): void
+    {
+        $contents = is_file($marker) ? file_get_contents($marker) : false;
+        if (!is_string($contents) || !hash_equals($owner . "\n", $contents)) {
+            return;
+        }
+        $entries = scandir($target);
+        if (!is_array($entries)) {
+            return;
+        }
+        foreach ($entries as $entry) {
+            if ($entry !== '.' && $entry !== '..') {
+                $this->removePath($target . '/' . $entry);
+            }
+        }
+        if ($targetCreated) {
+            @rmdir($target);
+        }
+    }
+
+    private function removePath(string $path): void
+    {
+        if (is_link($path) || is_file($path)) {
+            if (!@unlink($path)) {
+                throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not remove generated content.');
+            }
+
+            return;
+        }
+        if (!is_dir($path)) {
+            return;
+        }
+        $entries = scandir($path);
+        if (!is_array($entries)) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not scan generated content.');
+        }
+        foreach ($entries as $entry) {
+            if ($entry !== '.' && $entry !== '..') {
+                $this->removePath($path . '/' . $entry);
+            }
+        }
+        if (!@rmdir($path)) {
+            throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not remove a generated directory.');
+        }
+    }
+}
+
+final class ProjectGeneratorCli
+{
+    /** @param list<string> $arguments */
+    public static function run(string $root, array $arguments): int
+    {
+        try {
+            $request = self::request($arguments);
+            $metadata = (new ProjectGenerator($root))->generate($request);
+            fwrite(STDOUT, json_encode([
+                'status' => 'created',
+                'project' => $metadata['project']['slug'],
+                'input_commit' => $metadata['peanut_admin']['input_commit'],
+                'input_tree' => $metadata['peanut_admin']['input_tree'],
+            ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . "\n");
+
+            return 0;
+        } catch (ProjectGeneratorException $exception) {
+            fwrite(STDERR, 'ERROR: ' . $exception->getMessage() . "\n");
+
+            return 64;
+        } catch (Throwable) {
+            fwrite(STDERR, "ERROR: PROJECT_GENERATION_FAILED: Generation failed without publishing partial output.\n");
+
+            return 1;
+        }
+    }
+
+    /** @param list<string> $arguments */
+    private static function request(array $arguments): GenerationRequest
+    {
+        $single = [];
+        $clients = [];
+        $features = [];
+        for ($index = 0; $index < count($arguments); $index++) {
+            $option = $arguments[$index];
+            if (!in_array($option, [
+                '--target', '--slug', '--display-name', '--php-namespace', '--brand',
+                '--profile', '--tenant-client', '--feature',
+            ], true)) {
+                throw new ProjectGeneratorException('PROJECT_OPTION_UNKNOWN', "Unknown option: {$option}.");
+            }
+            $value = $arguments[++$index] ?? null;
+            if (!is_string($value) || $value === '') {
+                throw new ProjectGeneratorException('PROJECT_OPTION_MISSING', "Missing value for {$option}.");
+            }
+            if ($option === '--tenant-client') {
+                $separator = strpos($value, '=');
+                if ($separator === false) {
+                    throw new ProjectGeneratorException('PROJECT_TENANT_CLIENT_INVALID', 'Use key=/api/path/v1/.');
+                }
+                $clients[] = [
+                    'key' => substr($value, 0, $separator),
+                    'api_prefix' => substr($value, $separator + 1),
+                ];
+            } elseif ($option === '--feature') {
+                $features[] = $value;
+            } else {
+                if (isset($single[$option])) {
+                    throw new ProjectGeneratorException('PROJECT_OPTION_DUPLICATE', "Duplicate option: {$option}.");
+                }
+                $single[$option] = $value;
+            }
+        }
+        foreach (['--target', '--slug', '--display-name', '--php-namespace', '--brand'] as $required) {
+            if (!isset($single[$required])) {
+                throw new ProjectGeneratorException('PROJECT_OPTION_MISSING', "Required option is missing: {$required}.");
+            }
+        }
+        $canonicalFeatures = [];
+        foreach (['settings', 'reference-codes', 'file-media'] as $feature) {
+            if (in_array($feature, $features, true)) {
+                $canonicalFeatures[] = $feature;
+            }
+        }
+        foreach ($features as $feature) {
+            if (!in_array($feature, ['settings', 'reference-codes', 'file-media'], true)) {
+                $canonicalFeatures[] = $feature;
+            }
+        }
+        if (count(array_unique($features)) !== count($features)) {
+            throw new ProjectGeneratorException('PROJECT_FEATURE_UNKNOWN', 'A first-party feature was selected more than once.');
+        }
+
+        return new GenerationRequest(
+            $single['--target'],
+            $single['--slug'],
+            $single['--display-name'],
+            $single['--php-namespace'],
+            $single['--brand'],
+            $single['--profile'] ?? 'standard-admin',
+            $clients,
+            $canonicalFeatures,
+        );
+    }
+}
