@@ -11,12 +11,22 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 
 $root = dirname(__DIR__, 2);
 $registry = (new ModuleRegistryFactory($root))->compile();
+$ownedTableOwners = $registry->ownedTableOwners;
+ksort($ownedTableOwners);
 $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 $dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
 $valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
     && $registry->moduleKeys() === ['example.greeting', 'peanut.reference-codes', 'peanut.settings']
-    && $registry->ownedTableOwners === []
+    && $ownedTableOwners === [
+        'pa_reference_code_entry' => 'peanut.reference-codes',
+        'pa_reference_code_entry_version' => 'peanut.reference-codes',
+        'pa_reference_code_set' => 'peanut.reference-codes',
+        'pa_setting_definition' => 'peanut.settings',
+        'pa_setting_deployment_value' => 'peanut.settings',
+        'pa_setting_target_value' => 'peanut.settings',
+        'pa_setting_tenant_value' => 'peanut.settings',
+    ]
     && is_string($kernelRoot)
     && is_dir($kernelRoot . '/database/migrations')
     && is_file($kernelRoot . '/resources/schemas/module-manifest.schema.json')
