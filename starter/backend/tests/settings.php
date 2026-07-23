@@ -174,7 +174,7 @@ SQL);
     ))->compile($documents);
     (new ModuleBoundaryChecker($moduleRegistry, $layout, ['pa_', 'starter_']))->check();
     $assertSame(
-        ['example.greeting', 'peanut.file-media', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings', 'peanut.task-job'],
+        ['example.greeting', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings'],
         $moduleRegistry->moduleKeys(),
         'Starter Modules did not compile.',
     );

@@ -175,6 +175,11 @@ final class ProjectGenerator
         ],
     ];
 
+    /** @var array<string, list<string>> */
+    private const FEATURE_DEPENDENCIES = [
+        'notification-sms' => ['file-media', 'task-job'],
+    ];
+
     private string $sourceRoot;
 
     public function __construct(string $sourceRoot)
@@ -983,8 +988,7 @@ MD;
     /** @param list<string> $features */
     private function writeBackendSmoke(string $path, array $features, string $namespace): void
     {
-        $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features)];
-        sort($keys);
+        $keys = self::orderedModuleKeys($features);
         $tables = [];
         $owned = [
             'settings' => [
@@ -1144,14 +1148,8 @@ TS;
     private function adaptFeatureFixtures(string $target, array $features): void
     {
         $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features)];
-        $sortedKeys = $keys;
-        sort($sortedKeys);
-        $phpExpected = var_export($sortedKeys, true);
-        $canonicalKeys = [
-            'example.greeting',
-            ...array_map(static fn(string $feature): string => 'peanut.' . $feature, array_keys(self::FEATURES)),
-        ];
-        sort($canonicalKeys);
+        $phpExpected = var_export(self::orderedModuleKeys($features), true);
+        $canonicalKeys = self::orderedModuleKeys(array_keys(self::FEATURES));
         $phpPattern = '~\\[\\s*' . implode(
             ',\\s*',
             array_map(static fn(string $key): string => "'" . preg_quote($key, '~') . "'", $canonicalKeys),
@@ -1199,6 +1197,39 @@ TS;
             }
             $this->write($path, $updated);
         }
+    }
+
+    /** @param list<string> $features @return list<string> */
+    private static function orderedModuleKeys(array $features): array
+    {
+        $selected = array_fill_keys($features, true);
+        $pending = $features;
+        sort($pending, SORT_STRING);
+        $visiting = [];
+        $visited = [];
+        $keys = ['example.greeting'];
+        $visit = function (string $feature) use (&$visit, &$visiting, &$visited, &$keys, $selected): void {
+            if (isset($visited[$feature])) {
+                return;
+            }
+            if (isset($visiting[$feature])) {
+                throw new ProjectGeneratorException('PROJECT_FEATURE_DEPENDENCY_INVALID', 'Feature dependencies contain a cycle.');
+            }
+            $visiting[$feature] = true;
+            foreach (self::FEATURE_DEPENDENCIES[$feature] ?? [] as $dependency) {
+                if (isset($selected[$dependency])) {
+                    $visit($dependency);
+                }
+            }
+            unset($visiting[$feature]);
+            $visited[$feature] = true;
+            $keys[] = 'peanut.' . $feature;
+        };
+        foreach ($pending as $feature) {
+            $visit($feature);
+        }
+
+        return $keys;
     }
 
     private function adaptPackageManifests(string $target, GenerationRequest $request): void

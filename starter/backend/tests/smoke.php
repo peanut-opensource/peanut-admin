@@ -17,7 +17,7 @@ $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 $dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
 $valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
-    && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings', 'peanut.task-job']
+    && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings']
     && $ownedTableOwners === [
         'pa_file_delivery_nonce' => 'peanut.file-media',
         'pa_file_delivery_policy' => 'peanut.file-media',
