@@ -56,6 +56,23 @@ Start with [the documentation index](docs/README.md).
 
 ## Development
 
+Bootstrap each new worktree once from the shared pnpm content store:
+
+```bash
+./scripts/bootstrap-worktree-dependencies
+```
+
+Only after an explicit offline cache miss, warm the store and retry:
+
+```bash
+./scripts/warm-worktree-dependencies
+./scripts/bootstrap-worktree-dependencies
+```
+
+The bootstrap is offline and frozen. Repeated focused tests reuse the local
+worktree layout; the command rebuilds only when dependency inputs, Node, pnpm,
+the operating system, the architecture, or the resolved store path changes.
+
 Ordinary bounded changes run the focused checks that cover their affected
 behavior. See [the testing guide](docs/guide/testing.md) for the layered
 verification policy and available commands.

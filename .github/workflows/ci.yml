@@ -36,8 +36,10 @@ jobs:
           cache: pnpm
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
-      - name: Install web dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Warm web dependency cache
+        run: ./scripts/warm-worktree-dependencies
+      - name: Bootstrap web dependencies offline
+        run: ./scripts/bootstrap-worktree-dependencies
       - name: Install browser runtime
         run: pnpm exec playwright install --with-deps chromium
       - name: Install Gitleaks 8.30.1

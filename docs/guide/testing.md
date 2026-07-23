@@ -31,6 +31,29 @@ A task that does not touch one of these boundaries does not inherit its full
 test suite. A task that does touch one must test the changed boundary, including
 the relevant negative and failure paths.
 
+## Worktree Dependencies
+
+Run the following once when opening a new worktree:
+
+```bash
+./scripts/bootstrap-worktree-dependencies
+```
+
+The command resolves the configured pnpm content store dynamically and performs
+an offline, frozen install. If the store is missing required content, populate
+it through the separate, explicitly networked command and retry:
+
+```bash
+./scripts/warm-worktree-dependencies
+./scripts/bootstrap-worktree-dependencies
+```
+
+Focused tests then reuse that worktree-local layout. Bootstrap is a no-op while
+the lock and package configuration, Node and pnpm versions, operating system,
+architecture, and resolved store path remain unchanged. It removes and rebuilds
+only ignored `node_modules` layouts inside the current worktree; a dependency
+link into another worktree is never reused.
+
 ## Milestone Candidate Verification
 
 The stable aggregate entry point is:
@@ -46,6 +69,8 @@ commit when preparing a Starter v1 milestone, qualification, or release
 candidate. That concentrated gate includes the full regression and browser
 matrix, clean install and upgrade, backup and restore, performance, starter
 reproducibility, and independent fixed-commit review required by the candidate.
+`./scripts/verify-internal-starter` creates and installs two independent starter
+copies and belongs only to this fixed-candidate or qualification phase.
 
 If a performance check fails, the affected qualification, release, or
 downstream consumption-lock movement remains blocked until it passes. The
@@ -67,7 +92,6 @@ Starter v1 candidate exists.
 ./scripts/check-openapi
 ./scripts/check-architecture
 ./scripts/check-docs
-./scripts/verify-internal-starter
 ```
 
 Run the fictional cross-Module contract example with MySQL available:

@@ -10,6 +10,8 @@ on:
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.npmrc'
+      - 'scripts/bootstrap-worktree-dependencies'
+      - 'scripts/warm-worktree-dependencies'
       - 'scripts/check-docs'
       - 'scripts/verify-doc-examples'
       - '.github/workflows/docs.yml'
@@ -46,8 +48,10 @@ jobs:
           cache: pnpm
       - name: Configure Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - name: Warm dependency cache
+        run: ./scripts/warm-worktree-dependencies
+      - name: Bootstrap dependencies offline
+        run: ./scripts/bootstrap-worktree-dependencies
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
       - name: Build documentation

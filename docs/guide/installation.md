@@ -22,7 +22,16 @@ Install dependencies from the repository root:
 
 ```bash
 composer install
-pnpm install --frozen-lockfile
+./scripts/bootstrap-worktree-dependencies
+```
+
+The bootstrap command always uses the frozen lockfile in offline mode. Only
+after it reports missing cached content, run the explicitly networked warm
+command and retry:
+
+```bash
+./scripts/warm-worktree-dependencies
+./scripts/bootstrap-worktree-dependencies
 ```
 
 The repository qualification gate checks the exact Composer and pnpm versions.

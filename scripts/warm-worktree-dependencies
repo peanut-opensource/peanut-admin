@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+cd "$ROOT"
+
+if [[ -n "${PNPM_STORE_DIR:-}" ]]; then
+  store_path="$(pnpm --store-dir "$PNPM_STORE_DIR" store path)"
+else
+  configured_store="$(pnpm config get store-dir)"
+  if [[ -n "$configured_store" && "$configured_store" != 'undefined' && "$configured_store" != 'null' ]]; then
+    store_path="$(pnpm --store-dir "$configured_store" store path)"
+  else
+    store_path="$(pnpm store path)"
+  fi
+fi
+if [[ -z "$store_path" ]]; then
+  echo 'ERROR: pnpm did not resolve a store path.' >&2
+  exit 1
+fi
+
+echo "Warming pnpm content store with network access allowed: $store_path"
+pnpm --store-dir "$store_path" fetch --frozen-lockfile
+echo 'Dependency cache warm complete; run ./scripts/bootstrap-worktree-dependencies next.'

@@ -9,9 +9,12 @@ The buildable documentation site contains the P0 developer guide, runtime refere
 Run the site locally from the repository root:
 
 ```bash
-corepack pnpm install --frozen-lockfile
-corepack pnpm docs:dev
+./scripts/bootstrap-worktree-dependencies
+pnpm docs:dev
 ```
+
+If bootstrap reports an offline cache miss, run
+`./scripts/warm-worktree-dependencies` explicitly and retry bootstrap.
 
 Build the same static output used by GitHub Pages:
 

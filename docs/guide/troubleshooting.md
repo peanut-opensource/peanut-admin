@@ -15,6 +15,22 @@ Use PHP 8.3 and Composer 2.10.2, and confirm `pdo_mysql` is loaded. The full
 repository gate also requires pnpm 11.13.0. Do not bypass or relax the preflight
 and workspace checks when a local tool version differs.
 
+## Worktree Bootstrap Reports An Offline Cache Miss
+
+Dependency bootstrap never fetches from the network. Warm the resolved pnpm
+content store explicitly, then retry the offline bootstrap:
+
+```bash
+./scripts/warm-worktree-dependencies
+./scripts/bootstrap-worktree-dependencies
+```
+
+Set `PNPM_STORE_DIR` only when an explicit store override is required. The
+scripts do not modify global pnpm or npm configuration. If bootstrap reports a
+broken or cross-worktree dependency link, it prints a bounded sample, removes
+only ignored `node_modules` layouts inside the current worktree, and exits.
+Rerun bootstrap to build a clean local layout.
+
 ## Installer Cannot Connect To MySQL
 
 Check the service and environment without printing secrets:
