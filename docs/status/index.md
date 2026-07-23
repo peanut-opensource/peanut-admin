@@ -123,7 +123,7 @@ behavior, and a candidate-only stop line. The candidate remains subject to its
 focused and later milestone qualification gates.
 
 The minimal reusable code-set slice is fixed by the
-[P1-B04 Minimal Reference-Code Module Contract](./p1-b04-minimal-reference-code-contract.md).
+[P1-B04 Minimal Reference Codes Module Contract](./p1-b04-minimal-reference-codes-contract.md).
 It defines trusted Module-owned sets, Tenant-isolated immutable code identity,
 effective as-of options, optimistic concurrency, Tenant Web behavior, and a
 candidate-only stop line without reusing the fictional shared-master fixture.
