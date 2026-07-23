@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d27df2678ab156a8a103d66b989c8068",
+    "content-hash": "d96e3fccc2dba6599f23f8da439c4ce5",
     "packages": [
         {
             "name": "opis/json-schema",
@@ -254,6 +254,40 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin security and runtime kernel contracts",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/reference-codes",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/php/reference-codes",
+                "reference": "5371b348f077bd7007ac259c000a4771e6515b3d"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\ReferenceCodes\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\ReferenceCodes\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable tenant-owned reference-code contracts and persistence",
             "transport-options": {
                 "symlink": true,
                 "relative": true

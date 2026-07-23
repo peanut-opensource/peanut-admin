@@ -118,8 +118,37 @@ final class ModuleManifestValidationTest extends TestCase
         self::expectNotToPerformAssertions();
     }
 
-    public function testReferenceHostRegistersTheSettingsModule(): void
+    public function testOpisValidatorAcceptsAReferenceCodeSetResource(): void
     {
-        self::assertContains('peanut.settings', RuntimeModuleRegistry::compile()->moduleKeys());
+        $validator = new OpisManifestSchemaValidator(
+            dirname(__DIR__, 3) . '/packages/php/kernel/resources/schemas/module-manifest.schema.json',
+        );
+        $validator->assertValid(json_decode((string) json_encode([
+            'schema_version' => 1,
+            'key' => 'example.target',
+            'name' => 'Example Target',
+            'description' => 'Fixture module',
+            'version' => '1.0.0',
+            'kernel_constraint' => '^1.0',
+            'license' => 'Apache-2.0',
+            'backend' => [
+                'provider' => 'PeanutAdmin\\App\\Modules\\Example\\Target\\ModuleProvider',
+                'reference_code_sets' => 'Resources/reference-code-sets.json',
+            ],
+            'frontend' => (object) [],
+            'database' => ['owned_tables' => []],
+            'contracts' => ['exports' => [], 'events' => []],
+            'tenant' => ['enableable' => true, 'requires' => []],
+        ], JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR));
+
+        self::expectNotToPerformAssertions();
+    }
+
+    public function testReferenceHostRegistersTheAdministrationModules(): void
+    {
+        $moduleKeys = RuntimeModuleRegistry::compile()->moduleKeys();
+
+        self::assertContains('peanut.settings', $moduleKeys);
+        self::assertContains('peanut.reference-codes', $moduleKeys);
     }
 }

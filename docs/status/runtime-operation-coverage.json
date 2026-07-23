@@ -124,6 +124,19 @@
         "packages/web/settings/tests/page.spec.ts",
         "frontend/tests/e2e/settings.e2e.ts"
       ]
+    },
+    "RUNTIME-REFERENCE-CODES-001": {
+      "description": "Tenant-owned versioned reference-code definitions, entries, isolation, Host API, and Admin Web behavior",
+      "evidence": [
+        "packages/php/reference-codes/tests/Integration/Application/ReferenceCodeAdminServiceTest.php",
+        "packages/php/reference-codes/tests/Integration/Application/ReferenceCodeQueryTest.php",
+        "packages/php/reference-codes/tests/Security/ReferenceCodesIsolationTest.php",
+        "backend/tests/Integration/ReferenceCodeModuleIntegrationTest.php",
+        "backend/tests/Http/ReferenceCodeApiTest.php",
+        "backend/tests/Security/ReferenceCodeSecurityTest.php",
+        "packages/web/reference-codes/tests/page.spec.ts",
+        "frontend/tests/e2e/reference-codes.e2e.ts"
+      ]
     }
   },
   "operations": [
@@ -211,6 +224,12 @@
     {"operation_id":"unsetDeploymentSetting","scope":"p1","route":"DELETE /api/platform/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformSettingsController::unsetDeploymentSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"},
     {"operation_id":"listTenantSettings","scope":"p1","route":"GET /api/v1/settings","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::listTenantSettings","response_schema":"#/components/schemas/SettingListResponse","test_owner":"RUNTIME-SETTINGS-001"},
     {"operation_id":"replaceTenantSetting","scope":"p1","route":"PUT /api/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::replaceTenantSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"},
-    {"operation_id":"unsetTenantSetting","scope":"p1","route":"DELETE /api/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::unsetTenantSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"}
+    {"operation_id":"unsetTenantSetting","scope":"p1","route":"DELETE /api/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::unsetTenantSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"},
+    {"operation_id":"listReferenceCodeSets","scope":"p1","route":"GET /api/v1/reference-code-sets","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::listReferenceCodeSets","response_schema":"#/components/schemas/ReferenceCodeSetListResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
+    {"operation_id":"listReferenceCodes","scope":"p1","route":"GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::listReferenceCodes","response_schema":"#/components/schemas/ReferenceCodeListResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
+    {"operation_id":"getReferenceCode","scope":"p1","route":"GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::getReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
+    {"operation_id":"createReferenceCode","scope":"p1","route":"POST /api/v1/reference-code-sets/{module_key}/{set_key}/codes","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::createReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
+    {"operation_id":"replaceReferenceCode","scope":"p1","route":"PUT /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::replaceReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
+    {"operation_id":"retireReferenceCode","scope":"p1","route":"DELETE /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::retireReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"}
   ]
 }

@@ -57,6 +57,8 @@ foreach ([
     'opis/json-schema' => '2.6.0',
     'peanut-admin/kernel' => '0.1.0',
     'peanut-admin/data-permission' => '0.1.0',
+    'peanut-admin/reference-codes' => '0.1.0',
+    'peanut-admin/settings' => '0.1.0',
 ] as $package => $version) {
     if (($composer['require'][$package] ?? null) !== $version) {
         fwrite(STDERR, "ERROR: starter must lock {$package} to {$version}\n");
@@ -73,6 +75,8 @@ $frontend = json_decode(
 foreach ([
     '@peanut-admin/admin-core' => 'workspace:0.1.0',
     '@peanut-admin/admin-shell' => 'workspace:0.1.0',
+    '@peanut-admin/reference-codes' => 'workspace:0.1.0',
+    '@peanut-admin/settings' => 'workspace:0.1.0',
 ] as $package => $version) {
     if (($frontend['dependencies'][$package] ?? null) !== $version) {
         fwrite(STDERR, "ERROR: starter must lock {$package} to {$version}\n");

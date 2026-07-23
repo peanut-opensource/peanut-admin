@@ -5,6 +5,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__, 2);
 $trustedRoots = [
     'backend/app/Modules/Peanut/Settings',
+    'backend/app/Modules/Peanut/ReferenceCodes',
     'backend/app/Modules/Example/Target',
     'backend/app/Modules/Example/Reference',
     'backend/app/Modules/Example/WorkItem',
@@ -18,6 +19,7 @@ return [
     )),
     'frontend_components' => [
         'peanut.settings.page',
+        'peanut.reference-codes.page',
         'example.target.list',
         'example.reference.list',
         'example.work-item.list',

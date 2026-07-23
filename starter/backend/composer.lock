@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "1b73e3ef53e6bac6483e3326665a5b47",
+    "content-hash": "0c96bb685a9a7c379d80bf9e82205d7d",
     "packages": [
         {
             "name": "composer/semver",
@@ -331,6 +331,40 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin security and runtime kernel contracts",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/reference-codes",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "../packages/php/reference-codes",
+                "reference": "769a8a1fe9880cbca4ae6236362b93b1d67f539f"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\ReferenceCodes\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\ReferenceCodes\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable tenant-owned reference-code contracts and persistence",
             "transport-options": {
                 "symlink": false,
                 "relative": true

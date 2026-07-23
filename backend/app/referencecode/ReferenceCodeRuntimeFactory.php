@@ -547,7 +547,7 @@ final class ReferenceCodeRuntimeFactory
     ): array {
         return (new PdoReferenceCodeRepository($pdo))->synchronize(
             self::definitionRegistry($modules),
-            $now,
+            self::millisecond($now),
         );
     }
 

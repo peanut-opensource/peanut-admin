@@ -32,6 +32,13 @@ The machine-readable [P1-B03 lock evidence](./p1-b03-lock-evidence.json) records
 the reviewed hashes, frozen starter installs, tool versions, and zero-advisory
 audit result without treating that evidence as qualification.
 
+P1-B04 also adds no third-party dependency. The Reference Codes PHP and Web
+packages reuse the Kernel, Admin Core, Admin Shell, PDO, JSON, and current Web
+toolchain already locked by the repository. Its machine-readable
+[P1-B04 lock evidence](./p1-b04-lock-evidence.json) records only first-party
+path/workspace lock changes and development checks; audit, clean starter
+installs, and fixed-candidate qualification remain deferred.
+
 ## Explicitly Deferred
 
 P0 does not install or create speculative abstractions for filesystem storage, queue management UI, spreadsheet import/export, notifications, Plugin runtime or marketplace, MFA, or OIDC. Each requires an approved use path and a new dependency decision before installation.

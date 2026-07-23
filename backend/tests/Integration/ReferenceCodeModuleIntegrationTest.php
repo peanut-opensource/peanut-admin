@@ -53,8 +53,8 @@ final class ReferenceCodeModuleIntegrationTest extends TestCase
         }
         $mysqlPort = $this->requiredPort('MYSQL_PORT');
         $dbPort = $this->requiredPort('DB_PORT');
-        if ($mysqlPort !== 33404 || $dbPort !== 33404) {
-            throw new RuntimeException('B04 MYSQL_PORT and DB_PORT must both equal 33404.');
+        if ($mysqlPort !== $dbPort) {
+            throw new RuntimeException('Reference Codes MYSQL_PORT and DB_PORT must match.');
         }
         $rootPassword = getenv('MYSQL_ROOT_PASSWORD') ?: 'peanut_admin_root_dev';
         $this->admin = new PDO(

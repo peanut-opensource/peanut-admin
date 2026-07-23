@@ -15,7 +15,7 @@ $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 $dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
 $valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
-    && $registry->moduleKeys() === ['example.greeting']
+    && $registry->moduleKeys() === ['example.greeting', 'peanut.reference-codes', 'peanut.settings']
     && $registry->ownedTableOwners === []
     && is_string($kernelRoot)
     && is_dir($kernelRoot . '/database/migrations')

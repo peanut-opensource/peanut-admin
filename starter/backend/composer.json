@@ -24,6 +24,13 @@
       "options": {
         "symlink": false
       }
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/reference-codes",
+      "options": {
+        "symlink": false
+      }
     }
   ],
   "require": {
@@ -32,6 +39,7 @@
     "php": "^8.3",
     "peanut-admin/data-permission": "0.1.0",
     "peanut-admin/kernel": "0.1.0",
+    "peanut-admin/reference-codes": "0.1.0",
     "peanut-admin/settings": "0.1.0",
     "topthink/framework": "8.1.4",
     "topthink/think-migration": "3.1.1"
@@ -42,7 +50,8 @@
       "PeanutAdmin\\InternalStarter\\": "src/"
     },
     "exclude-from-classmap": [
-      "src/Modules/Peanut/Settings/Database/Migrations/"
+      "src/Modules/Peanut/Settings/Database/Migrations/",
+      "src/Modules/Peanut/ReferenceCodes/Database/Migrations/"
     ]
   },
   "config": {

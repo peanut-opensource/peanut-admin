@@ -174,6 +174,61 @@ x-work-item-policy-published-response: &workItemPolicyPublishedResponse
   <<: *writeErrors
   '201': { $ref: './responses.yaml#/WorkItemPolicyPublished' }
 
+x-reference-code-set-list-response: &referenceCodeSetListResponse
+  <<: *readErrors
+  '200':
+    description: Active reference-code set declarations visible to the current Tenant.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeSetListResponse' }
+x-reference-code-list-response: &referenceCodeListResponse
+  <<: *readErrors
+  '200':
+    description: Current-Tenant reference-code entries at one fixed as-of instant.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeListResponse' }
+x-reference-code-entry-response: &referenceCodeEntryResponse
+  <<: *readErrors
+  '200':
+    description: One current-Tenant reference-code identity and effective version.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { $ref: './schemas/reference-codes.yaml#/StrongReferenceCodeEtag' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeEntryResponse' }
+x-reference-code-write-response: &referenceCodeWriteResponse
+  <<: *writeErrors
+  '200':
+    description: Updated or retired current-Tenant reference-code identity.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { $ref: './schemas/reference-codes.yaml#/StrongReferenceCodeEtag' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeEntryResponse' }
+x-reference-code-created-response: &referenceCodeCreatedResponse
+  <<: *writeErrors
+  '201':
+    description: Reference-code identity and initial version created.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { $ref: './schemas/reference-codes.yaml#/StrongReferenceCodeEtag' } }
+      Location: { schema: { type: string, pattern: '^/api/v1/reference-code-sets/[^/?#]+/[^/?#]+/codes/[^/?#]+$' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeEntryResponse' }
+
 x-platform-operator-response: &platformOperatorResponse
   <<: *writeErrors
   '200': { $ref: './responses.yaml#/PlatformOperatorOk' }
@@ -434,6 +489,88 @@ paths:
   /api/v1/modules/{module_key}/config:
     parameters: [{ $ref: '#/components/parameters/ModuleKey' }]
     patch: { operationId: updateTenantModuleConfig, summary: updateTenantModuleConfig, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::updateModuleConfig', x-permission: core.module.configure, parameters: [{ $ref: '#/components/parameters/IfMatch' }], requestBody: { $ref: '#/components/requestBodies/ModuleConfigWrite' }, responses: *tenantModuleResponse }
+  /api/v1/reference-code-sets:
+    get:
+      operationId: listReferenceCodeSets
+      summary: listReferenceCodeSets
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ReferenceCodeController::listReferenceCodeSets'
+      x-module-key: peanut.reference-codes
+      x-permission: peanut.reference-codes.read
+      responses: *referenceCodeSetListResponse
+  /api/v1/reference-code-sets/{module_key}/{set_key}/codes:
+    parameters:
+      - { $ref: '#/components/parameters/ReferenceCodeOwnerModuleKey' }
+      - { $ref: '#/components/parameters/ReferenceCodeSetKey' }
+    get:
+      operationId: listReferenceCodes
+      summary: listReferenceCodes
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ReferenceCodeController::listReferenceCodes'
+      x-module-key: peanut.reference-codes
+      x-permission: peanut.reference-codes.read
+      parameters:
+        - { in: query, name: as_of, required: false, schema: { $ref: './schemas/reference-codes.yaml#/MillisecondDateTime' } }
+        - { in: query, name: effective_status, required: false, schema: { enum: [active, inactive, all], default: all } }
+        - { in: query, name: include_retired, required: false, schema: { type: boolean, default: false } }
+        - { in: query, name: page, required: false, schema: { type: integer, minimum: 1, maximum: 10000, default: 1 } }
+        - { in: query, name: page_size, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 50 } }
+      responses: *referenceCodeListResponse
+    post:
+      operationId: createReferenceCode
+      summary: createReferenceCode
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ReferenceCodeController::createReferenceCode'
+      x-module-key: peanut.reference-codes
+      x-permission: peanut.reference-codes.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/ReferenceCodeIfNoneMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeCreateRequest' }
+      responses: *referenceCodeCreatedResponse
+  /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}:
+    parameters:
+      - { $ref: '#/components/parameters/ReferenceCodeOwnerModuleKey' }
+      - { $ref: '#/components/parameters/ReferenceCodeSetKey' }
+      - { $ref: '#/components/parameters/ReferenceCodeKey' }
+    get:
+      operationId: getReferenceCode
+      summary: getReferenceCode
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ReferenceCodeController::getReferenceCode'
+      x-module-key: peanut.reference-codes
+      x-permission: peanut.reference-codes.read
+      parameters:
+        - { in: query, name: as_of, required: false, schema: { $ref: './schemas/reference-codes.yaml#/MillisecondDateTime' } }
+      responses: *referenceCodeEntryResponse
+    put:
+      operationId: replaceReferenceCode
+      summary: replaceReferenceCode
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ReferenceCodeController::replaceReferenceCode'
+      x-module-key: peanut.reference-codes
+      x-permission: peanut.reference-codes.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/ReferenceCodeIfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeReplaceRequest' }
+      responses: *referenceCodeWriteResponse
+    delete:
+      operationId: retireReferenceCode
+      summary: retireReferenceCode
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ReferenceCodeController::retireReferenceCode'
+      x-module-key: peanut.reference-codes
+      x-permission: peanut.reference-codes.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/ReferenceCodeIfMatch' }
+      responses: *referenceCodeWriteResponse
   /api/v1/audit-events:
     get: { operationId: listTenantAuditEvents, summary: listTenantAuditEvents, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::auditEvents', x-permission: core.audit.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *tenantAuditListResponse }
   /api/v1/menus:
@@ -664,6 +801,11 @@ components:
     RoleId: { in: path, name: role_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     OperatorId: { in: path, name: operator_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     ModuleKey: { in: path, name: module_key, required: true, schema: { type: string, pattern: '^[a-z][a-z0-9.-]+$' } }
+    ReferenceCodeOwnerModuleKey: { in: path, name: module_key, required: true, schema: { $ref: './schemas/reference-codes.yaml#/ModuleKey' } }
+    ReferenceCodeSetKey: { in: path, name: set_key, required: true, schema: { $ref: './schemas/reference-codes.yaml#/LocalKey' } }
+    ReferenceCodeKey: { in: path, name: code, required: true, schema: { $ref: './schemas/reference-codes.yaml#/LocalKey' } }
+    ReferenceCodeIfNoneMatch: { in: header, name: If-None-Match, required: true, schema: { type: string, const: '*' } }
+    ReferenceCodeIfMatch: { in: header, name: If-Match, required: true, schema: { $ref: './schemas/reference-codes.yaml#/StrongReferenceCodeEtag' } }
     SettingModuleKey:
       in: path
       name: module_key

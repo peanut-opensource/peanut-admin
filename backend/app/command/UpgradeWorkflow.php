@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use PDO;
 use PeanutAdmin\App\module\ModuleRegistryFactory;
+use PeanutAdmin\App\referencecode\ReferenceCodeRuntimeFactory;
 use PeanutAdmin\App\setting\SettingsRuntimeFactory;
 use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
@@ -101,6 +102,7 @@ final readonly class UpgradeWorkflow
         ))->synchronize($registry);
         (new MenuCatalogSynchronizer(new PdoMenuCatalogRepository($this->pdo)))->synchronize($registry);
         SettingsRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
+        ReferenceCodeRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
 
         return [
             'modules' => $registry->moduleKeys(),

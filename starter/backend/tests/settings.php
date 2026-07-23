@@ -173,7 +173,11 @@ SQL);
         $moduleConfig['registered_client_keys'],
     ))->compile($documents);
     (new ModuleBoundaryChecker($moduleRegistry, $layout, ['pa_', 'starter_']))->check();
-    $assertSame(['example.greeting', 'peanut.settings'], $moduleRegistry->moduleKeys(), 'Starter Modules did not compile.');
+    $assertSame(
+        ['example.greeting', 'peanut.reference-codes', 'peanut.settings'],
+        $moduleRegistry->moduleKeys(),
+        'Starter Modules did not compile.',
+    );
     foreach (SettingsSchema::tableNames() as $table) {
         $assertSame('peanut.settings', $moduleRegistry->ownedTableOwners[$table] ?? null, "Settings table owner is invalid: {$table}");
     }

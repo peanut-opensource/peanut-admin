@@ -22,7 +22,7 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 ## Runtime Operation Coverage
 
 [`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies
-the current 85 OpenAPI operations as 75 P0 and 10 P1 operations, records their
+the current 91 OpenAPI operations as 75 P0 and 16 P1 operations, records their
 concrete handlers and success schemas, and assigns each operation to an
 executable test owner. `./scripts/check-runtime-coverage` rejects missing,
 duplicate, stale, or unowned operations.
@@ -129,7 +129,8 @@ effective as-of options, optimistic concurrency, Tenant Web behavior, and a
 candidate-only stop line without reusing the fictional shared-master fixture.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
-The Reference-Code contract remains implementation-only planning. P1 work does
+The Reference Codes implementation is development-only and remains outside the
+qualified downstream lock. P1 work does
 not change the external-host consumption lock above. A later P1 commit remains
 unqualified for downstream consumption until a new fixed-commit aggregate check
 and review approve it.

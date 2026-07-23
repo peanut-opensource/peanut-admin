@@ -14,8 +14,8 @@ use PeanutAdmin\Kernel\Module\ManifestLoader;
 use PeanutAdmin\Kernel\Module\ModuleBoundaryChecker;
 use PeanutAdmin\Kernel\Module\ModuleHostLayout;
 use PeanutAdmin\Kernel\Module\ModuleRegistryCompiler;
-use PeanutAdmin\Kernel\Persistence\Schema\KernelSchema;
 use PeanutAdmin\Kernel\Package as KernelPackage;
+use PeanutAdmin\Kernel\Persistence\Schema\KernelSchema;
 use RuntimeException;
 
 final readonly class ModuleRegistryFactory
@@ -29,18 +29,23 @@ final readonly class ModuleRegistryFactory
             'ExampleHost\\App\\Modules',
             'frontend/src/modules',
         );
-        $moduleRoot = $this->root . '/backend/src/Modules/Example/Greeting';
+        /** @var array{roots: list<string>, frontend_components: list<string>, registered_client_keys: list<string>} $config */
+        $config = require $this->root . '/backend/config/modules.php';
         $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
         if (!is_string($kernelRoot) || $kernelRoot === '') {
             throw new RuntimeException('Installed Kernel package path is unavailable.');
         }
-        $document = (new ManifestLoader())->load($moduleRoot);
+        $loader = new ManifestLoader();
+        $documents = array_map(
+            fn(string $path) => $loader->load($this->root . '/' . ltrim($path, '/')),
+            $config['roots'],
+        );
         $registry = (new ModuleRegistryCompiler(
             new OpisManifestSchemaValidator($kernelRoot . '/resources/schemas/module-manifest.schema.json'),
             new ComposerVersionConstraintMatcher(),
             new ReflectionContractInspector(),
             KernelPackage::VERSION,
-            [],
+            $config['frontend_components'],
             $layout,
             [
                 ...KernelSchema::tableNames(),
@@ -49,8 +54,8 @@ final readonly class ModuleRegistryFactory
                 ...IdempotencySchema::tableNames(),
                 ...DataPermissionSchema::tableNames(),
             ],
-            ['operations-web', 'reporting-web', 'platform-web'],
-        ))->compile([$document]);
+            $config['registered_client_keys'],
+        ))->compile($documents);
         (new ModuleBoundaryChecker($registry, $layout, ['pa_', 'starter_']))->check();
 
         return $registry;

@@ -26,7 +26,11 @@ describe('internal starter Settings consumption', () => {
     })
 
     expect(settingsPackage.SETTINGS_VERSION).toBe('0.1.0')
-    expect(host.modules.map(module => module.key)).toEqual(['example.greeting', 'peanut.settings'])
+    expect(host.modules.map(module => module.key)).toEqual([
+      'example.greeting',
+      'peanut.settings',
+      'peanut.reference-codes',
+    ])
     expect(host.settingsModule.routes[0]).toMatchObject({
       name: settingsPackage.SETTINGS_ROUTE_NAME,
       path: settingsPackage.SETTINGS_ROUTE_PATH,

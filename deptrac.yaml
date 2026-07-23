@@ -3,6 +3,7 @@ deptrac:
     - backend/app
     - packages/php/kernel/src
     - packages/php/data-permission/src
+    - packages/php/reference-codes/src
     - packages/php/settings/src
     - packages/php/testing/src
   exclude_files:
@@ -28,6 +29,10 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^PeanutAdmin\\Settings\\#'
+    - name: ReferenceCodes
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\ReferenceCodes\\#'
     - name: Testing
       collectors:
         - type: classNameRegex
@@ -51,6 +56,9 @@ deptrac:
     Settings:
       - RuntimeLibraries
       - Kernel
+    ReferenceCodes:
+      - RuntimeLibraries
+      - Kernel
     Testing:
       - Kernel
       - DataPermission
@@ -59,6 +67,7 @@ deptrac:
       - RuntimeLibraries
       - Kernel
       - DataPermission
+      - ReferenceCodes
       - Settings
       - ModuleContracts
     ModuleContracts:
@@ -68,5 +77,6 @@ deptrac:
       - Framework
       - Kernel
       - DataPermission
+      - ReferenceCodes
       - Settings
       - ModuleContracts
