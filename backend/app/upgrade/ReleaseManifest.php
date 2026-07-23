@@ -1,0 +1,85 @@
+<?php
+
+declare(strict_types=1);
+
+namespace PeanutAdmin\App\upgrade;
+
+final readonly class ReleaseManifest
+{
+    /** @param array{commit: string, tree: string} $source
+     *  @param array{commit: string, tree: string} $target
+     */
+    private function __construct(
+        public string $releaseId,
+        public array $source,
+        public array $target,
+        public MigrationInventory $sourceMigrations,
+        public MigrationInventory $targetMigrations,
+    ) {}
+
+    /** @param array<string, mixed> $data */
+    public static function fromArray(array $data): self
+    {
+        if (($data['schema_version'] ?? null) !== 1
+            || !is_string($data['release_id'] ?? null)
+            || preg_match('/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}$/D', $data['release_id']) !== 1) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+        $source = self::identity($data['source'] ?? null);
+        $target = self::identity($data['target'] ?? null);
+        if ($source === $target) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+        $migrations = $data['migrations'] ?? null;
+        if (!is_array($migrations) || !is_array($migrations['source'] ?? null) || !is_array($migrations['target'] ?? null)) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+
+        /** @var list<array{owner: string, key: string, checksum: string}> $sourceEntries */
+        $sourceEntries = array_values($migrations['source']);
+        /** @var list<array{owner: string, key: string, checksum: string}> $targetEntries */
+        $targetEntries = array_values($migrations['target']);
+
+        return new self(
+            $data['release_id'],
+            $source,
+            $target,
+            new MigrationInventory($sourceEntries),
+            new MigrationInventory($targetEntries),
+        );
+    }
+
+    public static function fromFile(string $path): self
+    {
+        $contents = is_readable($path) ? file_get_contents($path) : false;
+        if (!is_string($contents)) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_UNREADABLE');
+        }
+        try {
+            $data = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+        if (!is_array($data)) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+
+        return self::fromArray($data);
+    }
+
+    /** @return array{commit: string, tree: string} */
+    private static function identity(mixed $value): array
+    {
+        if (!is_array($value)) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+        $commit = $value['commit'] ?? null;
+        $tree = $value['tree'] ?? null;
+        if (!is_string($commit) || preg_match('/^[a-f0-9]{40}$/D', $commit) !== 1
+            || !is_string($tree) || preg_match('/^[a-f0-9]{40}$/D', $tree) !== 1) {
+            throw new UpgradeFailure('UPGRADE_RELEASE_MANIFEST_INVALID');
+        }
+
+        return ['commit' => $commit, 'tree' => $tree];
+    }
+}

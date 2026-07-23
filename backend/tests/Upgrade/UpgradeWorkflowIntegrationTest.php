@@ -6,6 +6,8 @@ namespace PeanutAdmin\App\Tests\Upgrade;
 
 use PDO;
 use PeanutAdmin\App\command\UpgradeWorkflow;
+use PeanutAdmin\App\upgrade\MigrationInventory;
+use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use Phinx\Config\Config;
@@ -48,36 +50,39 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
 
     public function testUpgradeRunsKernelDataAndModulesInDependencyOrderAndIsIdempotent(): void
     {
-        $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
+        $root = dirname(__DIR__, 3);
+        $workflow = new UpgradeWorkflow($root, $this->database);
 
         $first = $workflow->run();
-        $second = $workflow->run();
+        $second = $workflow->run((new TargetMigrationInventory())->scan($root));
 
         self::assertSame([
             'example.target',
             'example.reference',
             'example.work-item',
+            'peanut.file-media',
+            'peanut.reference-codes',
             'peanut.settings',
         ], $first['modules']);
-        self::assertSame(7, $first['applied_module_migrations']);
+        self::assertSame(11, $first['applied_module_migrations']);
         self::assertSame(0, $second['applied_module_migrations']);
-        self::assertSame(4, $this->scalar("SELECT COUNT(*) FROM pa_module_installation WHERE status = 'active'"));
-        self::assertSame(7, $this->scalar("SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'"));
-        self::assertSame(55, $this->scalar("SELECT COUNT(*) FROM pa_permission WHERE status = 'active'"));
+        self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_module_installation WHERE status = 'active'"));
+        self::assertSame(11, $this->scalar("SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'"));
+        self::assertSame(60, $this->scalar("SELECT COUNT(*) FROM pa_permission WHERE status = 'active'"));
         self::assertSame(1, $this->scalar(<<<'SQL'
 SELECT COUNT(*) FROM pa_permission
 WHERE `key` = 'core.member.effective-access.read'
   AND module_key = 'core' AND type = 'api' AND risk_level = 'sensitive' AND status = 'active'
 SQL));
-        self::assertSame(4, $this->scalar("SELECT COUNT(*) FROM pa_protected_resource WHERE status = 'active'"));
+        self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_protected_resource WHERE status = 'active'"));
         self::assertSame(2, $this->scalar("SELECT COUNT(*) FROM pa_target_type WHERE status = 'active'"));
-        self::assertSame(13, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation WHERE status = 'active'"));
+        self::assertSame(20, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation WHERE status = 'active'"));
         self::assertSame(17, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_target_type WHERE status = 'active'"));
         self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_data_condition_definition WHERE status = 'active'"));
         self::assertSame(40, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_condition WHERE status = 'active'"));
-        self::assertSame(17, $this->scalar("SELECT COUNT(*) FROM pa_menu_definition WHERE status = 'active'"));
+        self::assertSame(19, $this->scalar("SELECT COUNT(*) FROM pa_menu_definition WHERE status = 'active'"));
         $menus = new PdoMenuCatalogRepository($this->database);
-        self::assertCount(12, $menus->activeDefinitions('tenant'));
+        self::assertCount(14, $menus->activeDefinitions('tenant'));
         self::assertCount(5, $menus->activeDefinitions('platform'));
         self::assertSame([
             'peanut.settings:20260719030101_create_setting_definitions',
@@ -99,6 +104,29 @@ SQL));
         ));
     }
 
+    public function testEvidenceBoundUpgradeRejectsTheWrongSourceDatabaseBeforeMutation(): void
+    {
+        $source = new MigrationInventory([[
+            'owner' => 'kernel',
+            'key' => '20260716010101_create_pa_account',
+            'checksum' => str_repeat('a', 64),
+        ]]);
+
+        try {
+            (new UpgradeWorkflow(dirname(__DIR__, 3), $this->database))->run($source);
+        } catch (ModuleException $exception) {
+            self::assertSame('UPGRADE_SOURCE_DATABASE_MISMATCH', $exception->errorCode);
+            self::assertSame(0, $this->scalar(<<<'SQL'
+SELECT COUNT(*) FROM information_schema.tables
+WHERE table_schema = 'peanut_admin_ops_upgrade_test' AND table_name = 'pa_account'
+SQL));
+
+            return;
+        }
+
+        self::fail('An evidence-bound upgrade must reject a database that is not at the declared source.');
+    }
+
     public function testAppliedMigrationChecksumDriftStopsBeforeFurtherChanges(): void
     {
         $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
@@ -112,7 +140,7 @@ SQL));
             $workflow->run();
         } catch (ModuleException $exception) {
             self::assertSame('MODULE_MIGRATION_CHECKSUM_MISMATCH', $exception->errorCode);
-            self::assertSame(7, $this->scalar(
+            self::assertSame(11, $this->scalar(
                 "SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'",
             ));
 
@@ -142,7 +170,7 @@ SQL));
 
         $result = (new UpgradeWorkflow($root, $this->database))->run();
 
-        self::assertSame(7, $result['applied_module_migrations']);
+        self::assertSame(11, $result['applied_module_migrations']);
         self::assertSame(38, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
         self::assertSame(1, $this->scalar(
             "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"

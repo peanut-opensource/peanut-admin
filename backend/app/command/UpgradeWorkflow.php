@@ -11,6 +11,7 @@ use PDO;
 use PeanutAdmin\App\module\ModuleRegistryFactory;
 use PeanutAdmin\App\referencecode\ReferenceCodeRuntimeFactory;
 use PeanutAdmin\App\setting\SettingsRuntimeFactory;
+use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
 use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
@@ -45,21 +46,78 @@ final readonly class UpgradeWorkflow
         return new self($root, self::connectFromEnvironment());
     }
 
-    /** @return array{modules: list<string>, applied_module_migrations: int} */
-    public function run(): array
+    /**
+     * Compatibility entry point for the post-install idempotency probe.
+     * It never applies migrations or synchronizes catalogs. A real source to
+     * target upgrade must use the explicit release and backup manifests.
+     *
+     * @return array{modules: list<string>, applied_module_migrations: int}
+     */
+    public function assertCurrentReleaseNoop(): array
     {
         if (!$this->acquireLock()) {
             throw new ModuleException('MODULE_UPGRADE_LOCKED', 'Another upgrade is already running.');
         }
         try {
-            return $this->runLocked();
+            $registry = $this->registry();
+            if (!$this->tableExists('pa_module_migration')) {
+                throw new ModuleException(
+                    'UPGRADE_EVIDENCE_REQUIRED',
+                    'Explicit release and backup manifests are required.',
+                );
+            }
+            $this->assertPackageMigrationCurrent(
+                $this->packagePath(KernelPackage::NAME) . '/database/migrations',
+                'pa_kernel_migration',
+            );
+            $this->assertPackageMigrationCurrent(
+                $this->packagePath(DataPermissionPackage::NAME) . '/database/migrations',
+                'pa_data_permission_migration',
+            );
+            foreach ($registry->modules as $module) {
+                $plan = $this->modulePlan($module);
+                $this->assertModulePlan($plan);
+                foreach ($plan['migrations'] as $migration) {
+                    if ($this->migrationNeedsApply($plan['module_key'], $migration['key'])) {
+                        throw new ModuleException(
+                            'UPGRADE_EVIDENCE_REQUIRED',
+                            'Explicit release and backup manifests are required.',
+                        );
+                    }
+                }
+                $installation = $this->installation($plan['module_key']);
+                if ($installation === null
+                    || $installation['installed_version'] !== $plan['module_version']
+                    || $installation['manifest_digest'] !== $module->digest
+                    || $installation['status'] !== 'active') {
+                    throw new ModuleException(
+                        'UPGRADE_EVIDENCE_REQUIRED',
+                        'Explicit release and backup manifests are required.',
+                    );
+                }
+            }
+
+            return ['modules' => $registry->moduleKeys(), 'applied_module_migrations' => 0];
         } finally {
             $this->releaseLock();
         }
     }
 
     /** @return array{modules: list<string>, applied_module_migrations: int} */
-    private function runLocked(): array
+    public function run(?MigrationInventory $expectedSourceMigrations = null): array
+    {
+        if (!$this->acquireLock()) {
+            throw new ModuleException('MODULE_UPGRADE_LOCKED', 'Another upgrade is already running.');
+        }
+        try {
+            return $this->runLocked($expectedSourceMigrations);
+        } finally {
+            $this->releaseLock();
+        }
+    }
+
+    /** @return array{modules: list<string>, applied_module_migrations: int} */
+    private function runLocked(?MigrationInventory $expectedSourceMigrations): array
     {
         $registry = $this->registry();
         $plans = [];
@@ -70,6 +128,9 @@ final readonly class UpgradeWorkflow
             foreach ($plans as $plan) {
                 $this->assertModulePlan($plan);
             }
+        }
+        if ($expectedSourceMigrations !== null) {
+            $this->assertSourceMigrationState($expectedSourceMigrations);
         }
 
         $this->migratePackage(
@@ -143,6 +204,142 @@ SQL);
         $statement->execute(['table_name' => $table]);
 
         return (int) $statement->fetchColumn() === 1;
+    }
+
+    private function assertPackageMigrationCurrent(string $path, string $table): void
+    {
+        if (!$this->tableExists($table)) {
+            throw new ModuleException(
+                'UPGRADE_EVIDENCE_REQUIRED',
+                'Explicit release and backup manifests are required.',
+            );
+        }
+        $files = glob($path . '/*.php');
+        if ($files === false) {
+            throw new ModuleException('PACKAGE_MIGRATION_SCAN_FAILED', 'Package migration inventory failed.');
+        }
+        $targetVersions = [];
+        foreach ($files as $file) {
+            if (preg_match('/\/(\d{14})_[a-z0-9_]+\.php$/D', $file, $matches) !== 1) {
+                throw new ModuleException('PACKAGE_MIGRATION_SCAN_FAILED', 'Package migration inventory failed.');
+            }
+            $targetVersions[] = $matches[1];
+        }
+        sort($targetVersions, SORT_STRING);
+
+        $statement = $this->pdo->query("SELECT version FROM `{$table}` WHERE breakpoint = 0");
+        if ($statement === false) {
+            throw new ModuleException('PACKAGE_MIGRATION_LEDGER_UNAVAILABLE', 'Package migration ledger failed.');
+        }
+        $appliedVersions = array_map('strval', $statement->fetchAll(PDO::FETCH_COLUMN));
+        sort($appliedVersions, SORT_STRING);
+        if ($targetVersions !== $appliedVersions) {
+            throw new ModuleException(
+                'UPGRADE_EVIDENCE_REQUIRED',
+                'Explicit release and backup manifests are required.',
+            );
+        }
+    }
+
+    private function assertSourceMigrationState(MigrationInventory $expected): void
+    {
+        $packageVersions = ['kernel' => [], 'data-permission' => []];
+        $moduleMigrations = [];
+        foreach ($expected->entries as $entry) {
+            if (array_key_exists($entry['owner'], $packageVersions)) {
+                if (preg_match('/^(\d{14})_[a-z0-9_]+$/D', $entry['key'], $matches) !== 1) {
+                    throw new ModuleException(
+                        'UPGRADE_SOURCE_DATABASE_MISMATCH',
+                        'The database migration state does not match the release source.',
+                    );
+                }
+                $packageVersions[$entry['owner']][] = $matches[1];
+                continue;
+            }
+            if (!str_starts_with($entry['owner'], 'module:')) {
+                throw new ModuleException(
+                    'UPGRADE_SOURCE_DATABASE_MISMATCH',
+                    'The database migration state does not match the release source.',
+                );
+            }
+            $moduleKey = substr($entry['owner'], strlen('module:'));
+            $moduleMigrations['module:' . $moduleKey . ':' . $entry['key']] = $entry['checksum'];
+        }
+
+        $this->assertPackageSourceVersions('pa_kernel_migration', $packageVersions['kernel']);
+        $this->assertPackageSourceVersions('pa_data_permission_migration', $packageVersions['data-permission']);
+        $this->assertModuleSourceMigrations($moduleMigrations);
+    }
+
+    /** @param list<string> $expectedVersions */
+    private function assertPackageSourceVersions(string $table, array $expectedVersions): void
+    {
+        sort($expectedVersions, SORT_STRING);
+        if (!$this->tableExists($table)) {
+            if ($expectedVersions === []) {
+                return;
+            }
+            $this->sourceDatabaseMismatch();
+        }
+        $statement = $this->pdo->query("SELECT version, breakpoint FROM `{$table}`");
+        if ($statement === false) {
+            $this->sourceDatabaseMismatch();
+        }
+        $actualVersions = [];
+        while (($row = $statement->fetch()) !== false) {
+            if ((int) $row['breakpoint'] !== 0) {
+                $this->sourceDatabaseMismatch();
+            }
+            $actualVersions[] = (string) $row['version'];
+        }
+        sort($actualVersions, SORT_STRING);
+        if ($actualVersions !== $expectedVersions) {
+            $this->sourceDatabaseMismatch();
+        }
+    }
+
+    /** @param array<string, string> $expected */
+    private function assertModuleSourceMigrations(array $expected): void
+    {
+        if (!$this->tableExists('pa_module_migration')) {
+            if ($expected === []) {
+                return;
+            }
+            $this->sourceDatabaseMismatch();
+        }
+        $statement = $this->pdo->query(<<<'SQL'
+SELECT module_key, migration_key, checksum, status FROM pa_module_migration
+SQL);
+        if ($statement === false) {
+            $this->sourceDatabaseMismatch();
+        }
+        $actual = [];
+        while (($row = $statement->fetch()) !== false) {
+            if ((string) $row['status'] !== 'applied') {
+                $this->sourceDatabaseMismatch();
+            }
+            $moduleKey = (string) $row['module_key'];
+            $migrationKey = (string) $row['migration_key'];
+            $prefix = $moduleKey . ':';
+            if (!str_starts_with($migrationKey, $prefix)) {
+                $this->sourceDatabaseMismatch();
+            }
+            $identity = 'module:' . $moduleKey . ':' . substr($migrationKey, strlen($prefix));
+            $actual[$identity] = (string) $row['checksum'];
+        }
+        ksort($expected, SORT_STRING);
+        ksort($actual, SORT_STRING);
+        if ($actual !== $expected) {
+            $this->sourceDatabaseMismatch();
+        }
+    }
+
+    private function sourceDatabaseMismatch(): never
+    {
+        throw new ModuleException(
+            'UPGRADE_SOURCE_DATABASE_MISMATCH',
+            'The database migration state does not match the release source.',
+        );
     }
 
     private function registry(): CompiledModuleRegistry
