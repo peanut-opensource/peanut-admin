@@ -28,7 +28,7 @@ final class FileMediaApiTest extends TestCase
         self::assertSame('peanut.file-media', $routes['GET /api/v1/files'][7]);
         self::assertSame('peanut.file-media.read', $routes['GET /api/v1/files'][2]);
         self::assertSame('multipart/form-data', $this->requestMediaType('createFile'));
-        self::assertSame('application/octet-stream', $routes['GET /api/v1/files/{file_key}/content'][9]);
+        self::assertSame('*/*', $routes['GET /api/v1/files/{file_key}/content'][9]);
         self::assertContains('Content-Disposition', $routes['GET /api/v1/files/{file_key}/content'][10]);
     }
 

@@ -105,7 +105,7 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       if (!required.has('data') || !required.has('meta') || !schemaIsConstrained(resolvedSchema?.properties?.data)) {
         throw new Error(`${operation.operationId} has an unconstrained success data schema`)
       }
-    } else if (mediaTypes.length !== 1 || mediaType !== 'application/octet-stream') {
+    } else if (mediaTypes.length !== 1 || mediaType !== '*/*') {
       throw new Error(`${operation.operationId} must return one supported success body`)
     }
     const responseSchemaRef = mediaType === null ? null : (content[mediaType]?.schema?.$ref ?? null)

@@ -19,12 +19,16 @@ final readonly class LocalPrivateStorageProvider implements StorageProvider
         if (!self::absolute($root)) {
             throw FileMediaException::storageUnavailable();
         }
-        $root = self::normalize($root);
+        $declaredRoot = self::normalize($root);
+        if (is_link($declaredRoot)) {
+            throw FileMediaException::storageUnavailable();
+        }
+        $root = self::physical($declaredRoot);
         foreach ($publicRoots as $publicRoot) {
             if (!self::absolute($publicRoot)) {
                 throw FileMediaException::storageUnavailable();
             }
-            $publicRoot = self::normalize($publicRoot);
+            $publicRoot = self::physical(self::normalize($publicRoot));
             if (self::contains($publicRoot, $root) || self::contains($root, $publicRoot)) {
                 throw FileMediaException::storageUnavailable();
             }
@@ -189,6 +193,28 @@ final readonly class LocalPrivateStorageProvider implements StorageProvider
         }
 
         return DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $parts);
+    }
+
+    private static function physical(string $path): string
+    {
+        $missing = [];
+        $cursor = $path;
+        while (!file_exists($cursor) && !is_link($cursor)) {
+            if ($cursor === DIRECTORY_SEPARATOR) {
+                throw FileMediaException::storageUnavailable();
+            }
+            array_unshift($missing, basename($cursor));
+            $cursor = dirname($cursor);
+        }
+        $resolved = realpath($cursor);
+        if (!is_string($resolved) || !is_dir($resolved)) {
+            throw FileMediaException::storageUnavailable();
+        }
+
+        return self::normalize(
+            rtrim($resolved, DIRECTORY_SEPARATOR)
+            . ($missing === [] ? '' : DIRECTORY_SEPARATOR . implode(DIRECTORY_SEPARATOR, $missing)),
+        );
     }
 
     private static function contains(string $root, string $path): bool

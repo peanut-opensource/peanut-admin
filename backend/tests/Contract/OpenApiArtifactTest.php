@@ -109,7 +109,7 @@ final class OpenApiArtifactTest extends TestCase
             $schema = $binding[11];
 
             self::assertContains($status, [200, 201, 204], $route);
-            self::assertContains($mediaType, $status === 204 ? [null] : ['application/json', 'application/octet-stream'], $route);
+            self::assertContains($mediaType, $status === 204 ? [null] : ['application/json', '*/*'], $route);
             self::assertContains('X-Request-Id', $headers, $route);
             self::assertContains('Cache-Control', $headers, $route);
             self::assertSame($status === 204 ? null : true, $schema === null ? null : true, $route);

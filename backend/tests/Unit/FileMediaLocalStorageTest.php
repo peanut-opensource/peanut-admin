@@ -68,6 +68,20 @@ final class FileMediaLocalStorageTest extends TestCase
         $this->assertFileError(fn() => $provider->store(7, 'file_0123456789abcdef0123456789abcdef', $source));
     }
 
+    public function testItRejectsAPrivateRootAliasedBelowAPublicRootBeforeCreatingIt(): void
+    {
+        if (!function_exists('symlink')) {
+            self::markTestSkipped('symlink is unavailable');
+        }
+        $public = $this->base . '/public';
+        mkdir($public, 0700);
+        $alias = $this->base . '/public-alias';
+        symlink($public, $alias);
+
+        $this->assertFileError(fn() => new LocalPrivateStorageProvider($alias . '/files', [$public]));
+        self::assertDirectoryDoesNotExist($public . '/files');
+    }
+
     private function assertFileError(callable $operation): void
     {
         try {

@@ -140,6 +140,9 @@ final class FileMediaModuleIntegrationTest extends TestCase
         self::assertSame('private report.txt', $file['original_name'] ?? null);
         self::assertSame('text/plain', $file['media_type'] ?? null);
         self::assertSame(hash_file('sha256', $this->uploadPath), $file['sha256'] ?? null);
+        self::assertMatchesRegularExpression('/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/D', $file['created_at'] ?? '');
+        self::assertSame($file['created_at'], $file['updated_at'] ?? null);
+        self::assertNull($file['archived_at'] ?? null);
         self::assertSame('"rev-1"', $created->getHeader('ETag'));
         self::assertSame('/api/v1/files/' . $fileKey, $created->getHeader('Location'));
         foreach (['tenant_id', 'storage_key', 'storage_provider_key', 'created_by_member_id'] as $forbidden) {
@@ -177,6 +180,10 @@ final class FileMediaModuleIntegrationTest extends TestCase
         self::assertSame(200, $archived->getCode());
         self::assertSame('archived', $archived->getData()['data']['status'] ?? null);
         self::assertSame('"rev-2"', $archived->getHeader('ETag'));
+        self::assertMatchesRegularExpression(
+            '/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$/D',
+            $archived->getData()['data']['archived_at'] ?? '',
+        );
 
         $denied = FileRuntimeFactory::download(
             $this->request('GET', "/api/v1/files/{$fileKey}/content", 'req_file_archived_download_0001'),

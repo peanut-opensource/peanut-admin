@@ -355,7 +355,7 @@ paths:
             Content-Type: { schema: { type: string, minLength: 1, maxLength: 127 } }
             X-Content-Type-Options: { schema: { type: string, const: nosniff } }
           content:
-            application/octet-stream:
+            '*/*':
               schema: { $ref: './schemas/file-media.yaml#/FileContent' }
 
   /api/v1/auth/login:
