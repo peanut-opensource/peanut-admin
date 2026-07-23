@@ -18,6 +18,11 @@ describe('governance workbench feature model', () => {
     })
 
     expect(tenant.snapshot()).toMatchObject({ audience: 'tenant', roleDraft: { roleId: '7' } })
+    const platform = createGovernanceWorkbenchModel('platform')
+    platform.setAuditDetail({
+      id: '2', eventType: 'platform.role.updated', action: 'platform.role.update', outcome: 'success', requestId: 'req_platform', occurredAt: '2026-07-24T00:00:00.000Z', metadata: {},
+    })
+    expect(platform.snapshot()).toMatchObject({ audience: 'platform', auditDetail: { id: '2' } })
     expect(() => tenant.setAuditDetail({
       id: '2', eventType: 'platform.role.updated', action: 'platform.role.update', outcome: 'success', requestId: 'req_platform', occurredAt: '2026-07-24T00:00:00.000Z', metadata: {},
     })).toThrow('GOVERNANCE_AUDIENCE_MISMATCH')
