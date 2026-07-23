@@ -38,6 +38,20 @@
       "options": {
         "symlink": false
       }
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/task-job",
+      "options": {
+        "symlink": false
+      }
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/notification-sms",
+      "options": {
+        "symlink": false
+      }
     }
   ],
   "require": {
@@ -47,8 +61,10 @@
     "peanut-admin/data-permission": "0.1.0",
     "peanut-admin/kernel": "0.1.0",
     "peanut-admin/file-media": "0.1.0",
+    "peanut-admin/notification-sms": "0.1.0",
     "peanut-admin/reference-codes": "0.1.0",
     "peanut-admin/settings": "0.1.0",
+    "peanut-admin/task-job": "0.1.0",
     "topthink/framework": "8.1.4",
     "topthink/think-migration": "3.1.1"
   },

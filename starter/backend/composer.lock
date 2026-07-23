@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c1aeb6ad4997d20b6fcba71904e85154",
+    "content-hash": "690c162fd0a145b1e10beb73ce0c21a7",
     "packages": [
         {
             "name": "composer/semver",
@@ -371,6 +371,36 @@
             }
         },
         {
+            "name": "peanut-admin/notification-sms",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "../packages/php/notification-sms",
+                "reference": "959339d502f29001b6f1e8487b551176248a69ca"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "peanut-admin/task-job": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\NotificationSms\\": "src/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable Tenant notification inbox and SMS delivery contracts",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        },
+        {
             "name": "peanut-admin/reference-codes",
             "version": "0.1.0",
             "dist": {
@@ -435,6 +465,40 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin reusable settings contracts and persistence",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/task-job",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "../packages/php/task-job",
+                "reference": "a8fcb4d8accd29c6437f8fde5e78507fe268deba"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\TaskJob\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\TaskJob\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable Tenant task ledger and local worker contracts",
             "transport-options": {
                 "symlink": false,
                 "relative": true
@@ -982,5 +1046,5 @@
     "platform-overrides": {
         "php": "8.3.24"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }
