@@ -91,18 +91,35 @@ PNPM
 chmod +x "$bin/node" "$bin/pnpm"
 
 run_bootstrap() {
+  local fake_store="${FAKE_STORE_PATH:-$store}"
   PATH="$bin:$PATH" \
   FAKE_PNPM_LOG="$log" \
-  FAKE_STORE_PATH="$store" \
+  FAKE_STORE_PATH="$fake_store" \
   "$repo/scripts/bootstrap-worktree-dependencies"
 }
 
 run_warm() {
+  local fake_store="${FAKE_STORE_PATH:-$store}"
   PATH="$bin:$PATH" \
   FAKE_PNPM_LOG="$log" \
-  FAKE_STORE_PATH="$store" \
+  FAKE_STORE_PATH="$fake_store" \
   "$repo/scripts/warm-worktree-dependencies"
 }
+
+repo_store="$repo/.pnpm-store/v11"
+for command in bootstrap warm; do
+  set +e
+  default_local_output="$(cd "$repo" && FAKE_STORE_PATH="$repo_store" "run_$command" 2>&1)"
+  default_local_status=$?
+  explicit_local_output="$(cd "$repo" && PNPM_STORE_DIR="$repo_store" "run_$command" 2>&1)"
+  explicit_local_status=$?
+  set -e
+  [[ "$default_local_status" -ne 0 ]]
+  [[ "$explicit_local_status" -ne 0 ]]
+  [[ "$default_local_output" == *'refusing worktree-local pnpm content store'* ]]
+  [[ "$explicit_local_output" == *'set PNPM_STORE_DIR to a persistent path outside the worktree'* ]]
+  [[ ! -e "$repo/.pnpm-store" ]]
+done
 
 cold_output="$(cd "$repo" && run_bootstrap)"
 [[ -d "$repo/node_modules/.pnpm" && ! -L "$repo/node_modules/.pnpm" ]]

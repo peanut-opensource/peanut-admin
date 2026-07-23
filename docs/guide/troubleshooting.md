@@ -25,11 +25,13 @@ content store explicitly, then retry the offline bootstrap:
 ./scripts/bootstrap-worktree-dependencies
 ```
 
-Set `PNPM_STORE_DIR` only when an explicit store override is required. The
-scripts do not modify global pnpm or npm configuration. If bootstrap reports a
-broken or cross-worktree dependency link, it prints a bounded sample, removes
-only ignored `node_modules` layouts inside the current worktree, and exits.
-Rerun bootstrap to build a clean local layout.
+The persistent content store must be outside the current worktree. If a sandbox
+cannot write the normal home-directory store, set `PNPM_STORE_DIR` to an
+explicit external path; never fall back to `.pnpm-store` in the project root.
+The scripts do not modify global pnpm or npm configuration. If bootstrap
+reports a broken or cross-worktree dependency link, it prints a bounded sample,
+removes only ignored `node_modules` layouts inside the current worktree, and
+exits. Rerun bootstrap to build a clean local layout.
 
 ## Installer Cannot Connect To MySQL
 

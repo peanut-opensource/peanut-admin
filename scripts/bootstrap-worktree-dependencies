@@ -34,15 +34,13 @@ resolve_store_path() {
   pnpm store path
 }
 
-assert_store_is_not_a_layout() {
+assert_store_is_external() {
   local store_path="$1"
-  local layout
-  for layout in "${layout_candidates[@]}"; do
-    if [[ "$store_path" == "$layout" || "$store_path" == "$layout/"* ]]; then
-      echo "ERROR: pnpm store must not be inside a generated node_modules layout: $store_path" >&2
-      exit 1
-    fi
-  done
+  if [[ "$store_path" == "$ROOT" || "$store_path" == "$ROOT/"* ]]; then
+    echo "ERROR: refusing worktree-local pnpm content store: $store_path" >&2
+    echo 'Configure store-dir or set PNPM_STORE_DIR to a persistent path outside the worktree.' >&2
+    exit 1
+  fi
 }
 
 broken_links=()
@@ -126,7 +124,7 @@ if [[ -z "$pre_cleanup_store" ]]; then
   echo 'ERROR: pnpm did not resolve a store path.' >&2
   exit 1
 fi
-assert_store_is_not_a_layout "$pre_cleanup_store"
+assert_store_is_external "$pre_cleanup_store"
 
 scan_dependency_links
 if [[ "${#broken_links[@]}" -gt 0 ]]; then
@@ -147,7 +145,7 @@ if [[ -z "$store_path" ]]; then
   echo 'ERROR: pnpm did not resolve a store path.' >&2
   exit 1
 fi
-assert_store_is_not_a_layout "$store_path"
+assert_store_is_external "$store_path"
 
 config_files=(
   .npmrc

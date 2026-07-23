@@ -40,8 +40,9 @@ Run the following once when opening a new worktree:
 ```
 
 The command resolves the configured pnpm content store dynamically and performs
-an offline, frozen install. If the store is missing required content, populate
-it through the separate, explicitly networked command and retry:
+an offline, frozen install. The persistent content store must be outside the
+current worktree. If the store is missing required content, populate it through
+the separate, explicitly networked command and retry:
 
 ```bash
 ./scripts/warm-worktree-dependencies

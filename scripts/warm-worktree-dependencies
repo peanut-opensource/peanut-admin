@@ -18,6 +18,11 @@ if [[ -z "$store_path" ]]; then
   echo 'ERROR: pnpm did not resolve a store path.' >&2
   exit 1
 fi
+if [[ "$store_path" == "$ROOT" || "$store_path" == "$ROOT/"* ]]; then
+  echo "ERROR: refusing worktree-local pnpm content store: $store_path" >&2
+  echo 'Configure store-dir or set PNPM_STORE_DIR to a persistent path outside the worktree.' >&2
+  exit 1
+fi
 
 echo "Warming pnpm content store with network access allowed: $store_path"
 pnpm --store-dir "$store_path" fetch --frozen-lockfile
