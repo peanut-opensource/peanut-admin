@@ -51,17 +51,59 @@ final readonly class MigrationInventory
     /** @return list<string> */
     public function assertAppendOnlyTo(self $target): array
     {
-        $source = $this->checksums();
-        $targetChecksums = $target->checksums();
-        foreach ($source as $identity => $checksum) {
-            if (!array_key_exists($identity, $targetChecksums)) {
+        $sourceByOwner = $this->byOwner();
+        $targetByOwner = $target->byOwner();
+        $pending = [];
+        foreach ($sourceByOwner as $owner => $sourceEntries) {
+            $targetEntries = $targetByOwner[$owner] ?? [];
+            if (count($targetEntries) < count($sourceEntries)) {
                 throw new UpgradeFailure('UPGRADE_MIGRATION_MISSING');
             }
-            if (!hash_equals($checksum, $targetChecksums[$identity])) {
-                throw new UpgradeFailure('UPGRADE_MIGRATION_REWRITTEN');
+            foreach ($sourceEntries as $index => $sourceEntry) {
+                $targetEntry = $targetEntries[$index] ?? null;
+                if (!is_array($targetEntry) || $targetEntry['key'] !== $sourceEntry['key']) {
+                    $targetChecksums = array_column($targetEntries, 'checksum', 'key');
+                    if (!array_key_exists($sourceEntry['key'], $targetChecksums)) {
+                        throw new UpgradeFailure('UPGRADE_MIGRATION_MISSING');
+                    }
+                    throw new UpgradeFailure('UPGRADE_MIGRATION_BACKDATED');
+                }
+                if (!hash_equals($sourceEntry['checksum'], $targetEntry['checksum'])) {
+                    throw new UpgradeFailure('UPGRADE_MIGRATION_REWRITTEN');
+                }
+            }
+            $sourceMaximum = $sourceEntries[array_key_last($sourceEntries)]['key'];
+            foreach (array_slice($targetEntries, count($sourceEntries)) as $entry) {
+                if (strcmp($entry['key'], $sourceMaximum) <= 0) {
+                    throw new UpgradeFailure('UPGRADE_MIGRATION_BACKDATED');
+                }
+                $pending[] = $owner . ':' . $entry['key'];
+            }
+            unset($targetByOwner[$owner]);
+        }
+        foreach ($targetByOwner as $owner => $entries) {
+            foreach ($entries as $entry) {
+                $pending[] = $owner . ':' . $entry['key'];
             }
         }
+        sort($pending, SORT_STRING);
 
-        return array_values(array_keys(array_diff_key($targetChecksums, $source)));
+        return $pending;
+    }
+
+    /** @return array<string, list<array{owner: string, key: string, checksum: string}>> */
+    private function byOwner(): array
+    {
+        $grouped = [];
+        foreach ($this->entries as $entry) {
+            $grouped[$entry['owner']][] = $entry;
+        }
+        foreach ($grouped as &$entries) {
+            usort($entries, static fn(array $left, array $right): int => strcmp($left['key'], $right['key']));
+        }
+        unset($entries);
+        ksort($grouped, SORT_STRING);
+
+        return $grouped;
     }
 }

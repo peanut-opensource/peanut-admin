@@ -4,19 +4,34 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\upgrade;
 
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
-
 final class TargetMigrationInventory
 {
     public function scan(string $root): MigrationInventory
     {
+        $repositoryRoot = realpath($root);
+        if ($repositoryRoot === false || !is_dir($repositoryRoot)) {
+            throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+        }
         $entries = [];
-        $this->scanDirectory($entries, 'kernel', $root . '/packages/php/kernel/database/migrations');
-        $this->scanDirectory($entries, 'data-permission', $root . '/packages/php/data-permission/database/migrations');
+        $kernelRoot = $this->ownedDirectory($repositoryRoot, $repositoryRoot, 'packages/php/kernel');
+        $dataPermissionRoot = $this->ownedDirectory(
+            $repositoryRoot,
+            $repositoryRoot,
+            'packages/php/data-permission',
+        );
+        $this->scanDirectory(
+            $entries,
+            'kernel',
+            $this->ownedDirectory($repositoryRoot, $kernelRoot, 'database/migrations'),
+        );
+        $this->scanDirectory(
+            $entries,
+            'data-permission',
+            $this->ownedDirectory($repositoryRoot, $dataPermissionRoot, 'database/migrations'),
+        );
 
-        $config = is_readable($root . '/backend/config/modules.php')
-            ? require $root . '/backend/config/modules.php'
+        $config = is_readable($repositoryRoot . '/backend/config/modules.php')
+            ? require $repositoryRoot . '/backend/config/modules.php'
             : null;
         if (!is_array($config) || !is_array($config['roots'] ?? null)) {
             throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
@@ -25,33 +40,26 @@ final class TargetMigrationInventory
             if (!is_string($relativeRoot)) {
                 throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
             }
-            $moduleRoot = $root . '/' . ltrim($relativeRoot, '/');
-            if (!is_dir($moduleRoot)) {
+            $moduleRoot = $this->ownedDirectory($repositoryRoot, $repositoryRoot, $relativeRoot);
+            $manifestPath = $moduleRoot . '/module.json';
+            if (is_link($manifestPath) || !is_file($manifestPath)) {
                 throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
             }
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($moduleRoot, RecursiveDirectoryIterator::SKIP_DOTS),
-            );
-            foreach ($iterator as $file) {
-                if (!$file->isFile() || $file->getFilename() !== 'module.json') {
-                    continue;
-                }
-                $manifest = $this->json($file->getPathname());
-                $moduleKey = $manifest['key'] ?? null;
-                $backend = $manifest['backend'] ?? null;
-                $migrations = is_array($backend) ? ($backend['migrations'] ?? null) : null;
-                if ($migrations === null) {
-                    continue;
-                }
-                if (!is_string($moduleKey) || !is_string($migrations) || $migrations === '') {
-                    throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
-                }
-                $this->scanDirectory(
-                    $entries,
-                    'module:' . $moduleKey,
-                    $file->getPath() . '/' . ltrim($migrations, '/'),
-                );
+            $manifest = $this->json($manifestPath);
+            $moduleKey = $manifest['key'] ?? null;
+            $backend = $manifest['backend'] ?? null;
+            $migrations = is_array($backend) ? ($backend['migrations'] ?? null) : null;
+            if ($migrations === null) {
+                continue;
             }
+            if (!is_string($moduleKey) || !is_string($migrations) || $migrations === '') {
+                throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+            }
+            $this->scanDirectory(
+                $entries,
+                'module:' . $moduleKey,
+                $this->ownedDirectory($repositoryRoot, $moduleRoot, $migrations),
+            );
         }
 
         return new MigrationInventory($entries);
@@ -69,6 +77,14 @@ final class TargetMigrationInventory
         }
         sort($files, SORT_STRING);
         foreach ($files as $file) {
+            if (is_link($file) || !is_file($file)) {
+                throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+            }
+            $physicalFile = realpath($file);
+            if ($physicalFile === false
+                || !str_starts_with($physicalFile, $directory . DIRECTORY_SEPARATOR)) {
+                throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+            }
             $key = pathinfo($file, PATHINFO_FILENAME);
             if (preg_match('/^\d{14}_[a-z0-9_]+$/D', $key) !== 1) {
                 throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
@@ -79,6 +95,34 @@ final class TargetMigrationInventory
             }
             $entries[] = ['owner' => $owner, 'key' => $key, 'checksum' => $checksum];
         }
+    }
+
+    private function ownedDirectory(string $repositoryRoot, string $ownerRoot, string $relativePath): string
+    {
+        if ($relativePath === '' || str_starts_with($relativePath, '/') || str_contains($relativePath, '\\')) {
+            throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+        }
+        $segments = explode('/', $relativePath);
+        if (in_array('..', $segments, true) || in_array('', $segments, true)) {
+            throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+        }
+        $candidate = $ownerRoot . '/' . $relativePath;
+        $physical = realpath($candidate);
+        if ($physical === false || !is_dir($physical)
+            || !str_starts_with($physical, $ownerRoot . DIRECTORY_SEPARATOR)
+            || !str_starts_with($physical, $repositoryRoot . DIRECTORY_SEPARATOR)) {
+            throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+        }
+        $relativeToRepository = substr($candidate, strlen($repositoryRoot) + 1);
+        $cursor = $repositoryRoot;
+        foreach (explode('/', $relativeToRepository) as $segment) {
+            $cursor .= '/' . $segment;
+            if (is_link($cursor)) {
+                throw new UpgradeFailure('UPGRADE_TARGET_INVENTORY_UNAVAILABLE');
+            }
+        }
+
+        return $physical;
     }
 
     /** @return array<string, mixed> */

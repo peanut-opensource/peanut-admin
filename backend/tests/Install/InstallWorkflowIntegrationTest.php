@@ -74,7 +74,7 @@ final class InstallWorkflowIntegrationTest extends TestCase
         self::assertSame(1, $this->countRows('pa_account'));
         self::assertSame(1, $this->countRows('pa_platform_operator'));
         self::assertSame(1, $this->countRows('pa_tenant'));
-        self::assertSame(4, $this->countRows('pa_tenant_module'));
+        self::assertSame(6, $this->countRows('pa_tenant_module'));
         self::assertSame(1, $this->countRows('pa_department'));
         self::assertSame(1, $this->countRows('pa_role'));
         self::assertArrayNotHasKey('password', $result);
@@ -82,9 +82,11 @@ final class InstallWorkflowIntegrationTest extends TestCase
             'example.target',
             'example.reference',
             'example.work-item',
+            'peanut.file-media',
+            'peanut.reference-codes',
             'peanut.settings',
         ], $result['upgrade']['modules']);
-        self::assertSame(7, $result['upgrade']['applied_module_migrations']);
+        self::assertSame(11, $result['upgrade']['applied_module_migrations']);
         self::assertSame(4, $this->countExistingTables([
             'pa_setting_definition',
             'pa_setting_deployment_value',

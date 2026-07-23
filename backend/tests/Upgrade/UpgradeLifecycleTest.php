@@ -9,6 +9,7 @@ use PeanutAdmin\App\upgrade\ExecutionReport;
 use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\ReleaseManifest;
 use PeanutAdmin\App\upgrade\RepositoryState;
+use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradeFailure;
 use PeanutAdmin\App\upgrade\UpgradePreflight;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -135,6 +136,22 @@ final class UpgradeLifecycleTest extends TestCase
             ];
         }, 'UPGRADE_MIGRATION_REWRITTEN'];
 
+        yield 'backdated migration inserted into history' => [static function (): array {
+            $test = new self('testPreflightFailsClosed');
+            $target = [
+                ['owner' => 'kernel', 'key' => '000_backdated', 'checksum' => hash('sha256', 'backdated')],
+                ...$test->targetMigrations(),
+            ];
+
+            return [
+                $test->release(target: $target),
+                $test->backup(),
+                new RepositoryState(self::TARGET_COMMIT, self::TARGET_TREE, true),
+                new MigrationInventory($target),
+                'staging',
+            ];
+        }, 'UPGRADE_MIGRATION_BACKDATED'];
+
         yield 'release inventory differs from target tree' => [static function (): array {
             $test = new self('testPreflightFailsClosed');
 
@@ -150,14 +167,14 @@ final class UpgradeLifecycleTest extends TestCase
 
     public function testFailureReportIsStableAndDoesNotIncludeThrowableDetails(): void
     {
-        $report = ExecutionReport::failure(
-            releaseId: 'release-stage-a',
-            source: ['commit' => self::SOURCE_COMMIT, 'tree' => self::SOURCE_TREE],
-            target: ['commit' => self::TARGET_COMMIT, 'tree' => self::TARGET_TREE],
-            backupId: 'backup-before-stage-a',
-            errorCode: 'MODULE_MIGRATION_FAILED',
-            environment: 'staging',
+        $plan = (new UpgradePreflight())->run(
+            $this->release(),
+            $this->backup(),
+            new RepositoryState(self::TARGET_COMMIT, self::TARGET_TREE, true),
+            new MigrationInventory($this->targetMigrations()),
+            'staging',
         );
+        $report = ExecutionReport::failure($plan, 'MODULE_MIGRATION_FAILED');
         $json = json_encode($report, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES);
 
         self::assertSame(1, $report['schema_version']);
@@ -165,10 +182,63 @@ final class UpgradeLifecycleTest extends TestCase
         self::assertSame('passed', $report['preflight']['status']);
         self::assertSame(true, $report['execution']['performed']);
         self::assertSame(false, $report['recovery']['automatic_ddl_rollback']);
+        self::assertSame(hash('sha256', 'backup'), $report['recovery']['backup_artifact_sha256']);
+        self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/D', $report['recovery']['release_manifest_sha256']);
+        self::assertMatchesRegularExpression('/^[a-f0-9]{64}$/D', $report['recovery']['backup_manifest_sha256']);
         self::assertSame('Restore the verified backup with the matching source release.', $report['recovery']['operator_action']);
         self::assertStringNotContainsString('mysql:', $json);
         self::assertStringNotContainsString('/Users/', $json);
         self::assertStringNotContainsString('SELECT ', $json);
+    }
+
+    public function testBackupManifestRejectsANonRfc3339Timestamp(): void
+    {
+        $this->expectException(UpgradeFailure::class);
+        BackupManifest::fromArray([
+            'schema_version' => 1,
+            'backup_id' => 'invalid-time',
+            'environment' => 'staging',
+            'source' => ['commit' => self::SOURCE_COMMIT, 'tree' => self::SOURCE_TREE],
+            'artifact_sha256' => hash('sha256', 'backup'),
+            'created_at' => '2026-07-24 00:00:00',
+            'verified_at' => '2026-07-24T00:10:00Z',
+            'restore_tested_at' => '2026-07-24T00:20:00Z',
+        ]);
+    }
+
+    public function testTargetInventoryRejectsASymlinkedMigrationFile(): void
+    {
+        $root = sys_get_temp_dir() . '/peanut-upgrade-inventory-' . bin2hex(random_bytes(8));
+        $external = $root . '-external.php';
+        try {
+            self::assertTrue(mkdir($root . '/packages/php/kernel/database/migrations', 0700, true));
+            self::assertTrue(mkdir($root . '/packages/php/data-permission/database/migrations', 0700, true));
+            self::assertTrue(mkdir($root . '/backend/config', 0700, true));
+            self::assertNotFalse(file_put_contents($root . '/backend/config/modules.php', "<?php return ['roots' => []];\n"));
+            self::assertNotFalse(file_put_contents($external, "<?php\n"));
+            self::assertTrue(symlink(
+                $external,
+                $root . '/packages/php/kernel/database/migrations/20260724010101_external.php',
+            ));
+
+            $this->expectException(UpgradeFailure::class);
+            (new TargetMigrationInventory())->scan($root);
+        } finally {
+            @unlink($root . '/packages/php/kernel/database/migrations/20260724010101_external.php');
+            @unlink($root . '/backend/config/modules.php');
+            @rmdir($root . '/packages/php/kernel/database/migrations');
+            @rmdir($root . '/packages/php/kernel/database');
+            @rmdir($root . '/packages/php/kernel');
+            @rmdir($root . '/packages/php/data-permission/database/migrations');
+            @rmdir($root . '/packages/php/data-permission/database');
+            @rmdir($root . '/packages/php/data-permission');
+            @rmdir($root . '/packages/php');
+            @rmdir($root . '/packages');
+            @rmdir($root . '/backend/config');
+            @rmdir($root . '/backend');
+            @rmdir($root);
+            @unlink($external);
+        }
     }
 
     /** @param list<array{owner: string, key: string, checksum: string}>|null $target */

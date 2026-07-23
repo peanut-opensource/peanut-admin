@@ -35,13 +35,20 @@ final readonly class InstallWorkflow
         bool $allowExisting = false,
     ): array {
         (new InstallEnvironmentChecker($this->root))->assertReady();
-        $upgrade = (new UpgradeWorkflow($this->root, $this->pdo))->run();
+        $upgradeWorkflow = new UpgradeWorkflow($this->root, $this->pdo);
+        $existingSchema = $this->tableExists('pa_platform_operator');
+        $upgrade = $allowExisting && $existingSchema
+            ? $upgradeWorkflow->assertCurrentReleaseNoop()
+            : $upgradeWorkflow->installEmptyDatabase();
 
         $operatorStatement = $this->pdo->query('SELECT COUNT(*) FROM pa_platform_operator');
         if ($operatorStatement === false) {
             throw new RuntimeException('INSTALL_STATE_UNAVAILABLE: platform bootstrap state could not be read.');
         }
         $operatorCount = (int) $operatorStatement->fetchColumn();
+        if ($existingSchema && $operatorCount === 0) {
+            throw new RuntimeException('INSTALL_INCOMPLETE: existing schema has no platform owner.');
+        }
         if ($operatorCount !== 0) {
             if (!$allowExisting) {
                 throw new RuntimeException('INSTALL_ALREADY_COMPLETED: use --allow-existing for an idempotent check.');
@@ -113,6 +120,17 @@ final readonly class InstallWorkflow
             'tenant' => $tenantResult,
             'upgrade' => $upgrade,
         ];
+    }
+
+    private function tableExists(string $table): bool
+    {
+        $statement = $this->pdo->prepare(<<<'SQL'
+SELECT COUNT(*) FROM information_schema.tables
+WHERE table_schema = DATABASE() AND table_name = :table_name
+SQL);
+        $statement->execute(['table_name' => $table]);
+
+        return (int) $statement->fetchColumn() === 1;
     }
 
     private function bootstrapService(): BootstrapService

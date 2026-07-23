@@ -49,10 +49,11 @@ final class UpgradeCli
             }
             $release = ReleaseManifest::fromFile($options['release_manifest']);
             $backup = BackupManifest::fromFile($options['backup_manifest']);
+            $repositoryInspector = new RepositoryInspector();
             $plan = (new UpgradePreflight())->run(
                 $release,
                 $backup,
-                (new RepositoryInspector())->inspect($root),
+                $repositoryInspector->inspectRelease($root, $release),
                 (new TargetMigrationInventory())->scan($root),
                 $options['environment'],
             );
@@ -61,7 +62,7 @@ final class UpgradeCli
             } else {
                 $report = ExecutionReport::success(
                     $plan,
-                    UpgradeWorkflow::fromEnvironment($root)->run($release->sourceMigrations),
+                    UpgradeWorkflow::fromEnvironment($root)->run($plan),
                 );
             }
             fwrite(STDOUT, json_encode($report, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES) . "\n");
@@ -72,14 +73,7 @@ final class UpgradeCli
                 ? $exception->errorCode
                 : 'UPGRADE_EXECUTION_FAILED';
             $report = $plan instanceof UpgradePlan
-                ? ExecutionReport::failure(
-                    $plan->releaseId,
-                    $plan->source,
-                    $plan->target,
-                    $plan->backupId,
-                    $errorCode,
-                    $plan->environment,
-                )
+                ? ExecutionReport::failure($plan, $errorCode)
                 : [
                     'schema_version' => 1,
                     'status' => 'failed',

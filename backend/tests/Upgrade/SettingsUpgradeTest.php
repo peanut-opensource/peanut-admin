@@ -6,6 +6,13 @@ namespace PeanutAdmin\App\Tests\Upgrade;
 
 use PDO;
 use PeanutAdmin\App\command\UpgradeWorkflow;
+use PeanutAdmin\App\upgrade\BackupManifest;
+use PeanutAdmin\App\upgrade\ReleaseManifest;
+use PeanutAdmin\App\upgrade\RepositoryState;
+use PeanutAdmin\App\upgrade\TargetMigrationInventory;
+use PeanutAdmin\App\upgrade\UpgradePlan;
+use PeanutAdmin\App\upgrade\UpgradePreflight;
+use PeanutAdmin\App\upgrade\UpgradeTargetVerifier;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -144,9 +151,9 @@ final class SettingsUpgradeTest extends TestCase
     {
         $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
 
-        $first = $workflow->run();
+        $first = $workflow->installEmptyDatabase();
         self::assertContains('peanut.settings', $first['modules']);
-        self::assertSame(7, $first['applied_module_migrations']);
+        self::assertSame(11, $first['applied_module_migrations']);
         self::assertSame(4, $this->settingsTableCount($this->database));
         self::assertSame(self::SETTINGS_MIGRATIONS, $this->columnValues(
             $this->database,
@@ -174,7 +181,7 @@ FROM pa_setting_definition
 ORDER BY module_key, setting_key
 SQL);
 
-        $second = $workflow->run();
+        $second = $workflow->assertCurrentReleaseNoop();
 
         self::assertSame(0, $second['applied_module_migrations']);
         self::assertSame($definitions, $this->columnValues($this->database, <<<'SQL'
@@ -223,8 +230,8 @@ SQL));
             self::assertFileExists($backup . '/dump.sql');
 
             $preUpgradeTableSignatures = $this->tableSignatures($this->database);
-            $upgrade = (new UpgradeWorkflow($root, $this->database))->run();
-            self::assertSame(4, $upgrade['applied_module_migrations']);
+            $upgrade = $this->evidenceBoundWorkflow($root)->run($this->upgradePlan($root, $oldRoot));
+            self::assertSame(8, $upgrade['applied_module_migrations']);
             self::assertSame(4, $this->settingsTableCount($this->database));
             self::assertSame(self::SETTINGS_MIGRATIONS, $this->columnValues(
                 $this->database,
@@ -317,6 +324,50 @@ SQL));
             'OLD_LOCK_FIXTURE_PASSWORD' => self::FIXTURE_PASSWORD,
             'OLD_LOCK_FIXTURE_TENANT' => self::FIXTURE_TENANT,
         ];
+    }
+
+    private function evidenceBoundWorkflow(string $root): UpgradeWorkflow
+    {
+        $verifier = new class implements UpgradeTargetVerifier {
+            public function verify(string $root, UpgradePlan $plan): void
+            {
+            }
+        };
+
+        return new UpgradeWorkflow($root, $this->database, $verifier);
+    }
+
+    private function upgradePlan(string $root, string $oldRoot): UpgradePlan
+    {
+        $source = (new TargetMigrationInventory())->scan($oldRoot);
+        $target = (new TargetMigrationInventory())->scan($root);
+        $targetCommit = trim($this->runCommand(['git', 'rev-parse', 'HEAD'], $root));
+        $targetTree = trim($this->runCommand(['git', 'rev-parse', 'HEAD^{tree}'], $root));
+        $release = ReleaseManifest::fromArray([
+            'schema_version' => 1,
+            'release_id' => 'settings-old-lock-integration',
+            'source' => ['commit' => self::OLD_LOCK, 'tree' => self::OLD_LOCK_TREE],
+            'target' => ['commit' => $targetCommit, 'tree' => $targetTree],
+            'migrations' => ['source' => $source->entries, 'target' => $target->entries],
+        ]);
+        $backup = BackupManifest::fromArray([
+            'schema_version' => 1,
+            'backup_id' => 'settings-old-lock-backup',
+            'environment' => 'test',
+            'source' => $release->source,
+            'artifact_sha256' => str_repeat('6', 64),
+            'created_at' => '2026-07-24T00:00:00Z',
+            'verified_at' => '2026-07-24T00:01:00Z',
+            'restore_tested_at' => '2026-07-24T00:02:00Z',
+        ]);
+
+        return (new UpgradePreflight())->run(
+            $release,
+            $backup,
+            new RepositoryState($targetCommit, $targetTree, true),
+            $target,
+            'test',
+        );
     }
 
     /** @return array<string, string> */

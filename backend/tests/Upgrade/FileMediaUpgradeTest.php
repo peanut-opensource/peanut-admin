@@ -54,8 +54,8 @@ final class FileMediaUpgradeTest extends TestCase
     public function testCleanUpgradeAndRepeatedUpgradeKeepFileMediaCoexisting(): void
     {
         $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->pdo);
-        $first = $workflow->run();
-        $second = $workflow->run();
+        $first = $workflow->installEmptyDatabase();
+        $second = $workflow->assertCurrentReleaseNoop();
 
         self::assertContains('peanut.file-media', $first['modules']);
         self::assertGreaterThanOrEqual(1, $first['applied_module_migrations']);

@@ -12,7 +12,10 @@ use PeanutAdmin\App\module\ModuleRegistryFactory;
 use PeanutAdmin\App\referencecode\ReferenceCodeRuntimeFactory;
 use PeanutAdmin\App\setting\SettingsRuntimeFactory;
 use PeanutAdmin\App\upgrade\MigrationInventory;
-use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
+use PeanutAdmin\App\upgrade\RepositoryUpgradeTargetVerifier;
+use PeanutAdmin\App\upgrade\TargetMigrationInventory;
+use PeanutAdmin\App\upgrade\UpgradePlan;
+use PeanutAdmin\App\upgrade\UpgradeTargetVerifier;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
 use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
 use PeanutAdmin\Kernel\Menu\MenuCatalogSynchronizer;
@@ -33,12 +36,16 @@ use Throwable;
 
 final readonly class UpgradeWorkflow
 {
+    private UpgradeTargetVerifier $targetVerifier;
+
     public function __construct(
         private string $root,
         private PDO $pdo,
+        ?UpgradeTargetVerifier $targetVerifier = null,
     ) {
         $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+        $this->targetVerifier = $targetVerifier ?? new RepositoryUpgradeTargetVerifier();
     }
 
     public static function fromEnvironment(string $root): self
@@ -60,6 +67,7 @@ final readonly class UpgradeWorkflow
         }
         try {
             $registry = $this->registry();
+            (new TargetMigrationInventory())->scan($this->root);
             if (!$this->tableExists('pa_module_migration')) {
                 throw new ModuleException(
                     'UPGRADE_EVIDENCE_REQUIRED',
@@ -67,11 +75,11 @@ final readonly class UpgradeWorkflow
                 );
             }
             $this->assertPackageMigrationCurrent(
-                $this->packagePath(KernelPackage::NAME) . '/database/migrations',
+                $this->root . '/packages/php/kernel/database/migrations',
                 'pa_kernel_migration',
             );
             $this->assertPackageMigrationCurrent(
-                $this->packagePath(DataPermissionPackage::NAME) . '/database/migrations',
+                $this->root . '/packages/php/data-permission/database/migrations',
                 'pa_data_permission_migration',
             );
             foreach ($registry->modules as $module) {
@@ -96,6 +104,8 @@ final readonly class UpgradeWorkflow
                     );
                 }
             }
+            $this->assertExactModuleState($registry);
+            $this->assertDefinitionState($registry);
 
             return ['modules' => $registry->moduleKeys(), 'applied_module_migrations' => 0];
         } finally {
@@ -104,20 +114,44 @@ final readonly class UpgradeWorkflow
     }
 
     /** @return array{modules: list<string>, applied_module_migrations: int} */
-    public function run(?MigrationInventory $expectedSourceMigrations = null): array
+    public function installEmptyDatabase(): array
     {
         if (!$this->acquireLock()) {
             throw new ModuleException('MODULE_UPGRADE_LOCKED', 'Another upgrade is already running.');
         }
         try {
-            return $this->runLocked($expectedSourceMigrations);
+            if (!$this->databaseIsEmpty()) {
+                throw new ModuleException(
+                    'INSTALL_DATABASE_NOT_EMPTY',
+                    'A fresh install requires an empty database.',
+                );
+            }
+            (new TargetMigrationInventory())->scan($this->root);
+
+            return $this->runLocked();
         } finally {
             $this->releaseLock();
         }
     }
 
     /** @return array{modules: list<string>, applied_module_migrations: int} */
-    private function runLocked(?MigrationInventory $expectedSourceMigrations): array
+    public function run(UpgradePlan $plan): array
+    {
+        if (!$this->acquireLock()) {
+            throw new ModuleException('MODULE_UPGRADE_LOCKED', 'Another upgrade is already running.');
+        }
+        try {
+            $this->targetVerifier->verify($this->root, $plan);
+            $this->assertSourceMigrationState($plan->sourceMigrations);
+
+            return $this->runLocked();
+        } finally {
+            $this->releaseLock();
+        }
+    }
+
+    /** @return array{modules: list<string>, applied_module_migrations: int} */
+    private function runLocked(): array
     {
         $registry = $this->registry();
         $plans = [];
@@ -129,17 +163,13 @@ final readonly class UpgradeWorkflow
                 $this->assertModulePlan($plan);
             }
         }
-        if ($expectedSourceMigrations !== null) {
-            $this->assertSourceMigrationState($expectedSourceMigrations);
-        }
-
         $this->migratePackage(
-            $this->packagePath(KernelPackage::NAME) . '/database/migrations',
+            $this->root . '/packages/php/kernel/database/migrations',
             'kernel',
             'pa_kernel_migration',
         );
         $this->migratePackage(
-            $this->packagePath(DataPermissionPackage::NAME) . '/database/migrations',
+            $this->root . '/packages/php/data-permission/database/migrations',
             'data_permission',
             'pa_data_permission_migration',
         );
@@ -206,6 +236,18 @@ SQL);
         return (int) $statement->fetchColumn() === 1;
     }
 
+    private function databaseIsEmpty(): bool
+    {
+        $statement = $this->pdo->query(<<<'SQL'
+SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE()
+SQL);
+        if ($statement === false) {
+            throw new ModuleException('INSTALL_DATABASE_STATE_UNAVAILABLE', 'Database state could not be read.');
+        }
+
+        return (int) $statement->fetchColumn() === 0;
+    }
+
     private function assertPackageMigrationCurrent(string $path, string $table): void
     {
         if (!$this->tableExists($table)) {
@@ -227,11 +269,20 @@ SQL);
         }
         sort($targetVersions, SORT_STRING);
 
-        $statement = $this->pdo->query("SELECT version FROM `{$table}` WHERE breakpoint = 0");
+        $statement = $this->pdo->query("SELECT version, breakpoint FROM `{$table}`");
         if ($statement === false) {
             throw new ModuleException('PACKAGE_MIGRATION_LEDGER_UNAVAILABLE', 'Package migration ledger failed.');
         }
-        $appliedVersions = array_map('strval', $statement->fetchAll(PDO::FETCH_COLUMN));
+        $appliedVersions = [];
+        while (($row = $statement->fetch()) !== false) {
+            if ((int) $row['breakpoint'] !== 0) {
+                throw new ModuleException(
+                    'UPGRADE_EVIDENCE_REQUIRED',
+                    'Explicit release and backup manifests are required.',
+                );
+            }
+            $appliedVersions[] = (string) $row['version'];
+        }
         sort($appliedVersions, SORT_STRING);
         if ($targetVersions !== $appliedVersions) {
             throw new ModuleException(
@@ -269,6 +320,86 @@ SQL);
         $this->assertPackageSourceVersions('pa_kernel_migration', $packageVersions['kernel']);
         $this->assertPackageSourceVersions('pa_data_permission_migration', $packageVersions['data-permission']);
         $this->assertModuleSourceMigrations($moduleMigrations);
+    }
+
+    private function assertExactModuleState(CompiledModuleRegistry $registry): void
+    {
+        $expectedInstallations = $registry->moduleKeys();
+        sort($expectedInstallations, SORT_STRING);
+        $statement = $this->pdo->query('SELECT module_key FROM pa_module_installation ORDER BY module_key');
+        if ($statement === false) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current Module state is unavailable.');
+        }
+        $actualInstallations = array_values(array_map('strval', $statement->fetchAll(PDO::FETCH_COLUMN)));
+        if ($actualInstallations !== $expectedInstallations) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current Module state differs from the release.');
+        }
+
+        $expectedLedgerModules = [];
+        foreach ($registry->modules as $module) {
+            $plan = $this->modulePlan($module);
+            if ($plan['migrations'] !== []) {
+                $expectedLedgerModules[] = $plan['module_key'];
+            }
+        }
+        sort($expectedLedgerModules, SORT_STRING);
+        $statement = $this->pdo->query(
+            'SELECT DISTINCT module_key FROM pa_module_migration ORDER BY module_key',
+        );
+        if ($statement === false) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current Module ledger is unavailable.');
+        }
+        $actualLedgerModules = array_values(array_map('strval', $statement->fetchAll(PDO::FETCH_COLUMN)));
+        if ($actualLedgerModules !== $expectedLedgerModules) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current Module ledger differs from the release.');
+        }
+    }
+
+    private function assertDefinitionState(CompiledModuleRegistry $registry): void
+    {
+        $expectedSettings = [];
+        foreach (SettingsRuntimeFactory::definitionRegistry($registry)->all() as $definition) {
+            $expectedSettings[$definition->qualifiedKey()] = $definition->digest . ':active';
+        }
+        $this->assertDefinitionRows(
+            'pa_setting_definition',
+            'SELECT module_key, setting_key AS definition_key, definition_digest, status AS lifecycle'
+                . ' FROM pa_setting_definition',
+            $expectedSettings,
+        );
+
+        $expectedReferenceCodes = [];
+        foreach (ReferenceCodeRuntimeFactory::definitionRegistry($registry)->all() as $definition) {
+            $expectedReferenceCodes[$definition->qualifiedKey()] = $definition->digest . ':active';
+        }
+        $this->assertDefinitionRows(
+            'pa_reference_code_set',
+            'SELECT module_key, set_key AS definition_key, definition_digest, lifecycle'
+                . ' FROM pa_reference_code_set',
+            $expectedReferenceCodes,
+        );
+    }
+
+    /** @param array<string, string> $expected */
+    private function assertDefinitionRows(string $table, string $sql, array $expected): void
+    {
+        if (!$this->tableExists($table)) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current definition state is unavailable.');
+        }
+        $statement = $this->pdo->query($sql);
+        if ($statement === false) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current definition state is unavailable.');
+        }
+        $actual = [];
+        while (($row = $statement->fetch()) !== false) {
+            $identity = (string) $row['module_key'] . ':' . (string) $row['definition_key'];
+            $actual[$identity] = (string) $row['definition_digest'] . ':' . (string) $row['lifecycle'];
+        }
+        ksort($expected, SORT_STRING);
+        ksort($actual, SORT_STRING);
+        if ($actual !== $expected) {
+            throw new ModuleException('UPGRADE_EVIDENCE_REQUIRED', 'Current definitions differ from the release.');
+        }
     }
 
     /** @param list<string> $expectedVersions */
@@ -570,7 +701,7 @@ SQL);
     private function executeMigration(MigrationInterface $migration): void
     {
         $manager = $this->manager(
-            $this->packagePath(KernelPackage::NAME) . '/database/migrations',
+            $this->root . '/packages/php/kernel/database/migrations',
             'runtime',
             'pa_kernel_migration',
         );

@@ -6,8 +6,14 @@ namespace PeanutAdmin\App\Tests\Upgrade;
 
 use PDO;
 use PeanutAdmin\App\command\UpgradeWorkflow;
+use PeanutAdmin\App\upgrade\BackupManifest;
 use PeanutAdmin\App\upgrade\MigrationInventory;
+use PeanutAdmin\App\upgrade\ReleaseManifest;
+use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
+use PeanutAdmin\App\upgrade\UpgradePlan;
+use PeanutAdmin\App\upgrade\UpgradePreflight;
+use PeanutAdmin\App\upgrade\UpgradeTargetVerifier;
 use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use Phinx\Config\Config;
@@ -53,8 +59,8 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
         $root = dirname(__DIR__, 3);
         $workflow = new UpgradeWorkflow($root, $this->database);
 
-        $first = $workflow->run();
-        $second = $workflow->run((new TargetMigrationInventory())->scan($root));
+        $first = $workflow->installEmptyDatabase();
+        $second = $workflow->assertCurrentReleaseNoop();
 
         self::assertSame([
             'example.target',
@@ -106,14 +112,18 @@ SQL));
 
     public function testEvidenceBoundUpgradeRejectsTheWrongSourceDatabaseBeforeMutation(): void
     {
-        $source = new MigrationInventory([[
-            'owner' => 'kernel',
-            'key' => '20260716010101_create_pa_account',
-            'checksum' => str_repeat('a', 64),
-        ]]);
+        $root = dirname(__DIR__, 3);
+        $target = (new TargetMigrationInventory())->scan($root);
+        $sourceEntry = array_values(array_filter(
+            $target->entries,
+            static fn(array $entry): bool => $entry['owner'] === 'kernel'
+                && $entry['key'] === '20260716010101_create_pa_account',
+        ));
+        self::assertCount(1, $sourceEntry);
+        $source = new MigrationInventory($sourceEntry);
 
         try {
-            (new UpgradeWorkflow(dirname(__DIR__, 3), $this->database))->run($source);
+            $this->upgradeWorkflow($root)->run($this->plan($root, $source));
         } catch (ModuleException $exception) {
             self::assertSame('UPGRADE_SOURCE_DATABASE_MISMATCH', $exception->errorCode);
             self::assertSame(0, $this->scalar(<<<'SQL'
@@ -130,14 +140,14 @@ SQL));
     public function testAppliedMigrationChecksumDriftStopsBeforeFurtherChanges(): void
     {
         $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
-        $workflow->run();
+        $workflow->installEmptyDatabase();
         $this->database->exec(
             "UPDATE pa_module_migration SET checksum = REPEAT('0', 64)"
             . " WHERE module_key = 'example.target'",
         );
 
         try {
-            $workflow->run();
+            $workflow->assertCurrentReleaseNoop();
         } catch (ModuleException $exception) {
             self::assertSame('MODULE_MIGRATION_CHECKSUM_MISMATCH', $exception->errorCode);
             self::assertSame(11, $this->scalar(
@@ -168,7 +178,13 @@ SQL));
         ]), new Input([]), new NullOutput());
         $manager->migrate('kernel', 20260716010110);
 
-        $result = (new UpgradeWorkflow($root, $this->database))->run();
+        $target = (new TargetMigrationInventory())->scan($root);
+        $source = new MigrationInventory(array_values(array_filter(
+            $target->entries,
+            static fn(array $entry): bool => $entry['owner'] === 'kernel'
+                && strcmp($entry['key'], '20260716010110_create_pa_tenant_member') <= 0,
+        )));
+        $result = $this->upgradeWorkflow($root)->run($this->plan($root, $source));
 
         self::assertSame(11, $result['applied_module_migrations']);
         self::assertSame(38, $this->scalar('SELECT COUNT(*) FROM pa_kernel_migration'));
@@ -186,7 +202,10 @@ SQL));
         self::assertSame(1, (int) $lock->fetchColumn());
 
         try {
-            (new UpgradeWorkflow(dirname(__DIR__, 3), $this->connect('DB_PORT', self::DATABASE)))->run();
+            (new UpgradeWorkflow(
+                dirname(__DIR__, 3),
+                $this->connect('DB_PORT', self::DATABASE),
+            ))->installEmptyDatabase();
         } catch (ModuleException $exception) {
             self::assertSame('MODULE_UPGRADE_LOCKED', $exception->errorCode);
             self::assertSame(0, $this->scalar(<<<'SQL'
@@ -201,6 +220,86 @@ SQL));
         }
 
         self::fail('A concurrent upgrade lock must fail closed.');
+    }
+
+    public function testCurrentReleaseNoopRejectsDefinitionDigestDrift(): void
+    {
+        $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
+        $workflow->installEmptyDatabase();
+        $this->database->exec("UPDATE pa_setting_definition SET definition_digest = REPEAT('0', 64) LIMIT 1");
+
+        try {
+            $workflow->assertCurrentReleaseNoop();
+        } catch (ModuleException $exception) {
+            self::assertSame('UPGRADE_EVIDENCE_REQUIRED', $exception->errorCode);
+
+            return;
+        }
+
+        self::fail('Definition drift must not be accepted as a current-release no-op.');
+    }
+
+    public function testCurrentReleaseNoopRejectsAnExtraModuleInstallation(): void
+    {
+        $workflow = new UpgradeWorkflow(dirname(__DIR__, 3), $this->database);
+        $workflow->installEmptyDatabase();
+        $this->database->exec(<<<'SQL'
+INSERT INTO pa_module_installation (
+  module_key, installed_version, manifest_schema_version, manifest_digest,
+  status, revision, created_at, updated_at
+) VALUES ('unexpected.module', '1.0.0', 1, REPEAT('a', 64), 'active', 1, NOW(3), NOW(3))
+SQL);
+
+        try {
+            $workflow->assertCurrentReleaseNoop();
+        } catch (ModuleException $exception) {
+            self::assertSame('UPGRADE_EVIDENCE_REQUIRED', $exception->errorCode);
+
+            return;
+        }
+
+        self::fail('An extra Module installation must not be accepted as current.');
+    }
+
+    private function upgradeWorkflow(string $root): UpgradeWorkflow
+    {
+        $verifier = new class implements UpgradeTargetVerifier {
+            public function verify(string $root, UpgradePlan $plan): void
+            {
+            }
+        };
+
+        return new UpgradeWorkflow($root, $this->database, $verifier);
+    }
+
+    private function plan(string $root, MigrationInventory $source): UpgradePlan
+    {
+        $target = (new TargetMigrationInventory())->scan($root);
+        $release = ReleaseManifest::fromArray([
+            'schema_version' => 1,
+            'release_id' => 'integration-upgrade',
+            'source' => ['commit' => str_repeat('1', 40), 'tree' => str_repeat('2', 40)],
+            'target' => ['commit' => str_repeat('3', 40), 'tree' => str_repeat('4', 40)],
+            'migrations' => ['source' => $source->entries, 'target' => $target->entries],
+        ]);
+        $backup = BackupManifest::fromArray([
+            'schema_version' => 1,
+            'backup_id' => 'integration-backup',
+            'environment' => 'test',
+            'source' => $release->source,
+            'artifact_sha256' => str_repeat('5', 64),
+            'created_at' => '2026-07-24T00:00:00Z',
+            'verified_at' => '2026-07-24T00:01:00Z',
+            'restore_tested_at' => '2026-07-24T00:02:00Z',
+        ]);
+
+        return (new UpgradePreflight())->run(
+            $release,
+            $backup,
+            new RepositoryState($release->target['commit'], $release->target['tree'], true),
+            $target,
+            'test',
+        );
     }
 
     private function connect(string $portEnvironment, ?string $database = null): PDO
