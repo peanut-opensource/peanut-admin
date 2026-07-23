@@ -39,6 +39,13 @@ toolchain already locked by the repository. Its machine-readable
 path/workspace lock changes and development checks; audit, clean starter
 installs, and fixed-candidate qualification remain deferred.
 
+Starter v1 C02 File And Media also adds no third-party dependency. The bounded
+local adapter uses PHP fileinfo, hashing, PDO, and filesystem primitives behind
+the first-party storage provider contract. Its machine-readable
+[C02 lock evidence](./c02-file-media-lock-evidence.json) records only the new
+first-party PHP and Web workspaces; production object-storage selection,
+security audit, clean starter installs, and qualification remain deferred.
+
 ## Explicitly Deferred
 
 P0 does not install or create speculative abstractions for filesystem storage, queue management UI, spreadsheet import/export, notifications, Plugin runtime or marketplace, MFA, or OIDC. Each requires an approved use path and a new dependency decision before installation.

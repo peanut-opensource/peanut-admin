@@ -14,8 +14,8 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(91, $routes);
-        self::assertCount(91, array_unique($operationIds));
+        self::assertCount(96, $routes);
+        self::assertCount(96, array_unique($operationIds));
         self::assertArrayHasKey('GET /api/v1/account', $routes);
         self::assertArrayHasKey('PATCH /api/v1/account', $routes);
         self::assertArrayHasKey('POST /api/v1/account/password', $routes);
@@ -35,6 +35,11 @@ final class OpenApiArtifactTest extends TestCase
         self::assertArrayHasKey('POST /api/v1/reference-code-sets/{module_key}/{set_key}/codes', $routes);
         self::assertArrayHasKey('PUT /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}', $routes);
         self::assertArrayHasKey('DELETE /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}', $routes);
+        self::assertArrayHasKey('GET /api/v1/files', $routes);
+        self::assertArrayHasKey('POST /api/v1/files', $routes);
+        self::assertArrayHasKey('GET /api/v1/files/{file_key}', $routes);
+        self::assertArrayHasKey('GET /api/v1/files/{file_key}/content', $routes);
+        self::assertArrayHasKey('DELETE /api/v1/files/{file_key}', $routes);
 
         $types = (string) file_get_contents($root . '/packages/web/admin-core/src/generated/api.d.ts');
         self::assertStringContainsString('listExampleWorkItems', $types);
@@ -45,6 +50,7 @@ final class OpenApiArtifactTest extends TestCase
         self::assertStringContainsString('ReplaceSettingRequest', $types);
         self::assertStringContainsString('ReferenceCodeListResponse', $types);
         self::assertStringContainsString('ReferenceCodeReplaceRequest', $types);
+        self::assertStringContainsString('FileListResponse', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
         self::assertStringNotContainsString('data: unknown', $types);
         self::assertDoesNotMatchRegularExpression('/(?:\| unknown|unknown \|)/', $types);
@@ -103,7 +109,7 @@ final class OpenApiArtifactTest extends TestCase
             $schema = $binding[11];
 
             self::assertContains($status, [200, 201, 204], $route);
-            self::assertSame($status === 204 ? null : 'application/json', $mediaType, $route);
+            self::assertContains($mediaType, $status === 204 ? [null] : ['application/json', 'application/octet-stream'], $route);
             self::assertContains('X-Request-Id', $headers, $route);
             self::assertContains('Cache-Control', $headers, $route);
             self::assertSame($status === 204 ? null : true, $schema === null ? null : true, $route);
@@ -141,12 +147,16 @@ final class OpenApiArtifactTest extends TestCase
     {
         $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
         $expected = [
+            'DELETE /api/v1/files/{file_key}' => 'peanut.file-media',
             'DELETE /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}' => 'peanut.reference-codes',
             'DELETE /api/v1/settings/{module_key}/{setting_key}' => 'peanut.settings',
             'GET /api/v1/example/reference-items/candidates' => 'example.reference',
             'GET /api/v1/example/work-items' => 'example.work-item',
             'GET /api/v1/example/work-items/aggregate' => 'example.work-item',
             'GET /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
+            'GET /api/v1/files' => 'peanut.file-media',
+            'GET /api/v1/files/{file_key}' => 'peanut.file-media',
+            'GET /api/v1/files/{file_key}/content' => 'peanut.file-media',
             'GET /api/v1/reference-code-sets' => 'peanut.reference-codes',
             'GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes' => 'peanut.reference-codes',
             'GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}' => 'peanut.reference-codes',
@@ -154,6 +164,7 @@ final class OpenApiArtifactTest extends TestCase
             'PATCH /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
             'POST /api/v1/example/work-item-view-policies' => 'example.work-item',
             'POST /api/v1/example/work-items' => 'example.work-item',
+            'POST /api/v1/files' => 'peanut.file-media',
             'POST /api/v1/reference-code-sets/{module_key}/{set_key}/codes' => 'peanut.reference-codes',
             'PUT /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}' => 'peanut.reference-codes',
             'PUT /api/v1/settings/{module_key}/{setting_key}' => 'peanut.settings',

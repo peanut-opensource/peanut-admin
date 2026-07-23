@@ -11,7 +11,8 @@ This guide describes the P0 runtime that exists in this repository. It separates
 5. Understand [typed targets](../reference/typed-targets.md) and [shared master scope](../reference/shared-master.md).
 6. Build a capability with the [Module tutorial](./module-development.md).
 7. Compose routes with the [Admin Web guide](./admin-web.md).
-8. Use the [testing](./testing.md), [upgrade](./upgrade.md), and [troubleshooting](./troubleshooting.md) runbooks.
+8. Configure the development-only [Tenant-private file adapter](./file-media.md).
+9. Use the [testing](./testing.md), [upgrade](./upgrade.md), and [troubleshooting](./troubleshooting.md) runbooks.
 
 ## Runtime Boundary
 

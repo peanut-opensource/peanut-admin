@@ -57,6 +57,16 @@ settings_required=(
   'frontend/tests/reference-codes.spec.ts'
   'packages/php/reference-codes/composer.json'
   'packages/web/reference-codes/package.json'
+  'backend/config/file-media.php'
+  'backend/src/FileMedia/FileMediaStorageFactory.php'
+  'backend/src/FileMedia/LocalPrivateStorageProvider.php'
+  'backend/src/Modules/Peanut/FileMedia/module.json'
+  'backend/src/Modules/Peanut/FileMedia/ModuleProvider.php'
+  'frontend/src/modules/peanut-file-media.ts'
+  'frontend/tests/file-media.spec.ts'
+  'backend/tests/file-media.php'
+  'packages/php/file-media/composer.json'
+  'packages/web/file-media/package.json'
 )
 for path in "${settings_required[@]}"; do
   if [[ ! -f "$first/$path" ]]; then
@@ -72,10 +82,14 @@ diff -ru "$ROOT/packages/php/settings/src" "$first/packages/php/settings/src"
 diff -ru "$ROOT/packages/web/settings/src" "$first/packages/web/settings/src"
 diff -ru "$ROOT/packages/php/reference-codes/src" "$first/packages/php/reference-codes/src"
 diff -ru "$ROOT/packages/web/reference-codes/src" "$first/packages/web/reference-codes/src"
+diff -ru "$ROOT/packages/php/file-media/src" "$first/packages/php/file-media/src"
+diff -ru "$ROOT/packages/web/file-media/src" "$first/packages/web/file-media/src"
 cmp "$ROOT/packages/php/settings/composer.json" "$first/packages/php/settings/composer.json"
 cmp "$ROOT/packages/web/settings/package.json" "$first/packages/web/settings/package.json"
 cmp "$ROOT/packages/php/reference-codes/composer.json" "$first/packages/php/reference-codes/composer.json"
 cmp "$ROOT/packages/web/reference-codes/package.json" "$first/packages/web/reference-codes/package.json"
+cmp "$ROOT/packages/php/file-media/composer.json" "$first/packages/php/file-media/composer.json"
+cmp "$ROOT/packages/web/file-media/package.json" "$first/packages/web/file-media/package.json"
 
 php tests/starter/assert-generated-starter.php "$first"
 
@@ -130,6 +144,7 @@ done
 php "$first/backend/tests/auth-clients.php"
 php "$first/backend/tests/settings.php"
 php "$first/backend/tests/reference-codes.php"
+php "$first/backend/tests/file-media.php"
 pnpm --dir "$first" typecheck
 pnpm --dir "$first" test
 pnpm --dir "$first" build

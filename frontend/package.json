@@ -12,6 +12,7 @@
   "dependencies": {
     "@peanut-admin/admin-core": "workspace:^",
     "@peanut-admin/admin-shell": "workspace:^",
+    "@peanut-admin/file-media": "workspace:^",
     "@peanut-admin/reference-codes": "workspace:^",
     "@peanut-admin/settings": "workspace:^",
     "element-plus": "2.14.3",

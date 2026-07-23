@@ -95,8 +95,8 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       if (mediaTypes.length !== 0) {
         throw new Error(`${operation.operationId} declares content for a 204 response`)
       }
-    } else {
-      if (mediaTypes.length !== 1 || mediaType !== 'application/json') {
+    } else if (mediaType === 'application/json') {
+      if (mediaTypes.length !== 1) {
         throw new Error(`${operation.operationId} must return one application/json success body`)
       }
       const responseSchema = content[mediaType]?.schema
@@ -105,6 +105,8 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       if (!required.has('data') || !required.has('meta') || !schemaIsConstrained(resolvedSchema?.properties?.data)) {
         throw new Error(`${operation.operationId} has an unconstrained success data schema`)
       }
+    } else if (mediaTypes.length !== 1 || mediaType !== 'application/octet-stream') {
+      throw new Error(`${operation.operationId} must return one supported success body`)
     }
     const responseSchemaRef = mediaType === null ? null : (content[mediaType]?.schema?.$ref ?? null)
     if (mediaType !== null && responseSchemaRef === null) {
@@ -150,8 +152,8 @@ const compareRoutes = (left, right) => {
   return leftSegments.length - rightSegments.length
 }
 routes.sort(compareRoutes)
-if (routes.length !== 91) {
-  throw new Error(`Expected 91 classified P0/P1 operations, found ${routes.length}`)
+if (routes.length !== 96) {
+  throw new Error(`Expected 96 classified P0/P1 operations, found ${routes.length}`)
 }
 const operationIds = new Set(routes.map(route => route.operationId))
 if (operationIds.size !== routes.length) {
@@ -320,7 +322,7 @@ foreach ($routes as $route => $binding) {
     if ($contract->successStatus !== $successStatus
         || $contract->hasJsonBody !== ($mediaType === "application/json")
         || $declaredHeaders !== $responseHeaders
-        || (($mediaType === "application/json") !== is_string($responseSchemaRef))
+        || (($mediaType !== null) !== is_string($responseSchemaRef))
     ) {
         fwrite(STDERR, "ERROR: OpenAPI success status/header/body contract does not match handler for {$route}\n");
         exit(1);

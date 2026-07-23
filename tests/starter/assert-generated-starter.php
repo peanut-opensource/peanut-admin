@@ -19,10 +19,13 @@ $required = [
     'backend/public/index.php',
     'backend/src/Module/ModuleRegistryFactory.php',
     'backend/src/Auth/TenantAuthRuntimeFactory.php',
+    'backend/src/FileMedia/FileMediaStorageFactory.php',
+    'backend/src/FileMedia/LocalPrivateStorageProvider.php',
     'backend/src/Modules/Example/Greeting/ExampleGreetingModuleProvider.php',
     'backend/src/Modules/Example/Greeting/module.json',
     'backend/src/StarterExceptionHandler.php',
     'backend/tests/auth-clients.php',
+    'backend/tests/file-media.php',
     'backend/tests/smoke.php',
     'frontend/package.json',
     'frontend/src/App.vue',
@@ -32,10 +35,12 @@ $required = [
     'packages/php/data-permission/composer.json',
     'packages/php/data-permission/database/migrations/20260716020101_create_pa_data_permission_policy.php',
     'packages/php/kernel/composer.json',
+    'packages/php/file-media/composer.json',
     'packages/php/kernel/database/migrations/20260718010101_generalize_pa_tenant_clients.php',
     'packages/php/kernel/resources/schemas/module-manifest.schema.json',
     'packages/web/admin-core/package.json',
     'packages/web/admin-shell/package.json',
+    'packages/web/file-media/package.json',
     'pnpm-workspace.yaml',
     'pnpm-lock.yaml',
 ];
@@ -56,6 +61,7 @@ foreach ([
     'composer/semver' => '3.4.4',
     'opis/json-schema' => '2.6.0',
     'peanut-admin/kernel' => '0.1.0',
+    'peanut-admin/file-media' => '0.1.0',
     'peanut-admin/data-permission' => '0.1.0',
     'peanut-admin/reference-codes' => '0.1.0',
     'peanut-admin/settings' => '0.1.0',
@@ -75,6 +81,7 @@ $frontend = json_decode(
 foreach ([
     '@peanut-admin/admin-core' => 'workspace:0.1.0',
     '@peanut-admin/admin-shell' => 'workspace:0.1.0',
+    '@peanut-admin/file-media' => 'workspace:0.1.0',
     '@peanut-admin/reference-codes' => 'workspace:0.1.0',
     '@peanut-admin/settings' => 'workspace:0.1.0',
 ] as $package => $version) {
@@ -111,6 +118,22 @@ $manifest = json_decode(
 if (($manifest['backend']['provider'] ?? null)
     !== 'ExampleHost\\App\\Modules\\Example\\Greeting\\ExampleGreetingModuleProvider') {
     fwrite(STDERR, "ERROR: starter manifest does not use its external host namespace\n");
+    exit(1);
+}
+
+$fileMediaManifest = json_decode(
+    (string) file_get_contents($root . '/backend/src/Modules/Peanut/FileMedia/module.json'),
+    true,
+    512,
+    JSON_THROW_ON_ERROR,
+);
+if (($fileMediaManifest['backend']['provider'] ?? null)
+    !== 'ExampleHost\\App\\Modules\\Peanut\\FileMedia\\ModuleProvider') {
+    fwrite(STDERR, "ERROR: starter File/Media manifest does not use its external host namespace\n");
+    exit(1);
+}
+if (($fileMediaManifest['kernel_constraint'] ?? null) !== '^0.1') {
+    fwrite(STDERR, "ERROR: starter File/Media manifest is incompatible with the fixed Kernel package\n");
     exit(1);
 }
 

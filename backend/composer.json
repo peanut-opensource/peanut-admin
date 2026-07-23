@@ -20,12 +20,17 @@
     {
       "type": "path",
       "url": "../packages/php/reference-codes"
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/file-media"
     }
   ],
   "require": {
     "php": "^8.3",
     "peanut-admin/data-permission": "^0.1.0",
     "peanut-admin/kernel": "^0.1.0",
+    "peanut-admin/file-media": "^0.1.0",
     "peanut-admin/reference-codes": "^0.1.0",
     "peanut-admin/settings": "^0.1.0",
     "topthink/framework": "^8.1.4"

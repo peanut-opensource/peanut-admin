@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0c96bb685a9a7c379d80bf9e82205d7d",
+    "content-hash": "c1aeb6ad4997d20b6fcba71904e85154",
     "packages": [
         {
             "name": "composer/semver",
@@ -300,6 +300,40 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin data authorization contracts",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/file-media",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "../packages/php/file-media",
+                "reference": "66f20c3df97067ef28b4c44897cdb19fd3e4300b"
+            },
+            "require": {
+                "ext-fileinfo": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\FileMedia\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\FileMedia\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable Tenant-private file metadata and storage contracts",
             "transport-options": {
                 "symlink": false,
                 "relative": true

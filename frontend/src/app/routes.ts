@@ -5,6 +5,7 @@ import { exampleReferenceModule } from '../modules/example-reference'
 import { exampleTargetModule } from '../modules/example-target'
 import { exampleWorkItemModule } from '../modules/example-work-item'
 import { peanutReferenceCodesModule } from '../modules/peanut-reference-codes'
+import { peanutFileMediaModule } from '../modules/peanut-file-media'
 import { peanutSettingsModule } from '../modules/peanut-settings'
 
 export interface AppRouteRegistration {
@@ -38,6 +39,7 @@ export const APP_MODULES = [
   exampleWorkItemModule,
   peanutSettingsModule,
   peanutReferenceCodesModule,
+  peanutFileMediaModule,
 ] as const
 export const APP_NAVIGATION = createAdminNavigationRegistry({ routes: registrations, modules: APP_MODULES })
 export const APP_ROUTE_REGISTRY = new Map<string, AdminNavigationRoute>(

@@ -137,6 +137,19 @@
         "packages/web/reference-codes/tests/page.spec.ts",
         "frontend/tests/e2e/reference-codes.e2e.ts"
       ]
+    },
+    "RUNTIME-FILE-MEDIA-001": {
+      "description": "Tenant-private file metadata, local provider, isolation, Host API, and Admin Web behavior",
+      "evidence": [
+        "packages/php/file-media/tests/Unit/Application/UploadPolicyTest.php",
+        "packages/php/file-media/tests/Integration/FileServiceTest.php",
+        "backend/tests/Unit/FileMediaLocalStorageTest.php",
+        "backend/tests/Integration/FileMediaModuleIntegrationTest.php",
+        "backend/tests/Http/FileMediaApiTest.php",
+        "backend/tests/Security/FileMediaSecurityTest.php",
+        "packages/web/file-media/tests/page.spec.ts",
+        "frontend/tests/file-media-page.spec.ts"
+      ]
     }
   },
   "operations": [
@@ -230,6 +243,11 @@
     {"operation_id":"getReferenceCode","scope":"p1","route":"GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::getReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
     {"operation_id":"createReferenceCode","scope":"p1","route":"POST /api/v1/reference-code-sets/{module_key}/{set_key}/codes","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::createReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
     {"operation_id":"replaceReferenceCode","scope":"p1","route":"PUT /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::replaceReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
-    {"operation_id":"retireReferenceCode","scope":"p1","route":"DELETE /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::retireReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"}
+    {"operation_id":"retireReferenceCode","scope":"p1","route":"DELETE /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ReferenceCodeController::retireReferenceCode","response_schema":"#/components/schemas/ReferenceCodeEntryResponse","test_owner":"RUNTIME-REFERENCE-CODES-001"},
+    {"operation_id":"listFiles","scope":"p1","route":"GET /api/v1/files","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::index","response_schema":"#/components/schemas/FileListResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"createFile","scope":"p1","route":"POST /api/v1/files","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::create","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"getFile","scope":"p1","route":"GET /api/v1/files/{file_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::show","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"downloadFile","scope":"p1","route":"GET /api/v1/files/{file_key}/content","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::content","response_schema":"#/components/schemas/FileContent","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"archiveFile","scope":"p1","route":"DELETE /api/v1/files/{file_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::archive","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"}
   ]
 }

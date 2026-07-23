@@ -1,0 +1,1 @@
+export { peanutFileMediaModule } from './routes'

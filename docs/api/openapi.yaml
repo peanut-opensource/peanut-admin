@@ -229,6 +229,40 @@ x-reference-code-created-response: &referenceCodeCreatedResponse
       application/json:
         schema: { $ref: './schemas/reference-codes.yaml#/ReferenceCodeEntryResponse' }
 
+x-file-list-response: &fileListResponse
+  <<: *readErrors
+  '200':
+    description: Current-Tenant private file metadata.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/file-media.yaml#/FileListResponse' }
+x-file-response: &fileResponse
+  <<: *writeErrors
+  '200':
+    description: Current-Tenant private file metadata.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { $ref: './schemas/file-media.yaml#/StrongFileEtag' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/file-media.yaml#/FileResponse' }
+x-file-created-response: &fileCreatedResponse
+  <<: *writeErrors
+  '201':
+    description: Private file stored for the current Tenant.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { $ref: './schemas/file-media.yaml#/StrongFileEtag' } }
+      Location: { schema: { type: string, pattern: '^/api/v1/files/file_[0-9a-f]{32}$' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/file-media.yaml#/FileResponse' }
+
 x-platform-operator-response: &platformOperatorResponse
   <<: *writeErrors
   '200': { $ref: './responses.yaml#/PlatformOperatorOk' }
@@ -252,6 +286,78 @@ x-platform-audit-list-response: &platformAuditListResponse
   '200': { $ref: './responses.yaml#/PlatformAuditListOk' }
 
 paths:
+  /api/v1/files:
+    get:
+      operationId: listFiles
+      summary: listFiles
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::index'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.read
+      parameters:
+        - { in: query, name: page, required: false, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: page_size, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
+        - { in: query, name: status, required: false, schema: { enum: [ready, archived], default: ready } }
+      responses: *fileListResponse
+    post:
+      operationId: createFile
+      summary: createFile
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::create'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.create
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses: *fileCreatedResponse
+  /api/v1/files/{file_key}:
+    parameters:
+      - { in: path, name: file_key, required: true, schema: { $ref: './schemas/file-media.yaml#/FileKey' } }
+    get:
+      operationId: getFile
+      summary: getFile
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::show'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.read
+      responses: *fileResponse
+    delete:
+      operationId: archiveFile
+      summary: archiveFile
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::archive'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.delete
+      parameters:
+        - { in: header, name: If-Match, required: true, schema: { $ref: './schemas/file-media.yaml#/StrongFileEtag' } }
+      responses: *fileResponse
+  /api/v1/files/{file_key}/content:
+    parameters:
+      - { in: path, name: file_key, required: true, schema: { $ref: './schemas/file-media.yaml#/FileKey' } }
+    get:
+      operationId: downloadFile
+      summary: downloadFile
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::content'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.read
+      responses:
+        <<: *readErrors
+        '200':
+          description: Exact private file bytes.
+          headers:
+            X-Request-Id: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: 'private, no-store' } }
+            Content-Disposition: { schema: { type: string } }
+            Content-Length: { schema: { type: integer, minimum: 1 } }
+            Content-Type: { schema: { type: string, minLength: 1, maxLength: 127 } }
+            X-Content-Type-Options: { schema: { type: string, const: nosniff } }
+          content:
+            application/octet-stream:
+              schema: { $ref: './schemas/file-media.yaml#/FileContent' }
+
   /api/v1/auth/login:
     post:
       operationId: tenantLogin

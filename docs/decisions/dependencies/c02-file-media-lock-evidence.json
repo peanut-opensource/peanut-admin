@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-23T15:00:00+08:00",
+  "task": "PA-SV1-C02-S01-file-media-core",
+  "input_commit": "a979063dd75db6be37bbb366b265df777c629e1b",
+  "input_tree": "04a7fb688c975bd0908ecbd9dac83621c1b2c8e3",
+  "contract_commit": "08a487432cec6a8b5f3ce30029b92961123fea33",
+  "qualified_downstream_lock_unchanged": "0ab02a9b735ba9f4c23509cb366b9bf04039ebf8",
+  "slice_status": "development-only",
+  "third_party_dependency_change": false,
+  "first_party_packages": [
+    "peanut-admin/file-media@0.1.0",
+    "@peanut-admin/file-media@0.1.0"
+  ],
+  "locks": {
+    "composer.lock": {
+      "sha256": "73f5b4652feb29265baf5a8e37217447a2d1d880e1abcd05c0e40926df8df6af",
+      "delta": "first-party-file-media-only",
+      "first_party_package": "peanut-admin/file-media@0.1.0"
+    },
+    "pnpm-lock.yaml": {
+      "sha256": "42eedb388c0037ab2e797c6790329a556354392486b332fe9b5db370cf7fd796",
+      "delta": "first-party-file-media-only",
+      "first_party_package": "@peanut-admin/file-media@0.1.0"
+    },
+    "starter/backend/composer.lock": {
+      "sha256": "84b611912ef32494c0242b3c3773ea71d5bee2cb35453a05fb527f05b98a5867",
+      "delta": "first-party-file-media-only",
+      "first_party_package": "peanut-admin/file-media@0.1.0"
+    },
+    "starter/pnpm-lock.yaml": {
+      "sha256": "d899a8745f63d2097a7b0c248c002d96b5c48916828c386858b6fa8a8835c2b1",
+      "delta": "first-party-file-media-only",
+      "first_party_package": "@peanut-admin/file-media@0.1.0"
+    }
+  },
+  "verification": {
+    "lock_sha256_consistency": "checked",
+    "manifest_lock_consistency": "checked",
+    "security_audit": "not-run-in-development-slice",
+    "two_independent_frozen_installs": "not-run-in-development-slice",
+    "fixed_commit_qualification": "not-run-in-development-slice"
+  },
+  "accepted_reuse": [
+    "ext-fileinfo",
+    "ext-pdo",
+    "peanut-admin/kernel@0.1.0",
+    "@peanut-admin/admin-core@0.1.0",
+    "@peanut-admin/admin-shell@0.1.0"
+  ],
+  "notes": [
+    "The four lock deltas add only the first-party File And Media packages and preserve the accepted external dependency graph.",
+    "PHP fileinfo, hashing, PDO, and filesystem primitives implement the bounded development adapter without an object-storage SDK.",
+    "This development slice does not run a dependency audit, two independent clean starter installs, or fixed-candidate qualification.",
+    "No credential, token, cookie, private path, Tenant identifier, member identifier, or product-domain value is recorded.",
+    "This evidence is not package publication, release, qualification, or downstream consumption approval."
+  ]
+}

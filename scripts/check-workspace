@@ -14,15 +14,18 @@ required=(
   packages/php/testing/composer.json
   packages/php/settings/composer.json
   packages/php/reference-codes/composer.json
+  packages/php/file-media/composer.json
   packages/web/admin-core/package.json
   packages/web/admin-shell/package.json
   packages/web/settings/package.json
   packages/web/reference-codes/package.json
+  packages/web/file-media/package.json
   packages/web/testing/package.json
   compose.yaml
   docs/decisions/dependencies/p0-a04-lock-evidence.json
   docs/decisions/dependencies/p1-b03-lock-evidence.json
   docs/decisions/dependencies/p1-b04-lock-evidence.json
+  docs/decisions/dependencies/c02-file-media-lock-evidence.json
 )
 
 for path in "${required[@]}"; do
@@ -45,7 +48,7 @@ fi
 
 php -r '
 $evidence = json_decode(
-    (string) file_get_contents("docs/decisions/dependencies/p1-b04-lock-evidence.json"),
+    (string) file_get_contents("docs/decisions/dependencies/c02-file-media-lock-evidence.json"),
     true,
     512,
     JSON_THROW_ON_ERROR,
@@ -71,6 +74,7 @@ $expectedPhp = [
     "packages/php/testing/composer.json" => ["peanut-admin/testing", "PeanutAdmin\\Testing\\"],
     "packages/php/settings/composer.json" => ["peanut-admin/settings", "PeanutAdmin\\Settings\\"],
     "packages/php/reference-codes/composer.json" => ["peanut-admin/reference-codes", "PeanutAdmin\\ReferenceCodes\\"],
+    "packages/php/file-media/composer.json" => ["peanut-admin/file-media", "PeanutAdmin\\FileMedia\\"],
 ];
 foreach ($expectedPhp as $path => [$name, $namespace]) {
     $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
@@ -119,12 +123,26 @@ if (($backend["require"]["peanut-admin/reference-codes"] ?? null) !== "^0.1.0") 
     fwrite(STDERR, "ERROR: backend must require peanut-admin/reference-codes ^0.1.0\n");
     exit(1);
 }
+$fileMediaRepository = array_values(array_filter(
+    $backend["repositories"] ?? [],
+    static fn(mixed $repository): bool => is_array($repository)
+        && ($repository["url"] ?? null) === "../packages/php/file-media",
+));
+if (count($fileMediaRepository) !== 1 || ($fileMediaRepository[0]["type"] ?? null) !== "path") {
+    fwrite(STDERR, "ERROR: backend must consume peanut-admin/file-media from its workspace path repository\n");
+    exit(1);
+}
+if (($backend["require"]["peanut-admin/file-media"] ?? null) !== "^0.1.0") {
+    fwrite(STDERR, "ERROR: backend must require peanut-admin/file-media ^0.1.0\n");
+    exit(1);
+}
 
 $expectedWeb = [
     "packages/web/admin-core/package.json" => "@peanut-admin/admin-core",
     "packages/web/admin-shell/package.json" => "@peanut-admin/admin-shell",
     "packages/web/settings/package.json" => "@peanut-admin/settings",
     "packages/web/reference-codes/package.json" => "@peanut-admin/reference-codes",
+    "packages/web/file-media/package.json" => "@peanut-admin/file-media",
     "packages/web/testing/package.json" => "@peanut-admin/web-testing",
 ];
 foreach ($expectedWeb as $path => $name) {

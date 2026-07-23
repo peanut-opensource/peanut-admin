@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d96e3fccc2dba6599f23f8da439c4ce5",
+    "content-hash": "6d3e3df69132a415451ac47a9d2b0874",
     "packages": [
         {
             "name": "opis/json-schema",
@@ -223,6 +223,40 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin data authorization contracts",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/file-media",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/php/file-media",
+                "reference": "cb53de0802ea6a4e8b8102304970d3b4b2535c42"
+            },
+            "require": {
+                "ext-fileinfo": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\FileMedia\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\FileMedia\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable Tenant-private file metadata and storage contracts",
             "transport-options": {
                 "symlink": true,
                 "relative": true

@@ -41,6 +41,12 @@ storage, six platform/Tenant operations, and a Tenant settings page. It remains
 outside the fixed downstream-consumption lock until a later fixed-commit
 qualification and separate consumption decision.
 
+Starter v1 C02 adds an unqualified first-party File And Media candidate with a
+provider-neutral PHP boundary, a local private development adapter,
+Tenant-scoped metadata, guarded upload/download/archive operations, and the
+existing Admin Web `/app/files` page. It does not claim production object
+storage, malware scanning, public delivery, or downstream qualification.
+
 ## Principles
 
 - Tenant and platform identities remain separate.
