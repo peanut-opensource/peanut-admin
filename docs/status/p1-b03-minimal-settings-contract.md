@@ -322,6 +322,22 @@ loading. The route is absent when `peanut.settings` is disabled. Desktop
 `1440x900` and mobile `390x844` tests require no horizontal overflow, usable
 labels, focus order, and non-overlapping dialogs.
 
+## Required R02 Hardening
+
+B03 may apply only the following narrow hardening to the inherited R02 host
+primitives. `AuthorizedExternalOperation` becomes an unforgeable host-issued
+value that carries the exact authorized operation. The atomic command adapter
+accepts a host guard that runs inside the command transaction and before an
+idempotent replay can return. The Settings guard locks the relevant Module
+availability rows so a concurrent disable cannot race a value mutation or a
+replay. These changes do not alter any other R01 or R02 authorization,
+idempotency, transaction, response, or error semantics.
+
+The two listed R02 test files own regression evidence for the unforgeable
+authorization value, guard ordering, locked availability read, and unchanged
+existing host behavior. No other R01 or R02 source or test file may change in
+B03.
+
 ## Exact Implementation File Whitelist
 
 After this contract commit, the B03 implementation commit may add or modify
@@ -337,6 +353,13 @@ phpunit.xml
 pnpm-lock.yaml
 README.md
 packages/php/kernel/resources/schemas/module-manifest.schema.json
+packages/php/kernel/src/Host/AtomicOperationAdapter.php
+packages/php/kernel/src/Host/AuthorizedExternalOperation.php
+packages/php/kernel/src/Host/ExternalOperationHost.php
+packages/php/kernel/src/Host/TypedTargetAdapter.php
+packages/php/kernel/src/Module/Persistence/PdoModuleRuntimeRepository.php
+packages/php/kernel/tests/Integration/Host/ExternalOperationHostIntegrationTest.php
+packages/php/kernel/tests/Unit/Host/ExternalOperationHostTest.php
 packages/php/kernel/tests/Unit/Module/ModuleRegistryCompilerTest.php
 packages/php/settings/LICENSE
 packages/php/settings/composer.json
@@ -354,6 +377,7 @@ packages/php/settings/src/Definition/SettingDefinitionLoader.php
 packages/php/settings/src/Definition/SettingDefinitionRegistry.php
 packages/php/settings/src/Persistence/PdoSettingRepository.php
 packages/php/settings/src/Secret/SecretProtector.php
+packages/php/settings/src/Secret/SecretStorageContext.php
 packages/php/settings/src/Secret/SodiumSecretProtector.php
 packages/php/settings/tests/Unit/Definition/SettingDefinitionLoaderTest.php
 packages/php/settings/tests/Unit/Secret/SodiumSecretProtectorTest.php
@@ -462,9 +486,10 @@ tests/recovery/RecoveryAcceptanceTest.php
 tests/security/g07-evidence.json
 ```
 
-The implementation must not modify the qualified lock, R01/R02 primitives,
-W03 files, `example.reference`, a product repository, a parent-repository
-Patch, a release file, or an unlisted generated artifact.
+The implementation must not modify the qualified lock, R01/R02 primitives
+other than the exact hardening files and behavior above, W03 files,
+`example.reference`, a product repository, a parent-repository Patch, a release
+file, or an unlisted generated artifact.
 
 ## Test Ownership And Acceptance
 
