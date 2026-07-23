@@ -8,6 +8,7 @@ export interface GovernanceRoleDraft {
 
 export interface GovernanceAuditDetail {
   id: string
+  audience: GovernanceWorkbenchAudience
   eventType: string
   action: string
   outcome: 'success' | 'denied' | 'error'
@@ -22,11 +23,7 @@ export interface GovernanceWorkbenchSnapshot {
   auditDetail: GovernanceAuditDetail | null
 }
 
-const eventMatchesAudience = (audience: GovernanceWorkbenchAudience, eventType: string): boolean => (
-  audience === 'platform'
-    ? eventType.startsWith('platform.')
-    : eventType.startsWith('tenant.') || eventType.startsWith('account.')
-)
+const eventTypePattern = /^[a-z][a-z0-9]*(?:[._-][a-z][a-z0-9-]*)+$/
 
 export const createGovernanceWorkbenchModel = (audience: GovernanceWorkbenchAudience) => {
   let roleDraft: GovernanceRoleDraft | null = null
@@ -38,7 +35,8 @@ export const createGovernanceWorkbenchModel = (audience: GovernanceWorkbenchAudi
       roleDraft = { ...next, permissionKeys: [...new Set(next.permissionKeys)].sort() }
     },
     setAuditDetail(next: GovernanceAuditDetail): void {
-      if (!eventMatchesAudience(audience, next.eventType)) throw new Error('GOVERNANCE_AUDIENCE_MISMATCH')
+      if (next.audience !== audience) throw new Error('GOVERNANCE_AUDIENCE_MISMATCH')
+      if (!eventTypePattern.test(next.eventType)) throw new Error('GOVERNANCE_AUDIT_EVENT_INVALID')
       auditDetail = { ...next, metadata: { ...next.metadata } }
     },
     clear(): void {
