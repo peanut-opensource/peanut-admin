@@ -13,7 +13,9 @@ $arguments = [
     '--php-namespace', 'StaticProject\\Admin',
     '--brand', 'Static',
     '--profile', 'standard-admin',
-    '--tenant-client', 'admin-web=/api/admin/v1/',
+    '--tenant-client', 'field-console=/api/field/v1/',
+    '--tenant-client', 'audit-console=/api/audit/v1/',
+    '--admin-client', 'field-console',
     '--feature', 'settings',
     '--feature', 'reference-codes',
     '--feature', 'file-media',
@@ -134,9 +136,39 @@ try {
     if (($metadata['project']['profile'] ?? null) !== 'standard-admin') {
         throw new RuntimeException('Generated profile is invalid.');
     }
-    if (($metadata['project']['tenant_clients'][0]['key'] ?? null) !== 'admin-web') {
+    if (($metadata['project']['tenant_clients'][0]['key'] ?? null) !== 'field-console'
+        || ($metadata['project']['admin_client_key'] ?? null) !== 'field-console') {
         throw new RuntimeException('Generated Tenant Client is invalid.');
     }
+    foreach (['Settings', 'ReferenceCodes', 'FileMedia'] as $module) {
+        $menus = json_decode(
+            (string) file_get_contents($target . "/backend/src/Modules/Peanut/{$module}/Resources/menus.json"),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        if (($menus[0]['client_keys'] ?? null) !== ['field-console']) {
+            throw new RuntimeException("Generated {$module} menu is not bound to the admin Client.");
+        }
+    }
+
+    $autoload = getenv('PEANUT_PROJECT_GENERATOR_AUTOLOAD') ?: $root . '/vendor/autoload.php';
+    if (!is_file($autoload)) {
+        throw new RuntimeException('Set PEANUT_PROJECT_GENERATOR_AUTOLOAD to an existing repository vendor/autoload.php.');
+    }
+    $autoloadDirectory = $target . '/backend/vendor';
+    if (!mkdir($autoloadDirectory, 0700, true) && !is_dir($autoloadDirectory)) {
+        throw new RuntimeException('Could not create the generated Host smoke autoload directory.');
+    }
+    $autoloadLiteral = var_export($autoload, true);
+    $generatedRootLiteral = var_export($target . '/backend/src/', true);
+    file_put_contents(
+        $autoloadDirectory . '/autoload.php',
+        "<?php\n\n\$loader = require {$autoloadLiteral};\n"
+        . "\$loader->addPsr4('StaticProject\\\\Admin\\\\', {$generatedRootLiteral});\n"
+        . "return \$loader;\n",
+    );
+    runStaticCommand([$lintPhp, $target . '/backend/tests/smoke.php'], $target);
     if (file_exists($target . '/.git')) {
         throw new RuntimeException('Generator created Git state.');
     }

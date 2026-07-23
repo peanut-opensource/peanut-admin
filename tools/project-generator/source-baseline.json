@@ -1,5 +1,10 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "input_commit": "1865be64048cb0f79ce374e76e8407faca7d21d1",
-  "input_tree": "d7b8c4550604a16f344432a0c0b3c8accb3f451f"
+  "input_tree": "d7b8c4550604a16f344432a0c0b3c8accb3f451f",
+  "controlled_content": {
+    "algorithm": "sha256-git-blob-manifest-v1",
+    "file_count": 447,
+    "digest": "66cb5ac096a0da5f92f41c26d12a5999b5434840662e0d110b406ce1dcd42d1d"
+  }
 }

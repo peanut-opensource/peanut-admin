@@ -34,6 +34,7 @@ final class GenerationRequest
         public readonly string $brand,
         public readonly string $profile,
         public readonly array $tenantClients,
+        public readonly string $adminClientKey,
         public readonly array $features,
     ) {
         if (preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/D', $slug) !== 1 || strlen($slug) > 63) {
@@ -69,6 +70,12 @@ final class GenerationRequest
             $keys[$key] = true;
             $prefixes[$prefix] = true;
         }
+        if (!isset($keys[$adminClientKey])) {
+            throw new ProjectGeneratorException(
+                'PROJECT_ADMIN_CLIENT_INVALID',
+                'The admin Client must name one of the declared Tenant Clients.',
+            );
+        }
         $canonical = [];
         foreach (self::FEATURES as $feature) {
             if (in_array($feature, $features, true)) {
@@ -103,6 +110,20 @@ final class GenerationRequest
 final class ProjectGenerator
 {
     private const MARKER = '.peanut-project-generation';
+
+    /** @var list<array{0: string, 1: string}> */
+    private const PACKAGE_SNAPSHOTS = [
+        ['packages/php/kernel', 'composer.json'],
+        ['packages/php/data-permission', 'composer.json'],
+        ['packages/php/settings', 'composer.json'],
+        ['packages/php/reference-codes', 'composer.json'],
+        ['packages/php/file-media', 'composer.json'],
+        ['packages/web/admin-core', 'package.json'],
+        ['packages/web/admin-shell', 'package.json'],
+        ['packages/web/settings', 'package.json'],
+        ['packages/web/reference-codes', 'package.json'],
+        ['packages/web/file-media', 'package.json'],
+    ];
 
     /** @var array<string, array{backend_root: string, frontend_component: string, frontend_host: string, backend_test: string, frontend_test: string}> */
     private const FEATURES = [
@@ -143,6 +164,7 @@ final class ProjectGenerator
     /** @return array<string, mixed> */
     public function generate(GenerationRequest $request): array
     {
+        $sourceIdentity = $this->validateSource();
         [$target, $targetCreated] = $this->prepareTarget($request->target);
         $owner = bin2hex(random_bytes(24));
         $marker = $target . '/' . self::MARKER;
@@ -170,13 +192,13 @@ final class ProjectGenerator
             $this->copyPackageSnapshots($target);
             $this->selectFeatures($target, $request->features);
             $this->replaceNamespaces($target, $request->phpNamespace);
-            $this->writeProjectFiles($target, $request);
+            $this->writeProjectFiles($target, $request, $sourceIdentity);
             $this->assertGeneratedBoundary($target);
             if (!@unlink($marker)) {
                 throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Could not release target ownership marker.');
             }
 
-            return $this->metadata($request);
+            return $this->metadata($request, $sourceIdentity);
         } catch (Throwable $exception) {
             $this->cleanupOwnedTarget($target, $marker, $owner, $targetCreated);
             if ($exception instanceof ProjectGeneratorException) {
@@ -184,6 +206,188 @@ final class ProjectGenerator
             }
             throw new ProjectGeneratorException('PROJECT_GENERATION_FAILED', 'Generation stopped without publishing a partial project.');
         }
+    }
+
+    /** @return array{input_commit: string, input_tree: string} */
+    private function validateSource(): array
+    {
+        $baselinePath = $this->sourceRoot . '/tools/project-generator/source-baseline.json';
+        try {
+            $baseline = is_file($baselinePath)
+                ? json_decode((string) file_get_contents($baselinePath), true, 512, JSON_THROW_ON_ERROR)
+                : null;
+        } catch (Throwable) {
+            $baseline = null;
+        }
+        $commit = is_array($baseline) ? ($baseline['input_commit'] ?? null) : null;
+        $tree = is_array($baseline) ? ($baseline['input_tree'] ?? null) : null;
+        $content = is_array($baseline) ? ($baseline['controlled_content'] ?? null) : null;
+        if (($baseline['schema_version'] ?? null) !== 2
+            || !is_string($commit) || preg_match('/^[0-9a-f]{40}$/D', $commit) !== 1
+            || !is_string($tree) || preg_match('/^[0-9a-f]{40}$/D', $tree) !== 1
+            || !is_array($content)
+            || ($content['algorithm'] ?? null) !== 'sha256-git-blob-manifest-v1'
+            || !is_int($content['file_count']) || $content['file_count'] < 1
+            || !is_string($content['digest']) || preg_match('/^[0-9a-f]{64}$/D', $content['digest']) !== 1) {
+            throw new ProjectGeneratorException('PROJECT_SOURCE_INVALID', 'Generator source baseline is invalid.');
+        }
+
+        $expected = ['file_count' => $content['file_count'], 'digest' => $content['digest']];
+        if (file_exists($this->sourceRoot . '/.git')) {
+            $topLevel = realpath(trim($this->git(['rev-parse', '--show-toplevel'])));
+            if (!is_string($topLevel) || rtrim($topLevel, DIRECTORY_SEPARATOR) !== $this->sourceRoot) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_INVALID', 'Generator source is not its Git checkout root.');
+            }
+            if (trim($this->git(['status', '--porcelain=v1', '--untracked-files=all'])) !== '') {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DIRTY', 'Generator source checkout must be clean.');
+            }
+            $head = trim($this->git(['rev-parse', 'HEAD^{commit}']));
+            $headTree = trim($this->git(['rev-parse', 'HEAD^{tree}']));
+            if (preg_match('/^[0-9a-f]{40}$/D', $head) !== 1
+                || preg_match('/^[0-9a-f]{40}$/D', $headTree) !== 1) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_INVALID', 'Generator checkout HEAD identity is invalid.');
+            }
+            $baselineCommit = trim($this->git(['rev-parse', $commit . '^{commit}']));
+            $baselineTree = trim($this->git(['rev-parse', $commit . '^{tree}']));
+            if (!hash_equals($commit, $baselineCommit) || !hash_equals($tree, $baselineTree)) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline commit and tree do not match.');
+            }
+            $this->git(['merge-base', '--is-ancestor', $commit, $head]);
+            $committed = $this->controlledGitManifest($commit);
+            if ($committed !== $expected) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline controlled-content digest does not match its commit.');
+            }
+        }
+
+        $checkout = $this->controlledFilesystemManifest();
+        if ($checkout !== $expected) {
+            throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Generator controlled source differs from the fixed baseline.');
+        }
+
+        return ['input_commit' => $commit, 'input_tree' => $tree];
+    }
+
+    /** @return list<string> */
+    private static function controlledSourcePaths(): array
+    {
+        $paths = ['starter'];
+        foreach (self::PACKAGE_SNAPSHOTS as [$relative, $manifest]) {
+            foreach ([$manifest, 'LICENSE', 'src', 'database', 'resources'] as $entry) {
+                $paths[] = $relative . '/' . $entry;
+            }
+        }
+
+        return $paths;
+    }
+
+    /** @return array{file_count: int, digest: string} */
+    private function controlledFilesystemManifest(): array
+    {
+        $entries = [];
+        foreach (self::controlledSourcePaths() as $relative) {
+            $path = $this->sourceRoot . '/' . $relative;
+            if (is_link($path)) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', "Controlled source is a symbolic link: {$relative}.");
+            }
+            if (is_file($path)) {
+                $this->recordFilesystemEntry($entries, $relative, $path);
+                continue;
+            }
+            if (!is_dir($path)) {
+                continue;
+            }
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+            );
+            foreach ($iterator as $file) {
+                $entryPath = $file->getPathname();
+                $entryRelative = substr($entryPath, strlen($this->sourceRoot) + 1);
+                if ($file->isLink() || !$file->isFile()) {
+                    throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', "Controlled source entry is unsafe: {$entryRelative}.");
+                }
+                $this->recordFilesystemEntry($entries, $entryRelative, $entryPath);
+            }
+        }
+        ksort($entries, SORT_STRING);
+
+        return $this->manifestIdentity($entries);
+    }
+
+    /** @param array<string, string> $entries */
+    private function recordFilesystemEntry(array &$entries, string $relative, string $path): void
+    {
+        $contents = file_get_contents($path);
+        $mode = fileperms($path);
+        if (!is_string($contents) || !is_int($mode)) {
+            throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', "Controlled source file is unreadable: {$relative}.");
+        }
+        $gitMode = ($mode & 0111) !== 0 ? '100755' : '100644';
+        $blob = sha1('blob ' . strlen($contents) . "\0" . $contents);
+        $entries[$relative] = $gitMode . ' ' . $blob;
+    }
+
+    /** @return array{file_count: int, digest: string} */
+    private function controlledGitManifest(string $commit): array
+    {
+        $output = $this->git([
+            'ls-tree', '-r', '-z', '--full-tree', $commit, '--', ...self::controlledSourcePaths(),
+        ]);
+        $entries = [];
+        foreach (explode("\0", $output) as $record) {
+            if ($record === '') {
+                continue;
+            }
+            if (preg_match('/^(100644|100755) blob ([0-9a-f]{40})\t(.+)$/D', $record, $matches) !== 1) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline controlled source contains an unsupported Git entry.');
+            }
+            $entries[$matches[3]] = $matches[1] . ' ' . $matches[2];
+        }
+        ksort($entries, SORT_STRING);
+
+        return $this->manifestIdentity($entries);
+    }
+
+    /**
+     * @param array<string, string> $entries
+     * @return array{file_count: int, digest: string}
+     */
+    private function manifestIdentity(array $entries): array
+    {
+        $lines = '';
+        foreach ($entries as $path => $identity) {
+            $lines .= $identity . "\t" . $path . "\n";
+        }
+
+        return ['file_count' => count($entries), 'digest' => hash('sha256', $lines)];
+    }
+
+    /** @param list<string> $arguments */
+    private function git(array $arguments): string
+    {
+        $pipes = [];
+        $process = proc_open(
+            ['git', '-C', $this->sourceRoot, ...$arguments],
+            [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+            $this->sourceRoot,
+        );
+        if (!is_resource($process)) {
+            throw new ProjectGeneratorException('PROJECT_SOURCE_INVALID', 'Could not inspect generator Git source.');
+        }
+        fclose($pipes[0]);
+        $stdout = stream_get_contents($pipes[1]);
+        $stderr = stream_get_contents($pipes[2]);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        if (proc_close($process) !== 0 || !is_string($stdout)) {
+            $detail = is_string($stderr) ? trim($stderr) : '';
+            throw new ProjectGeneratorException(
+                'PROJECT_SOURCE_DRIFT',
+                $detail === '' ? 'Generator Git source validation failed.' : $detail,
+            );
+        }
+
+        return $stdout;
     }
 
     /** @return array{string, bool} */
@@ -265,18 +469,7 @@ final class ProjectGenerator
 
     private function copyPackageSnapshots(string $target): void
     {
-        foreach ([
-            ['packages/php/kernel', 'composer.json'],
-            ['packages/php/data-permission', 'composer.json'],
-            ['packages/php/settings', 'composer.json'],
-            ['packages/php/reference-codes', 'composer.json'],
-            ['packages/php/file-media', 'composer.json'],
-            ['packages/web/admin-core', 'package.json'],
-            ['packages/web/admin-shell', 'package.json'],
-            ['packages/web/settings', 'package.json'],
-            ['packages/web/reference-codes', 'package.json'],
-            ['packages/web/file-media', 'package.json'],
-        ] as [$relative, $manifest]) {
+        foreach (self::PACKAGE_SNAPSHOTS as [$relative, $manifest]) {
             $source = $this->sourceRoot . '/' . $relative;
             $destination = $target . '/' . $relative;
             foreach ([$manifest, 'LICENSE', 'src'] as $required) {
@@ -390,11 +583,13 @@ final class ProjectGenerator
         }
     }
 
-    private function writeProjectFiles(string $target, GenerationRequest $request): void
+    /** @param array{input_commit: string, input_tree: string} $sourceIdentity */
+    private function writeProjectFiles(string $target, GenerationRequest $request, array $sourceIdentity): void
     {
-        $this->writeJson($target . '/peanut-project.json', $this->metadata($request));
+        $this->writeJson($target . '/peanut-project.json', $this->metadata($request, $sourceIdentity));
         $this->writePhpConfig($target . '/backend/config/auth.php', [
-            'tenant_clients' => array_column($request->tenantClients, 'key'),
+            'admin_client_key' => $request->adminClientKey,
+            'tenant_clients' => $request->tenantClients,
         ]);
         $moduleRoots = ['backend/src/Modules/Example/Greeting'];
         $frontendComponents = ['example.greeting.page'];
@@ -411,6 +606,8 @@ final class ProjectGenerator
             'frontend_components' => $frontendComponents,
             'registered_client_keys' => $registeredClients,
         ]);
+        $this->adaptTenantClientRuntimeFactory($target);
+        $this->adaptModuleMenus($target, $request->features, $request->adminClientKey);
         $this->writeClients($target . '/frontend/src/clients.ts', $request->tenantClients);
         $this->writeClientVerification($target . '/frontend/verification/clients.spec.ts', $request->tenantClients);
         $this->writeFrontendModules($target . '/frontend/src/app/modules.ts', $request->features);
@@ -419,31 +616,23 @@ final class ProjectGenerator
         $this->writeEnvironment($target . '/.env.example', $request);
         $this->writeReadme($target . '/README.md', $request);
         $this->writeBackendSmoke($target . '/backend/tests/smoke.php', $request->features, $request->phpNamespace);
-        $this->adaptAuthFixture($target, $request->tenantClients);
+        $this->adaptAuthFixture($target, $request->tenantClients, $request->adminClientKey);
         $this->adaptFeatureFixtures($target, $request->features);
         $this->adaptPackageManifests($target, $request);
     }
 
-    /** @return array<string, mixed> */
-    private function metadata(GenerationRequest $request): array
+    /**
+     * @param array{input_commit: string, input_tree: string} $sourceIdentity
+     * @return array<string, mixed>
+     */
+    private function metadata(GenerationRequest $request, array $sourceIdentity): array
     {
-        $baselinePath = $this->sourceRoot . '/tools/project-generator/source-baseline.json';
-        $baseline = is_file($baselinePath)
-            ? json_decode((string) file_get_contents($baselinePath), true, 512, JSON_THROW_ON_ERROR)
-            : null;
-        if (!is_array($baseline)
-            || ($baseline['schema_version'] ?? null) !== 1
-            || preg_match('/^[0-9a-f]{40}$/D', (string) ($baseline['input_commit'] ?? '')) !== 1
-            || preg_match('/^[0-9a-f]{40}$/D', (string) ($baseline['input_tree'] ?? '')) !== 1) {
-            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Generator source identity is invalid.');
-        }
-
         return [
             'schema_version' => 1,
             'generator' => ['name' => 'peanut-admin/create-project', 'schema_version' => 1],
             'peanut_admin' => [
-                'input_commit' => $baseline['input_commit'],
-                'input_tree' => $baseline['input_tree'],
+                'input_commit' => $sourceIdentity['input_commit'],
+                'input_tree' => $sourceIdentity['input_tree'],
             ],
             'project' => [
                 'slug' => $request->slug,
@@ -452,6 +641,7 @@ final class ProjectGenerator
                 'brand' => $request->brand,
                 'profile' => $request->profile,
                 'tenant_clients' => $request->tenantClients,
+                'admin_client_key' => $request->adminClientKey,
                 'features' => $request->features,
             ],
             'secrets' => [
@@ -467,6 +657,72 @@ final class ProjectGenerator
         $contents = "<?php\n\ndeclare(strict_types=1);\n\nreturn " . var_export($values, true) . ";\n";
         $contents = preg_replace('/^ {2}/m', '    ', $contents) ?? $contents;
         $this->write($path, $contents);
+    }
+
+    private function adaptTenantClientRuntimeFactory(string $target): void
+    {
+        $path = $target . '/backend/src/Auth/TenantAuthRuntimeFactory.php';
+        $contents = file_get_contents($path);
+        if (!is_string($contents)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Tenant Client Host factory is missing.');
+        }
+        $legacy = <<<'PHP'
+        $config = require $root . '/backend/config/auth.php';
+        $clientKeys = $config['tenant_clients'] ?? null;
+        if (!is_array($clientKeys) || !array_is_list($clientKeys)) {
+            throw new RuntimeException('Starter Tenant Client configuration is invalid.');
+        }
+        $this->clients = new TenantClientRegistry(array_map('strval', $clientKeys));
+PHP;
+        $structured = <<<'PHP'
+        $config = require $root . '/backend/config/auth.php';
+        $definitions = $config['tenant_clients'] ?? null;
+        $adminClientKey = $config['admin_client_key'] ?? null;
+        if (!is_array($definitions) || !array_is_list($definitions) || !is_string($adminClientKey)) {
+            throw new RuntimeException('Starter Tenant Client configuration is invalid.');
+        }
+        $clientKeys = [];
+        foreach ($definitions as $definition) {
+            if (!is_array($definition)
+                || !is_string($definition['key'] ?? null)
+                || !is_string($definition['api_prefix'] ?? null)) {
+                throw new RuntimeException('Starter Tenant Client configuration is invalid.');
+            }
+            $clientKeys[] = $definition['key'];
+        }
+        if (!in_array($adminClientKey, $clientKeys, true)) {
+            throw new RuntimeException('Starter admin Client is not registered.');
+        }
+        $this->clients = new TenantClientRegistry($clientKeys);
+PHP;
+        if (substr_count($contents, $legacy) !== 1) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Tenant Client Host factory contract drifted.');
+        }
+        $this->write($path, str_replace($legacy, $structured, $contents));
+    }
+
+    /** @param list<string> $features */
+    private function adaptModuleMenus(string $target, array $features, string $adminClientKey): void
+    {
+        foreach ($features as $feature) {
+            $path = $target . '/' . self::FEATURES[$feature]['backend_root'] . '/Resources/menus.json';
+            try {
+                $menus = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
+            } catch (Throwable) {
+                $menus = null;
+            }
+            if (!is_array($menus) || !array_is_list($menus) || $menus === []) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Module menu contract is invalid: {$feature}.");
+            }
+            foreach ($menus as &$menu) {
+                if (!is_array($menu) || !isset($menu['client_keys']) || !is_array($menu['client_keys'])) {
+                    throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Module menu Client contract is invalid: {$feature}.");
+                }
+                $menu['client_keys'] = [$adminClientKey];
+            }
+            unset($menu);
+            $this->writeJson($path, $menus);
+        }
     }
 
     /** @param list<array{key: string, api_prefix: string}> $clients */
@@ -554,26 +810,32 @@ TS;
 
     private function writeFrontendApp(string $path, GenerationRequest $request): void
     {
-        $brand = htmlspecialchars($request->brand, ENT_QUOTES | ENT_XML1, 'UTF-8');
-        $name = htmlspecialchars($request->displayName, ENT_QUOTES | ENT_XML1, 'UTF-8');
-        $slug = htmlspecialchars($request->slug, ENT_QUOTES | ENT_XML1, 'UTF-8');
+        $jsonFlags = JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+        $brand = json_encode($request->brand, $jsonFlags);
+        $name = json_encode($request->displayName, $jsonFlags);
+        $slug = json_encode($request->slug, $jsonFlags);
         $contents = <<<VUE
 <script setup lang="ts">
 import { ADMIN_CORE_PACKAGE } from '@peanut-admin/admin-core'
 import { AdminShell, PageContent, PageHeader, ShellHeader, ShellSidebar } from '@peanut-admin/admin-shell'
+
+const projectBrand = {$brand}
+const projectDisplayName = {$name}
+const projectSlug = {$slug}
 </script>
 
 <template>
   <AdminShell class="starter-shell">
     <template #header>
-      <ShellHeader>{$brand}</ShellHeader>
+      <ShellHeader><span v-text="projectBrand" /></ShellHeader>
     </template>
     <template #sidebar>
-      <ShellSidebar>{$name}</ShellSidebar>
+      <ShellSidebar><span v-text="projectDisplayName" /></ShellSidebar>
     </template>
-    <PageHeader>{$name}</PageHeader>
+    <PageHeader><span v-text="projectDisplayName" /></PageHeader>
     <PageContent>
-      <p data-testid="project-slug">{$slug}</p>
+      <p data-testid="project-slug" v-text="projectSlug" />
       <p data-testid="package-name">{{ ADMIN_CORE_PACKAGE }}</p>
     </PageContent>
   </AdminShell>
@@ -610,14 +872,17 @@ VUE;
         $features = $request->features === [] ? 'none' : implode(', ', $request->features);
         $clients = implode(', ', array_column($request->tenantClients, 'key'));
         $authCheck = count($request->tenantClients) >= 2 ? "php backend/tests/auth-clients.php\n" : '';
+        $displayName = self::markdownText($request->displayName);
+        $phpNamespace = self::markdownText($request->phpNamespace);
+        $brand = self::markdownText($request->brand);
         $contents = <<<MD
-# {$request->displayName}
+# {$displayName}
 
 Generated from Peanut Admin's `standard-admin` profile.
 
 - Project slug: `{$request->slug}`
-- PHP namespace: `{$request->phpNamespace}`
-- Brand: `{$request->brand}`
+- PHP namespace: `{$phpNamespace}`
+- Brand: `{$brand}`
 - Tenant Clients: {$clients}
 - Enabled first-party Modules: {$features}
 - Removable fictional Module: `example.greeting`
@@ -644,6 +909,16 @@ into this directory is intentionally rejected; the generator never overwrites an
 existing project.
 MD;
         $this->write($path, $contents . "\n");
+    }
+
+    private static function markdownText(string $value): string
+    {
+        return strtr($value, [
+            '&' => '&amp;',
+            '<' => '&lt;',
+            '>' => '&gt;',
+            '`' => '\\`',
+        ]);
     }
 
     /** @param list<string> $features */
@@ -709,7 +984,7 @@ PHP;
     }
 
     /** @param list<array{key: string, api_prefix: string}> $clients */
-    private function adaptAuthFixture(string $target, array $clients): void
+    private function adaptAuthFixture(string $target, array $clients, string $adminClientKey): void
     {
         $path = $target . '/backend/tests/auth-clients.php';
         if (count($clients) < 2) {
@@ -721,8 +996,34 @@ PHP;
         if (!is_string($contents)) {
             throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Tenant Client fixture is missing.');
         }
-        $contents = str_replace('operations-web', $clients[0]['key'], $contents);
-        $contents = str_replace('reporting-web', $clients[1]['key'], $contents);
+        $secondaryClientKey = null;
+        foreach ($clients as $client) {
+            if ($client['key'] !== $adminClientKey) {
+                $secondaryClientKey = $client['key'];
+                break;
+            }
+        }
+        if (!is_string($secondaryClientKey)) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Tenant Client fixture needs two distinct Clients.');
+        }
+        $legacyExpected = "['operations-web', 'reporting-web']";
+        if (substr_count($contents, $legacyExpected) !== 1
+            || substr_count($contents, "'operations-web'") < 2
+            || substr_count($contents, "'reporting-web'") < 2) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Tenant Client fixture contract drifted.');
+        }
+        $contents = str_replace($legacyExpected, '__GENERATED_SESSION_CLIENT_KEYS__', $contents);
+        $contents = strtr($contents, [
+            "'operations-web'" => var_export($adminClientKey, true),
+            "'reporting-web'" => var_export($secondaryClientKey, true),
+        ]);
+        $sessionClientKeys = [$adminClientKey, $secondaryClientKey];
+        sort($sessionClientKeys, SORT_STRING);
+        $contents = str_replace(
+            '__GENERATED_SESSION_CLIENT_KEYS__',
+            var_export($sessionClientKeys, true),
+            $contents,
+        );
         $this->write($path, $contents);
     }
 
@@ -996,7 +1297,7 @@ final class ProjectGeneratorCli
             $option = $arguments[$index];
             if (!in_array($option, [
                 '--target', '--slug', '--display-name', '--php-namespace', '--brand',
-                '--profile', '--tenant-client', '--feature',
+                '--profile', '--tenant-client', '--admin-client', '--feature',
             ], true)) {
                 throw new ProjectGeneratorException('PROJECT_OPTION_UNKNOWN', "Unknown option: {$option}.");
             }
@@ -1041,6 +1342,16 @@ final class ProjectGeneratorCli
         if (count(array_unique($features)) !== count($features)) {
             throw new ProjectGeneratorException('PROJECT_FEATURE_UNKNOWN', 'A first-party feature was selected more than once.');
         }
+        $adminClientKey = $single['--admin-client'] ?? null;
+        if (!is_string($adminClientKey)) {
+            if (count($clients) !== 1) {
+                throw new ProjectGeneratorException(
+                    'PROJECT_ADMIN_CLIENT_MISSING',
+                    'Use --admin-client when more than one Tenant Client is declared.',
+                );
+            }
+            $adminClientKey = $clients[0]['key'];
+        }
 
         return new GenerationRequest(
             $single['--target'],
@@ -1050,6 +1361,7 @@ final class ProjectGeneratorCli
             $single['--brand'],
             $single['--profile'] ?? 'standard-admin',
             $clients,
+            $adminClientKey,
             $canonicalFeatures,
         );
     }

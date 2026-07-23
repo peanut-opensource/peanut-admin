@@ -16,10 +16,17 @@ application.
   --profile standard-admin \
   --tenant-client operations-web=/api/operations/v1/ \
   --tenant-client reporting-web=/api/reporting/v1/ \
+  --admin-client operations-web \
   --feature settings \
   --feature reference-codes \
   --feature file-media
 ```
+
+When more than one Tenant Client is declared, `--admin-client` is required and
+selects the Client used by the generated administration Modules and menus. A
+single declared Client is selected implicitly. Client definitions remain
+structured as key/API-prefix pairs in the generated Host; the generator does
+not infer an administration Client from argument order.
 
 The target must not exist or must be an empty, non-symlink directory outside
 the Peanut Admin source tree. Parent traversal, a symlink target, a non-empty
@@ -27,6 +34,13 @@ target, duplicate or unknown features, invalid PSR-4 namespaces, and duplicate
 Tenant Client keys or API prefixes fail before publishing output. The generator
 does not run Composer or pnpm, initialize Git, create a remote, or contact a
 network service.
+
+Generation also fails before creating or claiming the target when its source is
+dirty or has drifted from `tools/project-generator/source-baseline.json`. In a
+Git checkout, the fixed commit/tree, ancestry, clean HEAD, and controlled source
+digest are verified. A release archive without `.git` must contain the same
+baseline-fixed controlled source digest; editing the copied starter or package
+snapshot invalidates it.
 
 The generated `peanut-project.json` is deterministic and records:
 
@@ -43,6 +57,10 @@ and `file-media` are optional first-party Modules; the fictional
 remain present for the fixed lock files, but only selected Modules are
 registered in the generated Host. Dependency versions remain fixed, so
 generation itself needs no dependency resolution.
+
+Display name and brand values are encoded as script data and rendered through
+text bindings. Vue template expressions and HTML-like text in either value are
+shown literally rather than compiled or inserted as markup.
 
 The generator creates a private ownership marker while copying. On failure it
 removes partial output only when that marker still exactly belongs to the
