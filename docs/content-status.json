@@ -142,6 +142,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/starter-v1-c02-file-media-delivery-handoff.md",
+      "title": "Starter v1 Stage B File And Media Delivery Handoff",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-w01-protected-transport-origin-contract.md",
       "title": "P1-W01 Protected Transport Origin Contract",
       "status": "canonical",
