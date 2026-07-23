@@ -121,6 +121,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/starter-v1-c02-file-media-contract.md",
+      "title": "Starter v1 C02 File And Media Core Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-w03-workspace-shell-contract.md",
       "title": "P1-W03 Workspace Shell Contract",
       "status": "canonical",

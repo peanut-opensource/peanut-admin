@@ -128,6 +128,14 @@ It defines trusted Module-owned sets, Tenant-isolated immutable code identity,
 effective as-of options, optimistic concurrency, Tenant Web behavior, and a
 candidate-only stop line without reusing the fictional shared-master fixture.
 
+The next Starter v1 development slice is fixed by the
+[File And Media Core Contract](./starter-v1-c02-file-media-contract.md). It
+defines a Tenant-private metadata model, a reusable storage-provider boundary,
+a local development adapter outside the public Web root, upload and private
+download policy, optimistic archive, audit evidence, standard Admin Web
+behavior, and internal starter integration without adding a third-party
+dependency or claiming production object-storage readiness.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
