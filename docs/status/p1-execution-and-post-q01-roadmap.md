@@ -1,10 +1,10 @@
-# P1 Execution Reality And Post-Q01 Roadmap
+# P1 Execution Reality And Starter v1 Roadmap
 
 ## Status
 
 ```text
-state: draft
-scope: current P1 execution and the next reusable capability waves
+state: active
+scope: current P1 execution and the Starter v1 reusable capability waves
 source_basis:
   - docs/status/p1-execution-baseline.md
   - docs/status/p1-downstream-module-readiness-plan.md
@@ -38,11 +38,15 @@ packages, and the corresponding host modules are still missing:
 - `backend/app/Modules/Peanut/Settings`
 - `backend/app/Modules/Peanut/ReferenceCode`
 
-So the remaining immediate P1 path is:
+So the remaining immediate integration path is:
 
 1. `P1-B03` minimal settings module.
 2. `P1-B04` minimal reference-code module.
-3. `P1-Q01` fixed-commit external-host qualification.
+3. Integrate the accepted slices into one current Starter v1 candidate line.
+
+Q01 is not a prerequisite for continuing unrelated reusable capabilities. It
+is the concentrated qualification task after the complete Starter v1 candidate
+commit has been fixed.
 
 ## Concurrency Rule
 
@@ -55,7 +59,7 @@ Reason:
   evidence;
 - the downstream lock does not move until a single fixed-commit qualification
   finishes;
-- `P1-Q01` is exclusive.
+- a later `P1-Q01` run is exclusive.
 
 ## Recommended Critical Path
 
@@ -63,13 +67,17 @@ Reason:
 current implemented slices
   -> B03 settings
   -> B04 reference-code
-  -> Q01 fixed-commit qualification
+  -> selected Starter v1 capabilities
+  -> Q01 fixed-commit qualification of the complete Starter v1 candidate
   -> downstream lock remains pinned until re-qualified
 ```
 
-## Post-Q01 Capability Waves
+## Reusable Capability Waves
 
-After Q01, the next reusable capability work should be split into waves.
+These waves are planning inputs, not a declaration that every listed capability
+belongs in Starter v1. The project plan selects the Starter v1 subset and may
+develop those slices before the final Q01 qualification. Each slice uses
+focused verification; the complete fixed candidate receives the aggregate gate.
 
 ### Wave A: Identity And Access Expansion
 
@@ -111,8 +119,13 @@ After Q01, the next reusable capability work should be split into waves.
 - fleet control
 - commercial licensing
 
+Wave E remains outside Starter v1 and requires a separate product decision.
+
 ## Planning Checkpoint
 
-Once `B03`, `B04`, and `Q01` are closed, the next task plan should be
-reissued as one contract per wave, with exact file whitelists and independent
-acceptance gates.
+After `B03` and `B04` are integrated, the project should issue one bounded
+contract per Starter v1 capability slice, with exact file whitelists and
+risk-proportionate acceptance checks. When the selected Starter v1 capabilities
+are integrated, fix one candidate commit and run Q01. Until Q01 and separate
+approval pass, the downstream lock remains
+`0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`.

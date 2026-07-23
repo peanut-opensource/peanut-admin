@@ -6,13 +6,18 @@
 state: active
 planning_base: d612a85045e2e9eb017719cd42a2f781d35b1f69
 qualified_downstream_lock: 0ab02a9b735ba9f4c23509cb366b9bf04039ebf8
-target: qualified fixed commit for application-owned Module development
+target: qualified Starter v1 fixed commit for application-owned Module development
 release_status: not approved
 ```
 
 This plan defines the smallest P1 capability set required before a downstream
 application can implement its first business Module without copying reusable
 administration infrastructure into the application repository.
+
+The Peanut Admin standard application is one product surface: it is the live
+Demo, the maintainers' development workbench, and the starter application that
+downstream projects extend. It must consume the same public packages and Module
+contracts available to those projects, without Demo-only Runtime shortcuts.
 
 The current downstream lock does not move while this plan is active. A task
 commit proves only its own candidate slice. Only the final fixed-commit
@@ -194,7 +199,12 @@ Minimum contract:
 Application-owned categories, identifiers, units, and lifecycle rules must not
 be represented as Peanut reference codes merely to avoid a domain Module.
 
-### P1-Q01 Fixed-Commit External-Host Qualification
+### P1-Q01 Starter v1 Fixed-Commit Qualification
+
+Q01 is the concentrated qualification gate for a fixed Starter v1 candidate.
+Historical Q01 contracts, failed results, and performance-remediation evidence
+remain preserved, but completing their old multi-round sequence is not a
+prerequisite for continuing independent reusable-capability work.
 
 The candidate is qualified only when a clean fixed tree proves all of the
 following:
@@ -229,14 +239,16 @@ P1-W01 protected transport origin
   -> P1-W02 host runtime and Module routing
       -> P1-W03 workspace shell and common contributions
 
-all accepted candidate slices
-  -> P1-Q01 fixed-commit external-host qualification
+all Starter v1 candidate slices
+  -> P1-Q01 fixed-commit qualification
 ```
 
 P1-R01 and P1-W01 may execute in parallel because their write sets are
 disjoint. P1-B03 and P1-B04 require separate migrations, manifests, OpenAPI
 artifacts, and commits; their planning may be parallel, but generated artifacts
-and integration are serialized. P1-Q01 is exclusive.
+and integration are serialized. Additional independently scoped Starter v1
+capabilities may continue before Q01. P1-Q01 itself is exclusive and begins
+only after the project fixes the Starter v1 candidate commit.
 
 ## Parallel Workspace Rule
 
@@ -262,8 +274,8 @@ No implementation task may infer these details from this aggregate plan.
 
 ## Completion And Stop Line
 
-This plan is complete only when P1-Q01 records a reviewed fixed commit and a
-separate approval permits a new exact downstream lock.
+This plan is complete only when P1-Q01 records a reviewed Starter v1 fixed
+commit and a separate approval permits a new exact downstream lock.
 
 Until then:
 

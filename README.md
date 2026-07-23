@@ -51,13 +51,21 @@ Start with [the documentation index](docs/README.md).
 
 ## Development
 
-Run the current repository checks:
+Ordinary bounded changes run the focused checks that cover their affected
+behavior. See [the testing guide](docs/guide/testing.md) for the layered
+verification policy and available commands.
+
+The stable aggregate entry point for a fixed milestone, qualification, or
+release candidate is:
 
 ```bash
 ./scripts/check
 ```
 
-The `dev` branch is the collaboration branch. A task is complete only after its current acceptance checks pass on a clean commit; commit subjects and historical qualification results are evidence, not release approval.
+The `dev` branch is the collaboration branch. A task is complete only after its
+focused acceptance checks pass on a clean commit and deferred milestone checks
+are recorded. Commit subjects and historical qualification results are
+evidence, not release approval.
 
 ## License
 

@@ -55,13 +55,32 @@ Before changing files, read in order:
 - Do not use destructive Git commands or rewrite shared history.
 - Do not skip, weaken, or remove checks to make a task pass.
 
+## Verification Policy
+
+- Ordinary reversible work runs the smallest set of unit, integration, type,
+  build, static, or documentation checks that covers the changed behavior.
+- Tenant isolation, identity, authorization, migrations, deletion, concurrency,
+  idempotency, external side effects, and breaking public-contract changes must
+  run risk-proportionate focused checks in the task that introduces the risk.
+- `./scripts/check` remains the aggregate repository entry point. Run it for a
+  fixed Starter v1 milestone, qualification, or release candidate, not as a
+  mandatory step after every bounded development task.
+- Full browser matrices, clean install and upgrade, backup and restore,
+  performance, and independent fixed-commit review belong to milestone
+  qualification unless a task directly changes the corresponding boundary.
+- Record every deferred aggregate check and the milestone that will run it. A
+  failed focused or aggregate check is never hidden or waived.
+- A performance failure blocks the affected qualification, release, or
+  downstream lock movement. It does not freeze unrelated ordinary feature work.
+
 ## Task Execution
 
 1. Confirm the repository, branch, clean worktree, and prerequisite commit.
 2. Read the task whitelist and stop line.
 3. Add a check or test that fails for the missing capability when the task requires runtime behavior.
 4. Modify only whitelisted files.
-5. Run task checks, `./scripts/check`, and `git diff --check`.
+5. Run the focused and risk-sensitive checks required by this task, run
+   `git diff --check`, and record deferred milestone verification.
 6. Inspect the staged diff and commit only the current task.
 7. Stop after the assigned task.
 

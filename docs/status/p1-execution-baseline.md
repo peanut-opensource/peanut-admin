@@ -19,6 +19,20 @@ At this baseline:
 - no P1 commit is qualified for downstream consumption, package publication, a
   release tag, or a production-readiness claim.
 
+## Current Verification Policy
+
+This document preserves the exact contracts and acceptance evidence used by
+the original P1 slices. Those historical task-specific check lists are not a
+global requirement to run every repository gate after every later change.
+
+Current Starter v1 development follows the layered policy in
+[`docs/guide/testing.md`](../guide/testing.md): ordinary bounded work runs
+focused checks; security-sensitive boundaries run risk-proportionate checks in
+the task; full regression, browser, install and upgrade, backup and restore,
+performance, and fixed-commit review run against a fixed milestone candidate.
+No layer may weaken fail-closed behavior or turn an unqualified commit into a
+downstream consumption baseline.
+
 ## Ownership Boundary
 
 Peanut Admin owns reusable administration infrastructure. Product applications
@@ -135,8 +149,11 @@ Every Runtime task must include all of the following before implementation:
 8. Audit/security event names, actor, target, before/after policy, and redaction.
 9. Idempotency, concurrency, precondition, retry, and duplicate-request behavior.
 10. Stable Problem Details codes without secret, token, or account-enumeration leaks.
-11. A failing test added before behavior, a named Runtime coverage owner, focused
-    checks, `./scripts/check`, and `git diff --check`.
+11. A failing test added before behavior when Runtime behavior changes, a named
+    Runtime coverage owner, risk-proportionate focused checks,
+    `git diff --check`, and explicit deferred milestone verification. A fixed
+    milestone, qualification, or release candidate additionally runs
+    `./scripts/check` and its full candidate gate.
 12. A single independently reviewable commit and an explicit qualification stop line.
 
 ## P1-B01: Account Self-Service Contract
@@ -577,7 +594,7 @@ and downstream-consumption locks must not change. If this whitelist proves
 insufficient, implementation stops and the contract is amended in a separate
 planning commit before any additional Runtime file changes.
 
-### Test Ownership And Acceptance
+### Historical Test Ownership And Acceptance
 
 Tests are written to fail for the missing capability before implementation.
 `RUNTIME-EFFECTIVE-ACCESS-PREVIEW-001` owns `getMemberEffectiveAccess` and names
@@ -586,7 +603,7 @@ full-stack browser test as executable evidence. Existing
 `RUNTIME-TENANT-ADMIN-001`, `RUNTIME-DATA-AUTHORIZATION-001`, and
 `RUNTIME-CONTRACT-001` owners remain unchanged.
 
-Acceptance requires:
+The original P1-B02 candidate acceptance required:
 
 - multiple active roles union and de-duplicate Permissions, while inactive
   roles, inactive members, platform Permissions, unavailable Modules, and
@@ -880,7 +897,7 @@ resolver, Module manifest, product profile, starter, frontend, release, or
 downstream-lock file may change. If this whitelist is insufficient, work stops
 and a separate planning correction is committed before expanding it.
 
-### Test Ownership And Acceptance
+### Historical Test Ownership And Acceptance
 
 `P1-OPERATION-ATOMICITY-001` owns the package and integration evidence. It has
 no OpenAPI operation and therefore no Runtime coverage ledger entry.
@@ -906,10 +923,13 @@ Tests are written to fail before the Runtime edit and must prove:
 - no raw idempotency key, secret, target set, SQL, or stack trace is persisted
   by the fixture evidence.
 
-Focused gates are the affected Kernel and testing unit/integration tests. Final
-acceptance also requires architecture, dependency, supply-chain, clean-install,
-upgrade, security, recovery, performance, starter, workspace, `./scripts/check`,
-and `git diff --check` to pass on an isolated Compose project.
+The original P1-R01 candidate ran focused Kernel and testing unit/integration
+gates. Its historical final-acceptance contract also required architecture,
+dependency, supply-chain, clean-install, upgrade, security, recovery,
+performance, starter, workspace, `./scripts/check`, and `git diff --check` on an
+isolated Compose project. Later Starter v1 tasks do not repeat this historical
+aggregate list unless their risk scope requires it; the fixed milestone
+candidate reruns the aggregate evidence.
 
 Implementation is one independently reviewable commit after this planning
 commit. Completion makes P1-R01 only an unqualified candidate. It does not move
@@ -944,8 +964,10 @@ capability is blocked.
   aggregate gate and independent review explicitly approve it.
 - P1 work does not authorize package publication, a tag, a release, automatic
   deployment, production sizing, or a stable compatibility promise.
-- A failed security, isolation, upgrade, recovery, browser, or supply-chain gate
-  blocks integration; checks are fixed rather than skipped or weakened.
+- A failed security, isolation, upgrade, recovery, browser, performance, or
+  supply-chain gate blocks the qualification, release, or downstream-lock
+  movement that depends on it; checks are fixed rather than skipped or
+  weakened. The failure does not freeze unrelated ordinary candidate work.
 - P1-B01 adds no schema migration. A code rollback does not restore an old
   password or revoked session; recovery uses a forward credential reset and new
   authentication, while the database transaction rolls back any failed write
