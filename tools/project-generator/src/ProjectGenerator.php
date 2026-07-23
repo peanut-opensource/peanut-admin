@@ -1147,6 +1147,15 @@ TS;
         $sortedKeys = $keys;
         sort($sortedKeys);
         $phpExpected = var_export($sortedKeys, true);
+        $canonicalKeys = [
+            'example.greeting',
+            ...array_map(static fn(string $feature): string => 'peanut.' . $feature, array_keys(self::FEATURES)),
+        ];
+        sort($canonicalKeys);
+        $phpPattern = '~\\[\\s*' . implode(
+            ',\\s*',
+            array_map(static fn(string $key): string => "'" . preg_quote($key, '~') . "'", $canonicalKeys),
+        ) . ',?\\s*\\]~';
         foreach (['backend/tests/settings.php', 'backend/tests/reference-codes.php'] as $relative) {
             $path = $target . '/' . $relative;
             if (!is_file($path)) {
@@ -1154,7 +1163,7 @@ TS;
             }
             $contents = (string) file_get_contents($path);
             $updated = preg_replace(
-                "~\\[\\s*'example\\.greeting',\\s*'peanut\\.reference-codes',\\s*'peanut\\.settings',?\\s*\\]~",
+                $phpPattern,
                 $phpExpected,
                 $contents,
                 1,
