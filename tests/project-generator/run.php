@@ -268,7 +268,15 @@ try {
         'packages/web/reference-codes',
         'packages/web/file-media',
     ] as $package) {
-        copyFixtureTree($root . '/' . $package, $packageSource . '/' . $package);
+        $manifest = str_starts_with($package, 'packages/php/') ? 'composer.json' : 'package.json';
+        foreach ([$manifest, 'LICENSE', 'src', 'database', 'resources'] as $entry) {
+            if (file_exists($root . '/' . $package . '/' . $entry)) {
+                copyFixtureTree(
+                    $root . '/' . $package . '/' . $entry,
+                    $packageSource . '/' . $package . '/' . $entry,
+                );
+            }
+        }
     }
     copyFixtureTree(
         $root . '/tools/project-generator/source-baseline.json',
