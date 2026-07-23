@@ -36,6 +36,13 @@ starter remain owned by `PA-SV1-C02-I04-stage-b-integration`.
 - `FileAssetSelector` displays only validated image candidates, emits the opaque
   file object selected by the operator, and accepts only same-origin `/api/` or
   credential-free HTTPS delivery URLs.
+- CDN grants accept only canonical ASCII HTTPS targets. Backslash/authority
+  ambiguity, userinfo, controls, non-canonical host/port/path, traversal and
+  encoded separators fail closed before a URL reaches the browser.
+- Image inspection and output verification read one bounded byte buffer before
+  metadata detection and hashing. The default is 10 MiB and the configurable
+  hard maximum is 50 MiB. Variant plan/output value objects self-validate so I04
+  cannot persist a forged suffix, geometry, MIME, size, or digest.
 
 ## I04 Exact Shared Integration Checklist
 

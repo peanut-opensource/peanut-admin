@@ -41,6 +41,14 @@ transformed; a Host must register a real processor and persist only verified
 output metadata during Stage B integration. No image library or cloud SDK is
 silently added.
 
+Delivery URLs use one canonical ASCII HTTPS form and reject userinfo, explicit
+ports, fragments, controls, backslashes, dot segments, encoded or duplicate
+path separators, and ambiguous percent encoding. Image inspection
+reads at most the configured byte cap (10 MiB by default, 50 MiB hard maximum)
+before metadata detection and hashing. Variant plans and output evidence
+validate their own key, suffix, geometry, MIME, size, and digest even when
+constructed directly.
+
 The five Tenant operations require `peanut.file-media.read`,
 `peanut.file-media.create`, or `peanut.file-media.delete`. Tenant identity is
 accepted only from trusted context; metadata and storage queries are always
