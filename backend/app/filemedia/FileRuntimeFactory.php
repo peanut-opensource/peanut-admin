@@ -186,6 +186,7 @@ final class FileRuntimeFactory
                             $stored = $object;
                         },
                     );
+                    (new FileDeliveryRepository($transaction))->recordImage($file, $sourcePath);
 
                     return new ExternalOperationResult(
                         201,

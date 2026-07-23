@@ -147,8 +147,30 @@
         "backend/tests/Integration/FileMediaModuleIntegrationTest.php",
         "backend/tests/Http/FileMediaApiTest.php",
         "backend/tests/Security/FileMediaSecurityTest.php",
+        "packages/php/file-media/tests/Unit/Delivery/DeliverySecurityTest.php",
+        "packages/php/file-media/tests/Unit/Media/ImageMetadataTest.php",
+        "packages/web/file-media/tests/asset-selector.spec.ts",
         "packages/web/file-media/tests/page.spec.ts",
         "frontend/tests/file-media-page.spec.ts"
+      ]
+    },
+    "RUNTIME-TASK-JOB-001": {
+      "description": "Tenant task ledger, transactional management, lease and retry safety, trusted worker, and Admin Web behavior",
+      "evidence": [
+        "packages/php/task-job/tests/feature-harness.php",
+        "packages/web/task-job/tests/contracts.spec.ts",
+        "packages/web/task-job/tests/runtime.spec.ts",
+        "backend/tests/Contract/OpenApiArtifactTest.php"
+      ]
+    },
+    "RUNTIME-NOTIFICATION-SMS-001": {
+      "description": "Tenant inbox, template snapshots, transactional outbox-to-task dispatch, fail-closed SMS provider, and Admin Web behavior",
+      "evidence": [
+        "packages/php/notification-sms/tests/feature-harness.php",
+        "packages/php/notification-sms/tests/mysql-harness.php",
+        "packages/web/notification-sms/tests/contracts.spec.ts",
+        "packages/web/notification-sms/tests/runtime.spec.ts",
+        "backend/tests/Contract/OpenApiArtifactTest.php"
       ]
     },
     "RUNTIME-GOVERNANCE-001": {
@@ -270,6 +292,19 @@
     {"operation_id":"createFile","scope":"p1","route":"POST /api/v1/files","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::create","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
     {"operation_id":"getFile","scope":"p1","route":"GET /api/v1/files/{file_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::show","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
     {"operation_id":"downloadFile","scope":"p1","route":"GET /api/v1/files/{file_key}/content","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::content","response_schema":"#/components/schemas/FileContent","test_owner":"RUNTIME-FILE-MEDIA-001"},
-    {"operation_id":"archiveFile","scope":"p1","route":"DELETE /api/v1/files/{file_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::archive","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"}
+    {"operation_id":"archiveFile","scope":"p1","route":"DELETE /api/v1/files/{file_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::archive","response_schema":"#/components/schemas/FileResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"listFileAssets","scope":"p1","route":"GET /api/v1/file-assets","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::assets","response_schema":"#/components/schemas/FileAssetListResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"createFileDeliveryGrant","scope":"p1","route":"POST /api/v1/files/{file_key}/delivery-grants","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::grant","response_schema":"#/components/schemas/FileDeliveryGrantResponse","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"downloadFileDelivery","scope":"p1","route":"GET /api/v1/file-deliveries/{file_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\FileController::deliver","response_schema":"#/components/schemas/FileContent","test_owner":"RUNTIME-FILE-MEDIA-001"},
+    {"operation_id":"listTasks","scope":"p1","route":"GET /api/v1/tasks","handler":"PeanutAdmin\\App\\controller\\api\\v1\\TaskController::index","response_schema":"#/components/schemas/TaskListResponse","test_owner":"RUNTIME-TASK-JOB-001"},
+    {"operation_id":"getTask","scope":"p1","route":"GET /api/v1/tasks/{job_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\TaskController::show","response_schema":"#/components/schemas/TaskResponse","test_owner":"RUNTIME-TASK-JOB-001"},
+    {"operation_id":"cancelTask","scope":"p1","route":"POST /api/v1/tasks/{job_key}/cancel","handler":"PeanutAdmin\\App\\controller\\api\\v1\\TaskController::cancel","response_schema":"#/components/schemas/TaskResponse","test_owner":"RUNTIME-TASK-JOB-001"},
+    {"operation_id":"retryTask","scope":"p1","route":"POST /api/v1/tasks/{job_key}/retry","handler":"PeanutAdmin\\App\\controller\\api\\v1\\TaskController::retry","response_schema":"#/components/schemas/TaskResponse","test_owner":"RUNTIME-TASK-JOB-001"},
+    {"operation_id":"listNotifications","scope":"p1","route":"GET /api/v1/notifications","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::index","response_schema":"#/components/schemas/NotificationListResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
+    {"operation_id":"markNotificationRead","scope":"p1","route":"POST /api/v1/notifications/{message_key}/read","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::markRead","response_schema":"#/components/schemas/NotificationResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
+    {"operation_id":"bulkUpdateNotifications","scope":"p1","route":"POST /api/v1/notifications/bulk","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::bulk","response_schema":"#/components/schemas/NotificationBulkResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
+    {"operation_id":"putNotificationTemplate","scope":"p1","route":"PUT /api/v1/notification-templates/{template_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::putTemplate","response_schema":"#/components/schemas/NotificationTemplateResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
+    {"operation_id":"createNotification","scope":"p1","route":"POST /api/v1/notifications","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::publish","response_schema":"#/components/schemas/NotificationPublishResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
+    {"operation_id":"dispatchNotificationOutbox","scope":"p1","route":"POST /api/v1/notification-outbox/{outbox_key}/dispatch","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::dispatch","response_schema":"#/components/schemas/TaskResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"}
   ]
 }

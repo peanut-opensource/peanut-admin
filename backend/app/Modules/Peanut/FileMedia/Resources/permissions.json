@@ -16,5 +16,11 @@
     "type": "action",
     "name": "Archive Tenant private files",
     "risk_level": "sensitive"
+  },
+  {
+    "key": "peanut.file-media.manage",
+    "type": "action",
+    "name": "Manage Tenant media delivery",
+    "risk_level": "sensitive"
   }
 ]

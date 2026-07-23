@@ -20,7 +20,7 @@ final class ProjectGeneratorException extends RuntimeException
 
 final class GenerationRequest
 {
-    private const FEATURES = ['settings', 'reference-codes', 'file-media'];
+    private const FEATURES = ['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms'];
 
     /**
      * @param list<array{key: string, api_prefix: string}> $tenantClients
@@ -93,6 +93,13 @@ final class GenerationRequest
         if ($canonical !== $features) {
             throw new ProjectGeneratorException('PROJECT_FEATURE_ORDER_INVALID', 'Features must use canonical order.');
         }
+        if (in_array('notification-sms', $features, true)
+            && (!in_array('task-job', $features, true) || !in_array('file-media', $features, true))) {
+            throw new ProjectGeneratorException(
+                'PROJECT_FEATURE_DEPENDENCY_MISSING',
+                'Notification/SMS requires File/Media and Task/Job.',
+            );
+        }
         if ($target === '' || str_contains($target, "\0")) {
             throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target path is empty or invalid.');
         }
@@ -118,11 +125,15 @@ final class ProjectGenerator
         ['packages/php/settings', 'composer.json'],
         ['packages/php/reference-codes', 'composer.json'],
         ['packages/php/file-media', 'composer.json'],
+        ['packages/php/task-job', 'composer.json'],
+        ['packages/php/notification-sms', 'composer.json'],
         ['packages/web/admin-core', 'package.json'],
         ['packages/web/admin-shell', 'package.json'],
         ['packages/web/settings', 'package.json'],
         ['packages/web/reference-codes', 'package.json'],
         ['packages/web/file-media', 'package.json'],
+        ['packages/web/task-job', 'package.json'],
+        ['packages/web/notification-sms', 'package.json'],
     ];
 
     /** @var array<string, array{backend_root: string, frontend_component: string, frontend_host: string, backend_test: string, frontend_test: string}> */
@@ -147,6 +158,20 @@ final class ProjectGenerator
             'frontend_host' => 'frontend/src/modules/peanut-file-media.ts',
             'backend_test' => 'backend/tests/file-media.php',
             'frontend_test' => 'frontend/tests/file-media.spec.ts',
+        ],
+        'task-job' => [
+            'backend_root' => 'backend/src/Modules/Peanut/TaskJob',
+            'frontend_component' => 'peanut.task-job.page',
+            'frontend_host' => 'frontend/src/modules/peanut-task-job.ts',
+            'backend_test' => 'backend/tests/task-job.php',
+            'frontend_test' => 'frontend/tests/task-job.spec.ts',
+        ],
+        'notification-sms' => [
+            'backend_root' => 'backend/src/Modules/Peanut/NotificationSms',
+            'frontend_component' => 'peanut.notification-sms.page',
+            'frontend_host' => 'frontend/src/modules/peanut-notification-sms.ts',
+            'backend_test' => 'backend/tests/notification-sms.php',
+            'frontend_test' => 'frontend/tests/notification-sms.spec.ts',
         ],
     ];
 
@@ -580,6 +605,9 @@ final class ProjectGenerator
             if ($key === 'file-media') {
                 $this->removePath($target . '/backend/config/file-media.php');
             }
+            if ($key === 'notification-sms') {
+                $this->removePath($target . '/backend/config/notification-sms.php');
+            }
         }
     }
 
@@ -812,6 +840,8 @@ TS;
             'settings' => ['PeanutSettingsHostOptions', 'createPeanutSettingsHost', 'settings'],
             'reference-codes' => ['PeanutReferenceCodesHostOptions', 'createPeanutReferenceCodesHost', 'referenceCodes'],
             'file-media' => ['PeanutFileMediaHostOptions', 'createPeanutFileMediaHost', 'fileMedia'],
+            'task-job' => ['PeanutTaskJobHostOptions', 'createPeanutTaskJobHost', 'taskJob'],
+            'notification-sms' => ['PeanutNotificationSmsHostOptions', 'createPeanutNotificationSmsHost', 'notificationSms'],
         ];
         foreach ($features as $feature) {
             [$type, $factory, $variable] = $map[$feature];
@@ -964,7 +994,15 @@ MD;
             'reference-codes' => [
                 'pa_reference_code_set', 'pa_reference_code_entry', 'pa_reference_code_entry_version',
             ],
-            'file-media' => ['pa_file_object'],
+            'file-media' => [
+                'pa_file_object', 'pa_file_delivery_policy', 'pa_file_image_metadata',
+                'pa_file_image_variant', 'pa_file_delivery_nonce',
+            ],
+            'task-job' => ['pa_task_job', 'pa_task_job_attempt', 'pa_task_job_event'],
+            'notification-sms' => [
+                'pa_notification_template', 'pa_notification_message', 'pa_notification_attachment',
+                'pa_notification_outbox', 'pa_sms_rate_bucket', 'pa_notification_event',
+            ],
         ];
         foreach ($features as $feature) {
             foreach ($owned[$feature] as $table) {
@@ -1106,8 +1144,9 @@ TS;
     private function adaptFeatureFixtures(string $target, array $features): void
     {
         $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features)];
-        sort($keys);
-        $phpExpected = var_export($keys, true);
+        $sortedKeys = $keys;
+        sort($sortedKeys);
+        $phpExpected = var_export($sortedKeys, true);
         foreach (['backend/tests/settings.php', 'backend/tests/reference-codes.php'] as $relative) {
             $path = $target . '/' . $relative;
             if (!is_file($path)) {
@@ -1131,6 +1170,8 @@ TS;
             'frontend/tests/settings.spec.ts',
             'frontend/tests/reference-codes.spec.ts',
             'frontend/tests/file-media.spec.ts',
+            'frontend/tests/task-job.spec.ts',
+            'frontend/tests/notification-sms.spec.ts',
         ] as $relative) {
             $path = $target . '/' . $relative;
             if (!is_file($path)) {
@@ -1358,13 +1399,13 @@ final class ProjectGeneratorCli
             }
         }
         $canonicalFeatures = [];
-        foreach (['settings', 'reference-codes', 'file-media'] as $feature) {
+        foreach (['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms'] as $feature) {
             if (in_array($feature, $features, true)) {
                 $canonicalFeatures[] = $feature;
             }
         }
         foreach ($features as $feature) {
-            if (!in_array($feature, ['settings', 'reference-codes', 'file-media'], true)) {
+            if (!in_array($feature, ['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms'], true)) {
                 $canonicalFeatures[] = $feature;
             }
         }

@@ -30,6 +30,9 @@ final class FileMediaApiTest extends TestCase
         self::assertSame('multipart/form-data', $this->requestMediaType('createFile'));
         self::assertSame('*/*', $routes['GET /api/v1/files/{file_key}/content'][9]);
         self::assertContains('Content-Disposition', $routes['GET /api/v1/files/{file_key}/content'][10]);
+        self::assertNull($routes['GET /api/v1/file-deliveries/{file_key}'][2]);
+        self::assertFalse($routes['GET /api/v1/file-deliveries/{file_key}'][5]);
+        self::assertNull($routes['GET /api/v1/file-deliveries/{file_key}'][7]);
     }
 
     public function testManifestAndResourcesExposeOnlyTheBoundedCapability(): void
@@ -40,13 +43,20 @@ final class FileMediaApiTest extends TestCase
         $menus = json_decode(file_get_contents($root . '/Resources/menus.json') ?: '', true, 32, JSON_THROW_ON_ERROR);
 
         self::assertSame('peanut.file-media', $manifest['key']);
-        self::assertSame(['pa_file_object'], $manifest['database']['owned_tables']);
+        self::assertSame([
+            'pa_file_object',
+            'pa_file_delivery_policy',
+            'pa_file_image_metadata',
+            'pa_file_image_variant',
+            'pa_file_delivery_nonce',
+        ], $manifest['database']['owned_tables']);
         self::assertSame([
             'peanut.file-media.read',
             'peanut.file-media.create',
             'peanut.file-media.delete',
+            'peanut.file-media.manage',
         ], array_column($permissions, 'key'));
-        self::assertSame('/files', $menus[0]['route_path']);
+        self::assertSame('/app/files', $menus[0]['route_path']);
         self::assertSame('peanut.file-media.read', $menus[0]['required_permission']);
     }
 

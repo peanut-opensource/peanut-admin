@@ -22,7 +22,7 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 ## Runtime Operation Coverage
 
 [`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies
-the current 101 OpenAPI operations as 75 P0 and 26 P1 operations, records their
+the current 114 OpenAPI operations as 75 P0 and 39 P1 operations, records their
 concrete handlers and success schemas, and assigns each operation to an
 executable test owner. `./scripts/check-runtime-coverage` rejects missing,
 duplicate, stale, or unowned operations.

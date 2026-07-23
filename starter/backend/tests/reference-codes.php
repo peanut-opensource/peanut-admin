@@ -104,7 +104,7 @@ try {
         $pdo->exec(ReferenceCodeSchema::createSql($table));
     }
     $registry = (new ModuleRegistryFactory($root))->compile();
-    if ($registry->moduleKeys() !== ['example.greeting', 'peanut.reference-codes', 'peanut.settings']) {
+    if ($registry->moduleKeys() !== ['example.greeting', 'peanut.file-media', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings', 'peanut.task-job']) {
         throw new RuntimeException('Starter reference-code Module was not compiled.');
     }
     $committedResource = $root

@@ -14,8 +14,8 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(101, $routes);
-        self::assertCount(101, array_unique($operationIds));
+        self::assertCount(114, $routes);
+        self::assertCount(114, array_unique($operationIds));
         self::assertArrayHasKey('GET /api/v1/account', $routes);
         self::assertArrayHasKey('PATCH /api/v1/account', $routes);
         self::assertArrayHasKey('POST /api/v1/account/password', $routes);
@@ -40,6 +40,13 @@ final class OpenApiArtifactTest extends TestCase
         self::assertArrayHasKey('GET /api/v1/files/{file_key}', $routes);
         self::assertArrayHasKey('GET /api/v1/files/{file_key}/content', $routes);
         self::assertArrayHasKey('DELETE /api/v1/files/{file_key}', $routes);
+        self::assertArrayHasKey('GET /api/v1/file-assets', $routes);
+        self::assertArrayHasKey('POST /api/v1/files/{file_key}/delivery-grants', $routes);
+        self::assertArrayHasKey('GET /api/v1/file-deliveries/{file_key}', $routes);
+        self::assertArrayHasKey('GET /api/v1/tasks', $routes);
+        self::assertArrayHasKey('POST /api/v1/tasks/{job_key}/cancel', $routes);
+        self::assertArrayHasKey('GET /api/v1/notifications', $routes);
+        self::assertArrayHasKey('POST /api/v1/notifications', $routes);
         self::assertArrayHasKey('GET /api/v1/audit-events/{event_id}', $routes);
         self::assertArrayHasKey('GET /api/v1/menu-diagnostics', $routes);
         self::assertArrayHasKey('GET /api/platform/v1/audit-events/{event_id}', $routes);
@@ -56,6 +63,8 @@ final class OpenApiArtifactTest extends TestCase
         self::assertStringContainsString('ReferenceCodeListResponse', $types);
         self::assertStringContainsString('ReferenceCodeReplaceRequest', $types);
         self::assertStringContainsString('FileListResponse', $types);
+        self::assertStringContainsString('TaskListResponse', $types);
+        self::assertStringContainsString('NotificationListResponse', $types);
         self::assertStringContainsString('UpgradeStatusResponse', $types);
         self::assertStringContainsString('MenuDiagnosticListResponse', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
@@ -115,7 +124,7 @@ final class OpenApiArtifactTest extends TestCase
             $headers = $binding[10];
             $schema = $binding[11];
 
-            self::assertContains($status, [200, 201, 204], $route);
+            self::assertContains($status, [200, 201, 202, 204], $route);
             self::assertContains($mediaType, $status === 204 ? [null] : ['application/json', '*/*'], $route);
             self::assertContains('X-Request-Id', $headers, $route);
             self::assertContains('Cache-Control', $headers, $route);
@@ -161,18 +170,30 @@ final class OpenApiArtifactTest extends TestCase
             'GET /api/v1/example/work-items' => 'example.work-item',
             'GET /api/v1/example/work-items/aggregate' => 'example.work-item',
             'GET /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
+            'GET /api/v1/file-assets' => 'peanut.file-media',
             'GET /api/v1/files' => 'peanut.file-media',
             'GET /api/v1/files/{file_key}' => 'peanut.file-media',
             'GET /api/v1/files/{file_key}/content' => 'peanut.file-media',
+            'GET /api/v1/notifications' => 'peanut.notification-sms',
             'GET /api/v1/reference-code-sets' => 'peanut.reference-codes',
             'GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes' => 'peanut.reference-codes',
             'GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}' => 'peanut.reference-codes',
             'GET /api/v1/settings' => 'peanut.settings',
+            'GET /api/v1/tasks' => 'peanut.task-job',
+            'GET /api/v1/tasks/{job_key}' => 'peanut.task-job',
             'PATCH /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
             'POST /api/v1/example/work-item-view-policies' => 'example.work-item',
             'POST /api/v1/example/work-items' => 'example.work-item',
             'POST /api/v1/files' => 'peanut.file-media',
+            'POST /api/v1/files/{file_key}/delivery-grants' => 'peanut.file-media',
+            'POST /api/v1/notification-outbox/{outbox_key}/dispatch' => 'peanut.notification-sms',
+            'POST /api/v1/notifications' => 'peanut.notification-sms',
+            'POST /api/v1/notifications/bulk' => 'peanut.notification-sms',
+            'POST /api/v1/notifications/{message_key}/read' => 'peanut.notification-sms',
             'POST /api/v1/reference-code-sets/{module_key}/{set_key}/codes' => 'peanut.reference-codes',
+            'POST /api/v1/tasks/{job_key}/cancel' => 'peanut.task-job',
+            'POST /api/v1/tasks/{job_key}/retry' => 'peanut.task-job',
+            'PUT /api/v1/notification-templates/{template_key}' => 'peanut.notification-sms',
             'PUT /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}' => 'peanut.reference-codes',
             'PUT /api/v1/settings/{module_key}/{setting_key}' => 'peanut.settings',
         ];
@@ -184,6 +205,18 @@ final class OpenApiArtifactTest extends TestCase
         }
 
         self::assertSame($expected, $actual);
+    }
+
+    public function testSignedFileDeliveryRouteUsesItsTokenInsteadOfBearerMiddleware(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+        $route = $routes['GET /api/v1/file-deliveries/{file_key}'] ?? null;
+
+        self::assertIsArray($route);
+        self::assertNull($route[2]);
+        self::assertSame('tenant', $route[4]);
+        self::assertFalse($route[5]);
+        self::assertNull($route[7]);
     }
 
     public function testExampleOperationsUseConcreteHandlers(): void

@@ -34,6 +34,16 @@
         "permissions": ["peanut.file-media.delete"],
         "target_types": [],
         "conditions": []
+      },
+      {
+        "key": "manage",
+        "access_mode": "tenant_wide",
+        "target_cardinality": "none",
+        "permission_match": "all",
+        "audit_level": "deny_and_write",
+        "permissions": ["peanut.file-media.manage"],
+        "target_types": [],
+        "conditions": []
       }
     ]
   }

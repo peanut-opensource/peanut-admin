@@ -1,0 +1,1 @@
+export { peanutNotificationSmsModule } from './routes'

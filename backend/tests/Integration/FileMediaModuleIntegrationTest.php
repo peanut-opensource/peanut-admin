@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use PDO;
 use PeanutAdmin\App\command\InstallProductProfile;
 use PeanutAdmin\App\command\InstallWorkflow;
+use PeanutAdmin\App\filemedia\FileDeliveryHttpRuntime;
 use PeanutAdmin\App\filemedia\FileRuntimeFactory;
 use PeanutAdmin\App\filemedia\LocalPrivateStorageProvider;
 use PeanutAdmin\App\module\RuntimeModuleRegistry;
@@ -68,7 +69,10 @@ final class FileMediaModuleIntegrationTest extends TestCase
                 PDO::ATTR_EMULATE_PREPARES => false,
             ],
         );
-        foreach (['DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'AUTH_IDENTIFIER_HMAC_KEY'] as $name) {
+        foreach ([
+            'DB_HOST', 'DB_PORT', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD', 'AUTH_IDENTIFIER_HMAC_KEY',
+            'FILE_MEDIA_STORAGE_ROOT', 'FILE_MEDIA_DELIVERY_BASE_URL', 'FILE_MEDIA_DELIVERY_SIGNING_KEY',
+        ] as $name) {
             $this->originalEnvironment[$name] = getenv($name);
         }
         putenv('DB_HOST=127.0.0.1');
@@ -102,6 +106,9 @@ final class FileMediaModuleIntegrationTest extends TestCase
         );
         $this->grantPermissions();
         $this->storageRoot = sys_get_temp_dir() . '/peanut-file-media-host-' . bin2hex(random_bytes(8));
+        putenv('FILE_MEDIA_STORAGE_ROOT=' . $this->storageRoot);
+        putenv('FILE_MEDIA_DELIVERY_BASE_URL=https://peanut-admin.test');
+        putenv('FILE_MEDIA_DELIVERY_SIGNING_KEY=' . str_repeat('s', 32));
         $this->uploadPath = tempnam(sys_get_temp_dir(), 'peanut-file-http-')
             ?: throw new RuntimeException('Could not create the File/Media upload fixture.');
         file_put_contents($this->uploadPath, "host multipart bytes\n");
@@ -262,6 +269,55 @@ SQL);
         );
         self::assertSame(404, $unknown->getCode());
         self::assertSame($unknown->getData()['code'] ?? null, $malformed->getData()['code'] ?? null);
+    }
+
+    public function testSignedDeliveryNeedsNoBearerAndIsAuditedAsSingleUseTenantSystemWork(): void
+    {
+        $created = FileRuntimeFactory::upload(
+            $this->request(
+                'POST',
+                '/api/v1/files',
+                'req_file_delivery_create_0001',
+                files: $this->uploadFiles('preview.txt'),
+            ),
+            $this->pdo,
+            RuntimeModuleRegistry::compile(),
+            $this->storage(),
+        );
+        self::assertSame(201, $created->getCode());
+        $fileKey = $created->getData()['data']['file_key'] ?? null;
+        self::assertIsString($fileKey);
+
+        $grant = FileDeliveryHttpRuntime::grant($this->request(
+            'POST',
+            "/api/v1/files/{$fileKey}/delivery-grants",
+            'req_file_delivery_grant_0001',
+        ), $fileKey);
+        self::assertSame(201, $grant->getCode(), json_encode($grant->getData(), JSON_THROW_ON_ERROR));
+        $uri = $grant->getData()['data']['delivery_uri'] ?? null;
+        self::assertIsString($uri);
+        parse_str((string) parse_url($uri, PHP_URL_QUERY), $query);
+        self::assertIsString($query['token'] ?? null);
+
+        $deliveryRequest = $this->request(
+            'GET',
+            "/api/v1/file-deliveries/{$fileKey}",
+            'req_file_delivery_public_0001',
+            query: ['token' => $query['token']],
+            trustedContext: false,
+        );
+        self::assertNull($deliveryRequest->header('authorization'));
+        $delivery = FileDeliveryHttpRuntime::deliver($deliveryRequest, $fileKey);
+        self::assertSame(200, $delivery->getCode(), json_encode($delivery->getData(), JSON_THROW_ON_ERROR));
+        self::assertSame("host multipart bytes\n", $delivery->getContent());
+        self::assertSame('tenant_system', $this->scalar(<<<'SQL'
+SELECT actor_type FROM pa_tenant_audit_event
+WHERE tenant_id = ? AND event_type = 'tenant.file.delivered' AND request_id = ?
+SQL, [$this->tenantId, 'req_file_delivery_public_0001']));
+
+        $replay = FileDeliveryHttpRuntime::deliver($deliveryRequest, $fileKey);
+        self::assertSame(403, $replay->getCode());
+        self::assertSame('FILE_DELIVERY_DENIED', $replay->getData()['code'] ?? null);
     }
 
     public function testAuditFailureRollsBackMetadataAndCompensatesStorage(): void

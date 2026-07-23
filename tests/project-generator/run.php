@@ -201,6 +201,16 @@ try {
     assertTrue(str_contains($result['stderr'], 'PROJECT_FEATURE_UNKNOWN'), 'Feature error is unstable.');
     assertTrue(!file_exists($temporaryRoot . '/unknown-feature'), 'Unknown feature created a target.');
 
+    $dependencyArgs = validArguments($temporaryRoot . '/missing-feature-dependency');
+    array_push($dependencyArgs, '--feature', 'notification-sms');
+    $result = runGenerator($root, $dependencyArgs);
+    assertTrue($result['code'] !== 0, 'Notification/SMS without Task/Job must fail.');
+    assertTrue(
+        str_contains($result['stderr'], 'PROJECT_FEATURE_DEPENDENCY_MISSING'),
+        'Feature dependency error is unstable.',
+    );
+    assertTrue(!file_exists($temporaryRoot . '/missing-feature-dependency'), 'Missing feature dependency created a target.');
+
     $missingAdminArgs = validArguments($temporaryRoot . '/missing-admin');
     $adminIndex = array_search('--admin-client', $missingAdminArgs, true);
     assertTrue(is_int($adminIndex), 'Admin Client argument fixture is invalid.');

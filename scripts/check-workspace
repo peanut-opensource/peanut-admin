@@ -15,11 +15,15 @@ required=(
   packages/php/settings/composer.json
   packages/php/reference-codes/composer.json
   packages/php/file-media/composer.json
+  packages/php/task-job/composer.json
+  packages/php/notification-sms/composer.json
   packages/web/admin-core/package.json
   packages/web/admin-shell/package.json
   packages/web/settings/package.json
   packages/web/reference-codes/package.json
   packages/web/file-media/package.json
+  packages/web/task-job/package.json
+  packages/web/notification-sms/package.json
   packages/web/testing/package.json
   compose.yaml
   docs/decisions/dependencies/p0-a04-lock-evidence.json
@@ -75,6 +79,8 @@ $expectedPhp = [
     "packages/php/settings/composer.json" => ["peanut-admin/settings", "PeanutAdmin\\Settings\\"],
     "packages/php/reference-codes/composer.json" => ["peanut-admin/reference-codes", "PeanutAdmin\\ReferenceCodes\\"],
     "packages/php/file-media/composer.json" => ["peanut-admin/file-media", "PeanutAdmin\\FileMedia\\"],
+    "packages/php/task-job/composer.json" => ["peanut-admin/task-job", "PeanutAdmin\\TaskJob\\"],
+    "packages/php/notification-sms/composer.json" => ["peanut-admin/notification-sms", "PeanutAdmin\\NotificationSms\\"],
 ];
 foreach ($expectedPhp as $path => [$name, $namespace]) {
     $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
@@ -136,6 +142,24 @@ if (($backend["require"]["peanut-admin/file-media"] ?? null) !== "^0.1.0") {
     fwrite(STDERR, "ERROR: backend must require peanut-admin/file-media ^0.1.0\n");
     exit(1);
 }
+foreach ([
+    "task-job" => "peanut-admin/task-job",
+    "notification-sms" => "peanut-admin/notification-sms",
+] as $directory => $package) {
+    $repositories = array_values(array_filter(
+        $backend["repositories"] ?? [],
+        static fn(mixed $repository): bool => is_array($repository)
+            && ($repository["url"] ?? null) === "../packages/php/{$directory}",
+    ));
+    if (count($repositories) !== 1 || ($repositories[0]["type"] ?? null) !== "path") {
+        fwrite(STDERR, "ERROR: backend must consume {$package} from its workspace path repository\n");
+        exit(1);
+    }
+    if (($backend["require"][$package] ?? null) !== "^0.1.0") {
+        fwrite(STDERR, "ERROR: backend must require {$package} ^0.1.0\n");
+        exit(1);
+    }
+}
 
 $expectedWeb = [
     "packages/web/admin-core/package.json" => "@peanut-admin/admin-core",
@@ -143,6 +167,8 @@ $expectedWeb = [
     "packages/web/settings/package.json" => "@peanut-admin/settings",
     "packages/web/reference-codes/package.json" => "@peanut-admin/reference-codes",
     "packages/web/file-media/package.json" => "@peanut-admin/file-media",
+    "packages/web/task-job/package.json" => "@peanut-admin/task-job",
+    "packages/web/notification-sms/package.json" => "@peanut-admin/notification-sms",
     "packages/web/testing/package.json" => "@peanut-admin/web-testing",
 ];
 foreach ($expectedWeb as $path => $name) {

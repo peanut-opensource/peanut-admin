@@ -30,6 +30,9 @@ export const createPeanutFileMediaHost = (options: PeanutFileMediaHostOptions): 
     list: (status, page, pageSize, signal) => result(options.fetch(new Request(
       url(`/api/v1/files?status=${status}&page=${page}&page_size=${pageSize}`), { signal },
     ))),
+    assets: (page, pageSize, signal) => result(options.fetch(new Request(
+      url(`/api/v1/file-assets?page=${page}&page_size=${pageSize}`), { signal },
+    ))),
     upload: (file, signal) => {
       const body = new FormData()
       body.append('file', file)

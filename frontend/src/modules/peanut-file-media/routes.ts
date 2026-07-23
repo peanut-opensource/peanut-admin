@@ -34,6 +34,11 @@ const transport: FileMediaTransport = {
       params: { query: { status, page, page_size: pageSize } }, signal,
     }))
   },
+  async assets(page, pageSize, signal) {
+    return transportResult(await (await apiClient()).GET('/api/v1/file-assets', {
+      params: { query: { page, page_size: pageSize } }, signal,
+    }))
+  },
   async upload(file, signal) {
     return transportResult(await (await apiClient()).POST('/api/v1/files', {
       body: { file } as never,

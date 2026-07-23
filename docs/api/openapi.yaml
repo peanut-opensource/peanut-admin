@@ -302,6 +302,109 @@ x-file-created-response: &fileCreatedResponse
     content:
       application/json:
         schema: { $ref: './schemas/file-media.yaml#/FileResponse' }
+x-file-asset-list-response: &fileAssetListResponse
+  <<: *readErrors
+  '200':
+    description: Tenant image assets with short-lived private previews.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/file-media.yaml#/FileAssetListResponse' }
+x-file-delivery-grant-response: &fileDeliveryGrantResponse
+  <<: *writeErrors
+  '201':
+    description: Short-lived single-use private delivery grant.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/file-media.yaml#/FileDeliveryGrantResponse' }
+x-task-list-response: &taskListResponse
+  <<: *readErrors
+  '200':
+    description: Tenant task ledger page.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/task-job.yaml#/TaskListResponse' }
+x-task-response: &taskResponse
+  <<: *writeErrors
+  '200':
+    description: Current Tenant task state.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { $ref: './schemas/task-job.yaml#/StrongTaskEtag' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/task-job.yaml#/TaskResponse' }
+x-task-accepted-response: &taskAcceptedResponse
+  <<: *writeErrors
+  '202':
+    description: Trusted notification task queued.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/task-job.yaml#/TaskResponse' }
+x-notification-list-response: &notificationListResponse
+  <<: *readErrors
+  '200':
+    description: Current member notification inbox.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/notification-sms.yaml#/NotificationListResponse' }
+x-notification-response: &notificationResponse
+  <<: *writeErrors
+  '200':
+    description: Current member notification state.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/notification-sms.yaml#/NotificationResponse' }
+x-notification-bulk-response: &notificationBulkResponse
+  <<: *writeErrors
+  '200':
+    description: Notification inbox bulk update count.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/notification-sms.yaml#/NotificationBulkResponse' }
+x-notification-template-response: &notificationTemplateResponse
+  <<: *writeErrors
+  '200':
+    description: Active notification template revision.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/notification-sms.yaml#/NotificationTemplateResponse' }
+x-notification-created-response: &notificationCreatedResponse
+  <<: *writeErrors
+  '201':
+    description: Notification messages and asynchronous delivery jobs created atomically.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/notification-sms.yaml#/NotificationPublishResponse' }
 
 x-platform-operator-response: &platformOperatorResponse
   <<: *writeErrors
@@ -326,6 +429,168 @@ x-platform-audit-list-response: &platformAuditListResponse
   '200': { $ref: './responses.yaml#/PlatformAuditListOk' }
 
 paths:
+  /api/v1/tasks:
+    get:
+      operationId: listTasks
+      summary: listTasks
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TaskController::index'
+      x-module-key: peanut.task-job
+      x-permission: peanut.task-job.read
+      parameters:
+        - { in: query, name: status, required: false, schema: { enum: [queued, running, succeeded, dead, cancelled], default: queued } }
+        - { in: query, name: page, required: false, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: page_size, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses: *taskListResponse
+  /api/v1/tasks/{job_key}:
+    parameters:
+      - { in: path, name: job_key, required: true, schema: { $ref: './schemas/task-job.yaml#/TaskKey' } }
+    get:
+      operationId: getTask
+      summary: getTask
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TaskController::show'
+      x-module-key: peanut.task-job
+      x-permission: peanut.task-job.read
+      responses: *taskResponse
+  /api/v1/tasks/{job_key}/cancel:
+    parameters:
+      - { in: path, name: job_key, required: true, schema: { $ref: './schemas/task-job.yaml#/TaskKey' } }
+    post:
+      operationId: cancelTask
+      summary: cancelTask
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TaskController::cancel'
+      x-module-key: peanut.task-job
+      x-permission: peanut.task-job.manage
+      parameters:
+        - { in: header, name: If-Match, required: true, schema: { $ref: './schemas/task-job.yaml#/StrongTaskEtag' } }
+      responses: *taskResponse
+  /api/v1/tasks/{job_key}/retry:
+    parameters:
+      - { in: path, name: job_key, required: true, schema: { $ref: './schemas/task-job.yaml#/TaskKey' } }
+    post:
+      operationId: retryTask
+      summary: retryTask
+      x-handler: 'PeanutAdmin\App\controller\api\v1\TaskController::retry'
+      x-module-key: peanut.task-job
+      x-permission: peanut.task-job.manage
+      parameters:
+        - { in: header, name: If-Match, required: true, schema: { $ref: './schemas/task-job.yaml#/StrongTaskEtag' } }
+      responses: *taskResponse
+  /api/v1/notifications:
+    get:
+      operationId: listNotifications
+      summary: listNotifications
+      x-handler: 'PeanutAdmin\App\controller\api\v1\NotificationController::index'
+      x-module-key: peanut.notification-sms
+      x-permission: peanut.notification-sms.read
+      parameters:
+        - { in: query, name: status, required: false, schema: { enum: [unread, read, archived, all], default: all } }
+        - { in: query, name: page, required: false, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: page_size, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses: *notificationListResponse
+    post:
+      operationId: createNotification
+      summary: createNotification
+      x-handler: 'PeanutAdmin\App\controller\api\v1\NotificationController::publish'
+      x-module-key: peanut.notification-sms
+      x-permission: peanut.notification-sms.manage
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: './schemas/notification-sms.yaml#/NotificationPublishRequest' } }
+      responses: *notificationCreatedResponse
+  /api/v1/notifications/bulk:
+    post:
+      operationId: bulkUpdateNotifications
+      summary: bulkUpdateNotifications
+      x-handler: 'PeanutAdmin\App\controller\api\v1\NotificationController::bulk'
+      x-module-key: peanut.notification-sms
+      x-permission: peanut.notification-sms.read
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: './schemas/notification-sms.yaml#/NotificationBulkRequest' } }
+      responses: *notificationBulkResponse
+  /api/v1/notifications/{message_key}/read:
+    parameters:
+      - { in: path, name: message_key, required: true, schema: { $ref: './schemas/notification-sms.yaml#/MessageKey' } }
+    post:
+      operationId: markNotificationRead
+      summary: markNotificationRead
+      x-handler: 'PeanutAdmin\App\controller\api\v1\NotificationController::markRead'
+      x-module-key: peanut.notification-sms
+      x-permission: peanut.notification-sms.read
+      parameters:
+        - { in: header, name: If-Match, required: true, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+      responses: *notificationResponse
+  /api/v1/notification-templates/{template_key}:
+    parameters:
+      - { in: path, name: template_key, required: true, schema: { $ref: './schemas/notification-sms.yaml#/TemplateKey' } }
+    put:
+      operationId: putNotificationTemplate
+      summary: putNotificationTemplate
+      x-handler: 'PeanutAdmin\App\controller\api\v1\NotificationController::putTemplate'
+      x-module-key: peanut.notification-sms
+      x-permission: peanut.notification-sms.manage
+      parameters:
+        - { in: header, name: If-Match, required: false, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: './schemas/notification-sms.yaml#/NotificationTemplateWrite' } }
+      responses: *notificationTemplateResponse
+  /api/v1/notification-outbox/{outbox_key}/dispatch:
+    parameters:
+      - { in: path, name: outbox_key, required: true, schema: { $ref: './schemas/notification-sms.yaml#/OutboxKey' } }
+    post:
+      operationId: dispatchNotificationOutbox
+      summary: dispatchNotificationOutbox
+      x-handler: 'PeanutAdmin\App\controller\api\v1\NotificationController::dispatch'
+      x-module-key: peanut.notification-sms
+      x-permission: peanut.notification-sms.manage
+      responses: *taskAcceptedResponse
+  /api/v1/file-assets:
+    get:
+      operationId: listFileAssets
+      summary: listFileAssets
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::assets'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.read
+      parameters:
+        - { in: query, name: page, required: false, schema: { type: integer, minimum: 1 } }
+        - { in: query, name: page_size, required: false, schema: { type: integer, minimum: 1, maximum: 100 } }
+      responses: *fileAssetListResponse
+  /api/v1/files/{file_key}/delivery-grants:
+    parameters:
+      - { in: path, name: file_key, required: true, schema: { $ref: './schemas/file-media.yaml#/FileKey' } }
+    post:
+      operationId: createFileDeliveryGrant
+      summary: createFileDeliveryGrant
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::grant'
+      x-module-key: peanut.file-media
+      x-permission: peanut.file-media.read
+      responses: *fileDeliveryGrantResponse
+  /api/v1/file-deliveries/{file_key}:
+    parameters:
+      - { in: path, name: file_key, required: true, schema: { $ref: './schemas/file-media.yaml#/FileKey' } }
+      - { in: query, name: token, required: true, schema: { type: string, minLength: 32, maxLength: 2048 } }
+    get:
+      operationId: downloadFileDelivery
+      summary: downloadFileDelivery
+      security: []
+      x-handler: 'PeanutAdmin\App\controller\api\v1\FileController::deliver'
+      responses:
+        <<: *readErrors
+        '200':
+          description: Exact private file bytes for a valid single-use delivery token.
+          headers:
+            X-Request-Id: { schema: { type: string } }
+            Cache-Control: { schema: { type: string, const: 'private, no-store' } }
+            Content-Disposition: { schema: { type: string } }
+            Content-Length: { schema: { type: integer, minimum: 1 } }
+            Content-Type: { schema: { type: string, minLength: 1, maxLength: 127 } }
+            X-Content-Type-Options: { schema: { type: string, const: nosniff } }
+          content:
+            '*/*': { schema: { $ref: './schemas/file-media.yaml#/FileContent' } }
   /api/v1/files:
     get:
       operationId: listFiles

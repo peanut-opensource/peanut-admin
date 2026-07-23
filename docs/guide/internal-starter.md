@@ -19,7 +19,9 @@ application.
   --admin-client operations-web \
   --feature settings \
   --feature reference-codes \
-  --feature file-media
+  --feature file-media \
+  --feature task-job \
+  --feature notification-sms
 ```
 
 When more than one Tenant Client is declared, `--admin-client` is required and
@@ -56,7 +58,9 @@ The generated `peanut-project.json` is deterministic and records:
 - the fact that no secret value is embedded.
 
 `standard-admin` is the only current profile. `settings`, `reference-codes`,
-and `file-media` are optional first-party Modules; the fictional
+`file-media`, `task-job`, and `notification-sms` are optional first-party
+Modules. Selecting `notification-sms` also requires `file-media` and
+`task-job`; the fictional
 `example.greeting` Module remains a removable example. All package snapshots
 remain present for the fixed lock files, but only selected Modules are
 registered in the generated Host. Dependency versions remain fixed, so

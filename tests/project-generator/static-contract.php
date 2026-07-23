@@ -19,6 +19,8 @@ $arguments = [
     '--feature', 'settings',
     '--feature', 'reference-codes',
     '--feature', 'file-media',
+    '--feature', 'task-job',
+    '--feature', 'notification-sms',
 ];
 
 function removeStaticFixture(string $path): void
@@ -140,7 +142,7 @@ try {
         || ($metadata['project']['admin_client_key'] ?? null) !== 'field-console') {
         throw new RuntimeException('Generated Tenant Client is invalid.');
     }
-    foreach (['Settings', 'ReferenceCodes', 'FileMedia'] as $module) {
+    foreach (['Settings', 'ReferenceCodes', 'FileMedia', 'TaskJob', 'NotificationSms'] as $module) {
         $menus = json_decode(
             (string) file_get_contents($target . "/backend/src/Modules/Peanut/{$module}/Resources/menus.json"),
             true,

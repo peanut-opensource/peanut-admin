@@ -15,7 +15,7 @@ describe('internal starter file-media consumption', () => {
     })
     expect(fileMedia.FILE_MEDIA_VERSION).toBe('0.1.0')
     expect(host.modules.map(module => module.key)).toEqual([
-      'example.greeting', 'peanut.settings', 'peanut.reference-codes', 'peanut.file-media',
+      'example.greeting', 'peanut.settings', 'peanut.reference-codes', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms',
     ])
     expect(host.fileMediaModule.routes[0]).toMatchObject({
       name: 'peanut.file-media.list', path: '/app/files',

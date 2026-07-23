@@ -17,7 +17,7 @@
     "protected_resources": "Resources/protected-resources.json"
   },
   "frontend": { "entry": "frontend/src/modules/peanut-file-media.ts" },
-  "database": { "owned_tables": ["pa_file_object"] },
+  "database": { "owned_tables": ["pa_file_object", "pa_file_delivery_policy", "pa_file_image_metadata", "pa_file_image_variant", "pa_file_delivery_nonce"] },
   "contracts": { "exports": [], "events": [] },
   "tenant": { "enableable": true, "disable_behavior": "reject_new_operations", "requires": [] }
 }

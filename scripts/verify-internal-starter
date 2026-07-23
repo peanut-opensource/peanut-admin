@@ -67,6 +67,17 @@ settings_required=(
   'backend/tests/file-media.php'
   'packages/php/file-media/composer.json'
   'packages/web/file-media/package.json'
+  'backend/src/Modules/Peanut/TaskJob/module.json'
+  'backend/src/Modules/Peanut/NotificationSms/module.json'
+  'backend/config/notification-sms.php'
+  'frontend/src/modules/peanut-task-job.ts'
+  'frontend/src/modules/peanut-notification-sms.ts'
+  'frontend/tests/task-job.spec.ts'
+  'frontend/tests/notification-sms.spec.ts'
+  'packages/php/task-job/composer.json'
+  'packages/php/notification-sms/composer.json'
+  'packages/web/task-job/package.json'
+  'packages/web/notification-sms/package.json'
 )
 for path in "${settings_required[@]}"; do
   if [[ ! -f "$first/$path" ]]; then
@@ -84,12 +95,20 @@ diff -ru "$ROOT/packages/php/reference-codes/src" "$first/packages/php/reference
 diff -ru "$ROOT/packages/web/reference-codes/src" "$first/packages/web/reference-codes/src"
 diff -ru "$ROOT/packages/php/file-media/src" "$first/packages/php/file-media/src"
 diff -ru "$ROOT/packages/web/file-media/src" "$first/packages/web/file-media/src"
+diff -ru "$ROOT/packages/php/task-job/src" "$first/packages/php/task-job/src"
+diff -ru "$ROOT/packages/php/notification-sms/src" "$first/packages/php/notification-sms/src"
+diff -ru "$ROOT/packages/web/task-job/src" "$first/packages/web/task-job/src"
+diff -ru "$ROOT/packages/web/notification-sms/src" "$first/packages/web/notification-sms/src"
 cmp "$ROOT/packages/php/settings/composer.json" "$first/packages/php/settings/composer.json"
 cmp "$ROOT/packages/web/settings/package.json" "$first/packages/web/settings/package.json"
 cmp "$ROOT/packages/php/reference-codes/composer.json" "$first/packages/php/reference-codes/composer.json"
 cmp "$ROOT/packages/web/reference-codes/package.json" "$first/packages/web/reference-codes/package.json"
 cmp "$ROOT/packages/php/file-media/composer.json" "$first/packages/php/file-media/composer.json"
 cmp "$ROOT/packages/web/file-media/package.json" "$first/packages/web/file-media/package.json"
+cmp "$ROOT/packages/php/task-job/composer.json" "$first/packages/php/task-job/composer.json"
+cmp "$ROOT/packages/php/notification-sms/composer.json" "$first/packages/php/notification-sms/composer.json"
+cmp "$ROOT/packages/web/task-job/package.json" "$first/packages/web/task-job/package.json"
+cmp "$ROOT/packages/web/notification-sms/package.json" "$first/packages/web/notification-sms/package.json"
 
 php tests/starter/assert-generated-starter.php "$first"
 

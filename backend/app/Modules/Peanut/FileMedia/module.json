@@ -21,7 +21,7 @@
     "routes": "frontend/src/modules/peanut-file-media/routes.ts"
   },
   "database": {
-    "owned_tables": ["pa_file_object"]
+    "owned_tables": ["pa_file_object", "pa_file_delivery_policy", "pa_file_image_metadata", "pa_file_image_variant", "pa_file_delivery_nonce"]
   },
   "contracts": {
     "exports": [],

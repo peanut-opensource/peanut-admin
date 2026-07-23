@@ -76,7 +76,9 @@
     "exclude-from-classmap": [
       "src/Modules/Peanut/Settings/Database/Migrations/",
       "src/Modules/Peanut/ReferenceCodes/Database/Migrations/",
-      "src/Modules/Peanut/FileMedia/Database/Migrations/"
+      "src/Modules/Peanut/FileMedia/Database/Migrations/",
+      "src/Modules/Peanut/TaskJob/Database/Migrations/",
+      "src/Modules/Peanut/NotificationSms/Database/Migrations/"
     ]
   },
   "config": {

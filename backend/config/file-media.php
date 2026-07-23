@@ -7,6 +7,9 @@ $configured = getenv('FILE_MEDIA_STORAGE_ROOT');
 
 return [
     'provider' => 'local-private',
+    'delivery_adapter' => 'local-signed',
+    'delivery_base_url' => (string) (getenv('FILE_MEDIA_DELIVERY_BASE_URL') ?: 'https://peanut-admin.test'),
+    'delivery_signing_key' => (string) (getenv('FILE_MEDIA_DELIVERY_SIGNING_KEY') ?: ''),
     'local_root' => is_string($configured) && $configured !== ''
         ? $configured
         : $root . '/storage/private/files',

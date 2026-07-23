@@ -17,9 +17,18 @@ $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 $dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
 $valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
-    && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.reference-codes', 'peanut.settings']
+    && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings', 'peanut.task-job']
     && $ownedTableOwners === [
+        'pa_file_delivery_nonce' => 'peanut.file-media',
+        'pa_file_delivery_policy' => 'peanut.file-media',
+        'pa_file_image_metadata' => 'peanut.file-media',
+        'pa_file_image_variant' => 'peanut.file-media',
         'pa_file_object' => 'peanut.file-media',
+        'pa_notification_attachment' => 'peanut.notification-sms',
+        'pa_notification_event' => 'peanut.notification-sms',
+        'pa_notification_message' => 'peanut.notification-sms',
+        'pa_notification_outbox' => 'peanut.notification-sms',
+        'pa_notification_template' => 'peanut.notification-sms',
         'pa_reference_code_entry' => 'peanut.reference-codes',
         'pa_reference_code_entry_version' => 'peanut.reference-codes',
         'pa_reference_code_set' => 'peanut.reference-codes',
@@ -27,6 +36,10 @@ $valid = KernelPackage::VERSION === '0.1.0'
         'pa_setting_deployment_value' => 'peanut.settings',
         'pa_setting_target_value' => 'peanut.settings',
         'pa_setting_tenant_value' => 'peanut.settings',
+        'pa_sms_rate_bucket' => 'peanut.notification-sms',
+        'pa_task_job' => 'peanut.task-job',
+        'pa_task_job_attempt' => 'peanut.task-job',
+        'pa_task_job_event' => 'peanut.task-job',
     ]
     && is_string($kernelRoot)
     && is_dir($kernelRoot . '/database/migrations')
