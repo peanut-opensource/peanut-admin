@@ -7,12 +7,13 @@
   "scripts": {
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "vitest run verification",
+    "test": "vitest run verification tests",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@peanut-admin/admin-core": "workspace:0.1.0",
     "@peanut-admin/admin-shell": "workspace:0.1.0",
+    "@peanut-admin/settings": "workspace:0.1.0",
     "element-plus": "2.14.3",
     "pinia": "4.0.2",
     "vue": "3.5.39",

@@ -10,6 +10,7 @@
             <directory>backend/tests</directory>
             <directory>packages/php/kernel/tests</directory>
             <directory>packages/php/data-permission/tests</directory>
+            <directory>packages/php/settings/tests</directory>
             <directory>packages/php/testing/tests</directory>
         </testsuite>
     </testsuites>
@@ -18,6 +19,7 @@
             <directory>backend/app</directory>
             <directory>packages/php/kernel/src</directory>
             <directory>packages/php/data-permission/src</directory>
+            <directory>packages/php/settings/src</directory>
             <directory>packages/php/testing/src</directory>
         </include>
     </source>

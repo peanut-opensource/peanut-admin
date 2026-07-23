@@ -39,7 +39,9 @@ copy_package() {
 
 copy_package "$ROOT/packages/php/kernel" "$target/packages/php/kernel" composer.json
 copy_package "$ROOT/packages/php/data-permission" "$target/packages/php/data-permission" composer.json
+copy_package "$ROOT/packages/php/settings" "$target/packages/php/settings" composer.json
 copy_package "$ROOT/packages/web/admin-core" "$target/packages/web/admin-core" package.json
 copy_package "$ROOT/packages/web/admin-shell" "$target/packages/web/admin-shell" package.json
+copy_package "$ROOT/packages/web/settings" "$target/packages/web/settings" package.json
 
 echo "Internal starter created at: $target"

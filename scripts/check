@@ -4,6 +4,18 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+for required_port in MYSQL_PORT DB_PORT; do
+  value="${!required_port-}"
+  if [[ -z "$value" ]]; then
+    echo "ERROR: $required_port is required for repository checks" >&2
+    exit 1
+  fi
+  if [[ ! "$value" =~ ^[0-9]+$ ]] || (( 10#$value < 1 || 10#$value > 65535 )); then
+    echo "ERROR: $required_port must be an integer between 1 and 65535" >&2
+    exit 1
+  fi
+done
+
 ./scripts/check-doc-content-status
 ./scripts/check-docs
 ./scripts/check-dependency-decisions
@@ -35,7 +47,7 @@ if rg -n '/Users/|base-framework|BusinessSpace|PermissionDomain|MemberIdentity|D
   exit 1
 fi
 
-for required_dir in backend frontend packages/php/kernel packages/php/data-permission packages/php/testing packages/web/admin-core packages/web/admin-shell packages/web/testing docker; do
+for required_dir in backend frontend packages/php/kernel packages/php/data-permission packages/php/settings packages/php/testing packages/web/admin-core packages/web/admin-shell packages/web/settings packages/web/testing docker; do
   if [[ ! -d "$required_dir" ]]; then
     echo "ERROR: P0 workspace directory is missing: $required_dir" >&2
     exit 1

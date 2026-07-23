@@ -35,6 +35,11 @@ P1-R02 composes those primitives with trusted context, Module availability,
 existing functional and typed-target authorization, and stable Problem Details
 for a host-owned API. It remains an unqualified candidate and does not make the
 fictional example a generic domain engine.
+P1-B03 adds unqualified first-party PHP and Web Settings packages, Module-owned
+typed definitions, deployment/Tenant/target precedence, encrypted secret
+storage, six platform/Tenant operations, and a Tenant settings page. It remains
+outside the fixed downstream-consumption lock until a later fixed-commit
+qualification and separate consumption decision.
 
 ## Principles
 

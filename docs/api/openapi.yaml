@@ -53,6 +53,28 @@ x-account-profile-responses: &accountProfileResponses
     content:
       application/json:
         schema: { $ref: './schemas/auth.yaml#/AccountProfileResponse' }
+x-setting-list-responses: &settingListResponses
+  <<: *readErrors
+  '200':
+    description: Effective settings for the managed scope.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"settings-[a-f0-9]{64}"$' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/settings.yaml#/SettingListResponse' }
+x-setting-responses: &settingResponses
+  <<: *writeErrors
+  '200':
+    description: Setting scope value updated.
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content:
+      application/json:
+        schema: { $ref: './schemas/settings.yaml#/SettingResponse' }
 
 x-tenant-response: &tenantResponse
   <<: *readErrors
@@ -268,6 +290,52 @@ paths:
             Cache-Control: { schema: { type: string, const: no-store } }
             Set-Cookie: { schema: { type: string } }
 
+  /api/v1/settings:
+    get:
+      operationId: listTenantSettings
+      summary: listTenantSettings
+      x-handler: 'PeanutAdmin\App\controller\api\v1\SettingsController::listTenantSettings'
+      x-module-key: peanut.settings
+      x-permission: peanut.settings.read
+      responses: *settingListResponses
+  /api/v1/settings/{module_key}/{setting_key}:
+    parameters:
+      - { $ref: '#/components/parameters/SettingModuleKey' }
+      - { $ref: '#/components/parameters/SettingKey' }
+    put:
+      operationId: replaceTenantSetting
+      summary: replaceTenantSetting
+      x-handler: 'PeanutAdmin\App\controller\api\v1\SettingsController::replaceTenantSetting'
+      x-module-key: peanut.settings
+      x-permission: peanut.settings.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IfMatchOptional' }
+        - { $ref: '#/components/parameters/IfNoneMatchAny' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './schemas/settings.yaml#/ReplaceSettingRequest' }
+      responses: *settingResponses
+    delete:
+      operationId: unsetTenantSetting
+      summary: unsetTenantSetting
+      x-handler: 'PeanutAdmin\App\controller\api\v1\SettingsController::unsetTenantSetting'
+      x-module-key: peanut.settings
+      x-permission: peanut.settings.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: './schemas/settings.yaml#/UnsetSettingRequest' }
+      responses: *settingResponses
+
   /api/v1/tenant:
     get: { operationId: getTenant, summary: getTenant, x-handler: 'PeanutAdmin\App\controller\api\v1\TenantWorkspaceController::show', responses: *tenantResponse }
   /api/v1/members:
@@ -464,6 +532,48 @@ paths:
             X-Request-Id: { schema: { type: string } }
             Cache-Control: { schema: { type: string, const: no-store } }
             Set-Cookie: { schema: { type: string } }
+  /api/platform/v1/settings:
+    get:
+      operationId: listDeploymentSettings
+      summary: listDeploymentSettings
+      x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformSettingsController::listDeploymentSettings'
+      x-permission: platform.settings.read
+      responses: *settingListResponses
+  /api/platform/v1/settings/{module_key}/{setting_key}:
+    parameters:
+      - { $ref: '#/components/parameters/SettingModuleKey' }
+      - { $ref: '#/components/parameters/SettingKey' }
+    put:
+      operationId: replaceDeploymentSetting
+      summary: replaceDeploymentSetting
+      x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformSettingsController::replaceDeploymentSetting'
+      x-permission: platform.settings.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IfMatchOptional' }
+        - { $ref: '#/components/parameters/IfNoneMatchAny' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: './schemas/settings.yaml#/ReplaceSettingRequest' }
+      responses: *settingResponses
+    delete:
+      operationId: unsetDeploymentSetting
+      summary: unsetDeploymentSetting
+      x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformSettingsController::unsetDeploymentSetting'
+      x-permission: platform.settings.manage
+      x-host-atomic-idempotency: true
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: './schemas/settings.yaml#/UnsetSettingRequest' }
+      responses: *settingResponses
   /api/platform/v1/tenants:
     get: { operationId: listPlatformTenants, summary: listPlatformTenants, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformWorkspaceController::tenants', x-permission: platform.tenant.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *tenantListResponse }
     post: { operationId: createPlatformTenant, summary: createPlatformTenant, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\PlatformTenantController::create', x-permission: platform.tenant.create, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/platform.yaml#/CreatePlatformTenantRequest' } } } }, responses: *tenantCreatedResponse }
@@ -540,6 +650,7 @@ components:
     PageSize: { in: query, name: page_size, schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
     IfMatch: { in: header, name: If-Match, required: true, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
     IfMatchOptional: { in: header, name: If-Match, required: false, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    IfNoneMatchAny: { in: header, name: If-None-Match, required: false, schema: { type: string, const: '*' } }
     IdempotencyKey: { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 16, maxLength: 128 } }
     TenantId: { in: path, name: tenant_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     MemberId: { in: path, name: member_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
@@ -553,6 +664,24 @@ components:
     RoleId: { in: path, name: role_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     OperatorId: { in: path, name: operator_id, required: true, schema: { $ref: './schemas/common.yaml#/$defs/BigIntString' } }
     ModuleKey: { in: path, name: module_key, required: true, schema: { type: string, pattern: '^[a-z][a-z0-9.-]+$' } }
+    SettingModuleKey:
+      in: path
+      name: module_key
+      required: true
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 96
+        pattern: '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)*$'
+    SettingKey:
+      in: path
+      name: setting_key
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 64
+        pattern: '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$'
   requestBodies:
     ModuleConfigWrite:
       required: true

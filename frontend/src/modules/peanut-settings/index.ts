@@ -1,0 +1,1 @@
+export { peanutSettingsModule } from './routes'

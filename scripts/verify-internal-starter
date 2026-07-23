@@ -4,6 +4,18 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+for required_port in MYSQL_PORT DB_PORT; do
+  value="${!required_port-}"
+  if [[ -z "$value" ]]; then
+    echo "ERROR: $required_port is required for starter verification" >&2
+    exit 1
+  fi
+  if [[ ! "$value" =~ ^[0-9]+$ ]] || (( 10#$value < 1 || 10#$value > 65535 )); then
+    echo "ERROR: $required_port must be an integer between 1 and 65535" >&2
+    exit 1
+  fi
+done
+
 workdir="$(mktemp -d "${TMPDIR:-/tmp}/peanut-admin-starter.XXXXXX")"
 first="$workdir/first"
 second="$workdir/second"
@@ -26,9 +38,33 @@ trap cleanup EXIT
 ./scripts/create-internal-starter "$first"
 ./scripts/create-internal-starter "$second"
 diff -ru --exclude='.DS_Store' "$first" "$second"
+
+settings_required=(
+  'backend/config/modules.php'
+  'backend/src/Modules/Example/Greeting/Resources/setting-definitions.json'
+  'backend/src/Modules/Peanut/Settings/module.json'
+  'backend/src/Modules/Peanut/Settings/ModuleProvider.php'
+  'backend/tests/settings.php'
+  'frontend/src/app/modules.ts'
+  'frontend/src/modules/peanut-settings.ts'
+  'frontend/tests/settings.spec.ts'
+  'packages/php/settings/composer.json'
+  'packages/web/settings/package.json'
+)
+for path in "${settings_required[@]}"; do
+  if [[ ! -f "$first/$path" ]]; then
+    echo "ERROR: generated starter Settings consumption file is missing: $path" >&2
+    exit 1
+  fi
+done
+
 diff -ru "$ROOT/packages/php/kernel/database" "$first/packages/php/kernel/database"
 diff -ru "$ROOT/packages/php/kernel/resources" "$first/packages/php/kernel/resources"
 diff -ru "$ROOT/packages/php/data-permission/database" "$first/packages/php/data-permission/database"
+diff -ru "$ROOT/packages/php/settings/src" "$first/packages/php/settings/src"
+diff -ru "$ROOT/packages/web/settings/src" "$first/packages/web/settings/src"
+cmp "$ROOT/packages/php/settings/composer.json" "$first/packages/php/settings/composer.json"
+cmp "$ROOT/packages/web/settings/package.json" "$first/packages/web/settings/package.json"
 
 php tests/starter/assert-generated-starter.php "$first"
 
@@ -63,7 +99,7 @@ for attempt in $(seq 1 60); do
   if php -r '
     try {
         new PDO(
-            "mysql:host=127.0.0.1;port=" . (getenv("MYSQL_PORT") ?: "3306"),
+            "mysql:host=127.0.0.1;port=" . getenv("MYSQL_PORT"),
             "root",
             getenv("MYSQL_ROOT_PASSWORD") ?: "peanut_admin_root_dev",
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
@@ -81,6 +117,7 @@ for attempt in $(seq 1 60); do
   sleep 2
 done
 php "$first/backend/tests/auth-clients.php"
+php "$first/backend/tests/settings.php"
 pnpm --dir "$first" typecheck
 pnpm --dir "$first" test
 pnpm --dir "$first" build
@@ -145,4 +182,4 @@ if (($health["status"] ?? null) !== "ok"
 }
 '
 
-echo 'Internal starter: OK (reproducible create, package schema, Module host, Client auth, build, start, test)'
+echo 'Internal starter: OK (reproducible create, package schema, Settings Module, definition resolution, Client auth, build, start, test)'

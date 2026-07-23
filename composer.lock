@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "834fdbb45e9db476bfa2b07f25242537",
+    "content-hash": "d27df2678ab156a8a103d66b989c8068",
     "packages": [
         {
             "name": "opis/json-schema",
@@ -254,6 +254,42 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin security and runtime kernel contracts",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/settings",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/php/settings",
+                "reference": "73909d5e0ad7be12fd6dbd41bd5816a2cbdd085d"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "ext-sodium": "*",
+                "opis/json-schema": "^2.6.0",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\Settings\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\Settings\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable settings contracts and persistence",
             "transport-options": {
                 "symlink": true,
                 "relative": true

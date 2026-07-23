@@ -24,6 +24,14 @@ The documentation workspace intentionally uses Vite 6.4.3 instead of VitePress 1
 
 Valkey is accepted as the P0 development cache because it provides the required open-source RESP-compatible server. Cache access must remain behind Kernel cache ports and cache data must never become authoritative.
 
+P1-B03 adds no third-party dependency. The Settings package reuses the accepted
+Opis JSON Schema validator, PHP Sodium extension, PDO, and existing Web
+toolchain. Composer and pnpm lock changes record new first-party workspace/path
+packages only; they do not expand the accepted external dependency set.
+The machine-readable [P1-B03 lock evidence](./p1-b03-lock-evidence.json) records
+the reviewed hashes, frozen starter installs, tool versions, and zero-advisory
+audit result without treating that evidence as qualification.
+
 ## Explicitly Deferred
 
 P0 does not install or create speculative abstractions for filesystem storage, queue management UI, spreadsheet import/export, notifications, Plugin runtime or marketplace, MFA, or OIDC. Each requires an approved use path and a new dependency decision before installation.

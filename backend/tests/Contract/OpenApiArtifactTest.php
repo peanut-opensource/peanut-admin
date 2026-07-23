@@ -14,8 +14,8 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(79, $routes);
-        self::assertCount(79, array_unique($operationIds));
+        self::assertCount(85, $routes);
+        self::assertCount(85, array_unique($operationIds));
         self::assertArrayHasKey('GET /api/v1/account', $routes);
         self::assertArrayHasKey('PATCH /api/v1/account', $routes);
         self::assertArrayHasKey('POST /api/v1/account/password', $routes);
@@ -23,15 +23,38 @@ final class OpenApiArtifactTest extends TestCase
         self::assertArrayHasKey('GET /api/v1/members/{member_id}/effective-access', $routes);
         self::assertArrayHasKey('GET /api/v1/example/reference-items/candidates', $routes);
         self::assertArrayHasKey('PUT /api/platform/v1/tenants/{tenant_id}/modules/{module_key}', $routes);
+        self::assertArrayHasKey('GET /api/platform/v1/settings', $routes);
+        self::assertArrayHasKey('PUT /api/platform/v1/settings/{module_key}/{setting_key}', $routes);
+        self::assertArrayHasKey('DELETE /api/platform/v1/settings/{module_key}/{setting_key}', $routes);
+        self::assertArrayHasKey('GET /api/v1/settings', $routes);
+        self::assertArrayHasKey('PUT /api/v1/settings/{module_key}/{setting_key}', $routes);
+        self::assertArrayHasKey('DELETE /api/v1/settings/{module_key}/{setting_key}', $routes);
 
         $types = (string) file_get_contents($root . '/packages/web/admin-core/src/generated/api.d.ts');
         self::assertStringContainsString('listExampleWorkItems', $types);
         self::assertStringContainsString('TargetSet', $types);
         self::assertStringContainsString('SelectTenantRequest', $types);
         self::assertStringContainsString('MemberEffectiveAccessResponse', $types);
+        self::assertStringContainsString('SettingListResponse', $types);
+        self::assertStringContainsString('ReplaceSettingRequest', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
         self::assertStringNotContainsString('data: unknown', $types);
         self::assertDoesNotMatchRegularExpression('/(?:\| unknown|unknown \|)/', $types);
+    }
+
+    public function testSettingsCommandsUseTheR02AtomicHostWithoutGenericIdempotencyMiddleware(): void
+    {
+        $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
+
+        foreach ([
+            'PUT /api/platform/v1/settings/{module_key}/{setting_key}',
+            'DELETE /api/platform/v1/settings/{module_key}/{setting_key}',
+            'PUT /api/v1/settings/{module_key}/{setting_key}',
+            'DELETE /api/v1/settings/{module_key}/{setting_key}',
+        ] as $route) {
+            self::assertArrayHasKey($route, $routes);
+            self::assertFalse($routes[$route][6], $route);
+        }
     }
 
     public function testEffectiveAccessPreviewKeepsItsSensitiveReadContract(): void
@@ -107,13 +130,16 @@ final class OpenApiArtifactTest extends TestCase
     {
         $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
         $expected = [
+            'DELETE /api/v1/settings/{module_key}/{setting_key}' => 'peanut.settings',
             'GET /api/v1/example/reference-items/candidates' => 'example.reference',
             'GET /api/v1/example/work-items' => 'example.work-item',
             'GET /api/v1/example/work-items/aggregate' => 'example.work-item',
             'GET /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
+            'GET /api/v1/settings' => 'peanut.settings',
             'PATCH /api/v1/example/work-items/{work_item_id}' => 'example.work-item',
             'POST /api/v1/example/work-item-view-policies' => 'example.work-item',
             'POST /api/v1/example/work-items' => 'example.work-item',
+            'PUT /api/v1/settings/{module_key}/{setting_key}' => 'peanut.settings',
         ];
         $actual = [];
         foreach ($routes as $route => $binding) {

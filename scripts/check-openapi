@@ -119,7 +119,8 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
       operationId: operation.operationId,
       audience: path.startsWith('/api/platform/') ? 'platform' : 'tenant',
       requiresAuth: !Array.isArray(operation.security) || operation.security.length !== 0,
-      idempotent: parameters.some(parameter => parameter.name === 'Idempotency-Key'),
+      idempotent: parameters.some(parameter => parameter.name === 'Idempotency-Key')
+        && operation['x-host-atomic-idempotency'] !== true,
       moduleKey: operation['x-module-key'] ?? null,
       successStatus,
       mediaType,
@@ -149,8 +150,8 @@ const compareRoutes = (left, right) => {
   return leftSegments.length - rightSegments.length
 }
 routes.sort(compareRoutes)
-if (routes.length !== 79) {
-  throw new Error(`Expected 79 classified P0/P1 operations, found ${routes.length}`)
+if (routes.length !== 85) {
+  throw new Error(`Expected 85 classified P0/P1 operations, found ${routes.length}`)
 }
 const operationIds = new Set(routes.map(route => route.operationId))
 if (operationIds.size !== routes.length) {
@@ -173,6 +174,10 @@ const idempotentOperations = [
   'closePlatformTenant',
   'enablePlatformTenantModule',
   'disablePlatformTenantModule',
+  'replaceDeploymentSetting',
+  'unsetDeploymentSetting',
+  'replaceTenantSetting',
+  'unsetTenantSetting',
 ]
 const moduleKeyPattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*(?:\.[a-z][a-z0-9]*(?:-[a-z0-9]+)*)*$/
 for (const [path, item] of Object.entries(document.paths ?? {})) {
@@ -192,6 +197,18 @@ for (const [path, item] of Object.entries(document.paths ?? {})) {
         .map(parameter => parameter.name)
       if (!names.includes('Idempotency-Key')) {
         throw new Error(`${operation.operationId} is missing Idempotency-Key`)
+      }
+    }
+    const hostAtomicIdempotency = operation['x-host-atomic-idempotency']
+    if (hostAtomicIdempotency !== undefined && hostAtomicIdempotency !== true) {
+      throw new Error(`${operation.operationId} declares an invalid x-host-atomic-idempotency value`)
+    }
+    if (hostAtomicIdempotency === true) {
+      const names = [...(item.parameters ?? []), ...(operation.parameters ?? [])]
+        .map(resolve)
+        .map(parameter => parameter.name)
+      if (!names.includes('Idempotency-Key')) {
+        throw new Error(`${operation.operationId} uses host atomic idempotency without Idempotency-Key`)
       }
     }
     const moduleKey = operation['x-module-key'] ?? null

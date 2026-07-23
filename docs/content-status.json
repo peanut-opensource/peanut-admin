@@ -184,6 +184,13 @@
       "replacement": null
     },
     {
+      "path": "docs/reference/packages/settings.md",
+      "title": "Settings Package",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/guide/index.md",
       "title": "Developer Guide",
       "status": "canonical",

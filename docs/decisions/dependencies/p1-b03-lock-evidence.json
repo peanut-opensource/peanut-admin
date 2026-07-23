@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-20T02:45:57+08:00",
+  "task": "P1-B03",
+  "runtime_prerequisite_commit": "3ab9a7ddf7488a9cc941b4c4f8fa9ba25470a9ad",
+  "qualified_downstream_lock_unchanged": "0ab02a9b735ba9f4c23509cb366b9bf04039ebf8",
+  "third_party_dependency_change": false,
+  "tools": {
+    "php": "8.3.24",
+    "composer": "2.10.2",
+    "node": "24.13.0",
+    "pnpm": "11.13.0"
+  },
+  "locks": {
+    "composer.lock": {
+      "sha256": "8a4a927b544b6d7f45eb99032553ae092452de4fd21e03be47529e62098d6861",
+      "audit": "no-security-vulnerability-advisories",
+      "first_party_package": "peanut-admin/settings@0.1.0"
+    },
+    "pnpm-lock.yaml": {
+      "sha256": "f4a891066e53b575a9c279ba450738ce762927a9bfb852cacee3a6197ab07229",
+      "audit": "zero-production-vulnerabilities",
+      "first_party_package": "@peanut-admin/settings@0.1.0"
+    },
+    "starter/backend/composer.lock": {
+      "sha256": "85cffd7acd0838a00ea3d4df5059d89ef033cb6319331b0ea28d33a742c6c860",
+      "install": "two-independent-frozen-installs-matched-byte-for-byte"
+    },
+    "starter/pnpm-lock.yaml": {
+      "sha256": "02803870d9de9212dcdd7e66d7583591ea4cb430c9931693c3f5368750babaab",
+      "install": "two-independent-frozen-installs-matched-byte-for-byte"
+    }
+  },
+  "accepted_reuse": [
+    "ext-json",
+    "ext-pdo",
+    "ext-sodium",
+    "opis/json-schema@2.6.0",
+    "peanut-admin/kernel@0.1.0",
+    "@peanut-admin/admin-core@0.1.0",
+    "@peanut-admin/admin-shell@0.1.0"
+  ],
+  "notes": [
+    "B03 adds only first-party path/workspace packages and reuses accepted dependencies.",
+    "No encryption key, credential, token, cookie, private path, or product-domain value is recorded.",
+    "This lock evidence is implementation evidence, not fixed-commit qualification or consumption approval."
+  ]
+}

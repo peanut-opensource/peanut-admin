@@ -3,6 +3,7 @@ deptrac:
     - backend/app
     - packages/php/kernel/src
     - packages/php/data-permission/src
+    - packages/php/settings/src
     - packages/php/testing/src
   exclude_files:
     - '#.*tests.*#'
@@ -23,6 +24,10 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^PeanutAdmin\\DataPermission\\#'
+    - name: Settings
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\Settings\\#'
     - name: Testing
       collectors:
         - type: classNameRegex
@@ -43,6 +48,9 @@ deptrac:
     Kernel: []
     DataPermission:
       - Kernel
+    Settings:
+      - RuntimeLibraries
+      - Kernel
     Testing:
       - Kernel
       - DataPermission
@@ -51,6 +59,7 @@ deptrac:
       - RuntimeLibraries
       - Kernel
       - DataPermission
+      - Settings
       - ModuleContracts
     ModuleContracts:
       - Kernel
@@ -59,4 +68,5 @@ deptrac:
       - Framework
       - Kernel
       - DataPermission
+      - Settings
       - ModuleContracts

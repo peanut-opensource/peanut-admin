@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4681a0dc14e6ff09b87b607e9e52edc9",
+    "content-hash": "1b73e3ef53e6bac6483e3326665a5b47",
     "packages": [
         {
             "name": "composer/semver",
@@ -331,6 +331,42 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin security and runtime kernel contracts",
+            "transport-options": {
+                "symlink": false,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/settings",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "../packages/php/settings",
+                "reference": "56a42cfbe6224a6d7cfb7c1845ef6e2f7d0ac18b"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "ext-sodium": "*",
+                "opis/json-schema": "^2.6.0",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\Settings\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\Settings\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin reusable settings contracts and persistence",
             "transport-options": {
                 "symlink": false,
                 "relative": true
@@ -878,5 +914,5 @@
     "platform-overrides": {
         "php": "8.3.24"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }

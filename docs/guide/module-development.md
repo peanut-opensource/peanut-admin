@@ -213,3 +213,23 @@ response.
 The executable fictional example is under `examples/external-host`. It proves
 five explicit operations and is not a generic repository, CRUD engine, route
 generator, or application domain model.
+
+## 9. Declare Typed Settings
+
+A Module that owns reusable configuration may add a trusted
+`backend.setting_definitions` resource to its manifest. Each definition owns a
+local key, JSON Schema draft 2020-12 schema, allowed scopes, secret flag, and an
+optional non-secret default. The Module remains responsible for the meaning of
+the key and must not move application policy into `peanut.settings`.
+
+Use `peanut-admin/settings` for storage and resolution. The fixed precedence is
+target, Tenant, deployment, then manifest default. A target definition must
+bind one explicit manifest-owned operation and callers must pass the exact
+`AuthorizedExternalOperation` issued by `ExternalOperationHost`; a target ID or
+Tenant from request input is never authorization.
+
+Use `@peanut-admin/settings` for the `/app/settings` Tenant contribution. The
+reference Host permissions are `peanut.settings.read` and
+`peanut.settings.manage`. Deployment management remains API-only. See the
+[Settings Package](../reference/packages/settings.md) reference for definition,
+secret, precondition, and stop-line details.

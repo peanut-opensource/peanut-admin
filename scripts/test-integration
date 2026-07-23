@@ -4,13 +4,25 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+for required_port in MYSQL_PORT DB_PORT; do
+  value="${!required_port-}"
+  if [[ -z "$value" ]]; then
+    echo "ERROR: $required_port is required for integration tests" >&2
+    exit 1
+  fi
+  if [[ ! "$value" =~ ^[0-9]+$ ]] || (( 10#$value < 1 || 10#$value > 65535 )); then
+    echo "ERROR: $required_port must be an integer between 1 and 65535" >&2
+    exit 1
+  fi
+done
+
 docker compose up -d mysql
 
 for attempt in $(seq 1 60); do
   if php -r '
     try {
         new PDO(
-            "mysql:host=127.0.0.1;port=" . (getenv("MYSQL_PORT") ?: "3306"),
+            "mysql:host=127.0.0.1;port=" . getenv("MYSQL_PORT"),
             "root",
             getenv("MYSQL_ROOT_PASSWORD") ?: "peanut_admin_root_dev",
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
@@ -32,6 +44,7 @@ done
 PEANUT_INTEGRATION=1 php vendor/bin/phpunit \
   packages/php/kernel/tests/Integration \
   packages/php/data-permission/tests/Integration \
+  packages/php/settings/tests/Integration \
   backend/tests/Integration \
   backend/tests/Install \
   backend/tests/Upgrade \

@@ -15,6 +15,7 @@
     "menus": "Resources/menus.json",
     "permissions": "Resources/permissions.json",
     "protected_resources": "Resources/protected-resources.json",
+    "setting_definitions": "Resources/setting-definitions.json",
     "target_types": "Resources/target-types.json"
   },
   "frontend": {

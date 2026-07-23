@@ -20,6 +20,7 @@ final class ProductProfileTest extends TestCase
 
         self::assertSame('reference-admin', $profile->key);
         self::assertSame([
+            'peanut.settings',
             'example.target',
             'example.reference',
             'example.work-item',

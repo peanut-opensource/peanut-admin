@@ -9,6 +9,7 @@ use DateTimeImmutable;
 use PDO;
 use PeanutAdmin\App\module\ModuleRegistryFactory;
 use PeanutAdmin\App\module\OpisTenantModuleConfigValidator;
+use PeanutAdmin\App\setting\SettingsRuntimeFactory;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use PeanutAdmin\Kernel\Module\Persistence\PdoModuleRuntimeRepository;
 use PeanutAdmin\Kernel\Module\TenantModuleManager;
@@ -37,6 +38,7 @@ final readonly class InstallProductProfileApplier
         if ($unknown !== []) {
             throw new ModuleException('MODULE_NOT_INSTALLED', 'Profile references unknown module: ' . $unknown[0]);
         }
+        SettingsRuntimeFactory::synchronizeDefinitions($this->pdo, $registry, new DateTimeImmutable('now'));
 
         $manager = new TenantModuleManager(
             $registry,

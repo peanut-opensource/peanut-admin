@@ -8,7 +8,20 @@ All BIGINT identifiers cross the API boundary as decimal strings. Tenant request
 
 ## Implementation Status
 
-All 75 P0 operations in the current OpenAPI document bind to concrete reference-host handlers. Four additional P1 operations provide account self-service and tenant-member effective-access inspection. These remain candidate capabilities outside the qualified downstream-consumption baseline. `./scripts/check-openapi` verifies that each handler exists, accepts the declared path parameters, returns `think\Response`, and carries success status, body, and header metadata matching the generated route.
+All 75 P0 operations in the current OpenAPI document bind to concrete
+reference-host handlers. Ten additional P1 operations provide account
+self-service, tenant-member effective-access inspection, and six Settings
+operations split between platform and Tenant audiences. These remain candidate
+capabilities outside the qualified downstream-consumption baseline.
+`./scripts/check-openapi` verifies that each handler exists, accepts the
+declared path parameters, returns `think\Response`, and carries success status,
+body, and header metadata matching the generated route.
+
+Settings writes require host-owned atomic idempotency and a strong resource
+precondition. The generated route therefore does not attach the generic
+idempotency middleware a second time. Settings responses keep resolved value
+metadata separate from the managed-scope revision and ETag, redact every secret
+value, and allow null only when no non-required effective value exists.
 
 `GET /api/v1/members/{member_id}/effective-access` requires the tenant-audience
 `core.member.effective-access.read` Permission. It pages the member's current

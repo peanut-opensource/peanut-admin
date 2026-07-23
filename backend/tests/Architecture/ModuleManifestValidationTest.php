@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Tests\Architecture;
 
 use PeanutAdmin\App\module\OpisManifestSchemaValidator;
+use PeanutAdmin\App\module\RuntimeModuleRegistry;
 use PeanutAdmin\Kernel\Module\ModuleException;
 use PHPUnit\Framework\TestCase;
 
@@ -89,5 +90,36 @@ final class ModuleManifestValidationTest extends TestCase
             512,
             JSON_THROW_ON_ERROR,
         ));
+    }
+
+    public function testOpisValidatorAcceptsASettingsDefinitionResource(): void
+    {
+        $validator = new OpisManifestSchemaValidator(
+            dirname(__DIR__, 3) . '/packages/php/kernel/resources/schemas/module-manifest.schema.json',
+        );
+        $validator->assertValid(json_decode((string) json_encode([
+            'schema_version' => 1,
+            'key' => 'example.target',
+            'name' => 'Example Target',
+            'description' => 'Fixture module',
+            'version' => '1.0.0',
+            'kernel_constraint' => '^1.0',
+            'license' => 'Apache-2.0',
+            'backend' => [
+                'provider' => 'PeanutAdmin\\App\\Modules\\Example\\Target\\ModuleProvider',
+                'setting_definitions' => 'Resources/setting-definitions.json',
+            ],
+            'frontend' => (object) [],
+            'database' => ['owned_tables' => []],
+            'contracts' => ['exports' => [], 'events' => []],
+            'tenant' => ['enableable' => true, 'requires' => []],
+        ], JSON_THROW_ON_ERROR), false, 512, JSON_THROW_ON_ERROR));
+
+        self::expectNotToPerformAssertions();
+    }
+
+    public function testReferenceHostRegistersTheSettingsModule(): void
+    {
+        self::assertContains('peanut.settings', RuntimeModuleRegistry::compile()->moduleKeys());
     }
 }

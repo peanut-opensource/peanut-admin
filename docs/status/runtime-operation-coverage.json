@@ -112,6 +112,19 @@
         "frontend/tests/effective-access-preview-page.spec.ts",
         "frontend/tests/e2e/full-stack.e2e.ts"
       ]
+    },
+    "RUNTIME-SETTINGS-001": {
+      "description": "Module-owned setting definition, effective resolution, atomic HTTP, security, and Tenant Web behavior",
+      "evidence": [
+        "packages/php/settings/tests/Integration/Application/SettingResolverTest.php",
+        "packages/php/settings/tests/Security/SettingsIsolationTest.php",
+        "backend/tests/Http/SettingsApiTest.php",
+        "backend/tests/Integration/SettingsModuleIntegrationTest.php",
+        "backend/tests/Upgrade/SettingsUpgradeTest.php",
+        "packages/web/settings/tests/page.spec.ts",
+        "frontend/tests/e2e/settings.e2e.ts",
+        "tests/recovery/RecoveryAcceptanceTest.php"
+      ]
     }
   },
   "operations": [
@@ -193,6 +206,12 @@
     {"operation_id":"getMyAccount","scope":"p1","route":"GET /api/v1/account","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::show","response_schema":"#/components/schemas/AccountProfileResponse","test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
     {"operation_id":"updateMyAccount","scope":"p1","route":"PATCH /api/v1/account","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::update","response_schema":"#/components/schemas/AccountProfileResponse","test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
     {"operation_id":"changeMyPassword","scope":"p1","route":"POST /api/v1/account/password","handler":"PeanutAdmin\\App\\controller\\api\\v1\\AccountController::changePassword","response_schema":null,"test_owner":"RUNTIME-ACCOUNT-SELF-SERVICE-001"},
-    {"operation_id":"getMemberEffectiveAccess","scope":"p1","route":"GET /api/v1/members/{member_id}/effective-access","handler":"PeanutAdmin\\App\\controller\\api\\v1\\DataAuthorizationController::effectiveAccess","response_schema":"#/components/schemas/MemberEffectiveAccessResponse","test_owner":"RUNTIME-EFFECTIVE-ACCESS-PREVIEW-001"}
+    {"operation_id":"getMemberEffectiveAccess","scope":"p1","route":"GET /api/v1/members/{member_id}/effective-access","handler":"PeanutAdmin\\App\\controller\\api\\v1\\DataAuthorizationController::effectiveAccess","response_schema":"#/components/schemas/MemberEffectiveAccessResponse","test_owner":"RUNTIME-EFFECTIVE-ACCESS-PREVIEW-001"},
+    {"operation_id":"listDeploymentSettings","scope":"p1","route":"GET /api/platform/v1/settings","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformSettingsController::listDeploymentSettings","response_schema":"#/components/schemas/SettingListResponse","test_owner":"RUNTIME-SETTINGS-001"},
+    {"operation_id":"replaceDeploymentSetting","scope":"p1","route":"PUT /api/platform/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformSettingsController::replaceDeploymentSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"},
+    {"operation_id":"unsetDeploymentSetting","scope":"p1","route":"DELETE /api/platform/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\PlatformSettingsController::unsetDeploymentSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"},
+    {"operation_id":"listTenantSettings","scope":"p1","route":"GET /api/v1/settings","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::listTenantSettings","response_schema":"#/components/schemas/SettingListResponse","test_owner":"RUNTIME-SETTINGS-001"},
+    {"operation_id":"replaceTenantSetting","scope":"p1","route":"PUT /api/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::replaceTenantSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"},
+    {"operation_id":"unsetTenantSetting","scope":"p1","route":"DELETE /api/v1/settings/{module_key}/{setting_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\SettingsController::unsetTenantSetting","response_schema":"#/components/schemas/SettingResponse","test_owner":"RUNTIME-SETTINGS-001"}
   ]
 }

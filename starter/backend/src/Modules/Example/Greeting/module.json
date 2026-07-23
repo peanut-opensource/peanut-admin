@@ -7,7 +7,8 @@
   "kernel_constraint": "^0.1",
   "license": "Apache-2.0",
   "backend": {
-    "provider": "ExampleHost\\App\\Modules\\Example\\Greeting\\ExampleGreetingModuleProvider"
+    "provider": "ExampleHost\\App\\Modules\\Example\\Greeting\\ExampleGreetingModuleProvider",
+    "setting_definitions": "Resources/setting-definitions.json"
   },
   "frontend": {
     "entry": "frontend/src/modules/example-greeting/index.ts"

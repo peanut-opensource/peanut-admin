@@ -22,7 +22,7 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 ## Runtime Operation Coverage
 
 [`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies
-the current 79 OpenAPI operations as 75 P0 and 4 P1 operations, records their
+the current 85 OpenAPI operations as 75 P0 and 10 P1 operations, records their
 concrete handlers and success schemas, and assigns each operation to an
 executable test owner. `./scripts/check-runtime-coverage` rejects missing,
 duplicate, stale, or unowned operations.
@@ -114,11 +114,13 @@ the candidate-only stop line.
 The execution reality and the next reusable capability waves are summarized in
 [P1 Execution Reality And Post-Q01 Roadmap](./p1-execution-and-post-q01-roadmap.md).
 
-The next backend administration slice is fixed by the
+The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed
 definitions, explicit target/Tenant/deployment precedence, secret redaction,
-optimistic concurrency, Tenant Web behavior, and a candidate-only stop line.
+optimistic concurrency, six platform/Tenant Runtime operations, Tenant Web
+behavior, and a candidate-only stop line. The candidate remains subject to its
+focused and later milestone qualification gates.
 
 The minimal reusable code-set slice is fixed by the
 [P1-B04 Minimal Reference-Code Module Contract](./p1-b04-minimal-reference-code-contract.md).
@@ -126,7 +128,8 @@ It defines trusted Module-owned sets, Tenant-isolated immutable code identity,
 effective as-of options, optimistic concurrency, Tenant Web behavior, and a
 candidate-only stop line without reusing the fictional shared-master fixture.
 
-These P1 operations are implemented candidates, not qualified downstream
-capabilities. P1 work does not change the external-host consumption lock above.
-A later P1 commit remains unqualified for downstream consumption until a new
-fixed-commit aggregate check and review approve it.
+Implemented P1 operations are candidates, not qualified downstream capabilities.
+The Reference-Code contract remains implementation-only planning. P1 work does
+not change the external-host consumption lock above. A later P1 commit remains
+unqualified for downstream consumption until a new fixed-commit aggregate check
+and review approve it.

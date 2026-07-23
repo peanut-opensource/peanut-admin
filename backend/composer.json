@@ -12,12 +12,17 @@
     {
       "type": "path",
       "url": "../packages/php/data-permission"
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/settings"
     }
   ],
   "require": {
     "php": "^8.3",
     "peanut-admin/data-permission": "^0.1.0",
     "peanut-admin/kernel": "^0.1.0",
+    "peanut-admin/settings": "^0.1.0",
     "topthink/framework": "^8.1.4"
   },
   "autoload": {

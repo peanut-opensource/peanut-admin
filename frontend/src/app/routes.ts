@@ -4,6 +4,7 @@ import type { AdminNavigationRoute, ApiAudience } from '@peanut-admin/admin-core
 import { exampleReferenceModule } from '../modules/example-reference'
 import { exampleTargetModule } from '../modules/example-target'
 import { exampleWorkItemModule } from '../modules/example-work-item'
+import { peanutSettingsModule } from '../modules/peanut-settings'
 
 export interface AppRouteRegistration {
   name: string
@@ -30,7 +31,7 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'platform.audit.list', path: '/platform/audit', audience: 'platform', permission: 'platform.audit.read' },
 ]
 
-export const APP_MODULES = [exampleTargetModule, exampleReferenceModule, exampleWorkItemModule] as const
+export const APP_MODULES = [exampleTargetModule, exampleReferenceModule, exampleWorkItemModule, peanutSettingsModule] as const
 export const APP_NAVIGATION = createAdminNavigationRegistry({ routes: registrations, modules: APP_MODULES })
 export const APP_ROUTE_REGISTRY = new Map<string, AdminNavigationRoute>(
   APP_NAVIGATION.routes().map(route => [route.name, route]),

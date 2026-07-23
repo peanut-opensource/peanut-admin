@@ -10,6 +10,23 @@ use PeanutAdmin\Kernel\Authorization\CorePermissionCatalog;
 use PeanutAdmin\Testing\Authorization\PdoAuthorizationFixtureSeeder;
 
 $root = dirname(__DIR__, 3);
+$requiredPort = static function (string $name): int {
+    $value = getenv($name);
+    if (!is_string($value) || preg_match('/^[0-9]+$/D', $value) !== 1) {
+        fwrite(STDERR, "ERROR: {$name} is required for browser fixture setup\n");
+        exit(1);
+    }
+    $port = (int) $value;
+    if ($port < 1 || $port > 65535) {
+        fwrite(STDERR, "ERROR: {$name} must be an integer between 1 and 65535\n");
+        exit(1);
+    }
+
+    return $port;
+};
+$requiredPort('MYSQL_PORT');
+$port = $requiredPort('DB_PORT');
+
 require $root . '/vendor/autoload.php';
 
 $database = getenv('DB_DATABASE') ?: 'peanut_admin_browser_test';
@@ -18,7 +35,6 @@ if (!preg_match('/^peanut_admin_browser_test(?:_[a-z0-9]+)?$/', $database)) {
 }
 
 $host = getenv('DB_HOST') ?: '127.0.0.1';
-$port = (int) (getenv('DB_PORT') ?: 3306);
 $username = getenv('DB_USERNAME') ?: 'root';
 $password = getenv('DB_PASSWORD') ?: (getenv('MYSQL_ROOT_PASSWORD') ?: 'peanut_admin_root_dev');
 $admin = new PDO(
@@ -118,6 +134,8 @@ $tenantPermissions = [
     'example.work-item.create',
     'example.work-item.update',
     'example.work-item.policy-publish',
+    'peanut.settings.read',
+    'peanut.settings.manage',
 ];
 foreach ([
     [$alphaTenantId, $alphaMemberId],
