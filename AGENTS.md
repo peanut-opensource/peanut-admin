@@ -64,8 +64,15 @@ Before changing files, read in order:
   typecheck, build, Host, OpenAPI/generated, starter, aggregate, or test-probe
   commands. They use static review, an exact write-set check, `git diff --check`,
   and a clean commit, and record runtime verification for the owning stage.
-- A stage integration contract groups its checks and owns any permitted rerun.
-  `./scripts/check`, browser matrices, clean install and upgrade, backup and
+- The integration owner completes every source acceptance and shared wiring,
+  performs static review, verifies the exact write set, and fixes the final
+  tree before running any automated check. Immediately before the final stage
+  commit, it runs one consolidated round; each contracted group runs once.
+- If a group fails, collect all findings and repair them as one static batch.
+  Only that failed group may run one more time. A second failure blocks the
+  stage; never loop, widen the suite, rerun a passed group, or add a post-commit
+  confirmation run. A passing round is committed as the exact same tree.
+- `./scripts/check`, browser matrices, clean install and upgrade, backup and
   restore, performance, and cross-platform checks belong only to the final
   fixed-candidate qualification contract.
 - Historical task evidence is not an active instruction to rerun checks. A
