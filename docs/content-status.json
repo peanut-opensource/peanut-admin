@@ -121,6 +121,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-c03-ops-console-contract.md",
+      "title": "P1-C03 Ops Console Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/starter-v1-c02-file-media-contract.md",
       "title": "Starter v1 C02 File And Media Core Contract",
       "status": "canonical",
