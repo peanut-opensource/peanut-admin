@@ -57,19 +57,20 @@ Before changing files, read in order:
 
 ## Verification Policy
 
-- Ordinary reversible work runs the smallest set of unit, integration, type,
-  build, static, or documentation checks that covers the changed behavior.
-- Tenant isolation, identity, authorization, migrations, deletion, concurrency,
-  idempotency, external side effects, and breaking public-contract changes must
-  run risk-proportionate focused checks in the task that introduces the risk.
-- `./scripts/check` remains the aggregate repository entry point. Run it for a
-  fixed Starter v1 milestone, qualification, or release candidate, not as a
-  mandatory step after every bounded development task.
-- Full browser matrices, clean install and upgrade, backup and restore,
-  performance, and independent fixed-commit review belong to milestone
-  qualification unless a task directly changes the corresponding boundary.
-- Record every deferred aggregate check and the milestone that will run it. A
-  failed focused or aggregate check is never hidden or waived.
+- Automated verification runs only when the controlling stage contract assigns
+  it to that stage's integration owner or to a fixed-candidate qualification
+  owner.
+- Feature, follow-up, and review tasks do not run PHP, database, Web unit,
+  typecheck, build, Host, OpenAPI/generated, starter, aggregate, or test-probe
+  commands. They use static review, an exact write-set check, `git diff --check`,
+  and a clean commit, and record runtime verification for the owning stage.
+- A stage integration contract groups its checks and owns any permitted rerun.
+  `./scripts/check`, browser matrices, clean install and upgrade, backup and
+  restore, performance, and cross-platform checks belong only to the final
+  fixed-candidate qualification contract.
+- Historical task evidence is not an active instruction to rerun checks. A
+  failure from an authorized stage or qualification check is never hidden or
+  waived.
 - A performance failure blocks the affected qualification, release, or
   downstream lock movement. It does not freeze unrelated ordinary feature work.
 
@@ -77,11 +78,10 @@ Before changing files, read in order:
 
 1. Confirm the repository, branch, clean worktree, and prerequisite commit.
 2. Read the task whitelist and stop line.
-3. Add a check or test that fails for the missing capability when the task requires runtime behavior.
-4. Modify only whitelisted files.
-5. Run the focused and risk-sensitive checks required by this task, run
-   `git diff --check`, and record deferred milestone verification.
-6. Inspect the staged diff and commit only the current task.
-7. Stop after the assigned task.
+3. Modify only whitelisted files.
+4. Perform static review, verify the exact write set, run `git diff --check`,
+   and record the controlling stage's deferred verification identifier.
+5. Inspect the staged diff and commit only the current task.
+6. Stop after the assigned task.
 
 If facts conflict or the file whitelist is insufficient, stop and report the conflict instead of guessing.
