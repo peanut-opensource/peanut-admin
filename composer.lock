@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "10e30264f703b79235df1706fc2a2a24",
+    "content-hash": "59f7933281b9ea41eedbdf92cda93cd8",
     "packages": [
         {
             "name": "opis/json-schema",
@@ -263,6 +263,72 @@
             }
         },
         {
+            "name": "peanut-admin/import-export",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/php/import-export",
+                "reference": "8da0895badc9cb176ca6609e7c5b7ead4ce6f9a4"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "peanut-admin/file-media": "^0.1.0",
+                "peanut-admin/kernel": "^0.1.0",
+                "peanut-admin/task-job": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\ImportExport\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "PeanutAdmin\\ImportExport\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin Tenant CSV import/export orchestration contracts",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/integration-security",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/php/integration-security",
+                "reference": "ac042ecfd3534fe252e97e794323870ee30b74a6"
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-openssl": "*",
+                "ext-pdo": "*",
+                "peanut-admin/kernel": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\IntegrationSecurity\\": "src/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin Tenant machine identity, webhook, and session security contracts",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "peanut-admin/kernel",
             "version": "0.1.0",
             "dist": {
@@ -318,6 +384,34 @@
                 "Apache-2.0"
             ],
             "description": "Peanut Admin reusable Tenant notification inbox and SMS delivery contracts",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "peanut-admin/ops-console",
+            "version": "0.1.0",
+            "dist": {
+                "type": "path",
+                "url": "packages/php/ops-console",
+                "reference": "c91676fb45f6e2fd5f6eaea7adf388d7575922e5"
+            },
+            "require": {
+                "peanut-admin/kernel": "^0.1.0",
+                "peanut-admin/task-job": "^0.1.0",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PeanutAdmin\\OpsConsole\\": "src/"
+                }
+            },
+            "license": [
+                "Apache-2.0"
+            ],
+            "description": "Peanut Admin platform operations evidence and controlled action contracts",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -6029,5 +6123,5 @@
     "platform-overrides": {
         "php": "8.3.24"
     },
-    "plugin-api-version": "2.9.0"
+    "plugin-api-version": "2.6.0"
 }

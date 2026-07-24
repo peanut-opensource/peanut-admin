@@ -32,6 +32,18 @@
     {
       "type": "path",
       "url": "../packages/php/notification-sms"
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/import-export"
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/ops-console"
+    },
+    {
+      "type": "path",
+      "url": "../packages/php/integration-security"
     }
   ],
   "require": {
@@ -39,7 +51,10 @@
     "peanut-admin/data-permission": "^0.1.0",
     "peanut-admin/kernel": "^0.1.0",
     "peanut-admin/file-media": "^0.1.0",
+    "peanut-admin/import-export": "^0.1.0",
+    "peanut-admin/integration-security": "^0.1.0",
     "peanut-admin/notification-sms": "^0.1.0",
+    "peanut-admin/ops-console": "^0.1.0",
     "peanut-admin/reference-codes": "^0.1.0",
     "peanut-admin/settings": "^0.1.0",
     "peanut-admin/task-job": "^0.1.0",

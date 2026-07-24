@@ -21,6 +21,8 @@ $arguments = [
     '--feature', 'file-media',
     '--feature', 'task-job',
     '--feature', 'notification-sms',
+    '--feature', 'import-export',
+    '--feature', 'integration-security',
 ];
 
 function removeStaticFixture(string $path): void
@@ -142,7 +144,7 @@ try {
         || ($metadata['project']['admin_client_key'] ?? null) !== 'field-console') {
         throw new RuntimeException('Generated Tenant Client is invalid.');
     }
-    foreach (['Settings', 'ReferenceCodes', 'FileMedia', 'TaskJob', 'NotificationSms'] as $module) {
+    foreach (['Settings', 'ReferenceCodes', 'FileMedia', 'TaskJob', 'NotificationSms', 'ImportExport', 'IntegrationSecurity'] as $module) {
         $menus = json_decode(
             (string) file_get_contents($target . "/backend/src/Modules/Peanut/{$module}/Resources/menus.json"),
             true,
@@ -152,6 +154,11 @@ try {
         if (($menus[0]['client_keys'] ?? null) !== ['field-console']) {
             throw new RuntimeException("Generated {$module} menu is not bound to the admin Client.");
         }
+    }
+    $moduleConfig = (string) file_get_contents($target . '/backend/config/modules.php');
+    if (!str_contains($moduleConfig, 'peanut.ops-console.page')
+        || !is_file($target . '/frontend/src/modules/peanut-ops-console.ts')) {
+        throw new RuntimeException('Generated standard-admin Host is missing the always-on Ops Console.');
     }
 
     $autoload = getenv('PEANUT_PROJECT_GENERATOR_AUTOLOAD') ?: $root . '/vendor/autoload.php';

@@ -211,6 +211,16 @@ try {
     );
     assertTrue(!file_exists($temporaryRoot . '/missing-feature-dependency'), 'Missing feature dependency created a target.');
 
+    $importDependencyArgs = validArguments($temporaryRoot . '/missing-import-export-dependency');
+    array_push($importDependencyArgs, '--feature', 'import-export');
+    $result = runGenerator($root, $importDependencyArgs);
+    assertTrue($result['code'] !== 0, 'Import/Export without Task/Job must fail.');
+    assertTrue(
+        str_contains($result['stderr'], 'PROJECT_FEATURE_DEPENDENCY_MISSING'),
+        'Import/Export dependency error is unstable.',
+    );
+    assertTrue(!file_exists($temporaryRoot . '/missing-import-export-dependency'), 'Missing Import/Export dependency created a target.');
+
     $missingAdminArgs = validArguments($temporaryRoot . '/missing-admin');
     $adminIndex = array_search('--admin-client', $missingAdminArgs, true);
     assertTrue(is_int($adminIndex), 'Admin Client argument fixture is invalid.');
@@ -355,6 +365,10 @@ try {
     assertTrue(($authConfig['tenant_clients'][0]['api_prefix'] ?? null) === '/api/field/v1/', 'Tenant Client structure was lost.');
     assertTrue(str_contains((string) file_get_contents($first . '/backend/config/modules.php'), 'peanut.settings'), 'Selected Settings Module is absent.');
     assertTrue(!str_contains((string) file_get_contents($first . '/backend/config/modules.php'), 'peanut.reference-codes'), 'Unselected Module was enabled.');
+    assertTrue(str_contains((string) file_get_contents($first . '/backend/config/modules.php'), 'peanut.ops-console.page'), 'Always-on Ops Console was removed.');
+    assertTrue(is_file($first . '/frontend/src/modules/peanut-ops-console.ts'), 'Always-on Ops Console Host is absent.');
+    assertTrue(!is_dir($first . '/backend/src/Modules/Peanut/IntegrationSecurity'), 'Unselected Integration Security Module was retained.');
+    assertTrue(!is_file($first . '/frontend/src/modules/peanut-integration-security.ts'), 'Unselected Integration Security Host was retained.');
     $fileMenus = json_decode(
         (string) file_get_contents($first . '/backend/src/Modules/Peanut/FileMedia/Resources/menus.json'),
         true,

@@ -1,0 +1,1 @@
+export { peanutIntegrationSecurityModule } from './routes'

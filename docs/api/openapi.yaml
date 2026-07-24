@@ -405,6 +405,108 @@ x-notification-created-response: &notificationCreatedResponse
     content:
       application/json:
         schema: { $ref: './schemas/notification-sms.yaml#/NotificationPublishResponse' }
+x-import-export-response: &importExportResponse
+  <<: *writeErrors
+  '200':
+    description: Import/export operation
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content: { application/json: { schema: { $ref: './schemas/import-export.yaml#/OperationResponse' } } }
+x-import-export-list-response: &importExportListResponse
+  <<: *readErrors
+  '200':
+    description: Import/export operations
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content: { application/json: { schema: { $ref: './schemas/import-export.yaml#/OperationListResponse' } } }
+x-import-export-created-response: &importExportCreatedResponse
+  <<: *writeErrors
+  '201':
+    description: Import/export operation queued
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content: { application/json: { schema: { $ref: './schemas/import-export.yaml#/OperationResponse' } } }
+x-integration-security-response: &integrationSecurityResponse
+  <<: *writeErrors
+  '200':
+    description: Integration security result
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/ObjectResponse' } } }
+x-integration-security-versioned-response: &integrationSecurityVersionedResponse
+  <<: *writeErrors
+  '200':
+    description: Versioned integration security result
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/ObjectResponse' } } }
+x-integration-security-created-response: &integrationSecurityCreatedResponse
+  <<: *writeErrors
+  '201':
+    description: Integration security credential created
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/ObjectResponse' } } }
+x-integration-security-list-response: &integrationSecurityListResponse
+  <<: *readErrors
+  '200':
+    description: Integration security objects
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/ListResponse' } } }
+x-integration-security-page-response: &integrationSecurityPageResponse
+  <<: *readErrors
+  '200':
+    description: Integration security page
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/PageResponse' } } }
+x-ops-response: &opsResponse
+  <<: *writeErrors
+  '200':
+    description: Operations result
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+    content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/ObjectResponse' } } }
+x-ops-versioned-response: &opsVersionedResponse
+  <<: *writeErrors
+  '200':
+    description: Versioned operations result
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/ObjectResponse' } } }
+x-ops-created-response: &opsCreatedResponse
+  <<: *writeErrors
+  '201':
+    description: Operations resource created
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/ObjectResponse' } } }
+x-ops-accepted-response: &opsAcceptedResponse
+  <<: *writeErrors
+  '202':
+    description: Operations task accepted
+    headers:
+      X-Request-Id: { schema: { type: string } }
+      Cache-Control: { schema: { type: string, const: no-store } }
+      ETag: { schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/ObjectResponse' } } }
 
 x-platform-operator-response: &platformOperatorResponse
   <<: *writeErrors
@@ -429,6 +531,71 @@ x-platform-audit-list-response: &platformAuditListResponse
   '200': { $ref: './responses.yaml#/PlatformAuditListOk' }
 
 paths:
+  /api/v1/import-export/operations:
+    get:
+      operationId: listImportExportOperations
+      summary: listImportExportOperations
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ImportExportController::index'
+      x-module-key: peanut.import-export
+      x-permission: peanut.import-export.read
+      parameters: [{ in: query, name: status, schema: { type: string } }, { $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }]
+      responses: *importExportListResponse
+  /api/v1/import-export/operations/{operation_key}:
+    parameters: [{ in: path, name: operation_key, required: true, schema: { $ref: './schemas/import-export.yaml#/OperationKey' } }]
+    get: { operationId: getImportExportOperation, summary: getImportExportOperation, x-handler: 'PeanutAdmin\App\controller\api\v1\ImportExportController::show', x-module-key: peanut.import-export, x-permission: peanut.import-export.read, responses: *importExportResponse }
+  /api/v1/import-export/imports:
+    post:
+      operationId: submitImport
+      summary: submitImport
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ImportExportController::submitImport'
+      x-module-key: peanut.import-export
+      x-permission: peanut.import-export.create
+      x-host-atomic-idempotency: true
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/import-export.yaml#/SubmitImportRequest' } } } }
+      responses: *importExportCreatedResponse
+  /api/v1/import-export/exports:
+    post:
+      operationId: submitExport
+      summary: submitExport
+      x-handler: 'PeanutAdmin\App\controller\api\v1\ImportExportController::submitExport'
+      x-module-key: peanut.import-export
+      x-permission: peanut.import-export.create
+      x-host-atomic-idempotency: true
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/import-export.yaml#/SubmitExportRequest' } } } }
+      responses: *importExportCreatedResponse
+  /api/v1/import-export/operations/{operation_key}/cancel:
+    parameters: [{ in: path, name: operation_key, required: true, schema: { $ref: './schemas/import-export.yaml#/OperationKey' } }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    post: { operationId: cancelImportExportOperation, summary: cancelImportExportOperation, x-handler: 'PeanutAdmin\App\controller\api\v1\ImportExportController::cancel', x-module-key: peanut.import-export, x-permission: peanut.import-export.cancel, x-host-atomic-idempotency: true, responses: *importExportResponse }
+  /api/v1/integration-security/machine-identities:
+    get: { operationId: listMachineIdentities, summary: listMachineIdentities, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::machines', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.machine.read, responses: *integrationSecurityListResponse }
+    post: { operationId: createMachineIdentity, summary: createMachineIdentity, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::createMachine', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.machine.manage, x-host-atomic-idempotency: true, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/MachineCreateRequest' } } } }, responses: *integrationSecurityCreatedResponse }
+  /api/v1/integration-security/machine-identities/{identity_key}:
+    parameters: [{ in: path, name: identity_key, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    delete: { operationId: revokeMachineIdentity, summary: revokeMachineIdentity, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::revokeMachine', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.machine.manage, x-host-atomic-idempotency: true, responses: *integrationSecurityVersionedResponse }
+  /api/v1/integration-security/machine-identities/{identity_key}/rotate:
+    parameters: [{ in: path, name: identity_key, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    post: { operationId: rotateMachineIdentity, summary: rotateMachineIdentity, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::rotateMachine', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.machine.manage, x-host-atomic-idempotency: true, responses: *integrationSecurityVersionedResponse }
+  /api/v1/integration-security/webhooks:
+    get: { operationId: listWebhookEndpoints, summary: listWebhookEndpoints, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::webhooks', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.webhook.read, responses: *integrationSecurityListResponse }
+    post: { operationId: createWebhookEndpoint, summary: createWebhookEndpoint, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::createWebhook', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.webhook.manage, x-host-atomic-idempotency: true, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/integration-security.yaml#/WebhookCreateRequest' } } } }, responses: *integrationSecurityCreatedResponse }
+  /api/v1/integration-security/webhooks/{endpoint_key}:
+    parameters: [{ in: path, name: endpoint_key, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    delete: { operationId: disableWebhookEndpoint, summary: disableWebhookEndpoint, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::disableWebhook', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.webhook.manage, x-host-atomic-idempotency: true, responses: *integrationSecurityVersionedResponse }
+  /api/v1/integration-security/webhooks/{endpoint_key}/rotate-secret:
+    parameters: [{ in: path, name: endpoint_key, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    post: { operationId: rotateWebhookSecret, summary: rotateWebhookSecret, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::rotateWebhook', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.webhook.manage, x-host-atomic-idempotency: true, responses: *integrationSecurityVersionedResponse }
+  /api/v1/integration-security/deliveries:
+    get: { operationId: listWebhookDeliveries, summary: listWebhookDeliveries, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::deliveries', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.delivery.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *integrationSecurityPageResponse }
+  /api/v1/integration-security/deliveries/{delivery_key}/attempts:
+    parameters: [{ in: path, name: delivery_key, required: true, schema: { type: string } }]
+    get: { operationId: listWebhookDeliveryAttempts, summary: listWebhookDeliveryAttempts, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::attempts', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.delivery.read, parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/PageSize' }], responses: *integrationSecurityPageResponse }
+  /api/v1/integration-security/sessions:
+    get: { operationId: listIntegrationSessions, summary: listIntegrationSessions, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::sessions', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.session.read, responses: *integrationSecurityListResponse }
+  /api/v1/integration-security/sessions/{session_key}/revoke:
+    parameters: [{ in: path, name: session_key, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    post: { operationId: revokeIntegrationSession, summary: revokeIntegrationSession, x-handler: 'PeanutAdmin\App\controller\api\v1\IntegrationSecurityController::revokeSession', x-module-key: peanut.integration-security, x-permission: peanut.integration-security.session.revoke, x-host-atomic-idempotency: true, responses: *integrationSecurityResponse }
   /api/v1/tasks:
     get:
       operationId: listTasks
@@ -1099,6 +1266,23 @@ paths:
       x-handler: 'PeanutAdmin\App\controller\api\platform\v1\UpgradeStatusController::show'
       x-permission: platform.upgrade.read
       responses: *upgradeStatusResponse
+  /api/platform/v1/ops/status:
+    get: { operationId: getOpsStatus, summary: getOpsStatus, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::status', x-permission: platform.ops.read, responses: *opsResponse }
+  /api/platform/v1/ops/maintenance:
+    get: { operationId: getOpsMaintenance, summary: getOpsMaintenance, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::maintenance', x-permission: platform.ops.read, responses: *opsResponse }
+    put: { operationId: scheduleOpsMaintenance, summary: scheduleOpsMaintenance, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::scheduleMaintenance', x-permission: platform.ops.maintenance.manage, x-host-atomic-idempotency: true, parameters: [{ $ref: '#/components/parameters/IfMatchAllowZero' }, { $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/MaintenanceRequest' } } } }, responses: *opsCreatedResponse }
+  /api/platform/v1/ops/maintenance/{maintenance_key}/close:
+    parameters: [{ in: path, name: maintenance_key, required: true, schema: { type: string } }, { $ref: '#/components/parameters/IfMatch' }, { $ref: '#/components/parameters/IdempotencyKey' }]
+    post: { operationId: closeOpsMaintenance, summary: closeOpsMaintenance, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::closeMaintenance', x-permission: platform.ops.maintenance.manage, x-host-atomic-idempotency: true, responses: *opsVersionedResponse }
+  /api/platform/v1/ops/tasks/backup:
+    post: { operationId: submitOpsBackup, summary: submitOpsBackup, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::backup', x-permission: platform.ops.backup.manage, x-host-atomic-idempotency: true, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/BackupRequest' } } } }, responses: *opsAcceptedResponse }
+  /api/platform/v1/ops/tasks/restore:
+    post: { operationId: submitOpsRestore, summary: submitOpsRestore, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::restore', x-permission: platform.ops.restore.manage, x-host-atomic-idempotency: true, parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }], requestBody: { required: true, content: { application/json: { schema: { $ref: './schemas/ops-console.yaml#/RestoreRequest' } } } }, responses: *opsAcceptedResponse }
+  /api/platform/v1/ops/tasks/{task_key}:
+    parameters: [{ in: path, name: task_key, required: true, schema: { type: string } }]
+    get: { operationId: getOpsTask, summary: getOpsTask, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::task', x-permission: platform.ops.read, responses: *opsVersionedResponse }
+  /api/platform/v1/ops/logs:
+    get: { operationId: listOpsLogs, summary: listOpsLogs, x-handler: 'PeanutAdmin\App\controller\api\platform\v1\OpsConsoleController::logs', x-permission: platform.ops.logs.read, parameters: [{ in: query, name: source, schema: { type: string } }, { in: query, name: severity, schema: { enum: [info, warning, error, critical] } }, { in: query, name: cursor, schema: { type: [string, 'null'] } }, { $ref: '#/components/parameters/PageSize' }], responses: *opsResponse }
   /api/platform/v1/settings/{module_key}/{setting_key}:
     parameters:
       - { $ref: '#/components/parameters/SettingModuleKey' }
@@ -1221,6 +1405,7 @@ components:
     AuditTargetType: { in: query, name: target_type, schema: { type: string, minLength: 1, maxLength: 160 } }
     AuditTargetId: { in: query, name: target_id, schema: { type: string, minLength: 1, maxLength: 160 } }
     IfMatch: { in: header, name: If-Match, required: true, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
+    IfMatchAllowZero: { in: header, name: If-Match, required: true, schema: { type: string, pattern: '^"rev-(0|[1-9][0-9]*)"$' } }
     IfMatchOptional: { in: header, name: If-Match, required: false, schema: { type: string, pattern: '^"rev-[1-9][0-9]*"$' } }
     IfNoneMatchAny: { in: header, name: If-None-Match, required: false, schema: { type: string, const: '*' } }
     IdempotencyKey: { in: header, name: Idempotency-Key, required: true, schema: { type: string, minLength: 16, maxLength: 128 } }

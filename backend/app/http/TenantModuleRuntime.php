@@ -51,6 +51,7 @@ final class TenantModuleRuntime
         string $moduleKey,
         string $permission,
         bool $command = false,
+        bool $idempotencyRequired = false,
     ): ExternalOperationDefinition {
         return new ExternalOperationDefinition(
             $operationId,
@@ -60,6 +61,7 @@ final class TenantModuleRuntime
             $moduleKey,
             new PermissionRequirement('tenant', [$permission]),
             atomicCommand: $command,
+            idempotencyRequired: $idempotencyRequired,
         );
     }
 
@@ -81,7 +83,7 @@ final class TenantModuleRuntime
                 'if_match' => MemberAdminRuntime::header($request, 'if-match'),
             ],
             [],
-            null,
+            ($key = MemberAdminRuntime::header($request, 'idempotency-key')) === '' ? null : $key,
             $now,
             $now->modify('+24 hours'),
         );

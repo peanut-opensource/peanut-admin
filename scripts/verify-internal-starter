@@ -78,6 +78,23 @@ settings_required=(
   'packages/php/notification-sms/composer.json'
   'packages/web/task-job/package.json'
   'packages/web/notification-sms/package.json'
+  'backend/src/Modules/Peanut/ImportExport/module.json'
+  'backend/src/Modules/Peanut/IntegrationSecurity/module.json'
+  'backend/config/integration-security.php'
+  'backend/tests/import-export.php'
+  'backend/tests/integration-security.php'
+  'frontend/src/modules/peanut-import-export.ts'
+  'frontend/src/modules/peanut-integration-security.ts'
+  'frontend/src/modules/peanut-ops-console.ts'
+  'frontend/tests/import-export.spec.ts'
+  'frontend/tests/integration-security.spec.ts'
+  'frontend/tests/ops-console.spec.ts'
+  'packages/php/import-export/composer.json'
+  'packages/php/ops-console/composer.json'
+  'packages/php/integration-security/composer.json'
+  'packages/web/import-export/package.json'
+  'packages/web/ops-console/package.json'
+  'packages/web/integration-security/package.json'
 )
 for path in "${settings_required[@]}"; do
   if [[ ! -f "$first/$path" ]]; then
@@ -99,6 +116,12 @@ diff -ru "$ROOT/packages/php/task-job/src" "$first/packages/php/task-job/src"
 diff -ru "$ROOT/packages/php/notification-sms/src" "$first/packages/php/notification-sms/src"
 diff -ru "$ROOT/packages/web/task-job/src" "$first/packages/web/task-job/src"
 diff -ru "$ROOT/packages/web/notification-sms/src" "$first/packages/web/notification-sms/src"
+diff -ru "$ROOT/packages/php/import-export/src" "$first/packages/php/import-export/src"
+diff -ru "$ROOT/packages/php/ops-console/src" "$first/packages/php/ops-console/src"
+diff -ru "$ROOT/packages/php/integration-security/src" "$first/packages/php/integration-security/src"
+diff -ru "$ROOT/packages/web/import-export/src" "$first/packages/web/import-export/src"
+diff -ru "$ROOT/packages/web/ops-console/src" "$first/packages/web/ops-console/src"
+diff -ru "$ROOT/packages/web/integration-security/src" "$first/packages/web/integration-security/src"
 cmp "$ROOT/packages/php/settings/composer.json" "$first/packages/php/settings/composer.json"
 cmp "$ROOT/packages/web/settings/package.json" "$first/packages/web/settings/package.json"
 cmp "$ROOT/packages/php/reference-codes/composer.json" "$first/packages/php/reference-codes/composer.json"
@@ -109,6 +132,12 @@ cmp "$ROOT/packages/php/task-job/composer.json" "$first/packages/php/task-job/co
 cmp "$ROOT/packages/php/notification-sms/composer.json" "$first/packages/php/notification-sms/composer.json"
 cmp "$ROOT/packages/web/task-job/package.json" "$first/packages/web/task-job/package.json"
 cmp "$ROOT/packages/web/notification-sms/package.json" "$first/packages/web/notification-sms/package.json"
+cmp "$ROOT/packages/php/import-export/composer.json" "$first/packages/php/import-export/composer.json"
+cmp "$ROOT/packages/php/ops-console/composer.json" "$first/packages/php/ops-console/composer.json"
+cmp "$ROOT/packages/php/integration-security/composer.json" "$first/packages/php/integration-security/composer.json"
+cmp "$ROOT/packages/web/import-export/package.json" "$first/packages/web/import-export/package.json"
+cmp "$ROOT/packages/web/ops-console/package.json" "$first/packages/web/ops-console/package.json"
+cmp "$ROOT/packages/web/integration-security/package.json" "$first/packages/web/integration-security/package.json"
 
 php tests/starter/assert-generated-starter.php "$first"
 
@@ -164,6 +193,8 @@ php "$first/backend/tests/auth-clients.php"
 php "$first/backend/tests/settings.php"
 php "$first/backend/tests/reference-codes.php"
 php "$first/backend/tests/file-media.php"
+php "$first/backend/tests/import-export.php"
+php "$first/backend/tests/integration-security.php"
 pnpm --dir "$first" typecheck
 pnpm --dir "$first" test
 pnpm --dir "$first" build

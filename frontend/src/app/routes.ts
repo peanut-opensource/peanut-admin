@@ -9,6 +9,8 @@ import { peanutFileMediaModule } from '../modules/peanut-file-media'
 import { peanutSettingsModule } from '../modules/peanut-settings'
 import { peanutTaskJobModule } from '../modules/peanut-task-job'
 import { peanutNotificationSmsModule } from '../modules/peanut-notification-sms'
+import { peanutImportExportModule } from '../modules/peanut-import-export'
+import { peanutIntegrationSecurityModule } from '../modules/peanut-integration-security'
 
 export interface AppRouteRegistration {
   name: string
@@ -41,6 +43,7 @@ const registrations: readonly AppRouteRegistration[] = [
   { name: 'platform.governance.workbench', path: '/platform/governance', audience: 'platform', permission: 'platform.role.read' },
   { name: 'platform.audit.list', path: '/platform/audit', audience: 'platform', permission: 'platform.audit.read' },
   { name: 'platform.upgrade.status', path: '/platform/upgrade', audience: 'platform', permission: 'platform.upgrade.read' },
+  { name: 'platform.ops.console', path: '/platform/ops', audience: 'platform', permission: 'platform.ops.read' },
 ]
 
 export const APP_ROUTE_REGISTRATIONS = registrations
@@ -58,11 +61,14 @@ export const TRUSTED_MENU_ROUTE_CONTRACTS: Readonly<Record<string, TrustedMenuRo
   'platform.governance.workbench': { componentKey: 'platform.governance.workbench', clientKeys: ['platform-web'] },
   'platform.audit.list': { componentKey: 'platform.audit.list', clientKeys: ['platform-web'] },
   'platform.upgrade.status': { componentKey: 'platform.upgrade.status', clientKeys: ['platform-web'] },
+  'platform.ops.console': { componentKey: 'platform.ops.console', clientKeys: ['platform-web'] },
   'peanut.settings.list': { componentKey: 'peanut.settings.page', clientKeys: ['admin-web'] },
   'peanut.reference-codes.list': { componentKey: 'peanut.reference-codes.page', clientKeys: ['admin-web'] },
   'peanut.file-media.list': { componentKey: 'peanut.file-media.page', clientKeys: ['admin-web'] },
   'peanut.task-job.list': { componentKey: 'peanut.task-job.page', clientKeys: ['admin-web'] },
   'peanut.notification-sms.inbox': { componentKey: 'peanut.notification-sms.page', clientKeys: ['admin-web'] },
+  'peanut.import-export.list': { componentKey: 'peanut.import-export.page', clientKeys: ['admin-web'] },
+  'peanut.integration-security.index': { componentKey: 'peanut.integration-security.page', clientKeys: ['admin-web'] },
   'example-target-list': { componentKey: 'example.target.list', clientKeys: ['admin-web'] },
   'example-reference-list': { componentKey: 'example.reference.list', clientKeys: ['admin-web'] },
   'example-work-item-list': { componentKey: 'example.work-item.list', clientKeys: ['admin-web'] },
@@ -78,6 +84,8 @@ export const APP_MODULES = [
   peanutFileMediaModule,
   peanutTaskJobModule,
   peanutNotificationSmsModule,
+  peanutImportExportModule,
+  peanutIntegrationSecurityModule,
 ] as const
 export const APP_NAVIGATION = createAdminNavigationRegistry({ routes: registrations, modules: APP_MODULES })
 export const APP_ROUTE_REGISTRY = new Map<string, AdminNavigationRoute>(

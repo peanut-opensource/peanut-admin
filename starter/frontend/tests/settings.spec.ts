@@ -32,7 +32,7 @@ describe('internal starter Settings consumption', () => {
       'peanut.reference-codes',
       'peanut.file-media',
       'peanut.task-job',
-      'peanut.notification-sms',
+      'peanut.notification-sms', 'peanut.import-export', 'peanut.integration-security', 'peanut.ops-console',
     ])
     expect(host.settingsModule.routes[0]).toMatchObject({
       name: settingsPackage.SETTINGS_ROUTE_NAME,

@@ -189,6 +189,35 @@
         "backend/tests/Contract/OpenApiArtifactTest.php",
         "frontend/tests/stage-a-integration.spec.ts"
       ]
+    },
+    "RUNTIME-IMPORT-EXPORT-001": {
+      "description": "Tenant CSV import/export orchestration, File/Media and Task/Job adapters, optimistic cancellation, and Admin Web behavior",
+      "evidence": [
+        "packages/php/import-export/tests/feature-harness.php",
+        "packages/web/import-export/tests/contracts.spec.ts",
+        "packages/web/import-export/tests/runtime.spec.ts",
+        "backend/tests/Contract/OpenApiArtifactTest.php"
+      ]
+    },
+    "RUNTIME-INTEGRATION-SECURITY-001": {
+      "description": "Tenant machine credentials, Webhook delivery security, own-session revocation, one-time replay redaction, and Admin Web behavior",
+      "evidence": [
+        "packages/php/integration-security/tests/feature-harness.php",
+        "packages/php/integration-security/tests/mysql-harness.php",
+        "packages/web/integration-security/tests/contracts.spec.ts",
+        "packages/web/integration-security/tests/runtime.spec.ts",
+        "backend/tests/Contract/OpenApiArtifactTest.php"
+      ]
+    },
+    "RUNTIME-OPS-CONSOLE-001": {
+      "description": "Platform health/version/migration evidence, maintenance concurrency, trusted backup and restore tasks, and redacted runtime logs",
+      "evidence": [
+        "packages/php/ops-console/tests/feature-harness.php",
+        "packages/web/ops-console/tests/contracts.spec.ts",
+        "packages/web/ops-console/tests/runtime.spec.ts",
+        "packages/web/ops-console/tests/transport.spec.ts",
+        "backend/tests/Contract/OpenApiArtifactTest.php"
+      ]
     }
   },
   "operations": [
@@ -305,6 +334,31 @@
     {"operation_id":"bulkUpdateNotifications","scope":"p1","route":"POST /api/v1/notifications/bulk","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::bulk","response_schema":"#/components/schemas/NotificationBulkResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
     {"operation_id":"putNotificationTemplate","scope":"p1","route":"PUT /api/v1/notification-templates/{template_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::putTemplate","response_schema":"#/components/schemas/NotificationTemplateResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
     {"operation_id":"createNotification","scope":"p1","route":"POST /api/v1/notifications","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::publish","response_schema":"#/components/schemas/NotificationPublishResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
-    {"operation_id":"dispatchNotificationOutbox","scope":"p1","route":"POST /api/v1/notification-outbox/{outbox_key}/dispatch","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::dispatch","response_schema":"#/components/schemas/TaskResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"}
+    {"operation_id":"dispatchNotificationOutbox","scope":"p1","route":"POST /api/v1/notification-outbox/{outbox_key}/dispatch","handler":"PeanutAdmin\\App\\controller\\api\\v1\\NotificationController::dispatch","response_schema":"#/components/schemas/TaskResponse","test_owner":"RUNTIME-NOTIFICATION-SMS-001"},
+    {"operation_id":"listImportExportOperations","scope":"p1","route":"GET /api/v1/import-export/operations","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ImportExportController::index","response_schema":"#/components/schemas/OperationListResponse","test_owner":"RUNTIME-IMPORT-EXPORT-001"},
+    {"operation_id":"getImportExportOperation","scope":"p1","route":"GET /api/v1/import-export/operations/{operation_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ImportExportController::show","response_schema":"#/components/schemas/OperationResponse","test_owner":"RUNTIME-IMPORT-EXPORT-001"},
+    {"operation_id":"submitImport","scope":"p1","route":"POST /api/v1/import-export/imports","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ImportExportController::submitImport","response_schema":"#/components/schemas/OperationResponse","test_owner":"RUNTIME-IMPORT-EXPORT-001"},
+    {"operation_id":"submitExport","scope":"p1","route":"POST /api/v1/import-export/exports","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ImportExportController::submitExport","response_schema":"#/components/schemas/OperationResponse","test_owner":"RUNTIME-IMPORT-EXPORT-001"},
+    {"operation_id":"cancelImportExportOperation","scope":"p1","route":"POST /api/v1/import-export/operations/{operation_key}/cancel","handler":"PeanutAdmin\\App\\controller\\api\\v1\\ImportExportController::cancel","response_schema":"#/components/schemas/OperationResponse","test_owner":"RUNTIME-IMPORT-EXPORT-001"},
+    {"operation_id":"listMachineIdentities","scope":"p1","route":"GET /api/v1/integration-security/machine-identities","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::machines","response_schema":"#/components/schemas/ListResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"createMachineIdentity","scope":"p1","route":"POST /api/v1/integration-security/machine-identities","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::createMachine","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"revokeMachineIdentity","scope":"p1","route":"DELETE /api/v1/integration-security/machine-identities/{identity_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::revokeMachine","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"rotateMachineIdentity","scope":"p1","route":"POST /api/v1/integration-security/machine-identities/{identity_key}/rotate","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::rotateMachine","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"listWebhookEndpoints","scope":"p1","route":"GET /api/v1/integration-security/webhooks","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::webhooks","response_schema":"#/components/schemas/ListResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"createWebhookEndpoint","scope":"p1","route":"POST /api/v1/integration-security/webhooks","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::createWebhook","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"disableWebhookEndpoint","scope":"p1","route":"DELETE /api/v1/integration-security/webhooks/{endpoint_key}","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::disableWebhook","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"rotateWebhookSecret","scope":"p1","route":"POST /api/v1/integration-security/webhooks/{endpoint_key}/rotate-secret","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::rotateWebhook","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"listWebhookDeliveries","scope":"p1","route":"GET /api/v1/integration-security/deliveries","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::deliveries","response_schema":"#/components/schemas/PageResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"listWebhookDeliveryAttempts","scope":"p1","route":"GET /api/v1/integration-security/deliveries/{delivery_key}/attempts","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::attempts","response_schema":"#/components/schemas/PageResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"listIntegrationSessions","scope":"p1","route":"GET /api/v1/integration-security/sessions","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::sessions","response_schema":"#/components/schemas/ListResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"revokeIntegrationSession","scope":"p1","route":"POST /api/v1/integration-security/sessions/{session_key}/revoke","handler":"PeanutAdmin\\App\\controller\\api\\v1\\IntegrationSecurityController::revokeSession","response_schema":"#/components/schemas/ObjectResponse","test_owner":"RUNTIME-INTEGRATION-SECURITY-001"},
+    {"operation_id":"getOpsStatus","scope":"p1","route":"GET /api/platform/v1/ops/status","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::status","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"getOpsMaintenance","scope":"p1","route":"GET /api/platform/v1/ops/maintenance","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::maintenance","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"scheduleOpsMaintenance","scope":"p1","route":"PUT /api/platform/v1/ops/maintenance","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::scheduleMaintenance","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"closeOpsMaintenance","scope":"p1","route":"POST /api/platform/v1/ops/maintenance/{maintenance_key}/close","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::closeMaintenance","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"submitOpsBackup","scope":"p1","route":"POST /api/platform/v1/ops/tasks/backup","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::backup","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"submitOpsRestore","scope":"p1","route":"POST /api/platform/v1/ops/tasks/restore","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::restore","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"getOpsTask","scope":"p1","route":"GET /api/platform/v1/ops/tasks/{task_key}","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::task","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"},
+    {"operation_id":"listOpsLogs","scope":"p1","route":"GET /api/platform/v1/ops/logs","handler":"PeanutAdmin\\App\\controller\\api\\platform\\v1\\OpsConsoleController::logs","response_schema":"#/components/schemas/ObjectResponse-2","test_owner":"RUNTIME-OPS-CONSOLE-001"}
   ]
 }

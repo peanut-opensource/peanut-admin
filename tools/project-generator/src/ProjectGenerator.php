@@ -20,7 +20,7 @@ final class ProjectGeneratorException extends RuntimeException
 
 final class GenerationRequest
 {
-    private const FEATURES = ['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms'];
+    private const FEATURES = ['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms', 'import-export', 'integration-security'];
 
     /**
      * @param list<array{key: string, api_prefix: string}> $tenantClients
@@ -100,6 +100,10 @@ final class GenerationRequest
                 'Notification/SMS requires File/Media and Task/Job.',
             );
         }
+        if (in_array('import-export', $features, true)
+            && (!in_array('task-job', $features, true) || !in_array('file-media', $features, true))) {
+            throw new ProjectGeneratorException('PROJECT_FEATURE_DEPENDENCY_MISSING', 'Import/Export requires File/Media and Task/Job.');
+        }
         if ($target === '' || str_contains($target, "\0")) {
             throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target path is empty or invalid.');
         }
@@ -127,6 +131,9 @@ final class ProjectGenerator
         ['packages/php/file-media', 'composer.json'],
         ['packages/php/task-job', 'composer.json'],
         ['packages/php/notification-sms', 'composer.json'],
+        ['packages/php/import-export', 'composer.json'],
+        ['packages/php/ops-console', 'composer.json'],
+        ['packages/php/integration-security', 'composer.json'],
         ['packages/web/admin-core', 'package.json'],
         ['packages/web/admin-shell', 'package.json'],
         ['packages/web/settings', 'package.json'],
@@ -134,6 +141,9 @@ final class ProjectGenerator
         ['packages/web/file-media', 'package.json'],
         ['packages/web/task-job', 'package.json'],
         ['packages/web/notification-sms', 'package.json'],
+        ['packages/web/import-export', 'package.json'],
+        ['packages/web/ops-console', 'package.json'],
+        ['packages/web/integration-security', 'package.json'],
     ];
 
     /** @var array<string, array{backend_root: string, frontend_component: string, frontend_host: string, backend_test: string, frontend_test: string}> */
@@ -173,11 +183,26 @@ final class ProjectGenerator
             'backend_test' => 'backend/tests/notification-sms.php',
             'frontend_test' => 'frontend/tests/notification-sms.spec.ts',
         ],
+        'import-export' => [
+            'backend_root' => 'backend/src/Modules/Peanut/ImportExport',
+            'frontend_component' => 'peanut.import-export.page',
+            'frontend_host' => 'frontend/src/modules/peanut-import-export.ts',
+            'backend_test' => 'backend/tests/import-export.php',
+            'frontend_test' => 'frontend/tests/import-export.spec.ts',
+        ],
+        'integration-security' => [
+            'backend_root' => 'backend/src/Modules/Peanut/IntegrationSecurity',
+            'frontend_component' => 'peanut.integration-security.page',
+            'frontend_host' => 'frontend/src/modules/peanut-integration-security.ts',
+            'backend_test' => 'backend/tests/integration-security.php',
+            'frontend_test' => 'frontend/tests/integration-security.spec.ts',
+        ],
     ];
 
     /** @var array<string, list<string>> */
     private const FEATURE_DEPENDENCIES = [
         'notification-sms' => ['file-media', 'task-job'],
+        'import-export' => ['file-media', 'task-job'],
     ];
 
     private string $sourceRoot;
@@ -613,6 +638,9 @@ final class ProjectGenerator
             if ($key === 'notification-sms') {
                 $this->removePath($target . '/backend/config/notification-sms.php');
             }
+            if ($key === 'integration-security') {
+                $this->removePath($target . '/backend/config/integration-security.php');
+            }
         }
     }
 
@@ -654,7 +682,7 @@ final class ProjectGenerator
             'tenant_clients' => $request->tenantClients,
         ]);
         $moduleRoots = ['backend/src/Modules/Example/Greeting'];
-        $frontendComponents = ['example.greeting.page'];
+        $frontendComponents = ['example.greeting.page', 'peanut.ops-console.page'];
         foreach ($request->features as $feature) {
             $moduleRoots[] = self::FEATURES[$feature]['backend_root'];
             $frontendComponents[] = self::FEATURES[$feature]['frontend_component'];
@@ -847,6 +875,8 @@ TS;
             'file-media' => ['PeanutFileMediaHostOptions', 'createPeanutFileMediaHost', 'fileMedia'],
             'task-job' => ['PeanutTaskJobHostOptions', 'createPeanutTaskJobHost', 'taskJob'],
             'notification-sms' => ['PeanutNotificationSmsHostOptions', 'createPeanutNotificationSmsHost', 'notificationSms'],
+            'import-export' => ['PeanutImportExportHostOptions', 'createPeanutImportExportHost', 'importExport'],
+            'integration-security' => ['PeanutIntegrationSecurityHostOptions', 'createPeanutIntegrationSecurityHost', 'integrationSecurity'],
         ];
         foreach ($features as $feature) {
             [$type, $factory, $variable] = $map[$feature];
@@ -859,6 +889,13 @@ TS;
             $returns[] = "    {$variable}Module: {$variable}.module,";
             $returns[] = "    {$variable}Runtime: {$variable}.runtime,";
         }
+        $imports[] = "import { createPeanutOpsConsoleHost } from '../modules/peanut-ops-console'";
+        $imports[] = "import type { PeanutOpsConsoleHostOptions } from '../modules/peanut-ops-console'";
+        $types[] = 'PeanutOpsConsoleHostOptions';
+        $setup[] = '  const opsConsole = createPeanutOpsConsoleHost(options)';
+        $modules[] = 'opsConsole.module';
+        $returns[] = '    opsConsoleModule: opsConsole.module,';
+        $returns[] = '    opsConsoleRuntime: opsConsole.runtime,';
         $typeExpression = $types === [] ? 'Record<string, never>' : implode(' & ', $types);
         $contents = implode("\n", $imports)
             . ($imports === [] ? '' : "\n\n")
@@ -1007,6 +1044,12 @@ MD;
                 'pa_notification_template', 'pa_notification_message', 'pa_notification_attachment',
                 'pa_notification_outbox', 'pa_sms_rate_bucket', 'pa_notification_event',
             ],
+            'import-export' => ['pa_import_export_operation', 'pa_import_export_row_error'],
+            'integration-security' => [
+                'pa_integration_machine_identity', 'pa_integration_webhook_endpoint',
+                'pa_integration_webhook_delivery', 'pa_integration_webhook_attempt',
+                'pa_integration_security_event',
+            ],
         ];
         foreach ($features as $feature) {
             foreach ($owned[$feature] as $table) {
@@ -1147,7 +1190,7 @@ TS;
     /** @param list<string> $features */
     private function adaptFeatureFixtures(string $target, array $features): void
     {
-        $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features)];
+        $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features), 'peanut.ops-console'];
         $phpExpected = var_export(self::orderedModuleKeys($features), true);
         $canonicalKeys = self::orderedModuleKeys(array_keys(self::FEATURES));
         $phpPattern = '~\\[\\s*' . implode(
@@ -1179,6 +1222,8 @@ TS;
             'frontend/tests/file-media.spec.ts',
             'frontend/tests/task-job.spec.ts',
             'frontend/tests/notification-sms.spec.ts',
+            'frontend/tests/import-export.spec.ts',
+            'frontend/tests/integration-security.spec.ts',
         ] as $relative) {
             $path = $target . '/' . $relative;
             if (!is_file($path)) {
@@ -1439,13 +1484,13 @@ final class ProjectGeneratorCli
             }
         }
         $canonicalFeatures = [];
-        foreach (['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms'] as $feature) {
+        foreach (['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms', 'import-export', 'integration-security'] as $feature) {
             if (in_array($feature, $features, true)) {
                 $canonicalFeatures[] = $feature;
             }
         }
         foreach ($features as $feature) {
-            if (!in_array($feature, ['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms'], true)) {
+            if (!in_array($feature, ['settings', 'reference-codes', 'file-media', 'task-job', 'notification-sms', 'import-export', 'integration-security'], true)) {
                 $canonicalFeatures[] = $feature;
             }
         }

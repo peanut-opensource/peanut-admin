@@ -44,6 +44,9 @@ copy_package "$ROOT/packages/php/reference-codes" "$target/packages/php/referenc
 copy_package "$ROOT/packages/php/file-media" "$target/packages/php/file-media" composer.json
 copy_package "$ROOT/packages/php/task-job" "$target/packages/php/task-job" composer.json
 copy_package "$ROOT/packages/php/notification-sms" "$target/packages/php/notification-sms" composer.json
+copy_package "$ROOT/packages/php/import-export" "$target/packages/php/import-export" composer.json
+copy_package "$ROOT/packages/php/ops-console" "$target/packages/php/ops-console" composer.json
+copy_package "$ROOT/packages/php/integration-security" "$target/packages/php/integration-security" composer.json
 copy_package "$ROOT/packages/web/admin-core" "$target/packages/web/admin-core" package.json
 copy_package "$ROOT/packages/web/admin-shell" "$target/packages/web/admin-shell" package.json
 copy_package "$ROOT/packages/web/settings" "$target/packages/web/settings" package.json
@@ -51,5 +54,8 @@ copy_package "$ROOT/packages/web/reference-codes" "$target/packages/web/referenc
 copy_package "$ROOT/packages/web/file-media" "$target/packages/web/file-media" package.json
 copy_package "$ROOT/packages/web/task-job" "$target/packages/web/task-job" package.json
 copy_package "$ROOT/packages/web/notification-sms" "$target/packages/web/notification-sms" package.json
+copy_package "$ROOT/packages/web/import-export" "$target/packages/web/import-export" package.json
+copy_package "$ROOT/packages/web/ops-console" "$target/packages/web/ops-console" package.json
+copy_package "$ROOT/packages/web/integration-security" "$target/packages/web/integration-security" package.json
 
 echo "Internal starter created at: $target"

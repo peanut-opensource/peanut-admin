@@ -47,6 +47,14 @@ Tenant-scoped metadata, guarded upload/download/archive operations, and the
 existing Admin Web `/app/files` page. It does not claim production object
 storage, malware scanning, public delivery, or downstream qualification.
 
+The later Starter v1 development candidates add Task/Job, Notification/SMS,
+Import/Export, Integration Security, and a platform Ops Console to the same
+reference Host and fixed starter. These capabilities use first-party package
+contracts and keep provider-specific production choices outside the starter.
+They remain development candidates until a fixed-tree qualification approves
+the complete Starter v1; this repository state is not a package publication,
+release, or downstream consumption lock.
+
 ## Principles
 
 - Tenant and platform identities remain separate.

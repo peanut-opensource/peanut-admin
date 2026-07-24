@@ -8,6 +8,8 @@
     { "module_key": "peanut.file-media", "config": {} },
     { "module_key": "peanut.task-job", "config": {} },
     { "module_key": "peanut.notification-sms", "config": {} },
+    { "module_key": "peanut.import-export", "config": {} },
+    { "module_key": "peanut.integration-security", "config": {} },
     { "module_key": "example.target", "config": {} },
     { "module_key": "example.reference", "config": {} },
     { "module_key": "example.work-item", "config": {} }

@@ -9,8 +9,14 @@ import { createPeanutTaskJobHost } from '../modules/peanut-task-job'
 import type { PeanutTaskJobHostOptions } from '../modules/peanut-task-job'
 import { createPeanutNotificationSmsHost } from '../modules/peanut-notification-sms'
 import type { PeanutNotificationSmsHostOptions } from '../modules/peanut-notification-sms'
+import { createPeanutImportExportHost } from '../modules/peanut-import-export'
+import type { PeanutImportExportHostOptions } from '../modules/peanut-import-export'
+import { createPeanutIntegrationSecurityHost } from '../modules/peanut-integration-security'
+import type { PeanutIntegrationSecurityHostOptions } from '../modules/peanut-integration-security'
+import { createPeanutOpsConsoleHost } from '../modules/peanut-ops-console'
+import type { PeanutOpsConsoleHostOptions } from '../modules/peanut-ops-console'
 
-export type StarterModuleOptions = PeanutSettingsHostOptions & PeanutReferenceCodesHostOptions & PeanutFileMediaHostOptions & PeanutTaskJobHostOptions & PeanutNotificationSmsHostOptions
+export type StarterModuleOptions = PeanutSettingsHostOptions & PeanutReferenceCodesHostOptions & PeanutFileMediaHostOptions & PeanutTaskJobHostOptions & PeanutNotificationSmsHostOptions & PeanutImportExportHostOptions & PeanutIntegrationSecurityHostOptions & PeanutOpsConsoleHostOptions
 
 export const createStarterModules = (options: StarterModuleOptions) => {
   const settings = createPeanutSettingsHost(options)
@@ -18,9 +24,12 @@ export const createStarterModules = (options: StarterModuleOptions) => {
   const fileMedia = createPeanutFileMediaHost(options)
   const taskJob = createPeanutTaskJobHost(options)
   const notificationSms = createPeanutNotificationSmsHost(options)
+  const importExport = createPeanutImportExportHost(options)
+  const integrationSecurity = createPeanutIntegrationSecurityHost(options)
+  const opsConsole = createPeanutOpsConsoleHost(options)
 
   return {
-    modules: [exampleGreetingModule, settings.module, referenceCodes.module, fileMedia.module, taskJob.module, notificationSms.module] as const,
+    modules: [exampleGreetingModule, settings.module, referenceCodes.module, fileMedia.module, taskJob.module, notificationSms.module, importExport.module, integrationSecurity.module, opsConsole.module] as const,
     settingsModule: settings.module,
     settingsRuntime: settings.runtime,
     referenceCodesModule: referenceCodes.module,
@@ -31,5 +40,11 @@ export const createStarterModules = (options: StarterModuleOptions) => {
     taskJobRuntime: taskJob.runtime,
     notificationSmsModule: notificationSms.module,
     notificationSmsRuntime: notificationSms.runtime,
+    importExportModule: importExport.module,
+    importExportRuntime: importExport.runtime,
+    integrationSecurityModule: integrationSecurity.module,
+    integrationSecurityRuntime: integrationSecurity.runtime,
+    opsConsoleModule: opsConsole.module,
+    opsConsoleRuntime: opsConsole.runtime,
   }
 }

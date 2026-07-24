@@ -17,6 +17,9 @@ required=(
   packages/php/file-media/composer.json
   packages/php/task-job/composer.json
   packages/php/notification-sms/composer.json
+  packages/php/import-export/composer.json
+  packages/php/ops-console/composer.json
+  packages/php/integration-security/composer.json
   packages/web/admin-core/package.json
   packages/web/admin-shell/package.json
   packages/web/settings/package.json
@@ -24,12 +27,16 @@ required=(
   packages/web/file-media/package.json
   packages/web/task-job/package.json
   packages/web/notification-sms/package.json
+  packages/web/import-export/package.json
+  packages/web/ops-console/package.json
+  packages/web/integration-security/package.json
   packages/web/testing/package.json
   compose.yaml
   docs/decisions/dependencies/p0-a04-lock-evidence.json
   docs/decisions/dependencies/p1-b03-lock-evidence.json
   docs/decisions/dependencies/p1-b04-lock-evidence.json
   docs/decisions/dependencies/c02-file-media-lock-evidence.json
+  docs/decisions/dependencies/c03-stage-c-lock-evidence.json
 )
 
 for path in "${required[@]}"; do
@@ -53,7 +60,7 @@ fi
 
 php -r '
 $evidence = json_decode(
-    (string) file_get_contents("docs/decisions/dependencies/c02-file-media-lock-evidence.json"),
+    (string) file_get_contents("docs/decisions/dependencies/c03-stage-c-lock-evidence.json"),
     true,
     512,
     JSON_THROW_ON_ERROR,
@@ -107,6 +114,9 @@ foreach ([
     "peanut-admin/file-media",
     "peanut-admin/task-job",
     "peanut-admin/notification-sms",
+    "peanut-admin/import-export",
+    "peanut-admin/ops-console",
+    "peanut-admin/integration-security",
 ] as $name) {
     foreach (["root" => $rootPackages, "starter" => $starterPackages] as $label => $packages) {
         $package = $packages[$name] ?? null;
@@ -135,6 +145,9 @@ $expectedPhp = [
     "packages/php/file-media/composer.json" => ["peanut-admin/file-media", "PeanutAdmin\\FileMedia\\"],
     "packages/php/task-job/composer.json" => ["peanut-admin/task-job", "PeanutAdmin\\TaskJob\\"],
     "packages/php/notification-sms/composer.json" => ["peanut-admin/notification-sms", "PeanutAdmin\\NotificationSms\\"],
+    "packages/php/import-export/composer.json" => ["peanut-admin/import-export", "PeanutAdmin\\ImportExport\\"],
+    "packages/php/ops-console/composer.json" => ["peanut-admin/ops-console", "PeanutAdmin\\OpsConsole\\"],
+    "packages/php/integration-security/composer.json" => ["peanut-admin/integration-security", "PeanutAdmin\\IntegrationSecurity\\"],
 ];
 foreach ($expectedPhp as $path => [$name, $namespace]) {
     $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
@@ -199,6 +212,9 @@ if (($backend["require"]["peanut-admin/file-media"] ?? null) !== "^0.1.0") {
 foreach ([
     "task-job" => "peanut-admin/task-job",
     "notification-sms" => "peanut-admin/notification-sms",
+    "import-export" => "peanut-admin/import-export",
+    "ops-console" => "peanut-admin/ops-console",
+    "integration-security" => "peanut-admin/integration-security",
 ] as $directory => $package) {
     $repositories = array_values(array_filter(
         $backend["repositories"] ?? [],
@@ -223,6 +239,9 @@ $expectedWeb = [
     "packages/web/file-media/package.json" => "@peanut-admin/file-media",
     "packages/web/task-job/package.json" => "@peanut-admin/task-job",
     "packages/web/notification-sms/package.json" => "@peanut-admin/notification-sms",
+    "packages/web/import-export/package.json" => "@peanut-admin/import-export",
+    "packages/web/ops-console/package.json" => "@peanut-admin/ops-console",
+    "packages/web/integration-security/package.json" => "@peanut-admin/integration-security",
     "packages/web/testing/package.json" => "@peanut-admin/web-testing",
 ];
 foreach ($expectedWeb as $path => $name) {

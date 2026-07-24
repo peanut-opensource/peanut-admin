@@ -28,7 +28,7 @@ describe('internal starter reference-code consumption', () => {
       'peanut.reference-codes',
       'peanut.file-media',
       'peanut.task-job',
-      'peanut.notification-sms',
+      'peanut.notification-sms', 'peanut.import-export', 'peanut.integration-security', 'peanut.ops-console',
     ])
     expect(host.referenceCodesModule.routes[0]).toMatchObject({
       name: referenceCodesPackage.REFERENCE_CODES_ROUTE_NAME,

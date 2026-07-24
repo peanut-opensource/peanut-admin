@@ -63,5 +63,13 @@ return [
         'GET /api/platform/v1/audit-events/{event_id}' => 'platform.audit.read',
         'GET /api/platform/v1/menu-diagnostics' => 'platform.role.read',
         'GET /api/platform/v1/upgrade' => 'platform.upgrade.read',
+        'GET /api/platform/v1/ops/status' => 'platform.ops.read',
+        'GET /api/platform/v1/ops/maintenance' => 'platform.ops.read',
+        'PUT /api/platform/v1/ops/maintenance' => 'platform.ops.maintenance.manage',
+        'POST /api/platform/v1/ops/maintenance/{maintenance_key}/close' => 'platform.ops.maintenance.manage',
+        'POST /api/platform/v1/ops/tasks/backup' => 'platform.ops.backup.manage',
+        'POST /api/platform/v1/ops/tasks/restore' => 'platform.ops.restore.manage',
+        'GET /api/platform/v1/ops/tasks/{task_key}' => 'platform.ops.read',
+        'GET /api/platform/v1/ops/logs' => 'platform.ops.logs.read',
     ],
 ];

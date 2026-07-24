@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-24T10:46:14+08:00",
+  "task": "PA-SV1-C03-I05-stage-c-integration",
+  "input_commit": "8c0d59b4c972f84423a938b78cfa82b1b0fec058",
+  "input_tree": "b908bb46992018cfe7a29cb99e9e2d3bd23e4f97",
+  "accepted_feature_inputs": {
+    "import_export": "5f1c061",
+    "ops_console": "4df173f",
+    "integration_security": "13a91df"
+  },
+  "slice_status": "development-only",
+  "third_party_dependency_change": false,
+  "first_party_packages": [
+    "peanut-admin/import-export@0.1.0",
+    "@peanut-admin/import-export@0.1.0",
+    "peanut-admin/integration-security@0.1.0",
+    "@peanut-admin/integration-security@0.1.0",
+    "peanut-admin/ops-console@0.1.0",
+    "@peanut-admin/ops-console@0.1.0"
+  ],
+  "locks": {
+    "composer.lock": {
+      "sha256": "7e28ccec33031cd8a9b9974bb58749667e6ce04d4571c724375c2c70763a43e2",
+      "delta": "stage-c-first-party-packages-only"
+    },
+    "pnpm-lock.yaml": {
+      "sha256": "90fbe1fe7d33b47a572c5584a00d959a666dd32df02207b5f449cc0b7609a1fa",
+      "delta": "stage-c-first-party-packages-only"
+    },
+    "starter/backend/composer.lock": {
+      "sha256": "da1e89a6cf75e99df305d64ab8c210a167139fc74e9bf3900c5d19d6a6ce328a",
+      "delta": "stage-c-first-party-packages-only"
+    },
+    "starter/pnpm-lock.yaml": {
+      "sha256": "2157edfce152047de0b170246d3503524a2b6bdd63c037e684d687c6906d11ba",
+      "delta": "stage-c-first-party-packages-only"
+    }
+  },
+  "verification": {
+    "lock_sha256_consistency": "checked",
+    "manifest_lock_consistency": "pending-candidate-group-c",
+    "security_audit": "not-run-in-development-slice",
+    "two_independent_frozen_installs": "not-run-in-development-slice",
+    "fixed_commit_qualification": "not-run-in-development-slice"
+  },
+  "notes": [
+    "The Stage C lock delta adds only the accepted Import/Export, Integration Security, and Ops Console first-party packages.",
+    "Composer dependency resolution ran with network disabled; pnpm lock resolution used the external v11 store in offline lockfile-only mode.",
+    "No package installation, dependency upgrade, clean starter install, aggregate verification, release, or downstream lock movement is represented by this evidence."
+  ]
+}

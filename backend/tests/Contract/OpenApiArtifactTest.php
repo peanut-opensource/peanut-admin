@@ -14,8 +14,8 @@ final class OpenApiArtifactTest extends TestCase
         $routes = require $root . '/backend/route/openapi-generated.php';
         $operationIds = array_map(static fn(array $binding): string => $binding[3], $routes);
 
-        self::assertCount(114, $routes);
-        self::assertCount(114, array_unique($operationIds));
+        self::assertCount(139, $routes);
+        self::assertCount(139, array_unique($operationIds));
         self::assertArrayHasKey('GET /api/v1/account', $routes);
         self::assertArrayHasKey('PATCH /api/v1/account', $routes);
         self::assertArrayHasKey('POST /api/v1/account/password', $routes);
@@ -52,6 +52,13 @@ final class OpenApiArtifactTest extends TestCase
         self::assertArrayHasKey('GET /api/platform/v1/audit-events/{event_id}', $routes);
         self::assertArrayHasKey('GET /api/platform/v1/menu-diagnostics', $routes);
         self::assertArrayHasKey('GET /api/platform/v1/upgrade', $routes);
+        self::assertArrayHasKey('GET /api/v1/import-export/operations', $routes);
+        self::assertArrayHasKey('POST /api/v1/import-export/imports', $routes);
+        self::assertArrayHasKey('GET /api/v1/integration-security/machine-identities', $routes);
+        self::assertArrayHasKey('POST /api/v1/integration-security/sessions/{session_key}/revoke', $routes);
+        self::assertArrayHasKey('GET /api/platform/v1/ops/status', $routes);
+        self::assertArrayHasKey('POST /api/platform/v1/ops/tasks/backup', $routes);
+        self::assertArrayHasKey('PUT /api/platform/v1/ops/maintenance', $routes);
 
         $types = (string) file_get_contents($root . '/packages/web/admin-core/src/generated/api.d.ts');
         self::assertStringContainsString('listExampleWorkItems', $types);
@@ -67,6 +74,12 @@ final class OpenApiArtifactTest extends TestCase
         self::assertStringContainsString('NotificationListResponse', $types);
         self::assertStringContainsString('UpgradeStatusResponse', $types);
         self::assertStringContainsString('MenuDiagnosticListResponse', $types);
+        self::assertStringContainsString('OperationListResponse', $types);
+        self::assertStringContainsString('OperationResponse', $types);
+        self::assertStringContainsString('ListResponse', $types);
+        self::assertStringContainsString('ObjectResponse', $types);
+        self::assertStringContainsString('PageResponse', $types);
+        self::assertStringContainsString('ObjectResponse-2', $types);
         self::assertStringNotContainsString('tenant_id?: number', $types);
         self::assertStringNotContainsString('data: unknown', $types);
         self::assertDoesNotMatchRegularExpression('/(?:\| unknown|unknown \|)/', $types);
@@ -163,6 +176,8 @@ final class OpenApiArtifactTest extends TestCase
     {
         $routes = require dirname(__DIR__, 3) . '/backend/route/openapi-generated.php';
         $expected = [
+            'DELETE /api/v1/integration-security/machine-identities/{identity_key}' => 'peanut.integration-security',
+            'DELETE /api/v1/integration-security/webhooks/{endpoint_key}' => 'peanut.integration-security',
             'DELETE /api/v1/files/{file_key}' => 'peanut.file-media',
             'DELETE /api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}' => 'peanut.reference-codes',
             'DELETE /api/v1/settings/{module_key}/{setting_key}' => 'peanut.settings',
@@ -174,6 +189,13 @@ final class OpenApiArtifactTest extends TestCase
             'GET /api/v1/files' => 'peanut.file-media',
             'GET /api/v1/files/{file_key}' => 'peanut.file-media',
             'GET /api/v1/files/{file_key}/content' => 'peanut.file-media',
+            'GET /api/v1/import-export/operations' => 'peanut.import-export',
+            'GET /api/v1/import-export/operations/{operation_key}' => 'peanut.import-export',
+            'GET /api/v1/integration-security/deliveries' => 'peanut.integration-security',
+            'GET /api/v1/integration-security/deliveries/{delivery_key}/attempts' => 'peanut.integration-security',
+            'GET /api/v1/integration-security/machine-identities' => 'peanut.integration-security',
+            'GET /api/v1/integration-security/sessions' => 'peanut.integration-security',
+            'GET /api/v1/integration-security/webhooks' => 'peanut.integration-security',
             'GET /api/v1/notifications' => 'peanut.notification-sms',
             'GET /api/v1/reference-code-sets' => 'peanut.reference-codes',
             'GET /api/v1/reference-code-sets/{module_key}/{set_key}/codes' => 'peanut.reference-codes',
@@ -186,6 +208,14 @@ final class OpenApiArtifactTest extends TestCase
             'POST /api/v1/example/work-items' => 'example.work-item',
             'POST /api/v1/files' => 'peanut.file-media',
             'POST /api/v1/files/{file_key}/delivery-grants' => 'peanut.file-media',
+            'POST /api/v1/import-export/exports' => 'peanut.import-export',
+            'POST /api/v1/import-export/imports' => 'peanut.import-export',
+            'POST /api/v1/import-export/operations/{operation_key}/cancel' => 'peanut.import-export',
+            'POST /api/v1/integration-security/machine-identities' => 'peanut.integration-security',
+            'POST /api/v1/integration-security/machine-identities/{identity_key}/rotate' => 'peanut.integration-security',
+            'POST /api/v1/integration-security/sessions/{session_key}/revoke' => 'peanut.integration-security',
+            'POST /api/v1/integration-security/webhooks' => 'peanut.integration-security',
+            'POST /api/v1/integration-security/webhooks/{endpoint_key}/rotate-secret' => 'peanut.integration-security',
             'POST /api/v1/notification-outbox/{outbox_key}/dispatch' => 'peanut.notification-sms',
             'POST /api/v1/notifications' => 'peanut.notification-sms',
             'POST /api/v1/notifications/bulk' => 'peanut.notification-sms',
@@ -204,6 +234,8 @@ final class OpenApiArtifactTest extends TestCase
             }
         }
 
+        ksort($expected);
+        ksort($actual);
         self::assertSame($expected, $actual);
     }
 

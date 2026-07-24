@@ -22,7 +22,7 @@ P0 produces an internal alpha foundation that is safe to extend. It does not cla
 ## Runtime Operation Coverage
 
 [`runtime-operation-coverage.json`](./runtime-operation-coverage.json) classifies
-the current 114 OpenAPI operations as 75 P0 and 39 P1 operations, records their
+the current 139 OpenAPI operations as 75 P0 and 64 P1 operations, records their
 concrete handlers and success schemas, and assigns each operation to an
 executable test owner. `./scripts/check-runtime-coverage` rejects missing,
 duplicate, stale, or unowned operations.
@@ -135,6 +135,16 @@ a local development adapter outside the public Web root, upload and private
 download policy, optimistic archive, audit evidence, standard Admin Web
 behavior, and internal starter integration without adding a third-party
 dependency or claiming production object-storage readiness.
+
+The current Stage C integration candidate composes the accepted Import/Export,
+Integration Security, and Ops Console package contracts into the reference
+Host, typed OpenAPI artifacts, Runtime coverage ledger, standard Admin Web, and
+fixed starter. Import/Export depends on File/Media and Task/Job; Integration
+Security remains a selectable Tenant Module; the platform Ops Console is an
+always-on, fail-closed `standard-admin` workbench. The resulting 139-operation
+ledger contains 75 P0 and 64 P1 operations. These statements describe the
+candidate tree only and do not establish qualification, publication, release,
+or downstream consumption approval.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the

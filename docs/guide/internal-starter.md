@@ -21,7 +21,9 @@ application.
   --feature reference-codes \
   --feature file-media \
   --feature task-job \
-  --feature notification-sms
+  --feature notification-sms \
+  --feature import-export \
+  --feature integration-security
 ```
 
 When more than one Tenant Client is declared, `--admin-client` is required and
@@ -58,9 +60,12 @@ The generated `peanut-project.json` is deterministic and records:
 - the fact that no secret value is embedded.
 
 `standard-admin` is the only current profile. `settings`, `reference-codes`,
-`file-media`, `task-job`, and `notification-sms` are optional first-party
-Modules. Selecting `notification-sms` also requires `file-media` and
-`task-job`; the fictional
+`file-media`, `task-job`, `notification-sms`, `import-export`, and
+`integration-security` are optional first-party Modules. Selecting
+`notification-sms` or `import-export` also requires `file-media` and
+`task-job`. The platform Ops Console is part of every `standard-admin` Host;
+it remains fail-closed until the Host registers providers, maintenance reasons,
+log sources, and platform permissions. The fictional
 `example.greeting` Module remains a removable example. All package snapshots
 remain present for the fixed lock files, but only selected Modules are
 registered in the generated Host. Dependency versions remain fixed, so

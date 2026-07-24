@@ -75,6 +75,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'governance', name: 'platform.governance.workbench', component: () => import('../pages/governance/GovernanceWorkbenchPage.vue'), meta: { audience: 'platform', title: '权限治理', permission: 'platform.role.read' } },
       { path: 'audit', name: 'platform.audit.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'platform', title: '平台审计', permission: 'platform.audit.read', resourcePage: 'platform-audit' } },
       { path: 'upgrade', name: 'platform.upgrade.status', component: () => import('../pages/platform/UpgradeStatusPage.vue'), meta: { audience: 'platform', title: '版本与升级', permission: 'platform.upgrade.read' } },
+      { path: 'ops', name: 'platform.ops.console', component: () => import('../pages/platform/OpsConsoleHostPage.vue'), meta: { audience: 'platform', title: '运维控制台', permission: 'platform.ops.read' } },
     ],
   },
   { path: '/403', name: 'state.forbidden', component: () => import('../pages/status/StatusPage.vue'), meta: { title: '无权访问' } },

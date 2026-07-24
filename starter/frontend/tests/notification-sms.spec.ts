@@ -12,7 +12,7 @@ describe('internal starter Notification/SMS consumption', () => {
       }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
     })
     expect(host.modules.map(module => module.key)).toEqual([
-      'example.greeting', 'peanut.settings', 'peanut.reference-codes', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms',
+      'example.greeting', 'peanut.settings', 'peanut.reference-codes', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.import-export', 'peanut.integration-security', 'peanut.ops-console',
     ])
     expect(host.notificationSmsModule.routes[0]).toMatchObject({ name: 'peanut.notification-sms.inbox', path: '/app/notifications' })
     await host.notificationSmsRuntime.load()

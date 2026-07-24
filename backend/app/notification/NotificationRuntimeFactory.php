@@ -7,6 +7,7 @@ namespace PeanutAdmin\App\notification;
 use PDO;
 use RuntimeException;
 use PeanutAdmin\App\task\PdoTaskAuthorizationRevalidator;
+use PeanutAdmin\App\importexport\ImportExportRuntimeFactory;
 use PeanutAdmin\Kernel\Async\JobHandlerAdapter;
 use PeanutAdmin\Kernel\Async\TrustedEnvelopeCodec;
 use PeanutAdmin\NotificationSms\Application\NotificationService;
@@ -42,7 +43,7 @@ final class NotificationRuntimeFactory
         if($config['provider']!=='local-dev')throw new RuntimeException('SMS_PROVIDER_UNAVAILABLE');
         $recipients=new PdoRecipientResolver($pdo,$config['recipient_directory'],$config['recipient_digest_key']);
         $repository=new PdoNotificationRepository($pdo);
-        $handlers=new TaskHandlerRegistry([new InboxTaskHandler($repository),new SmsTaskHandler($repository,$recipients,new LocalDevSmsProvider())]);
+        $handlers=new TaskHandlerRegistry([new InboxTaskHandler($repository),new SmsTaskHandler($repository,$recipients,new LocalDevSmsProvider()),ImportExportRuntimeFactory::handler($pdo)]);
         return new LocalWorker($tenantId,$workerId,new PdoTaskJobRepository($pdo),$handlers,new JobHandlerAdapter(self::codec(),new PdoTaskAuthorizationRevalidator($pdo)));
     }
 
