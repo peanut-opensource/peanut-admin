@@ -6,14 +6,23 @@ use app\adminapi\http\middleware\InitMiddleware;
 use app\adminapi\http\middleware\LoginMiddleware;
 use think\facade\Route;
 
-// 管理后台路由组，统一加三层中间件
+// ─── Arco Design Pro Vue 兼容路由（对应前端 /api/user/* 调用） ───
+// 不经过 admin 中间件链，直接映射到对应 controller 方法
+Route::post('api/user/login',  'adminapi.auth.Login/login');
+Route::post('api/user/logout', 'adminapi.auth.Login/logout');
+Route::post('api/user/info',   'adminapi.auth.Login/info')
+    ->middleware([InitMiddleware::class, LoginMiddleware::class]);
+Route::post('api/user/menu',   'adminapi.auth.Menu/route')
+    ->middleware([InitMiddleware::class, LoginMiddleware::class]);
+
+// ─── 管理后台完整 API（三层中间件：Init → Login → Auth） ─────────
 Route::group('admin', function () {
 
-    // 认证（免登录）
-    Route::post('login/login',   'auth.Login/login');
-    Route::post('login/logout',  'auth.Login/logout');
+    // 免登录
+    Route::post('login/login',  'auth.Login/login');
+    Route::post('login/logout', 'auth.Login/logout');
 
-    // 需要登录的接口
+    // 需要登录
     Route::group('', function () {
         Route::get('login/info', 'auth.Login/info');
 
@@ -46,4 +55,5 @@ Route::group('admin', function () {
     });
 
 })->middleware([InitMiddleware::class, LoginMiddleware::class, AuthMiddleware::class]);
+
 
