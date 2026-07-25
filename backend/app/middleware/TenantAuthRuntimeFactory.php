@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\middleware;
 
-use PeanutAdmin\App\database\PdoProvider;
+use PDO;
 use PeanutAdmin\Kernel\Auth\Persistence\PdoTenantAuthRepository;
 use PeanutAdmin\Kernel\Auth\SystemClock;
 use PeanutAdmin\Kernel\Auth\TenantAuthService;
@@ -25,7 +25,7 @@ final class TenantAuthRuntimeFactory
             throw new RuntimeException('AUTH_IDENTIFIER_HMAC_KEY must contain at least 32 bytes.');
         }
 
-        $pdo = PdoProvider::get();
+        $pdo = app(PDO::class);
 
         $config = self::config();
         $clientKey ??= $config['default_client'];

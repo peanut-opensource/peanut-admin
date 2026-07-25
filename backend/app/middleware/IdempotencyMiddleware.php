@@ -6,7 +6,7 @@ namespace PeanutAdmin\App\middleware;
 
 use Closure;
 use DateTimeImmutable;
-use PeanutAdmin\App\database\PdoProvider;
+use PDO;
 use PeanutAdmin\Kernel\Api\ApiException;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Context\PlatformContext;
@@ -19,6 +19,8 @@ use think\Response;
 
 final class IdempotencyMiddleware
 {
+    public function __construct(private readonly PDO $pdo) {}
+
     public function handle(
         Request $request,
         Closure $next,
@@ -35,7 +37,7 @@ final class IdempotencyMiddleware
         );
         $route = $request->route();
         $routeValues = is_array($route) ? $route : [];
-        $repository = new PdoIdempotencyRepository(PdoProvider::get());
+        $repository = new PdoIdempotencyRepository($this->pdo);
         $expires = new DateTimeImmutable('+24 hours');
         $record = $audience === 'tenant'
             ? $this->beginTenant($repository, $routeValues['tenant_context'] ?? null, $operationId, $key, $requestHash, $expires)

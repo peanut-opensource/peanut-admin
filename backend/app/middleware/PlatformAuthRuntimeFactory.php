@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\middleware;
 
-use PeanutAdmin\App\database\PdoProvider;
+use PDO;
 use PeanutAdmin\Kernel\Auth\Persistence\PdoPlatformAuthRepository;
 use PeanutAdmin\Kernel\Auth\PlatformAuthService;
 use PeanutAdmin\Kernel\Auth\SystemClock;
@@ -24,7 +24,7 @@ final class PlatformAuthRuntimeFactory
             throw new RuntimeException('AUTH_IDENTIFIER_HMAC_KEY must contain at least 32 bytes.');
         }
 
-        $pdo = PdoProvider::get();
+        $pdo = app(PDO::class);
 
         return new PlatformAuthService(
             new PdoTransactionManager($pdo),

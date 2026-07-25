@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\middleware;
 
 use Closure;
-use PeanutAdmin\App\database\PdoProvider;
+use PDO;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Authorization\AuthorizationException;
 use PeanutAdmin\Kernel\Authorization\PdoTenantAuthorizationRepository;
@@ -21,6 +21,8 @@ use think\Response;
 
 final class PermissionGuard
 {
+    public function __construct(private readonly PDO $pdo) {}
+
     public function handle(
         Request $request,
         Closure $next,
@@ -30,7 +32,11 @@ final class PermissionGuard
         $route = $request->route();
         $routeValues = is_array($route) ? $route : [];
         $requirement = new PermissionRequirement($audience, [$permissionKey]);
-        $middleware = self::create();
+        $cache = new RevisionPermissionCache();
+        $middleware = new PermissionMiddleware(
+            new TenantAuthorizationEvaluator(new PdoTenantAuthorizationRepository($this->pdo), $cache),
+            new PlatformAuthorizationEvaluator(new PdoPlatformAuthorizationRepository($this->pdo), $cache),
+        );
 
         if ($audience === 'tenant') {
             $context = $routeValues['tenant_context'] ?? null;
@@ -47,16 +53,5 @@ final class PermissionGuard
         }
 
         return $next($request);
-    }
-
-    private static function create(): PermissionMiddleware
-    {
-        $pdo = PdoProvider::get();
-        $cache = new RevisionPermissionCache();
-
-        return new PermissionMiddleware(
-            new TenantAuthorizationEvaluator(new PdoTenantAuthorizationRepository($pdo), $cache),
-            new PlatformAuthorizationEvaluator(new PdoPlatformAuthorizationRepository($pdo), $cache),
-        );
     }
 }

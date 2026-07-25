@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\middleware;
 
-use PeanutAdmin\App\database\PdoProvider;
+use PDO;
 use PeanutAdmin\Kernel\Identity\SelfService\AccountSelfService;
 
 final class TenantAccountRuntimeFactory
@@ -13,6 +13,6 @@ final class TenantAccountRuntimeFactory
 
     public static function create(): AccountSelfService
     {
-        return new AccountSelfService(PdoProvider::get());
+        return new AccountSelfService(app(PDO::class));
     }
 }
