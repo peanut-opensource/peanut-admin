@@ -1,49 +1,49 @@
 <?php
-
 declare(strict_types=1);
 
-use PeanutAdmin\App\controller\api\platform\v1\HealthController as PlatformHealthController;
-use PeanutAdmin\App\controller\api\v1\HealthController as TenantHealthController;
-use PeanutAdmin\App\middleware\IdempotencyMiddleware;
-use PeanutAdmin\App\middleware\ModuleGuard;
-use PeanutAdmin\App\middleware\PermissionGuard;
-use PeanutAdmin\App\middleware\PlatformGuard;
-use PeanutAdmin\App\middleware\TenantGuard;
+use app\adminapi\http\middleware\AuthMiddleware;
+use app\adminapi\http\middleware\InitMiddleware;
+use app\adminapi\http\middleware\LoginMiddleware;
 use think\facade\Route;
 
-$routes = require __DIR__ . '/openapi-generated.php';
+// 管理后台路由组，统一加三层中间件
+Route::group('admin', function () {
 
-Route::get('api/v1/health$', [TenantHealthController::class, 'show'])->name('tenantHealth');
-Route::get('api/platform/v1/health$', [PlatformHealthController::class, 'show'])->name('platformHealth');
+    // 认证（免登录）
+    Route::post('login/login',   'auth.Login/login');
+    Route::post('login/logout',  'auth.Login/logout');
 
-foreach ($routes as $route => $binding) {
-    [$method, $path] = explode(' ', $route, 2);
-    [$class, $classMethod, $permission, $operationId, $audience, $requiresAuth, $idempotent, $moduleKey] = $binding;
-    $rule = Route::rule(ltrim($path, '/') . '$', [$class, $classMethod], $method)
-        ->name($operationId)
-        ->append(['operation_id' => $operationId, 'audience' => $audience]);
+    // 需要登录的接口
+    Route::group('', function () {
+        Route::get('login/info', 'auth.Login/info');
 
-    if ($requiresAuth) {
-        $rule->middleware($audience === 'tenant' ? TenantGuard::class : PlatformGuard::class);
-    }
-    if ($moduleKey !== null) {
-        if (!$requiresAuth || $audience !== 'tenant') {
-            throw new \LogicException("Module route must use an authenticated tenant context: {$route}");
-        }
-        $rule->middleware(ModuleGuard::class, $moduleKey);
-    }
-    if ($permission !== null) {
-        if (!$requiresAuth) {
-            throw new \LogicException("Protected permission route cannot be public: {$route}");
-        }
-        $rule->middleware(PermissionGuard::class, $permission, $audience);
-    }
-    if ($idempotent) {
-        if (!$requiresAuth) {
-            throw new \LogicException("Idempotent operation cannot be public: {$route}");
-        }
-        $rule->middleware(IdempotencyMiddleware::class, $operationId, $audience);
-    }
-}
+        // 菜单
+        Route::get('menu/route',   'auth.Menu/route');
+        Route::get('menu/lists',   'auth.Menu/lists');
+        Route::get('menu/all',     'auth.Menu/all');
+        Route::get('menu/detail',  'auth.Menu/detail');
+        Route::post('menu/add',    'auth.Menu/add');
+        Route::post('menu/edit',   'auth.Menu/edit');
+        Route::post('menu/delete', 'auth.Menu/delete');
+        Route::post('menu/status', 'auth.Menu/updateStatus');
 
-return $routes;
+        // 角色
+        Route::get('role/lists',   'auth.Role/lists');
+        Route::get('role/all',     'auth.Role/all');
+        Route::get('role/detail',  'auth.Role/detail');
+        Route::post('role/add',    'auth.Role/add');
+        Route::post('role/edit',   'auth.Role/edit');
+        Route::post('role/delete', 'auth.Role/delete');
+
+        // 管理员
+        Route::get('admin/lists',   'auth.Admin/lists');
+        Route::get('admin/detail',  'auth.Admin/detail');
+        Route::get('admin/self',    'auth.Admin/self');
+        Route::post('admin/add',    'auth.Admin/add');
+        Route::post('admin/edit',   'auth.Admin/edit');
+        Route::post('admin/delete', 'auth.Admin/delete');
+        Route::post('admin/status', 'auth.Admin/updateStatus');
+    });
+
+})->middleware([InitMiddleware::class, LoginMiddleware::class, AuthMiddleware::class]);
+

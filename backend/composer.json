@@ -1,68 +1,33 @@
 {
-  "name": "peanut-admin/reference-backend",
-  "description": "ThinkPHP reference host for Peanut Admin packages",
+  "name": "peanut-admin/backend",
+  "description": "Peanut Admin Backend API",
   "type": "project",
   "license": "Apache-2.0",
-  "version": "0.1.0",
-  "repositories": [
-    {
-      "type": "path",
-      "url": "../packages/php/kernel"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/data-permission"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/settings"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/reference-codes"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/file-media"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/task-job"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/notification-sms"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/import-export"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/ops-console"
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/integration-security"
-    }
-  ],
   "require": {
-    "php": "^8.3",
-    "peanut-admin/data-permission": "^0.1.0",
-    "peanut-admin/kernel": "^0.1.0",
-    "peanut-admin/file-media": "^0.1.0",
-    "peanut-admin/import-export": "^0.1.0",
-    "peanut-admin/integration-security": "^0.1.0",
-    "peanut-admin/notification-sms": "^0.1.0",
-    "peanut-admin/ops-console": "^0.1.0",
-    "peanut-admin/reference-codes": "^0.1.0",
-    "peanut-admin/settings": "^0.1.0",
-    "peanut-admin/task-job": "^0.1.0",
-    "topthink/framework": "^8.1.4"
+    "php": ">=8.1",
+    "topthink/framework": "^8.1.4",
+    "firebase/php-jwt": "^6.10",
+    "topthink/think-helper": "^3.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
   },
   "autoload": {
     "psr-4": {
-      "PeanutAdmin\\App\\": "app/"
+      "app\\": "app/"
+    },
+    "files": [
+      "app/common.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "tests\\": "tests/"
     }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "allow-plugins": {}
   }
 }

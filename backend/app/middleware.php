@@ -2,12 +2,7 @@
 
 declare(strict_types=1);
 
-use PeanutAdmin\App\middleware\ProblemDetailsMiddleware;
-use PeanutAdmin\App\middleware\RequestIdMiddleware;
-use PeanutAdmin\App\middleware\SecurityHeadersMiddleware;
+// 全局中间件（所有请求都经过）
+// 路由级中间件在 route/app.php 中按路由组定义
+return [];
 
-return [
-    RequestIdMiddleware::class,
-    SecurityHeadersMiddleware::class,
-    ProblemDetailsMiddleware::class,
-];

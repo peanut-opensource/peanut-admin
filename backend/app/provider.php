@@ -2,9 +2,5 @@
 
 declare(strict_types=1);
 
-use PeanutAdmin\App\http\ApiExceptionHandler;
-use think\exception\Handle;
+return [];
 
-return [
-    Handle::class => ApiExceptionHandler::class,
-];

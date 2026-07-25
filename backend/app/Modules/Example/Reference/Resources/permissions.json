@@ -1,5 +1,0 @@
-[
-  {"key": "example.reference.read", "type": "api", "name": "Read example references", "risk_level": "normal"},
-  {"key": "example.reference.use", "type": "action", "name": "Use example references", "risk_level": "normal"},
-  {"key": "example.reference.maintain", "type": "action", "name": "Maintain example references", "risk_level": "sensitive"}
-]
