@@ -1,4 +1,5 @@
 import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
+import type { AudienceApiClient } from '@peanut-admin/admin-core'
 import {
   REFERENCE_CODES_MANAGE_PERMISSION,
   REFERENCE_CODES_MODULE_KEY,
@@ -18,15 +19,16 @@ import type {
 } from '@peanut-admin/reference-codes'
 import { defineComponent, h, provide } from 'vue'
 
+import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
+
 interface ApiClientResult {
   readonly data?: unknown
   readonly error?: unknown
   readonly response: Response
 }
 
-const apiClient = async () => {
-  const { useAdminRuntime } = await import('../../app/runtime')
-  return useAdminRuntime().tenantClient
+export interface PeanutReferenceCodesModuleOptions {
+  client: AudienceApiClient
 }
 
 const transportResult = (result: ApiClientResult): ReferenceCodesTransportResult => ({
@@ -62,128 +64,134 @@ const mutationHeaders = (request: ReferenceCodeReplaceRequest | ReferenceCodeRet
   'If-Match': request.etag,
 })
 
-const transport: ReferenceCodesTransport = {
-  async listSets(signal) {
-    return transportResult(await (await apiClient()).GET('/api/v1/reference-code-sets', { signal }))
-  },
-  async listCodes(moduleKey, setKey, query, signal) {
-    return transportResult(await (await apiClient()).GET(
-      '/api/v1/reference-code-sets/{module_key}/{set_key}/codes',
-      {
-        params: {
-          path: { module_key: moduleKey, set_key: setKey },
-          query: listQuery(query),
+export const createPeanutReferenceCodesModule = (options: PeanutReferenceCodesModuleOptions) => {
+  const transport: ReferenceCodesTransport = {
+    async listSets(signal) {
+      return transportResult(await options.client.GET('/api/v1/reference-code-sets', { signal }))
+    },
+    async listCodes(moduleKey, setKey, query, signal) {
+      return transportResult(await options.client.GET(
+        '/api/v1/reference-code-sets/{module_key}/{set_key}/codes',
+        {
+          params: {
+            path: { module_key: moduleKey, set_key: setKey },
+            query: listQuery(query),
+          },
+          signal,
         },
-        signal,
-      },
-    ))
-  },
-  async getCode(moduleKey, setKey, code, asOf, signal) {
-    return transportResult(await (await apiClient()).GET(
-      '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
-      {
-        params: {
-          path: { module_key: moduleKey, set_key: setKey, code },
-          query: { as_of: asOf },
+      ))
+    },
+    async getCode(moduleKey, setKey, code, asOf, signal) {
+      return transportResult(await options.client.GET(
+        '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
+        {
+          params: {
+            path: { module_key: moduleKey, set_key: setKey, code },
+            query: { as_of: asOf },
+          },
+          signal,
         },
-        signal,
-      },
-    ))
-  },
-  async create(moduleKey, setKey, request) {
-    return transportResult(await (await apiClient()).POST(
-      '/api/v1/reference-code-sets/{module_key}/{set_key}/codes',
-      {
-        body: { code: request.input.code, ...versionBody(request.input) },
-        params: {
-          header: createHeaders(request),
-          path: { module_key: moduleKey, set_key: setKey },
+      ))
+    },
+    async create(moduleKey, setKey, request) {
+      return transportResult(await options.client.POST(
+        '/api/v1/reference-code-sets/{module_key}/{set_key}/codes',
+        {
+          body: { code: request.input.code, ...versionBody(request.input) },
+          params: {
+            header: createHeaders(request),
+            path: { module_key: moduleKey, set_key: setKey },
+          },
+          signal: request.signal,
         },
-        signal: request.signal,
-      },
-    ))
-  },
-  async replace(moduleKey, setKey, code, request) {
-    return transportResult(await (await apiClient()).PUT(
-      '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
-      {
-        body: versionBody(request.input),
-        params: {
-          header: mutationHeaders(request),
-          path: { module_key: moduleKey, set_key: setKey, code },
+      ))
+    },
+    async replace(moduleKey, setKey, code, request) {
+      return transportResult(await options.client.PUT(
+        '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
+        {
+          body: versionBody(request.input),
+          params: {
+            header: mutationHeaders(request),
+            path: { module_key: moduleKey, set_key: setKey, code },
+          },
+          signal: request.signal,
         },
-        signal: request.signal,
-      },
-    ))
-  },
-  async retire(moduleKey, setKey, code, request) {
-    return transportResult(await (await apiClient()).DELETE(
-      '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
-      {
-        params: {
-          header: mutationHeaders(request),
-          path: { module_key: moduleKey, set_key: setKey, code },
+      ))
+    },
+    async retire(moduleKey, setKey, code, request) {
+      return transportResult(await options.client.DELETE(
+        '/api/v1/reference-code-sets/{module_key}/{set_key}/codes/{code}',
+        {
+          params: {
+            header: mutationHeaders(request),
+            path: { module_key: moduleKey, set_key: setKey, code },
+          },
+          signal: request.signal,
         },
-        signal: request.signal,
-      },
-    ))
-  },
-}
+      ))
+    },
+  }
+  let referenceCodesRuntime: ReferenceCodesRuntime | null = null
 
-let referenceCodesRuntime: ReferenceCodesRuntime | null = null
+  const loadReferenceCodesRoute = async () => {
+    const referenceCodesPackage = await import('@peanut-admin/reference-codes')
+    const runtime = referenceCodesRuntime ?? referenceCodesPackage.createReferenceCodesRuntime({
+      transport,
+      canRead: () => hasPermission(useTenantContext().permissionSet, REFERENCE_CODES_READ_PERMISSION),
+      canManage: () => hasPermission(useTenantContext().permissionSet, REFERENCE_CODES_MANAGE_PERMISSION),
+    })
+    referenceCodesRuntime = runtime
 
-export const loadReferenceCodesRoute = async () => {
-  const referenceCodesPackage = await import('@peanut-admin/reference-codes')
-  const runtime = referenceCodesRuntime ?? referenceCodesPackage.createReferenceCodesRuntime({
-    transport,
-    canRead: () => hasPermission(useTenantContext().permissionSet, REFERENCE_CODES_READ_PERMISSION),
-    canManage: () => hasPermission(useTenantContext().permissionSet, REFERENCE_CODES_MANAGE_PERMISSION),
+    const contribution = referenceCodesPackage.createReferenceCodesModuleContribution(runtime)
+    const packageRoute = contribution.routes[0]
+    if (
+      contribution.key !== REFERENCE_CODES_MODULE_KEY
+      || contribution.routes.length !== 1
+      || packageRoute?.name !== REFERENCE_CODES_ROUTE_NAME
+      || packageRoute.path !== REFERENCE_CODES_ROUTE_PATH
+      || packageRoute.access.moduleKey !== REFERENCE_CODES_MODULE_KEY
+      || packageRoute.access.permissionKeys.length !== 1
+      || packageRoute.access.permissionKeys[0] !== REFERENCE_CODES_READ_PERMISSION
+    ) {
+      runtime.dispose()
+      throw new Error('PEANUT_REFERENCE_CODES_CONTRIBUTION_INVALID')
+    }
+
+    const { default: ReferenceCodesPage } = await packageRoute.component()
+    return {
+      default: defineComponent({
+        name: 'PeanutReferenceCodesHostRoute',
+        setup() {
+          provide(referenceCodesPackage.referenceCodesRuntimeKey, runtime)
+          return () => h(ReferenceCodesPage)
+        },
+      }),
+    }
+  }
+
+  return defineAdminModule({
+    key: REFERENCE_CODES_MODULE_KEY,
+    routes: [{
+      name: REFERENCE_CODES_ROUTE_NAME,
+      path: REFERENCE_CODES_ROUTE_PATH,
+      component: loadReferenceCodesRoute,
+      access: {
+        moduleKey: REFERENCE_CODES_MODULE_KEY,
+        permissionKeys: [REFERENCE_CODES_READ_PERMISSION],
+      },
+    }],
+    disposeOnTenantChange: true,
+    stores: [{
+      key: REFERENCE_CODES_STORE_KEY,
+      dispose() {
+        referenceCodesRuntime?.dispose()
+        referenceCodesRuntime = null
+      },
+    }],
   })
-  referenceCodesRuntime = runtime
-
-  const contribution = referenceCodesPackage.createReferenceCodesModuleContribution(runtime)
-  const packageRoute = contribution.routes[0]
-  if (
-    contribution.key !== REFERENCE_CODES_MODULE_KEY
-    || contribution.routes.length !== 1
-    || packageRoute?.name !== REFERENCE_CODES_ROUTE_NAME
-    || packageRoute.path !== REFERENCE_CODES_ROUTE_PATH
-    || packageRoute.access.moduleKey !== REFERENCE_CODES_MODULE_KEY
-    || packageRoute.access.permissionKeys.length !== 1
-    || packageRoute.access.permissionKeys[0] !== REFERENCE_CODES_READ_PERMISSION
-  ) {
-    runtime.dispose()
-    throw new Error('PEANUT_REFERENCE_CODES_CONTRIBUTION_INVALID')
-  }
-
-  const { default: ReferenceCodesPage } = await packageRoute.component()
-  return {
-    default: defineComponent({
-      name: 'PeanutReferenceCodesHostRoute',
-      setup() {
-        provide(referenceCodesPackage.referenceCodesRuntimeKey, runtime)
-        return () => h(ReferenceCodesPage)
-      },
-    }),
-  }
 }
 
-export const peanutReferenceCodesModule = defineAdminModule({
-  key: REFERENCE_CODES_MODULE_KEY,
-  routes: [{
-    name: REFERENCE_CODES_ROUTE_NAME,
-    path: REFERENCE_CODES_ROUTE_PATH,
-    component: loadReferenceCodesRoute,
-    access: {
-      moduleKey: REFERENCE_CODES_MODULE_KEY,
-      permissionKeys: [REFERENCE_CODES_READ_PERMISSION],
-    },
-  }],
-  disposeOnTenantChange: true,
-  stores: [{
-    key: REFERENCE_CODES_STORE_KEY,
-    dispose() {
-      referenceCodesRuntime?.dispose()
-    },
-  }],
+export const peanutReferenceCodesModule = createPeanutReferenceCodesModule({
+  client: UNCONFIGURED_TENANT_CLIENT,
 })

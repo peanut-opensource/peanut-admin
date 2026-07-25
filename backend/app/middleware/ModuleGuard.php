@@ -7,7 +7,7 @@ namespace PeanutAdmin\App\middleware;
 use Closure;
 use DateTimeImmutable;
 use DateTimeZone;
-use PDO;
+use PeanutAdmin\App\database\PdoProvider;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Authorization\AuthorizationException;
 use PeanutAdmin\Kernel\Module\ModuleGuard as KernelModuleGuard;
@@ -29,29 +29,10 @@ final class ModuleGuard
             throw new AuthorizationException('CONTEXT_TENANT_REQUIRED');
         }
 
-        $guard = new KernelModuleGuard($this->repository ?? new PdoModuleRuntimeRepository(self::pdo()));
+        $guard = new KernelModuleGuard($this->repository ?? new PdoModuleRuntimeRepository(PdoProvider::get()));
         $guard->assertDeployment($moduleKey);
         $guard->assertTenant($context->tenantId, $moduleKey, new DateTimeImmutable('now', new DateTimeZone('UTC')));
 
         return $next($request);
-    }
-
-    private static function pdo(): PDO
-    {
-        return new PDO(
-            sprintf(
-                'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
-                getenv('DB_HOST') ?: '127.0.0.1',
-                (int) (getenv('DB_PORT') ?: 3306),
-                getenv('DB_DATABASE') ?: 'peanut_admin',
-            ),
-            getenv('DB_USERNAME') ?: 'peanut_admin',
-            getenv('DB_PASSWORD') ?: 'peanut_admin_dev',
-            [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false,
-            ],
-        );
     }
 }

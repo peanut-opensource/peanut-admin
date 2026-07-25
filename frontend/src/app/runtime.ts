@@ -1,5 +1,6 @@
 import {
   createPlatformApiClient,
+  createAdminNavigationRegistry,
   createTenantApiClient,
   defineAdminHostConfig,
   disposeTenantState,
@@ -11,6 +12,9 @@ import {
 } from '@peanut-admin/admin-core'
 import type {
   AdminHostConfig,
+  AdminModuleContribution,
+  AdminNavigationRegistry,
+  AdminNavigationRoute,
   ApiAudience,
   AudienceApiClient,
   PlatformContextData,
@@ -31,7 +35,8 @@ import {
 import type { AdminMenuItem, TenantLoginResult } from './contracts'
 import { createContextGeneration } from './context-generation'
 import { readAdminHostConfig } from './host-config'
-import { APP_NAVIGATION } from './routes'
+import { createAppModules } from './modules'
+import { APP_ROUTE_REGISTRATIONS } from './routes'
 import { useWorkspaceStore } from './store'
 import type { WorkspaceIdentity } from './store'
 
@@ -140,6 +145,9 @@ export interface AdminRuntime {
   config: AdminHostConfig
   tenantClient: AudienceApiClient
   platformClient: AudienceApiClient
+  modules: readonly AdminModuleContribution[]
+  navigation: AdminNavigationRegistry
+  routeRegistry: ReadonlyMap<string, AdminNavigationRoute>
   generation: ReturnType<typeof createContextGeneration>
   tenantLogin: (email: string, password: string, tenantCode: string | null) => Promise<TenantLoginResult>
   beginTenantSwitch: () => Promise<TenantLoginResult>
@@ -214,11 +222,16 @@ export const createAdminRuntime = (
     refresh: () => refresh('platform'),
     refreshScope: `${config.platform.clientKey}:platform`,
   })
+  const modules = createAppModules({ tenantClient })
+  const navigation = createAdminNavigationRegistry({ routes: APP_ROUTE_REGISTRATIONS, modules })
+  const routeRegistry = new Map<string, AdminNavigationRoute>(
+    navigation.routes().map(route => [route.name, route]),
+  )
 
   const disposeRegisteredTenantState = async (): Promise<void> => {
     const results = await Promise.allSettled([
       disposeTenantState(),
-      APP_NAVIGATION.disposeTenantState(),
+      navigation.disposeTenantState(),
     ])
     const failure = results.find((result): result is PromiseRejectedResult => result.status === 'rejected')
     if (failure !== undefined) throw failure.reason
@@ -236,7 +249,7 @@ export const createAdminRuntime = (
       tenantContext.clear()
       workspace.clearTenant()
       targets.clearAll()
-      APP_NAVIGATION.clearDiagnostics()
+      navigation.clearDiagnostics()
     }
     if (disposalFailure !== null) throw disposalFailure
   }
@@ -256,6 +269,9 @@ export const createAdminRuntime = (
     config,
     tenantClient,
     platformClient,
+    modules,
+    navigation,
+    routeRegistry,
     generation,
     unwrap,
     async tenantLogin(email, password, tenantCode) {

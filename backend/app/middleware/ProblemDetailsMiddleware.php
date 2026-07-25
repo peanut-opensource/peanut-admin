@@ -54,7 +54,16 @@ final class ProblemDetailsMiddleware
                     in_array($exception->errorCode, ['MODULE_INSTALLATION_FAILED', 'MODULE_NOT_INSTALLED'], true) ? 503 : 403,
                     $exception->getMessage(),
                 ),
-                default => new ApiException('INTERNAL_ERROR', 500, 'The request could not be completed.'),
+                default => (static function () use ($exception): ApiException {
+                    error_log(sprintf(
+                        '[Peanut] Unhandled exception: %s %s in %s:%d',
+                        get_class($exception),
+                        $exception->getMessage(),
+                        $exception->getFile(),
+                        $exception->getLine(),
+                    ));
+                    return new ApiException('INTERNAL_ERROR', 500, 'The request could not be completed.');
+                })(),
             };
             $problem = ProblemDetails::fromException($apiException, $requestId);
 

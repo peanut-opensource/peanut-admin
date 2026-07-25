@@ -53,7 +53,6 @@ export const useWorkspaceStore = defineStore('peanut-admin-reference-workspace',
       this.platformIdentity = null
       this.platformMenus = []
       this.platformMenuRevision = null
-      this.menuDiagnostics = []
     },
     setProblem(problem: ProblemDetails | null): void {
       this.problem = problem

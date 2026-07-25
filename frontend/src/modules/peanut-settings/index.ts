@@ -1,1 +1,2 @@
-export { peanutSettingsModule } from './routes'
+export { createPeanutSettingsModule, peanutSettingsModule } from './routes'
+export type { PeanutSettingsModuleOptions } from './routes'

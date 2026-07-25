@@ -1,1 +1,2 @@
-export { peanutFileMediaModule } from './routes'
+export { createPeanutFileMediaModule, peanutFileMediaModule } from './routes'
+export type { PeanutFileMediaModuleOptions } from './routes'

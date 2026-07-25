@@ -10,10 +10,10 @@ import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
 
 import { AdminApiError } from './runtime'
 import type { AdminRuntime } from './runtime'
-import { APP_MODULES, safeReturnTo } from './routes'
+import { safeReturnTo } from './routes'
 import { useWorkspaceStore } from './store'
 
-const moduleRoutes: RouteRecordRaw[] = APP_MODULES
+const moduleRoutes = (runtime: AdminRuntime): RouteRecordRaw[] => runtime.modules
   .flatMap(module => module.routes.map((route): RouteRecordRaw => ({
     path: route.path.slice('/app/'.length),
     name: route.name,
@@ -22,11 +22,11 @@ const moduleRoutes: RouteRecordRaw[] = APP_MODULES
       audience: 'tenant' as const,
       permissions: route.access.permissionKeys,
       moduleKey: route.access.moduleKey,
-      ...(route.name === 'example-work-item-policy' ? { title: '目标策略发布' } : {}),
+      ...('title' in route && typeof route.title === 'string' ? { title: route.title } : {}),
     },
   })))
 
-const routes: RouteRecordRaw[] = [
+const routes = (runtime: AdminRuntime): RouteRecordRaw[] => [
   {
     path: '/login',
     name: 'tenant.login',
@@ -59,7 +59,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'governance', name: 'tenant.governance.workbench', component: () => import('../pages/governance/GovernanceWorkbenchPage.vue'), meta: { audience: 'tenant', title: '权限治理', permission: 'core.role.read' } },
       { path: 'modules', name: 'tenant.modules.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'tenant', title: '模块管理', permission: 'core.module.read', resourcePage: 'tenant-modules' } },
       { path: 'audit', name: 'tenant.audit.list', component: () => import('../pages/common/ResourceCollectionPage.vue'), meta: { audience: 'tenant', title: '审计日志', permission: 'core.audit.read', resourcePage: 'tenant-audit' } },
-      ...moduleRoutes,
+      ...moduleRoutes(runtime),
     ],
   },
   {
@@ -91,7 +91,7 @@ const protectedReturnTo = (route: RouteLocationNormalized): string => {
 }
 
 export const createAdminRouter = (runtime: AdminRuntime) => {
-  const router = createRouter({ history: createWebHistory(), routes })
+  const router = createRouter({ history: createWebHistory(), routes: routes(runtime) })
 
   router.beforeEach(async to => {
     const workspace = useWorkspaceStore()

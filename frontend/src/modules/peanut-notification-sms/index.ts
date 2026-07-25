@@ -1,1 +1,2 @@
-export { peanutNotificationSmsModule } from './routes'
+export { createPeanutNotificationSmsModule, peanutNotificationSmsModule } from './routes'
+export type { PeanutNotificationSmsModuleOptions } from './routes'

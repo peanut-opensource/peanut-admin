@@ -8,7 +8,6 @@ import type { ShellBreadcrumbItem, ShellNavigationItem } from '@peanut-admin/adm
 
 import type { AdminMenuItem } from '../app/contracts'
 import { useAdminRuntime } from '../app/runtime'
-import { APP_ROUTE_REGISTRY } from '../app/routes'
 import { useWorkspaceStore } from '../app/store'
 import { readShellHostConfig } from './host-config'
 
@@ -26,7 +25,7 @@ const convertMenu = (menu: AdminMenuItem): ShellNavigationItem | null => {
   const children = menu.children.map(convertMenu).filter((item): item is ShellNavigationItem => item !== null)
   if (menu.type === 'group') return { key: menu.key, label: menu.name, path: null, children }
   if (menu.route_name === null) return null
-  const registration = APP_ROUTE_REGISTRY.get(menu.route_name)
+  const registration = runtime.routeRegistry.get(menu.route_name)
   if (registration === undefined || registration.audience !== audience.value) {
     workspace.addMenuDiagnostic(menu.route_name)
     return null

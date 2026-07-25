@@ -15,6 +15,7 @@ export const exampleWorkItemModule = defineAdminModule({
     {
       path: '/app/examples/work-item-policies',
       name: 'example-work-item-policy',
+      title: '目标策略发布',
       component: () => import('./pages/WorkItemPolicyPage.vue'),
       access: {
         moduleKey: 'example.work-item',
