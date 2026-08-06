@@ -540,6 +540,31 @@ owner must verify that the actual changed path set exactly equals the frozen
 inventory, then rerun only the failed PHP CS Fixer check once. A mismatch or a
 second formatter failure blocks P1-PKG01.
 
+## Workspace ESLint Baseline Repair Write Set
+
+After PHP CS Fixer passed, the first authorized Web lint run exposed one
+unused local binding and 609 pre-existing Vue template-layout warnings in
+exactly these eight files:
+
+- `frontend/src/pages/governance/GovernanceWorkbenchPage.vue`;
+- `frontend/src/pages/platform/UpgradeStatusPage.vue`;
+- `packages/web/file-media/src/FileAssetSelector.vue`;
+- `packages/web/file-media/src/FileMediaPage.vue`;
+- `packages/web/import-export/src/ImportExportPage.vue`;
+- `packages/web/integration-security/src/IntegrationSecurityPage.vue`;
+- `packages/web/ops-console/src/OpsConsolePage.vue`;
+- `packages/web/task-job/src/TaskJobPage.vue`.
+
+The integration owner may run the existing ESLint configuration with `--fix`
+against only these eight explicit paths, then mechanically wrap remaining Vue
+attributes and element contents to satisfy the same existing rules. In
+`FileAssetSelector.vue`, the unused local `props` binding may be removed while
+retaining the same `withDefaults(defineProps(...))` declaration. No executable
+statement, template element, directive, event, condition, style value, public
+type, route, API behavior, or user-visible result may otherwise change. Only
+the failed `pnpm lint` group may be rerun once after the complete batch; a
+changed path outside this inventory or a second failure blocks P1-PKG01.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
