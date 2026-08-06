@@ -565,6 +565,30 @@ type, route, API behavior, or user-visible result may otherwise change. Only
 the failed `pnpm lint` group may be rerun once after the complete batch; a
 changed path outside this inventory or a second failure blocks P1-PKG01.
 
+## Workspace Unit-Test Baseline Repair Write Set
+
+After lint and typecheck passed, the first authorized Web unit run exposed two
+test-assembly gaps caused by the consolidated package boundary. Only these
+files may change:
+
+- `frontend/tests/w03-shell.spec.ts`;
+- `package.json`;
+- `pnpm-lock.yaml`.
+
+The Shell spec may add a two-entry `routeRegistry` to its existing mocked
+Admin Runtime for the already mocked Tenant and platform menu routes. The root
+manifest may add `@peanut-admin/admin` at `workspace:0.1.0-alpha.1` as a
+development-only dependency so root-owned Vitest can resolve package subpaths
+used by collected Starter tests. The root lock may change only by adding that
+workspace link to the root importer; no third-party resolution, version,
+integrity, peer graph, other importer, test assertion, production source, or
+runtime behavior may change.
+
+The integration owner refreshes the dependency layout offline, statically
+checks the exact three-file write set and lock delta, then reruns only the
+failed `pnpm test:unit` group once. A changed path outside this inventory or a
+second failure blocks P1-PKG01.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
