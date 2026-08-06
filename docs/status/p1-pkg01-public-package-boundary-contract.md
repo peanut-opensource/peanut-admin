@@ -434,6 +434,108 @@ five layers. Module Internals may consume only TaskJob, NotificationSms,
 ImportExport, and IntegrationSecurity for their owned migrations; OpsConsole
 remains platform Backend infrastructure. `--fail-on-uncovered` stays enabled.
 
+## Workspace PHP CS Fixer Baseline Repair Write Set
+
+After PHPUnit, PHPStan, and Deptrac passed, the same authorized workspace
+continuation exposed formatting differences in exactly 85 files. The frozen
+sorted path inventory has SHA-256
+`b87174327141e84f85a08896ca8074a708f0e7e068fd3aba2f58beb257e7cc51` and
+contains only:
+
+- `backend/app/AppService.php`;
+- `backend/app/Modules/Peanut/FileMedia/Database/Migrations/20260724020102_create_file_delivery.php`;
+- `backend/app/Modules/Peanut/ImportExport/Database/Migrations/20260724040101_create_import_export.php`;
+- `backend/app/Modules/Peanut/ImportExport/ModuleProvider.php`;
+- `backend/app/Modules/Peanut/IntegrationSecurity/Database/Migrations/20260724040301_create_integration_security.php`;
+- `backend/app/Modules/Peanut/IntegrationSecurity/ModuleProvider.php`;
+- `backend/app/Modules/Peanut/NotificationSms/Database/Migrations/20260724030201_create_notifications.php`;
+- `backend/app/command/TaskWorkerCommand.php`;
+- `backend/app/controller/api/platform/v1/OpsConsoleController.php`;
+- `backend/app/controller/api/v1/FileController.php`;
+- `backend/app/controller/api/v1/ImportExportController.php`;
+- `backend/app/controller/api/v1/IntegrationSecurityController.php`;
+- `backend/app/controller/api/v1/MemberAdminRuntime.php`;
+- `backend/app/controller/api/v1/NotificationController.php`;
+- `backend/app/controller/api/v1/TaskController.php`;
+- `backend/app/filemedia/FileDeliveryHttpRuntime.php`;
+- `backend/app/filemedia/FileDeliveryRepository.php`;
+- `backend/app/filemedia/LocalSignedDeliveryAdapter.php`;
+- `backend/app/filemedia/PdoDeliveryReplayGuard.php`;
+- `backend/app/http/TenantModuleRuntime.php`;
+- `backend/app/importexport/ImportExportHttpRuntime.php`;
+- `backend/app/importexport/ImportExportRuntimeFactory.php`;
+- `backend/app/importexport/PdoFileMediaGateway.php`;
+- `backend/app/importexport/TenantMemberDirectoryProvider.php`;
+- `backend/app/integrationsecurity/CurlPinnedWebhookTransport.php`;
+- `backend/app/integrationsecurity/IntegrationSecurityHttpRuntime.php`;
+- `backend/app/integrationsecurity/IntegrationSecurityRuntimeFactory.php`;
+- `backend/app/notification/NotificationHttpRuntime.php`;
+- `backend/app/notification/NotificationRuntimeFactory.php`;
+- `backend/app/notification/PdoAttachmentResolver.php`;
+- `backend/app/notification/PdoRecipientResolver.php`;
+- `backend/app/ops/HostRuntimeStatusProvider.php`;
+- `backend/app/ops/OpsRuntimeFactory.php`;
+- `backend/app/ops/PdoMaintenanceWindowStore.php`;
+- `backend/app/ops/PdoOpsTaskDispatcher.php`;
+- `backend/app/ops/PdoPlatformPermissionChecker.php`;
+- `backend/app/ops/PdoRuntimeLogProvider.php`;
+- `backend/app/ops/ReferenceBackupRestoreProvider.php`;
+- `backend/app/task/PdoTaskAuthorizationRevalidator.php`;
+- `backend/app/task/TaskHttpRuntime.php`;
+- `packages/php/import-export/src/Application/ImportExportException.php`;
+- `packages/php/import-export/src/Application/ImportExportService.php`;
+- `packages/php/import-export/src/Contract/SchemaDefinition.php`;
+- `packages/php/import-export/src/Execution/CsvOperationRunner.php`;
+- `packages/php/import-export/src/Execution/ImportExportTaskHandler.php`;
+- `packages/php/import-export/src/Execution/ImportExportTaskSubmissionProvider.php`;
+- `packages/php/import-export/src/Persistence/PdoImportExportRepository.php`;
+- `packages/php/import-export/tests/feature-harness.php`;
+- `packages/php/integration-security/src/Application/IntegrationSecurityException.php`;
+- `packages/php/integration-security/src/Application/MachineIdentityService.php`;
+- `packages/php/integration-security/src/Application/MachineScopeCatalog.php`;
+- `packages/php/integration-security/src/Application/MachineScopeGrantPolicy.php`;
+- `packages/php/integration-security/src/Application/SessionSecurityService.php`;
+- `packages/php/integration-security/src/Application/WebhookDeliveryLogService.php`;
+- `packages/php/integration-security/src/Application/WebhookService.php`;
+- `packages/php/integration-security/src/Persistence/IntegrationSecurityRepository.php`;
+- `packages/php/integration-security/src/Persistence/PdoIntegrationSecurityRepository.php`;
+- `packages/php/integration-security/src/Webhook/TrustedWebhookEvent.php`;
+- `packages/php/integration-security/src/Webhook/WebhookDestinationPolicy.php`;
+- `packages/php/integration-security/src/Webhook/WebhookDispatcher.php`;
+- `packages/php/integration-security/tests/feature-harness.php`;
+- `packages/php/integration-security/tests/mysql-harness.php`;
+- `packages/php/kernel/src/Platform/Application/PlatformWorkspaceQueryService.php`;
+- `packages/php/kernel/src/Tenancy/Application/TenantWorkspaceQueryService.php`;
+- `packages/php/kernel/tests/Unit/Governance/GovernanceWorkbenchTest.php`;
+- `packages/php/notification-sms/src/Persistence/PdoNotificationRepository.php`;
+- `packages/php/notification-sms/tests/feature-harness.php`;
+- `packages/php/notification-sms/tests/mysql-harness.php`;
+- `packages/php/ops-console/src/Application/OpsConsoleException.php`;
+- `packages/php/ops-console/src/Logs/RuntimeLogProviderRegistry.php`;
+- `packages/php/ops-console/src/Logs/RuntimeLogQuery.php`;
+- `packages/php/ops-console/src/Logs/RuntimeLogService.php`;
+- `packages/php/ops-console/src/Logs/SafeLogMessageCatalog.php`;
+- `packages/php/ops-console/src/Logs/StructuredLogBatch.php`;
+- `packages/php/ops-console/src/Logs/StructuredLogRecord.php`;
+- `packages/php/ops-console/src/Maintenance/MaintenanceReasonRegistry.php`;
+- `packages/php/ops-console/src/Maintenance/MaintenanceService.php`;
+- `packages/php/ops-console/src/Status/OpsStatusSnapshot.php`;
+- `packages/php/ops-console/src/Task/BackupRestoreProviderRegistry.php`;
+- `packages/php/ops-console/src/Task/OpsTask.php`;
+- `packages/php/ops-console/src/Task/OpsTaskService.php`;
+- `packages/php/ops-console/src/Task/TaskJobStatusProjection.php`;
+- `packages/php/ops-console/tests/feature-harness.php`;
+- `packages/php/task-job/src/Persistence/PdoTaskJobRepository.php`;
+- `packages/php/task-job/tests/feature-harness.php`;
+
+The integration owner may run the existing PHP CS Fixer configuration once to
+mechanically rewrite only this frozen inventory. No formatter configuration,
+public signature, query, branch, exception, status, permission, Tenant
+boundary, schema, route, API result, or user-visible behavior may change. The
+owner must verify that the actual changed path set exactly equals the frozen
+inventory, then rerun only the failed PHP CS Fixer check once. A mismatch or a
+second formatter failure blocks P1-PKG01.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
