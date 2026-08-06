@@ -127,7 +127,11 @@ final class UpgradeLifecycleTest extends TestCase
         yield 'historical migration rewritten' => [static function (): array {
             $test = new self('testPreflightFailsClosed');
             $target = $test->targetMigrations();
-            $target[0]['checksum'] = hash('sha256', 'rewritten');
+            $target[0] = [
+                'owner' => $target[0]['owner'],
+                'key' => $target[0]['key'],
+                'checksum' => hash('sha256', 'rewritten'),
+            ];
 
             return [
                 $test->release(target: $target),

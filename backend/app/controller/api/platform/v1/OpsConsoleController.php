@@ -27,7 +27,12 @@ final class OpsConsoleController
 
     private function run(Request $r,callable $operation):Response{return MemberAdminRuntime::run($r,function()use($r,$operation){try{return $operation(MemberAdminRuntime::pdo(),$this->context($r));}catch(OpsConsoleException $e){throw new AdminAccessException($e->problemCode,$e->status,'The operations request could not be completed.');}});}
     private function context(Request $r):PlatformContext{$route=$r->route();$c=is_array($route)?($route['platform_context']??null):null;if(!$c instanceof PlatformContext)throw new AdminAccessException('CONTEXT_PLATFORM_REQUIRED',403,'A platform context is required.');return $c;}
+    /**
+     * @param list<string> $keys
+     * @return array<string, mixed>
+     */
     private function body(Request $r,array $keys):array{$p=MemberAdminRuntime::body($r);$actual=array_keys($p);sort($actual);sort($keys);if($actual!==$keys)throw OpsConsoleException::invalid();return $p;}
-    private function string(array $p,string $key):string{$v=$p[$key]??null;if(!is_string($v))throw OpsConsoleException::invalid();return $v;}private function integer(array $p,string $key,int $minimum):int{$v=$p[$key]??null;if(!is_int($v)||$v<$minimum)throw OpsConsoleException::invalid();return $v;}
+    /** @param array<string,mixed> $p */
+    private function string(array $p,string $key):string{$v=$p[$key]??null;if(!is_string($v))throw OpsConsoleException::invalid();return $v;}
     private function idempotency(Request $r):string{$v=MemberAdminRuntime::header($r,'idempotency-key');if(!is_string($v))throw OpsConsoleException::invalid();return $v;}private function revision(Request $r,bool $allowZero=false):int{$v=MemberAdminRuntime::header($r,'if-match');$pattern=$allowZero?'/^"rev-(0|[1-9][0-9]*)"$/D':'/^"rev-([1-9][0-9]*)"$/D';if(!is_string($v)||preg_match($pattern,$v,$m)!==1)throw OpsConsoleException::revisionConflict();return (int)$m[1];}
 }

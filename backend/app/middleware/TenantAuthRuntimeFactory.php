@@ -13,6 +13,7 @@ use PeanutAdmin\Kernel\Auth\TokenIssuer;
 use PeanutAdmin\Kernel\Identity\PasswordHasher;
 use PeanutAdmin\Kernel\Persistence\Pdo\PdoTransactionManager;
 use RuntimeException;
+use think\Container;
 
 final class TenantAuthRuntimeFactory
 {
@@ -25,7 +26,7 @@ final class TenantAuthRuntimeFactory
             throw new RuntimeException('AUTH_IDENTIFIER_HMAC_KEY must contain at least 32 bytes.');
         }
 
-        $pdo = app(PDO::class);
+        $pdo = Container::getInstance()->make(PDO::class);
 
         $config = self::config();
         $clientKey ??= $config['default_client'];

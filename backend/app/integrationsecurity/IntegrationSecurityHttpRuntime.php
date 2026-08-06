@@ -9,7 +9,10 @@ use PDO;
 use PeanutAdmin\App\controller\api\v1\MemberAdminRuntime;
 use PeanutAdmin\App\http\TenantModuleRuntime;
 use PeanutAdmin\App\module\RuntimeModuleRegistry;
+use PeanutAdmin\IntegrationSecurity\Application\MachineIdentity;
 use PeanutAdmin\IntegrationSecurity\Application\IntegrationSecurityException;
+use PeanutAdmin\IntegrationSecurity\Application\SessionDevice;
+use PeanutAdmin\IntegrationSecurity\Application\WebhookEndpoint;
 use PeanutAdmin\Kernel\Api\ApiException;
 use PeanutAdmin\Kernel\Host\ExternalOperationResponse;
 use PeanutAdmin\Kernel\Host\ExternalOperationResult;
@@ -101,12 +104,21 @@ final class IntegrationSecurityHttpRuntime
         return TenantModuleRuntime::response($response,$external->requestId->value);
     }
 
-    private static function machine(object $v):array{return ['identity_key'=>$v->identityKey,'name'=>$v->name,'scopes'=>$v->scopes,'status'=>$v->status,'token_prefix'=>$v->tokenPrefix,'token_last_four'=>$v->tokenLastFour,'expires_at'=>$v->expiresAt,'last_used_at'=>$v->lastUsedAt,'revision'=>$v->revision,'created_at'=>$v->createdAt];}
-    private static function webhook(object $v):array{return ['endpoint_key'=>$v->endpointKey,'name'=>$v->name,'url'=>$v->url,'events'=>$v->events,'status'=>$v->status,'revision'=>$v->revision,'created_at'=>$v->createdAt];}
-    private static function session(object $v):array{return ['session_key'=>$v->sessionKey,'client_key'=>$v->clientKey,'status'=>$v->status,'current'=>$v->current,'masked_ip'=>$v->maskedIp,'user_agent_fingerprint'=>$v->userAgentFingerprint,'issued_at'=>$v->issuedAt,'last_seen_at'=>$v->lastSeenAt,'absolute_expires_at'=>$v->absoluteExpiresAt,'revoked_at'=>$v->revokedAt];}
+    /** @return array{identity_key:string,name:string,scopes:list<string>,status:string,token_prefix:string,token_last_four:string,expires_at:?string,last_used_at:?string,revision:int,created_at:string} */
+    private static function machine(MachineIdentity $v):array{return ['identity_key'=>$v->identityKey,'name'=>$v->name,'scopes'=>$v->scopes,'status'=>$v->status,'token_prefix'=>$v->tokenPrefix,'token_last_four'=>$v->tokenLastFour,'expires_at'=>$v->expiresAt,'last_used_at'=>$v->lastUsedAt,'revision'=>$v->revision,'created_at'=>$v->createdAt];}
+    /** @return array{endpoint_key:string,name:string,url:string,events:list<string>,status:string,revision:int,created_at:string} */
+    private static function webhook(WebhookEndpoint $v):array{return ['endpoint_key'=>$v->endpointKey,'name'=>$v->name,'url'=>$v->url,'events'=>$v->events,'status'=>$v->status,'revision'=>$v->revision,'created_at'=>$v->createdAt];}
+    /** @return array{session_key:string,client_key:string,status:string,current:bool,masked_ip:?string,user_agent_fingerprint:?string,issued_at:string,last_seen_at:string,absolute_expires_at:string,revoked_at:?string} */
+    private static function session(SessionDevice $v):array{return ['session_key'=>$v->sessionKey,'client_key'=>$v->clientKey,'status'=>$v->status,'current'=>$v->current,'masked_ip'=>$v->maskedIp,'user_agent_fingerprint'=>$v->userAgentFingerprint,'issued_at'=>$v->issuedAt,'last_seen_at'=>$v->lastSeenAt,'absolute_expires_at'=>$v->absoluteExpiresAt,'revoked_at'=>$v->revokedAt];}
+    /** @param list<string> $expected */
     private static function keys(mixed $payload,array $expected):void{if(!is_array($payload))throw IntegrationSecurityException::invalid();$actual=array_keys($payload);sort($actual);sort($expected);if($actual!==$expected)throw IntegrationSecurityException::invalid();}
+    /** @param array<string,mixed> $p */
     private static function string(array $p,string $key):string{$v=$p[$key]??null;if(!is_string($v))throw IntegrationSecurityException::invalid();return $v;}
-    private static function strings(array $p,string $key):array{$v=$p[$key]??null;if(!is_array($v)||!array_is_list($v)||array_filter($v,static fn($i)=>!is_string($i))!==[])throw IntegrationSecurityException::invalid();return $v;}
+    /**
+     * @param array<string, mixed> $p
+     * @return list<string>
+     */
+    private static function strings(array $p,string $key):array{$v=$p[$key]??null;if(!is_array($v)||!array_is_list($v))throw IntegrationSecurityException::invalid();$result=[];foreach($v as $item){if(!is_string($item))throw IntegrationSecurityException::invalid();$result[]=$item;}return $result;}
     private static function instant(mixed $v):?DateTimeImmutable{if($v===null)return null;if(!is_string($v))throw IntegrationSecurityException::invalid();try{return new DateTimeImmutable($v);}catch(\Throwable){throw IntegrationSecurityException::invalid();}}
     private static function problem(IntegrationSecurityException $e):ApiException{$status=match($e->problemCode){'INTEGRATION_PERMISSION_DENIED'=>403,'MACHINE_IDENTITY_NOT_FOUND','WEBHOOK_ENDPOINT_NOT_FOUND','SESSION_DEVICE_NOT_FOUND'=>404,'INTEGRATION_REVISION_CONFLICT'=>409,'WEBHOOK_DESTINATION_DENIED'=>422,default=>422};return new ApiException($e->problemCode,$status,'The integration security operation could not be completed.');}
 }

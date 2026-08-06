@@ -12,6 +12,7 @@ use PeanutAdmin\Kernel\Auth\TokenIssuer;
 use PeanutAdmin\Kernel\Identity\PasswordHasher;
 use PeanutAdmin\Kernel\Persistence\Pdo\PdoTransactionManager;
 use RuntimeException;
+use think\Container;
 
 final class PlatformAuthRuntimeFactory
 {
@@ -24,7 +25,7 @@ final class PlatformAuthRuntimeFactory
             throw new RuntimeException('AUTH_IDENTIFIER_HMAC_KEY must contain at least 32 bytes.');
         }
 
-        $pdo = app(PDO::class);
+        $pdo = Container::getInstance()->make(PDO::class);
 
         return new PlatformAuthService(
             new PdoTransactionManager($pdo),

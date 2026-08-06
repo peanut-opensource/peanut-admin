@@ -118,13 +118,20 @@ final class UpgradeCli
             };
             $options[$key] = $value;
         }
-        foreach (['release_manifest', 'backup_manifest', 'environment'] as $required) {
-            if (!is_string($options[$required] ?? null)) {
-                throw new UpgradeFailure('UPGRADE_ARGUMENT_INVALID');
-            }
+        $releaseManifest = $options['release_manifest'] ?? null;
+        $backupManifest = $options['backup_manifest'] ?? null;
+        $environment = $options['environment'] ?? null;
+        if (!is_string($releaseManifest)
+            || !is_string($backupManifest)
+            || !is_string($environment)) {
+            throw new UpgradeFailure('UPGRADE_ARGUMENT_INVALID');
         }
 
-        /** @var array{release_manifest: string, backup_manifest: string, environment: string, preflight_only: bool} $options */
-        return $options;
+        return [
+            'release_manifest' => $releaseManifest,
+            'backup_manifest' => $backupManifest,
+            'environment' => $environment,
+            'preflight_only' => $options['preflight_only'],
+        ];
     }
 }

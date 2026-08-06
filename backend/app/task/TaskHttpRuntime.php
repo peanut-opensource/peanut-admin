@@ -67,13 +67,14 @@ final class TaskHttpRuntime
         $operation=TenantModuleRuntime::operation($operationId,'POST','/api/v1/tasks/{job_key}/'.$suffix,'peanut.task-job','peanut.task-job.manage',true);
         $external=TenantModuleRuntime::request($request,$operation,$path);
         $response=TenantModuleRuntime::host($pdo,$modules)->command($operation,$external,static function($authorized,$command,PDO $transaction)use($jobKey,$operationId){
-            try { self::noInput($command->body); $service=new TaskJobService(new PdoTaskJobRepository($transaction));$revision=TenantModuleRuntime::expectedRevision($command);$context=TenantModuleRuntime::authorizedContext($authorized, 'peanut.task-job', 'manage');$job=$operationId==='cancelTask'?$service->cancel($context,$jobKey,$revision):$service->retry($context,$jobKey,$revision);return new ExternalOperationResult(200,['data'=>$job->toPublicArray()],'tenant.task.managed','peanut.task-job.manage',['state'=>$job->status,'revision'=>$job->revision],'task',$job->jobKey); }
+            try { self::noInput($command->body); $service=new TaskJobService(new PdoTaskJobRepository($transaction));$revision=TenantModuleRuntime::expectedRevision($command);if($revision===null)throw TaskJobException::invalid();$context=TenantModuleRuntime::authorizedContext($authorized, 'peanut.task-job', 'manage');$job=$operationId==='cancelTask'?$service->cancel($context,$jobKey,$revision):$service->retry($context,$jobKey,$revision);return new ExternalOperationResult(200,['data'=>$job->toPublicArray()],'tenant.task.managed','peanut.task-job.manage',['state'=>$job->status,'revision'=>$job->revision],'task',$job->jobKey); }
             catch(TaskJobException $e){throw self::problem($e);}
         },guard:TenantModuleRuntime::commandGuard('peanut.task-job'));
         return TenantModuleRuntime::response($response,$external->requestId->value);
     }
 
     private static function emptyBody(mixed $body): void { if(!is_array($body)||$body!==[])throw TaskJobException::invalid(); }
+    /** @param array<string, mixed> $body */
     private static function noInput(array $body): void { self::emptyBody($body['payload']??null);if(($body['query']??null)!==[])throw TaskJobException::invalid(); }
     private static function problem(TaskJobException $e): ApiException { return new ApiException($e->problemCode,$e->status,'The task operation could not be completed.'); }
 }

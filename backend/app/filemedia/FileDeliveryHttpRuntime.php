@@ -112,6 +112,7 @@ final class FileDeliveryHttpRuntime
     /** @return array{provider:string,delivery_adapter:string,delivery_base_url:string,delivery_signing_key:string,local_root:string,public_roots:list<string>} */
     private static function config():array{$c=require dirname(__DIR__,3).'/backend/config/file-media.php';foreach(['provider','delivery_adapter','delivery_base_url','delivery_signing_key','local_root'] as $k)if(!is_string($c[$k]??null))throw FileMediaException::deliveryUnavailable();if(!is_array($c['public_roots']??null))throw FileMediaException::deliveryUnavailable();return $c;}
     private static function emptyBody(mixed $v):void{if(!is_array($v)||$v!==[])throw FileMediaException::deliveryInvalid();}
+    /** @param array<string,mixed> $body */
     private static function noInput(array $body):void{self::emptyBody($body['payload']??null);if(($body['query']??null)!==[])throw FileMediaException::deliveryInvalid();}
     private static function problem(FileMediaException $e):ApiException{return new ApiException($e->errorCode,$e->httpStatus,'The file delivery operation could not be completed.');}
 }

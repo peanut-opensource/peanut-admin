@@ -9,7 +9,7 @@ final readonly class MigrationInventory
     /** @var list<array{owner: string, key: string, checksum: string}> */
     public array $entries;
 
-    /** @param list<array{owner: string, key: string, checksum: string}> $entries */
+    /** @param list<mixed> $entries */
     public function __construct(array $entries)
     {
         $normalized = [];
@@ -77,7 +77,10 @@ final readonly class MigrationInventory
                     throw new UpgradeFailure('UPGRADE_MIGRATION_REWRITTEN');
                 }
             }
-            $sourceMaximum = $sourceEntries[array_key_last($sourceEntries)]['key'];
+            if ($sourceEntries === []) {
+                continue;
+            }
+            $sourceMaximum = $sourceEntries[count($sourceEntries) - 1]['key'];
             foreach (array_slice($targetEntries, count($sourceEntries)) as $entry) {
                 if (strcmp($entry['key'], $sourceMaximum) <= 0) {
                     throw new UpgradeFailure('UPGRADE_MIGRATION_BACKDATED');

@@ -475,7 +475,6 @@ SQL);
 
     private function registry(): CompiledModuleRegistry
     {
-        /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>} $config */
         $repositoryRoot = realpath($this->root);
         $configPath = $this->root . '/backend/config/modules.php';
         $physicalConfig = realpath($configPath);
@@ -486,15 +485,33 @@ SQL);
             throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration path is unsafe.');
         }
         $config = require $physicalConfig;
-        $roots = array_map(
-            fn(string $path): string => $this->root . '/' . ltrim($path, '/'),
-            $config['roots'],
-        );
+        $kernelVersion = is_array($config) ? ($config['kernel_version'] ?? null) : null;
+        $configuredRoots = is_array($config) ? ($config['roots'] ?? null) : null;
+        $frontendComponents = is_array($config) ? ($config['frontend_components'] ?? null) : null;
+        if (!is_string($kernelVersion)
+            || !is_array($configuredRoots)
+            || !is_array($frontendComponents)) {
+            throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration is invalid.');
+        }
+        $roots = [];
+        foreach ($configuredRoots as $path) {
+            if (!is_string($path) || $path === '') {
+                throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration is invalid.');
+            }
+            $roots[] = $this->root . '/' . ltrim($path, '/');
+        }
+        $components = [];
+        foreach ($frontendComponents as $component) {
+            if (!is_string($component) || $component === '') {
+                throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration is invalid.');
+            }
+            $components[] = $component;
+        }
 
         return (new ModuleRegistryFactory(
             $roots,
-            $config['frontend_components'],
-            $config['kernel_version'],
+            $components,
+            $kernelVersion,
             $this->packagePath(KernelPackage::NAME) . '/kernel/resources/schemas/module-manifest.schema.json',
         ))->compileAndCheckBoundaries();
     }

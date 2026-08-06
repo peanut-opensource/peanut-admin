@@ -26,11 +26,15 @@ final readonly class TenantMemberDirectoryProvider implements DataProvider
             new ColumnDefinition('status', 'status', false, true, false, 32),
         ]);
     }
+    /**
+     * @param array<string, string|null> $row
+     * @return list<RowIssue>
+     */
     public function validateImport(AuthorizedOperationContext $context, array $row): array
     {
         $issues=[];$number=$row['member_no']??null;$name=$row['display_name']??null;
         if(!is_string($number)||preg_match('/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/D',$number)!==1)$issues[]=new RowIssue('IMPORT_MEMBER_NO_INVALID','member_no');
-        if($name!==null&&(!is_string($name)||trim($name)===''||mb_strlen($name)>120))$issues[]=new RowIssue('IMPORT_DISPLAY_NAME_INVALID','display_name');
+        if($name!==null&&(trim($name)===''||mb_strlen($name)>120))$issues[]=new RowIssue('IMPORT_DISPLAY_NAME_INVALID','display_name');
         return $issues;
     }
     public function importRow(AuthorizedOperationContext $context,array $row,string $idempotencyKey):void
@@ -47,6 +51,14 @@ final readonly class TenantMemberDirectoryProvider implements DataProvider
         $statement=$this->pdo->prepare('SELECT id,member_no,display_name,member_type,status FROM pa_tenant_member WHERE tenant_id=:tenant_id AND id>:after ORDER BY id LIMIT :limit');
         $statement->bindValue('tenant_id',$context->tenantContext->tenantId,PDO::PARAM_INT);$statement->bindValue('after',$after,PDO::PARAM_INT);$statement->bindValue('limit',$limit,PDO::PARAM_INT);$statement->execute();$rows=$statement->fetchAll(PDO::FETCH_ASSOC);
         $next=count($rows)===$limit?(string)$rows[array_key_last($rows)]['id']:null;
-        return new ExportBatch(array_map(static fn(array $r):array=>['member_no'=>$r['member_no'],'display_name'=>$r['display_name'],'member_type'=>$r['member_type'],'status'=>$r['status']],$rows),$next);
+        return new ExportBatch(array_values(array_map(static fn(array $r):array=>['member_no'=>self::exportValue($r['member_no']??null),'display_name'=>self::exportValue($r['display_name']??null),'member_type'=>self::exportValue($r['member_type']??null),'status'=>self::exportValue($r['status']??null)],$rows)),$next);
+    }
+
+    private static function exportValue(mixed $value): bool|float|int|string|null
+    {
+        if ($value === null || is_bool($value) || is_float($value) || is_int($value) || is_string($value)) {
+            return $value;
+        }
+        throw ImportExportException::internal();
     }
 }

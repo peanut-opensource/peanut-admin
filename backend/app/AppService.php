@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace PeanutAdmin\App;
 
 use PDO;
-use RuntimeException;
 use think\Service;
 
 final class AppService extends Service
@@ -18,10 +17,6 @@ final class AppService extends Service
             $database = getenv('DB_DATABASE') ?: 'peanut_admin';
             $username = getenv('DB_USERNAME') ?: 'peanut_admin';
             $password = getenv('DB_PASSWORD') ?: 'peanut_admin_dev';
-
-            if ($database === '') {
-                throw new RuntimeException('DB_DATABASE environment variable is required.');
-            }
 
             return new PDO(
                 sprintf('mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4', $host, $port, $database),

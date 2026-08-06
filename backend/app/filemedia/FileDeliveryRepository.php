@@ -27,6 +27,6 @@ final readonly class FileDeliveryRepository
     {
         $offset=($page-1)*$pageSize;$count=$this->pdo->prepare("SELECT COUNT(*) FROM pa_file_image_metadata im JOIN pa_file_object f ON f.tenant_id=im.tenant_id AND f.id=im.file_object_id WHERE f.tenant_id=:tenant_id AND f.status='ready'");$count->execute(['tenant_id'=>$tenantId]);
         $query=$this->pdo->prepare("SELECT f.file_key,f.original_name,f.media_type,im.width,im.height FROM pa_file_image_metadata im JOIN pa_file_object f ON f.tenant_id=im.tenant_id AND f.id=im.file_object_id WHERE f.tenant_id=:tenant_id AND f.status='ready' ORDER BY f.id DESC LIMIT :limit OFFSET :offset");$query->bindValue('tenant_id',$tenantId,PDO::PARAM_INT);$query->bindValue('limit',$pageSize,PDO::PARAM_INT);$query->bindValue('offset',$offset,PDO::PARAM_INT);$query->execute();
-        return ['items'=>$query->fetchAll(PDO::FETCH_ASSOC),'page'=>$page,'page_size'=>$pageSize,'total'=>(int)$count->fetchColumn()];
+        return ['items'=>array_values($query->fetchAll(PDO::FETCH_ASSOC)),'page'=>$page,'page_size'=>$pageSize,'total'=>(int)$count->fetchColumn()];
     }
 }
