@@ -424,6 +424,16 @@ on the new layer. It must not allow Module Internals to depend on the Backend
 layer, change source code, suppress a violation, or weaken uncovered-symbol
 enforcement.
 
+The same repair must register the existing TaskJob, NotificationSms,
+ImportExport, OpsConsole, and IntegrationSecurity source directories and
+namespaces as first-party layers. Their dependency edges remain the exact
+former package-manifest graph: TaskJob to Kernel; NotificationSms to Kernel
+and TaskJob; ImportExport to Kernel, FileMedia, and TaskJob; OpsConsole to
+Kernel and TaskJob; IntegrationSecurity to Kernel. Backend may consume all
+five layers. Module Internals may consume only TaskJob, NotificationSms,
+ImportExport, and IntegrationSecurity for their owned migrations; OpsConsole
+remains platform Backend infrastructure. `--fail-on-uncovered` stays enabled.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
