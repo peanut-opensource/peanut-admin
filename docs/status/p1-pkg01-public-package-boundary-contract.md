@@ -617,6 +617,25 @@ consumer can import `vue/server-renderer`, verifies the exact two-file write
 set and lock delta, then runs `pnpm test:unit` once. A failure receives one
 read-only diagnosis and stops R01; it does not authorize another unit rerun.
 
+## P1-PKG01-R02 Exact Vue Alias Remediation
+
+R01 is closed after its single unit run. Its read-only Vite resolver diagnosis
+proved that the object-form string alias `vue` also rewrites the
+`vue/server-renderer` subpath to the invalid filesystem path
+`vue.esm-bundler.js/server-renderer`. R02 is an independent configuration
+repair with verification identifier `P1-PKG01-R02-UNIT-001`.
+
+Only `vitest.config.ts` may change. The existing Vue replacement path must stay
+unchanged, while the alias key becomes the exact regular expression `/^vue$/`
+so only the bare `vue` import is deduplicated. No other alias, plugin, test
+selection, environment, dependency, source, test assertion, or runtime behavior
+may change.
+
+The R02 owner first proves through the Vite resolver that bare `vue` still uses
+the fixed frontend instance and `vue/server-renderer` no longer resolves below
+`vue.esm-bundler.js`. It then runs `pnpm test:unit` once. A failure receives one
+read-only diagnosis and stops R02; it does not authorize another unit rerun.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
