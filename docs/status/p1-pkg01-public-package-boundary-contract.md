@@ -369,6 +369,49 @@ permission type `navigation` with the schema-defined navigation permission type
 `menu`. Permission keys, names, risk levels, routes, authorization semantics,
 and every other catalog entry remain unchanged.
 
+## Workspace PHPStan Baseline Repair Write Set
+
+After PHPUnit passed all 562 tests, the same authorized workspace run exposed
+97 pre-existing PHPStan errors in the following exact files:
+
+- `backend/app/AppService.php`;
+- `backend/app/command/UpgradeCli.php`;
+- `backend/app/command/UpgradeWorkflow.php`;
+- `backend/app/controller/api/platform/v1/OpsConsoleController.php`;
+- `backend/app/filemedia/FileDeliveryHttpRuntime.php`;
+- `backend/app/filemedia/FileDeliveryRepository.php`;
+- `backend/app/importexport/ImportExportHttpRuntime.php`;
+- `backend/app/importexport/TenantMemberDirectoryProvider.php`;
+- `backend/app/integrationsecurity/CurlPinnedWebhookTransport.php`;
+- `backend/app/integrationsecurity/IntegrationSecurityHttpRuntime.php`;
+- `backend/app/integrationsecurity/IntegrationSecurityRuntimeFactory.php`;
+- `backend/app/middleware/PlatformAuthRuntimeFactory.php`;
+- `backend/app/middleware/TenantAccountRuntimeFactory.php`;
+- `backend/app/middleware/TenantAuthRuntimeFactory.php`;
+- `backend/app/notification/NotificationHttpRuntime.php`;
+- `backend/app/ops/HostRuntimeStatusProvider.php`;
+- `backend/app/ops/PdoMaintenanceWindowStore.php`;
+- `backend/app/ops/PdoOpsTaskDispatcher.php`;
+- `backend/app/ops/PdoRuntimeLogProvider.php`;
+- `backend/app/task/TaskHttpRuntime.php`;
+- `backend/app/upgrade/BackupManifest.php`;
+- `backend/app/upgrade/MigrationInventory.php`;
+- `backend/tests/Upgrade/UpgradeLifecycleTest.php`;
+- `packages/php/kernel/src/Authorization/Governance/GovernancePermissionCatalog.php`;
+- `packages/php/kernel/src/Host/ExternalOperationResult.php`;
+- `packages/php/kernel/src/Platform/Application/PlatformWorkspaceQueryService.php`;
+- `packages/php/kernel/tests/Unit/Governance/GovernanceWorkbenchTest.php`.
+
+This independent baseline repair may add or correct native types, precise
+PHPDoc array shapes, local variable narrowing, explicit list normalization,
+constructor assignments, and test fixture annotations only. It must not alter
+public signatures except to express an already enforced value type, change a
+query, branch, exception, status, permission, Tenant boundary, schema, route,
+API result, or user-visible behavior. PHPStan baselines, ignore directives,
+configuration weakening, inline `@var` overrides, compatibility shims, and new
+dependencies are forbidden. Each disjoint file group receives static review
+and `php -l`; the integration owner runs PHPStan once on the combined tree.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
