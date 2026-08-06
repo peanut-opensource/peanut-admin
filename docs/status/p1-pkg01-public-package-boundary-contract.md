@@ -281,6 +281,7 @@ Only the following integration-owned files may change:
 - `starter/pnpm-lock.yaml`;
 - `package.json`;
 - `starter/package.json`;
+- `scripts/bootstrap-worktree-dependencies`;
 - `scripts/check`;
 - `scripts/check-architecture`;
 - `scripts/check-workspace`;
@@ -314,6 +315,7 @@ Only the following integration-owned files may change:
 - `docs/reference/packages/file-media.md`;
 - `docs/reference/packages/reference-codes.md`;
 - `docs/reference/packages/settings.md`;
+- `docs/reference/third-party-licenses.generated.md` (generated only by its existing writer);
 - `README.md` and `docs/status/index.md` only for candidate status;
 - new `docs/decisions/dependencies/p1-pkg01-lock-evidence.json`.
 
