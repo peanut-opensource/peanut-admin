@@ -338,6 +338,30 @@ verification round immediately before its commit:
 If a group fails, the integration owner performs one static batch repair and
 reruns only that failed group once. A second failure blocks the stage.
 
+## Workspace Baseline Repair Write Set
+
+The first authorized `./scripts/check-workspace` integration run exposed seven
+stale baseline assertions that predate and are behaviorally independent from
+the two-package boundary. The integration owner may repair only the following
+files before the single allowed rerun of that failed verification group:
+
+- `backend/app/Modules/Peanut/ImportExport/module.json`;
+- `starter/backend/src/Modules/Peanut/ImportExport/module.json`;
+- `backend/tests/Contract/ModuleGuardMiddlewareTest.php`;
+- `backend/tests/Install/ProductProfileTest.php`;
+- `packages/php/kernel/tests/Integration/Schema/MigrationInventoryTest.php`;
+- `packages/php/kernel/tests/Unit/Menu/MenuCatalogSynchronizerTest.php`.
+
+The two Module manifests may only replace their legacy string dependency list
+with the existing object-shaped dependency contract while retaining the new
+`peanut-admin/core` and `@peanut-admin/admin/import-export` package mappings.
+The four test files may only align constructor fixtures and inventory counts
+with the production source already present at prerequisite commit `e863fdf`.
+No production PHP behavior, schema, migration, menu catalog, Product Profile,
+package boundary, authorization, Tenant, audit, or user-visible result may
+change. After one static batch repair, only `./scripts/check-workspace` may be
+rerun once; another failure blocks P1-PKG01.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
