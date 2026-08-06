@@ -319,6 +319,10 @@ Only the following integration-owned files may change:
 - `README.md` and `docs/status/index.md` only for candidate status;
 - new `docs/decisions/dependencies/p1-pkg01-lock-evidence.json`.
 
+The independently authorized workspace baseline-repair sections below are
+narrow additional write sets for the exact files and mechanical changes they
+name. They do not otherwise expand this integration write set.
+
 The integration owner rejects any source change outside the two source-task
 commits, updates all four locks once, updates guards from per-module package
 counts to the two public boundaries, changes each first-party Module manifest
