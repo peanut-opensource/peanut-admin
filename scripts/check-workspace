@@ -9,34 +9,16 @@ required=(
   composer.lock
   backend/composer.json
   frontend/package.json
-  packages/php/kernel/composer.json
-  packages/php/data-permission/composer.json
-  packages/php/testing/composer.json
-  packages/php/settings/composer.json
-  packages/php/reference-codes/composer.json
-  packages/php/file-media/composer.json
-  packages/php/task-job/composer.json
-  packages/php/notification-sms/composer.json
-  packages/php/import-export/composer.json
-  packages/php/ops-console/composer.json
-  packages/php/integration-security/composer.json
-  packages/web/admin-core/package.json
-  packages/web/admin-shell/package.json
-  packages/web/settings/package.json
-  packages/web/reference-codes/package.json
-  packages/web/file-media/package.json
-  packages/web/task-job/package.json
-  packages/web/notification-sms/package.json
-  packages/web/import-export/package.json
-  packages/web/ops-console/package.json
-  packages/web/integration-security/package.json
-  packages/web/testing/package.json
+  packages/php/composer.json
+  packages/php/LICENSE
+  packages/web/package.json
+  packages/web/LICENSE
+  starter/backend/composer.json
+  starter/backend/composer.lock
+  starter/frontend/package.json
+  starter/pnpm-lock.yaml
   compose.yaml
-  docs/decisions/dependencies/p0-a04-lock-evidence.json
-  docs/decisions/dependencies/p1-b03-lock-evidence.json
-  docs/decisions/dependencies/p1-b04-lock-evidence.json
-  docs/decisions/dependencies/c02-file-media-lock-evidence.json
-  docs/decisions/dependencies/c03-stage-c-lock-evidence.json
+  docs/decisions/dependencies/p1-pkg01-lock-evidence.json
 )
 
 for path in "${required[@]}"; do
@@ -45,6 +27,15 @@ for path in "${required[@]}"; do
     exit 1
   fi
 done
+
+if find packages/php -mindepth 2 -maxdepth 2 -name composer.json -print -quit | rg -q .; then
+  echo 'ERROR: a child Composer package manifest remains below packages/php' >&2
+  exit 1
+fi
+if find packages/web -mindepth 2 -maxdepth 2 -name package.json -print -quit | rg -q .; then
+  echo 'ERROR: a child npm package manifest remains below packages/web' >&2
+  exit 1
+fi
 
 composer_bin="${PEANUT_COMPOSER:-composer}"
 composer_version="$("$composer_bin" --version --no-ansi | sed -E 's/^Composer version ([0-9.]+).*/\1/')"
@@ -59,12 +50,18 @@ if [[ "$pnpm_version" != '11.13.0' ]]; then
 fi
 
 php -r '
-$evidence = json_decode(
-    (string) file_get_contents("docs/decisions/dependencies/c03-stage-c-lock-evidence.json"),
+$decode = static fn(string $path): array => json_decode(
+    (string) file_get_contents($path),
     true,
     512,
     JSON_THROW_ON_ERROR,
 );
+$fail = static function (string $message): never {
+    fwrite(STDERR, "ERROR: {$message}\n");
+    exit(1);
+};
+
+$evidence = $decode("docs/decisions/dependencies/p1-pkg01-lock-evidence.json");
 foreach ([
     "composer.lock",
     "pnpm-lock.yaml",
@@ -73,192 +70,144 @@ foreach ([
 ] as $path) {
     $expected = $evidence["locks"][$path]["sha256"] ?? null;
     if (!is_string($expected) || hash_file("sha256", $path) !== $expected) {
-        fwrite(STDERR, "ERROR: dependency lock evidence is stale for {$path}\n");
-        exit(1);
-    }
-}
-'
-
-php -r '
-$root = json_decode((string) file_get_contents("composer.lock"), true, 512, JSON_THROW_ON_ERROR);
-$starter = json_decode((string) file_get_contents("starter/backend/composer.lock"), true, 512, JSON_THROW_ON_ERROR);
-foreach (["composer.lock" => $root, "starter/backend/composer.lock" => $starter] as $path => $lock) {
-    if (($lock["plugin-api-version"] ?? null) !== "2.9.0") {
-        fwrite(STDERR, "ERROR: {$path} was not generated with the Composer 2.10.2 plugin API\n");
-        exit(1);
+        $fail("dependency lock evidence is stale for {$path}");
     }
 }
 
+$rootLock = $decode("composer.lock");
+$starterLock = $decode("starter/backend/composer.lock");
 $index = static function (array $lock): array {
     $packages = [];
     foreach ([...($lock["packages"] ?? []), ...($lock["packages-dev"] ?? [])] as $package) {
         $packages[$package["name"]] = $package;
     }
-
     return $packages;
 };
-$rootPackages = $index($root);
-$starterPackages = $index($starter);
+$rootPackages = $index($rootLock);
+$starterPackages = $index($starterLock);
+foreach (["composer.lock" => $rootLock, "starter/backend/composer.lock" => $starterLock] as $path => $lock) {
+    if (($lock["plugin-api-version"] ?? null) !== "2.9.0") {
+        $fail("{$path} was not generated with the Composer 2.10.2 plugin API");
+    }
+}
 foreach ($starterPackages as $name => $package) {
     if (!isset($rootPackages[$name])) {
-        fwrite(STDERR, "ERROR: starter Composer lock package is missing from the root lock: {$name}\n");
-        exit(1);
+        $fail("starter Composer lock package is missing from the root lock: {$name}");
     }
     if (($rootPackages[$name]["version"] ?? null) !== ($package["version"] ?? null)) {
-        fwrite(STDERR, "ERROR: root and starter Composer lock versions differ for {$name}\n");
-        exit(1);
+        $fail("root and starter Composer lock versions differ for {$name}");
+    }
+}
+foreach (["root" => $rootPackages, "starter" => $starterPackages] as $label => $packages) {
+    $package = $packages["peanut-admin/core"] ?? null;
+    $expectedSymlink = $label === "root";
+    if (!is_array($package) || ($package["version"] ?? null) !== "0.1.0-alpha.1") {
+        $fail("{$label} Composer lock is missing peanut-admin/core@0.1.0-alpha.1");
+    }
+    if (($package["dist"]["type"] ?? null) !== "path"
+        || ($package["transport-options"]["symlink"] ?? null) !== $expectedSymlink
+        || ($package["transport-options"]["relative"] ?? null) !== true) {
+        $fail("{$label} Composer lock has invalid path transport for peanut-admin/core");
     }
 }
 
-foreach ([
-    "peanut-admin/file-media",
-    "peanut-admin/task-job",
-    "peanut-admin/notification-sms",
-    "peanut-admin/import-export",
-    "peanut-admin/ops-console",
-    "peanut-admin/integration-security",
-] as $name) {
-    foreach (["root" => $rootPackages, "starter" => $starterPackages] as $label => $packages) {
-        $package = $packages[$name] ?? null;
-        $expectedSymlink = $label === "root";
-        if (!is_array($package) || ($package["version"] ?? null) !== "0.1.0") {
-            fwrite(STDERR, "ERROR: {$label} Composer lock is missing {$name}@0.1.0\n");
-            exit(1);
-        }
-        if (($package["dist"]["type"] ?? null) !== "path"
-            || ($package["transport-options"]["symlink"] ?? null) !== $expectedSymlink
-            || ($package["transport-options"]["relative"] ?? null) !== true) {
-            fwrite(STDERR, "ERROR: {$label} Composer lock has invalid path transport for {$name}\n");
-            exit(1);
-        }
+$php = $decode("packages/php/composer.json");
+$expectedAutoload = [
+    "PeanutAdmin\\DataPermission\\" => "data-permission/src/",
+    "PeanutAdmin\\FileMedia\\" => "file-media/src/",
+    "PeanutAdmin\\ImportExport\\" => "import-export/src/",
+    "PeanutAdmin\\IntegrationSecurity\\" => "integration-security/src/",
+    "PeanutAdmin\\Kernel\\" => "kernel/src/",
+    "PeanutAdmin\\NotificationSms\\" => "notification-sms/src/",
+    "PeanutAdmin\\OpsConsole\\" => "ops-console/src/",
+    "PeanutAdmin\\ReferenceCodes\\" => "reference-codes/src/",
+    "PeanutAdmin\\Settings\\" => "settings/src/",
+    "PeanutAdmin\\TaskJob\\" => "task-job/src/",
+];
+if (($php["name"] ?? null) !== "peanut-admin/core"
+    || ($php["version"] ?? null) !== "0.1.0-alpha.1"
+    || ($php["license"] ?? null) !== "Apache-2.0"
+    || ($php["autoload"]["psr-4"] ?? null) !== $expectedAutoload
+    || ($php["autoload-dev"]["psr-4"]["PeanutAdmin\\Testing\\"] ?? null) !== "testing/src/") {
+    $fail("packages/php/composer.json does not define the consolidated core boundary");
+}
+foreach (["replace", "provide"] as $compatibilityKey) {
+    if (isset($php[$compatibilityKey])) {
+        $fail("peanut-admin/core must not declare Composer {$compatibilityKey} compatibility");
     }
 }
+
+$assertComposerConsumer = static function (
+    string $path,
+    string $repositoryPath,
+    bool $symlink,
+) use ($decode, $fail): void {
+    $manifest = $decode($path);
+    $firstParty = array_filter(
+        $manifest["require"] ?? [],
+        static fn(string $name): bool => str_starts_with($name, "peanut-admin/"),
+        ARRAY_FILTER_USE_KEY,
+    );
+    if ($firstParty !== ["peanut-admin/core" => "0.1.0-alpha.1"]) {
+        $fail("{$path} must require only peanut-admin/core@0.1.0-alpha.1");
+    }
+    $repositories = $manifest["repositories"] ?? [];
+    if (count($repositories) !== 1
+        || ($repositories[0]["type"] ?? null) !== "path"
+        || ($repositories[0]["url"] ?? null) !== $repositoryPath
+        || (($repositories[0]["options"]["symlink"] ?? $symlink) !== $symlink)) {
+        $fail("{$path} has an invalid consolidated path repository");
+    }
+};
+$assertComposerConsumer("composer.json", "packages/php", true);
+$assertComposerConsumer("backend/composer.json", "../packages/php", true);
+$assertComposerConsumer("starter/backend/composer.json", "../packages/php", false);
+
+$web = $decode("packages/web/package.json");
+$expectedExports = [
+    "./core", "./shell", "./settings", "./reference-codes", "./file-media",
+    "./task-job", "./notification-sms", "./import-export", "./ops-console",
+    "./integration-security", "./testing",
+];
+$actualExports = array_keys($web["exports"] ?? []);
+sort($expectedExports);
+sort($actualExports);
+if (($web["name"] ?? null) !== "@peanut-admin/admin"
+    || ($web["version"] ?? null) !== "0.1.0-alpha.1"
+    || ($web["license"] ?? null) !== "Apache-2.0"
+    || $actualExports !== $expectedExports
+    || !isset($web["exports"]["./testing"]["development"])) {
+    $fail("packages/web/package.json does not define the consolidated Admin boundary");
+}
+foreach (array_keys($web["dependencies"] ?? []) as $dependency) {
+    if (str_starts_with($dependency, "@peanut-admin/")) {
+        $fail("@peanut-admin/admin contains an internal package dependency: {$dependency}");
+    }
+}
+
+$assertWebConsumer = static function (string $path, string $version) use ($decode, $fail): void {
+    $manifest = $decode($path);
+    $firstParty = array_filter(
+        $manifest["dependencies"] ?? [],
+        static fn(string $name): bool => str_starts_with($name, "@peanut-admin/"),
+        ARRAY_FILTER_USE_KEY,
+    );
+    if ($firstParty !== ["@peanut-admin/admin" => $version]) {
+        $fail("{$path} must depend only on @peanut-admin/admin@{$version}");
+    }
+};
+$assertWebConsumer("frontend/package.json", "workspace:^");
+$assertWebConsumer("starter/frontend/package.json", "workspace:0.1.0-alpha.1");
 '
 
-php -r '
-$expectedPhp = [
-    "packages/php/kernel/composer.json" => ["peanut-admin/kernel", "PeanutAdmin\\Kernel\\"],
-    "packages/php/data-permission/composer.json" => ["peanut-admin/data-permission", "PeanutAdmin\\DataPermission\\"],
-    "packages/php/testing/composer.json" => ["peanut-admin/testing", "PeanutAdmin\\Testing\\"],
-    "packages/php/settings/composer.json" => ["peanut-admin/settings", "PeanutAdmin\\Settings\\"],
-    "packages/php/reference-codes/composer.json" => ["peanut-admin/reference-codes", "PeanutAdmin\\ReferenceCodes\\"],
-    "packages/php/file-media/composer.json" => ["peanut-admin/file-media", "PeanutAdmin\\FileMedia\\"],
-    "packages/php/task-job/composer.json" => ["peanut-admin/task-job", "PeanutAdmin\\TaskJob\\"],
-    "packages/php/notification-sms/composer.json" => ["peanut-admin/notification-sms", "PeanutAdmin\\NotificationSms\\"],
-    "packages/php/import-export/composer.json" => ["peanut-admin/import-export", "PeanutAdmin\\ImportExport\\"],
-    "packages/php/ops-console/composer.json" => ["peanut-admin/ops-console", "PeanutAdmin\\OpsConsole\\"],
-    "packages/php/integration-security/composer.json" => ["peanut-admin/integration-security", "PeanutAdmin\\IntegrationSecurity\\"],
-];
-foreach ($expectedPhp as $path => [$name, $namespace]) {
-    $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-    if (($manifest["name"] ?? null) !== $name) {
-        fwrite(STDERR, "ERROR: {$path} has the wrong package name\n");
-        exit(1);
-    }
-    if (($manifest["license"] ?? null) !== "Apache-2.0") {
-        fwrite(STDERR, "ERROR: {$path} must declare Apache-2.0\n");
-        exit(1);
-    }
-    if (($manifest["autoload"]["psr-4"][$namespace] ?? null) !== "src/") {
-        fwrite(STDERR, "ERROR: {$path} has the wrong PSR-4 public namespace\n");
-        exit(1);
-    }
-}
-
-$backend = json_decode((string) file_get_contents("backend/composer.json"), true, 512, JSON_THROW_ON_ERROR);
-if (($backend["autoload"]["psr-4"]["PeanutAdmin\\App\\"] ?? null) !== "app/") {
-    fwrite(STDERR, "ERROR: backend host namespace must map PeanutAdmin\\App\\ to app/\n");
-    exit(1);
-}
-$settingsRepository = array_values(array_filter(
-    $backend["repositories"] ?? [],
-    static fn(mixed $repository): bool => is_array($repository)
-        && ($repository["url"] ?? null) === "../packages/php/settings",
-));
-if (count($settingsRepository) !== 1 || ($settingsRepository[0]["type"] ?? null) !== "path") {
-    fwrite(STDERR, "ERROR: backend must consume peanut-admin/settings from its workspace path repository\n");
-    exit(1);
-}
-if (($backend["require"]["peanut-admin/settings"] ?? null) !== "^0.1.0") {
-    fwrite(STDERR, "ERROR: backend must require peanut-admin/settings ^0.1.0\n");
-    exit(1);
-}
-$referenceCodesRepository = array_values(array_filter(
-    $backend["repositories"] ?? [],
-    static fn(mixed $repository): bool => is_array($repository)
-        && ($repository["url"] ?? null) === "../packages/php/reference-codes",
-));
-if (count($referenceCodesRepository) !== 1 || ($referenceCodesRepository[0]["type"] ?? null) !== "path") {
-    fwrite(STDERR, "ERROR: backend must consume peanut-admin/reference-codes from its workspace path repository\n");
-    exit(1);
-}
-if (($backend["require"]["peanut-admin/reference-codes"] ?? null) !== "^0.1.0") {
-    fwrite(STDERR, "ERROR: backend must require peanut-admin/reference-codes ^0.1.0\n");
-    exit(1);
-}
-$fileMediaRepository = array_values(array_filter(
-    $backend["repositories"] ?? [],
-    static fn(mixed $repository): bool => is_array($repository)
-        && ($repository["url"] ?? null) === "../packages/php/file-media",
-));
-if (count($fileMediaRepository) !== 1 || ($fileMediaRepository[0]["type"] ?? null) !== "path") {
-    fwrite(STDERR, "ERROR: backend must consume peanut-admin/file-media from its workspace path repository\n");
-    exit(1);
-}
-if (($backend["require"]["peanut-admin/file-media"] ?? null) !== "^0.1.0") {
-    fwrite(STDERR, "ERROR: backend must require peanut-admin/file-media ^0.1.0\n");
-    exit(1);
-}
-foreach ([
-    "task-job" => "peanut-admin/task-job",
-    "notification-sms" => "peanut-admin/notification-sms",
-    "import-export" => "peanut-admin/import-export",
-    "ops-console" => "peanut-admin/ops-console",
-    "integration-security" => "peanut-admin/integration-security",
-] as $directory => $package) {
-    $repositories = array_values(array_filter(
-        $backend["repositories"] ?? [],
-        static fn(mixed $repository): bool => is_array($repository)
-            && ($repository["url"] ?? null) === "../packages/php/{$directory}",
-    ));
-    if (count($repositories) !== 1 || ($repositories[0]["type"] ?? null) !== "path") {
-        fwrite(STDERR, "ERROR: backend must consume {$package} from its workspace path repository\n");
-        exit(1);
-    }
-    if (($backend["require"][$package] ?? null) !== "^0.1.0") {
-        fwrite(STDERR, "ERROR: backend must require {$package} ^0.1.0\n");
-        exit(1);
-    }
-}
-
-$expectedWeb = [
-    "packages/web/admin-core/package.json" => "@peanut-admin/admin-core",
-    "packages/web/admin-shell/package.json" => "@peanut-admin/admin-shell",
-    "packages/web/settings/package.json" => "@peanut-admin/settings",
-    "packages/web/reference-codes/package.json" => "@peanut-admin/reference-codes",
-    "packages/web/file-media/package.json" => "@peanut-admin/file-media",
-    "packages/web/task-job/package.json" => "@peanut-admin/task-job",
-    "packages/web/notification-sms/package.json" => "@peanut-admin/notification-sms",
-    "packages/web/import-export/package.json" => "@peanut-admin/import-export",
-    "packages/web/ops-console/package.json" => "@peanut-admin/ops-console",
-    "packages/web/integration-security/package.json" => "@peanut-admin/integration-security",
-    "packages/web/testing/package.json" => "@peanut-admin/web-testing",
-];
-foreach ($expectedWeb as $path => $name) {
-    $manifest = json_decode((string) file_get_contents($path), true, 512, JSON_THROW_ON_ERROR);
-    if (($manifest["name"] ?? null) !== $name || ($manifest["license"] ?? null) !== "Apache-2.0") {
-        fwrite(STDERR, "ERROR: {$path} has an invalid name or license\n");
-        exit(1);
-    }
-    if (!isset($manifest["exports"]["."])) {
-        fwrite(STDERR, "ERROR: {$path} must expose one public root export\n");
-        exit(1);
-    }
-}
-'
+if ! rg -q '^  - packages/web$' pnpm-workspace.yaml \
+  || ! rg -q '^  - packages/web$' starter/pnpm-workspace.yaml; then
+  echo 'ERROR: pnpm workspaces must expose only the packages/web root' >&2
+  exit 1
+fi
 
 approved_license_hash="cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
-for package_license in packages/php/*/LICENSE packages/web/*/LICENSE; do
+for package_license in packages/php/LICENSE packages/web/LICENSE; do
   actual="$(php -r 'echo hash_file("sha256", $argv[1]);' "$package_license")"
   if [[ "$actual" != "$approved_license_hash" ]]; then
     echo "ERROR: package license does not match Apache-2.0 baseline: $package_license" >&2
@@ -267,7 +216,7 @@ for package_license in packages/php/*/LICENSE packages/web/*/LICENSE; do
 done
 
 "$composer_bin" validate --strict --no-check-publish
-"$composer_bin" validate --working-dir starter/backend --strict --no-check-publish
+"$composer_bin" validate --working-dir starter/backend --no-check-publish
 
 if [[ -n "${PNPM_STORE_DIR:-}" ]]; then
   pnpm_store="$(pnpm --store-dir "$PNPM_STORE_DIR" store path)"

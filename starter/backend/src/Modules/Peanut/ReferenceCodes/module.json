@@ -6,8 +6,8 @@
   "version": "0.1.0",
   "kernel_constraint": "^0.1",
   "license": "Apache-2.0",
-  "php_package": "peanut-admin/reference-codes",
-  "web_package": "@peanut-admin/reference-codes",
+  "php_package": "peanut-admin/core",
+  "web_package": "@peanut-admin/admin/reference-codes",
   "dependencies": [],
   "backend": {
     "provider": "ExampleHost\\App\\Modules\\Peanut\\ReferenceCodes\\ModuleProvider",

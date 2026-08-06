@@ -21,7 +21,7 @@ if ($mapping !== $expected) {
 
 ./scripts/check-module-manifests
 
-if rg -n "from ['\"]@peanut-admin/[^'\"]+/(src|internal)/" frontend packages/web; then
+if rg -n "from ['\"]@peanut-admin/admin/(?:[^'\"]+/)*(src|internal)/" frontend packages/web; then
   echo 'ERROR: web host or package uses a private deep import' >&2
   exit 1
 fi
@@ -32,14 +32,30 @@ import path from 'node:path'
 import ts from 'typescript'
 
 const packages = new Map([
-  ['@peanut-admin/admin-core', 'packages/web/admin-core'],
-  ['@peanut-admin/admin-shell', 'packages/web/admin-shell'],
-  ['@peanut-admin/web-testing', 'packages/web/testing'],
+  ['@peanut-admin/admin/core', 'packages/web/admin-core'],
+  ['@peanut-admin/admin/shell', 'packages/web/admin-shell'],
+  ['@peanut-admin/admin/settings', 'packages/web/settings'],
+  ['@peanut-admin/admin/reference-codes', 'packages/web/reference-codes'],
+  ['@peanut-admin/admin/file-media', 'packages/web/file-media'],
+  ['@peanut-admin/admin/task-job', 'packages/web/task-job'],
+  ['@peanut-admin/admin/notification-sms', 'packages/web/notification-sms'],
+  ['@peanut-admin/admin/import-export', 'packages/web/import-export'],
+  ['@peanut-admin/admin/ops-console', 'packages/web/ops-console'],
+  ['@peanut-admin/admin/integration-security', 'packages/web/integration-security'],
+  ['@peanut-admin/admin/testing', 'packages/web/testing'],
 ])
 const allowedDependencies = new Map([
-  ['@peanut-admin/admin-core', new Set()],
-  ['@peanut-admin/admin-shell', new Set(['@peanut-admin/admin-core'])],
-  ['@peanut-admin/web-testing', new Set(['@peanut-admin/admin-core'])],
+  ['@peanut-admin/admin/core', new Set()],
+  ['@peanut-admin/admin/shell', new Set(['@peanut-admin/admin/core'])],
+  ['@peanut-admin/admin/settings', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/reference-codes', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/file-media', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/task-job', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/notification-sms', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/import-export', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/ops-console', new Set(['@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/integration-security', new Set(['@peanut-admin/admin/core', '@peanut-admin/admin/shell'])],
+  ['@peanut-admin/admin/testing', new Set(['@peanut-admin/admin/core'])],
 ])
 const errors = []
 const edges = new Map()

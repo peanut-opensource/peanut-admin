@@ -13,12 +13,8 @@ architecture="$(uname -m)"
 layout_candidates=(
   "$ROOT/node_modules"
   "$ROOT/frontend/node_modules"
+  "$ROOT/packages/web/node_modules"
 )
-for package_dir in "$ROOT"/packages/web/*; do
-  if [[ -d "$package_dir" ]]; then
-    layout_candidates+=("$package_dir/node_modules")
-  fi
-done
 
 resolve_store_path() {
   if [[ -n "${PNPM_STORE_DIR:-}" ]]; then
@@ -166,12 +162,8 @@ config_files=(
   pnpm-lock.yaml
   pnpm-workspace.yaml
   frontend/package.json
+  packages/web/package.json
 )
-for manifest in packages/web/*/package.json; do
-  if [[ -f "$manifest" ]]; then
-    config_files+=("$manifest")
-  fi
-done
 config_hash="$({
   for path in "${config_files[@]}"; do
     printf '%s\n' "$path"

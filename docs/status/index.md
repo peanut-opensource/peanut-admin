@@ -146,6 +146,12 @@ ledger contains 75 P0 and 64 P1 operations. These statements describe the
 candidate tree only and do not establish qualification, publication, release,
 or downstream consumption approval.
 
+The P1-PKG01 package-boundary candidate exposes the same Runtime through two
+installable boundaries: `peanut-admin/core` for PHP and
+`@peanut-admin/admin` for Admin Web. Both use `0.1.0-alpha.1`; internal domain
+directories remain ownership boundaries, not packages. Publication, release,
+stable compatibility, and downstream lock movement remain separate decisions.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

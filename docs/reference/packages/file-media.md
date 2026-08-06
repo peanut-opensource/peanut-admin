@@ -1,9 +1,10 @@
 # File And Media Package
 
-`peanut-admin/file-media` owns Tenant-private file metadata and neutral storage
-and delivery contracts. `@peanut-admin/file-media` contributes the guarded
-`/app/files` administration page and a reusable image asset selector to the
-existing Admin Web.
+The File And Media namespace inside `peanut-admin/core` owns Tenant-private
+file metadata and neutral storage and delivery contracts.
+`@peanut-admin/admin/file-media` contributes the guarded `/app/files`
+administration page and a reusable image asset selector to the existing Admin
+Web.
 
 The reference Host uses `local-private`, which stores opaque objects below an
 absolute private root outside Web roots. It is a development and single-node

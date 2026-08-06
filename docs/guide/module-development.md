@@ -182,7 +182,7 @@ $hostConfiguration = new ExternalHostConfiguration(
     '/api/platform/v1',
     'docs/api/openapi.yaml',
     'backend/route/openapi-generated.php',
-    'packages/web/generated/api.d.ts',
+    'packages/web/admin-core/src/generated/api.d.ts',
     ['operations-web'],
     'X-Request-ID',
 );
@@ -222,13 +222,14 @@ local key, JSON Schema draft 2020-12 schema, allowed scopes, secret flag, and an
 optional non-secret default. The Module remains responsible for the meaning of
 the key and must not move application policy into `peanut.settings`.
 
-Use `peanut-admin/settings` for storage and resolution. The fixed precedence is
-target, Tenant, deployment, then manifest default. A target definition must
+Use the Settings namespace from `peanut-admin/core` for storage and resolution.
+The fixed precedence is target, Tenant, deployment, then manifest default. A
+target definition must
 bind one explicit manifest-owned operation and callers must pass the exact
 `AuthorizedExternalOperation` issued by `ExternalOperationHost`; a target ID or
 Tenant from request input is never authorization.
 
-Use `@peanut-admin/settings` for the `/app/settings` Tenant contribution. The
+Use `@peanut-admin/admin/settings` for the `/app/settings` Tenant contribution. The
 reference Host permissions are `peanut.settings.read` and
 `peanut.settings.manage`. Deployment management remains API-only. See the
 [Settings Package](../reference/packages/settings.md) reference for definition,

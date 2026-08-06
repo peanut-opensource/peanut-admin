@@ -124,26 +124,38 @@ final class ProjectGenerator
 
     /** @var list<array{0: string, 1: string}> */
     private const PACKAGE_SNAPSHOTS = [
-        ['packages/php/kernel', 'composer.json'],
-        ['packages/php/data-permission', 'composer.json'],
-        ['packages/php/settings', 'composer.json'],
-        ['packages/php/reference-codes', 'composer.json'],
-        ['packages/php/file-media', 'composer.json'],
-        ['packages/php/task-job', 'composer.json'],
-        ['packages/php/notification-sms', 'composer.json'],
-        ['packages/php/import-export', 'composer.json'],
-        ['packages/php/ops-console', 'composer.json'],
-        ['packages/php/integration-security', 'composer.json'],
-        ['packages/web/admin-core', 'package.json'],
-        ['packages/web/admin-shell', 'package.json'],
-        ['packages/web/settings', 'package.json'],
-        ['packages/web/reference-codes', 'package.json'],
-        ['packages/web/file-media', 'package.json'],
-        ['packages/web/task-job', 'package.json'],
-        ['packages/web/notification-sms', 'package.json'],
-        ['packages/web/import-export', 'package.json'],
-        ['packages/web/ops-console', 'package.json'],
-        ['packages/web/integration-security', 'package.json'],
+        ['packages/php', 'composer.json'],
+        ['packages/web', 'package.json'],
+    ];
+
+    /** @var array<string, list<string>> */
+    private const PACKAGE_MODULES = [
+        'packages/php' => [
+            'kernel',
+            'data-permission',
+            'testing',
+            'settings',
+            'reference-codes',
+            'file-media',
+            'task-job',
+            'notification-sms',
+            'import-export',
+            'ops-console',
+            'integration-security',
+        ],
+        'packages/web' => [
+            'admin-core',
+            'admin-shell',
+            'testing',
+            'settings',
+            'reference-codes',
+            'file-media',
+            'task-job',
+            'notification-sms',
+            'import-export',
+            'ops-console',
+            'integration-security',
+        ],
     ];
 
     /** @var array<string, array{backend_root: string, frontend_component: string, frontend_host: string, backend_test: string, frontend_test: string}> */
@@ -356,8 +368,13 @@ final class ProjectGenerator
     {
         $paths = ['starter'];
         foreach (self::PACKAGE_SNAPSHOTS as [$relative, $manifest]) {
-            foreach ([$manifest, 'LICENSE', 'src', 'database', 'resources'] as $entry) {
+            foreach ([$manifest, 'LICENSE'] as $entry) {
                 $paths[] = $relative . '/' . $entry;
+            }
+            foreach (self::PACKAGE_MODULES[$relative] as $module) {
+                foreach (['src', 'database', 'resources'] as $entry) {
+                    $paths[] = $relative . '/' . $module . '/' . $entry;
+                }
             }
         }
 
@@ -556,17 +573,30 @@ final class ProjectGenerator
         foreach (self::PACKAGE_SNAPSHOTS as [$relative, $manifest]) {
             $source = $this->sourceRoot . '/' . $relative;
             $destination = $target . '/' . $relative;
-            foreach ([$manifest, 'LICENSE', 'src'] as $required) {
+            foreach ([$manifest, 'LICENSE'] as $required) {
                 if (!file_exists($source . '/' . $required)) {
                     throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', "Package snapshot is incomplete: {$relative}.");
                 }
             }
             $this->copyFile($source . '/' . $manifest, $destination . '/' . $manifest);
             $this->copyFile($source . '/LICENSE', $destination . '/LICENSE');
-            $this->copyTree($source . '/src', $destination . '/src');
-            foreach (['database', 'resources'] as $optional) {
-                if (is_dir($source . '/' . $optional)) {
-                    $this->copyTree($source . '/' . $optional, $destination . '/' . $optional);
+            foreach (self::PACKAGE_MODULES[$relative] as $module) {
+                $moduleSource = $source . '/' . $module;
+                $moduleDestination = $destination . '/' . $module;
+                if (!is_dir($moduleSource . '/src')) {
+                    throw new ProjectGeneratorException(
+                        'PROJECT_TEMPLATE_INVALID',
+                        "Package module snapshot is incomplete: {$relative}/{$module}.",
+                    );
+                }
+                $this->copyTree($moduleSource . '/src', $moduleDestination . '/src');
+                foreach (['database', 'resources'] as $optional) {
+                    if (is_dir($moduleSource . '/' . $optional)) {
+                        $this->copyTree(
+                            $moduleSource . '/' . $optional,
+                            $moduleDestination . '/' . $optional,
+                        );
+                    }
                 }
             }
         }
@@ -827,8 +857,8 @@ PHP;
             $clients,
         );
         $contents = <<<'TS'
-import { createProtectedFetch } from '@peanut-admin/admin-core'
-import type { RefreshCoordinator } from '@peanut-admin/admin-core'
+import { createProtectedFetch } from '@peanut-admin/admin/core'
+import type { RefreshCoordinator } from '@peanut-admin/admin/core'
 
 export interface TenantClientDefinition {
   key: string
@@ -918,8 +948,8 @@ TS;
         $slug = json_encode($request->slug, $jsonFlags);
         $contents = <<<VUE
 <script setup lang="ts">
-import { ADMIN_CORE_PACKAGE } from '@peanut-admin/admin-core'
-import { AdminShell, PageContent, PageHeader, ShellHeader, ShellSidebar } from '@peanut-admin/admin-shell'
+import { ADMIN_CORE_PACKAGE } from '@peanut-admin/admin/core'
+import { AdminShell, PageContent, PageHeader, ShellHeader, ShellSidebar } from '@peanut-admin/admin/shell'
 
 const projectBrand = {$brand}
 const projectDisplayName = {$name}
@@ -1077,6 +1107,8 @@ require dirname(__DIR__) . '/vendor/autoload.php';
 ksort(\$ownedTableOwners);
 \$kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 \$dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
+\$kernelRoot = is_string(\$kernelRoot) ? \$kernelRoot . '/kernel' : \$kernelRoot;
+\$dataPermissionRoot = is_string(\$dataPermissionRoot) ? \$dataPermissionRoot . '/data-permission' : \$dataPermissionRoot;
 \$valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
     && \$registry->moduleKeys() === {$keysExport}
@@ -1149,7 +1181,7 @@ PHP;
         $allowedPath = $clients[0]['api_prefix'] . 'items';
         $rejectedPath = count($clients) > 1 ? $clients[1]['api_prefix'] . 'items' : '/api/unregistered/v1/items';
         $contents = <<<TS
-import { createMemoryRefreshCoordinator } from '@peanut-admin/admin-core'
+import { createMemoryRefreshCoordinator } from '@peanut-admin/admin/core'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createTenantClientTransport, tenantClients } from '../src/clients'

@@ -1,6 +1,9 @@
 # Admin Web Composition
 
-The reference Admin Web is one Vue 3 build with strictly separated tenant and platform workspaces. Reusable behavior lives in `@peanut-admin/admin-core` and `@peanut-admin/admin-shell`; final routing, pages, branding, and Module assembly live in `frontend`.
+The reference Admin Web is one Vue 3 build with strictly separated tenant and
+platform workspaces. Reusable behavior comes from
+`@peanut-admin/admin/core` and `@peanut-admin/admin/shell`; final routing,
+pages, branding, and Module assembly live in `frontend`.
 
 ## Audience Clients
 
@@ -24,7 +27,7 @@ Non-idempotent requests are replayed only when they carry an `Idempotency-Key`.
 ## Module Contribution
 
 ```ts
-import { defineAdminModule } from '@peanut-admin/admin-core'
+import { defineAdminModule } from '@peanut-admin/admin/core'
 
 export default defineAdminModule({
   key: 'example.work-item',

@@ -36,25 +36,11 @@ $required = [
     'frontend/src/clients.ts',
     'frontend/src/modules/example-greeting/index.ts',
     'package.json',
-    'packages/php/data-permission/composer.json',
+    'packages/php/composer.json',
     'packages/php/data-permission/database/migrations/20260716020101_create_pa_data_permission_policy.php',
-    'packages/php/kernel/composer.json',
-    'packages/php/file-media/composer.json',
-    'packages/php/task-job/composer.json',
-    'packages/php/notification-sms/composer.json',
-    'packages/php/import-export/composer.json',
-    'packages/php/ops-console/composer.json',
-    'packages/php/integration-security/composer.json',
     'packages/php/kernel/database/migrations/20260718010101_generalize_pa_tenant_clients.php',
     'packages/php/kernel/resources/schemas/module-manifest.schema.json',
-    'packages/web/admin-core/package.json',
-    'packages/web/admin-shell/package.json',
-    'packages/web/file-media/package.json',
-    'packages/web/task-job/package.json',
-    'packages/web/notification-sms/package.json',
-    'packages/web/import-export/package.json',
-    'packages/web/ops-console/package.json',
-    'packages/web/integration-security/package.json',
+    'packages/web/package.json',
     'backend/src/Modules/Peanut/TaskJob/module.json',
     'backend/src/Modules/Peanut/NotificationSms/module.json',
     'frontend/src/modules/peanut-task-job.ts',
@@ -88,16 +74,7 @@ $composer = json_decode(
 foreach ([
     'composer/semver' => '3.4.4',
     'opis/json-schema' => '2.6.0',
-    'peanut-admin/kernel' => '0.1.0',
-    'peanut-admin/file-media' => '0.1.0',
-    'peanut-admin/task-job' => '0.1.0',
-    'peanut-admin/notification-sms' => '0.1.0',
-    'peanut-admin/import-export' => '0.1.0',
-    'peanut-admin/ops-console' => '0.1.0',
-    'peanut-admin/integration-security' => '0.1.0',
-    'peanut-admin/data-permission' => '0.1.0',
-    'peanut-admin/reference-codes' => '0.1.0',
-    'peanut-admin/settings' => '0.1.0',
+    'peanut-admin/core' => '0.1.0-alpha.1',
 ] as $package => $version) {
     if (($composer['require'][$package] ?? null) !== $version) {
         fwrite(STDERR, "ERROR: starter must lock {$package} to {$version}\n");
@@ -112,16 +89,7 @@ $frontend = json_decode(
     JSON_THROW_ON_ERROR,
 );
 foreach ([
-    '@peanut-admin/admin-core' => 'workspace:0.1.0',
-    '@peanut-admin/admin-shell' => 'workspace:0.1.0',
-    '@peanut-admin/file-media' => 'workspace:0.1.0',
-    '@peanut-admin/task-job' => 'workspace:0.1.0',
-    '@peanut-admin/notification-sms' => 'workspace:0.1.0',
-    '@peanut-admin/import-export' => 'workspace:0.1.0',
-    '@peanut-admin/ops-console' => 'workspace:0.1.0',
-    '@peanut-admin/integration-security' => 'workspace:0.1.0',
-    '@peanut-admin/reference-codes' => 'workspace:0.1.0',
-    '@peanut-admin/settings' => 'workspace:0.1.0',
+    '@peanut-admin/admin' => 'workspace:0.1.0-alpha.1',
 ] as $package => $version) {
     if (($frontend['dependencies'][$package] ?? null) !== $version) {
         fwrite(STDERR, "ERROR: starter must lock {$package} to {$version}\n");

@@ -1,10 +1,10 @@
 # Settings Package
 
-`peanut-admin/settings` provides reusable, Module-owned typed setting
-definitions, encrypted values, optimistic concurrency, and deterministic
-effective resolution. `@peanut-admin/settings` provides the Tenant page and
-host contribution. Neither package contains application setting keys or
-product policy.
+The Settings namespace inside `peanut-admin/core` provides reusable,
+Module-owned typed setting definitions, encrypted values, optimistic
+concurrency, and deterministic effective resolution.
+`@peanut-admin/admin/settings` provides the Tenant page and host contribution.
+Neither public package contains application setting keys or product policy.
 
 ## Definition Ownership
 
