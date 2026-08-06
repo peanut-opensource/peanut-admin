@@ -9,8 +9,8 @@ import {
   projectAuditDetail,
   usePlatformContext,
   useTenantContext,
-} from '@peanut-admin/admin-core'
-import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
+} from '@peanut-admin/admin/core'
+import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin/shell'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 

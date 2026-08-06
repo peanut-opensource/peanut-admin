@@ -2,9 +2,9 @@ import {
   createNotificationFetchTransport,
   createNotificationModuleContribution,
   createNotificationRuntime,
-} from '@peanut-admin/notification-sms'
-import type { NotificationRuntime } from '@peanut-admin/notification-sms'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+} from '@peanut-admin/admin/notification-sms'
+import type { NotificationRuntime } from '@peanut-admin/admin/notification-sms'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutNotificationSmsHostOptions {
   baseUrl: string

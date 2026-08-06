@@ -1,6 +1,6 @@
-import { createImportExportModuleContribution, createImportExportRuntime } from '@peanut-admin/import-export'
-import type { ImportExportRuntime, ImportExportTransport, ImportExportTransportResult } from '@peanut-admin/import-export'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createImportExportModuleContribution, createImportExportRuntime } from '@peanut-admin/admin/import-export'
+import type { ImportExportRuntime, ImportExportTransport, ImportExportTransportResult } from '@peanut-admin/admin/import-export'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutImportExportHostOptions {
   baseUrl: string

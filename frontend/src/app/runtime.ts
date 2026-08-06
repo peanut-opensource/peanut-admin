@@ -9,7 +9,7 @@ import {
   usePlatformContext,
   useTenantAuth,
   useTenantContext,
-} from '@peanut-admin/admin-core'
+} from '@peanut-admin/admin/core'
 import type {
   AdminHostConfig,
   AdminModuleContribution,
@@ -20,7 +20,7 @@ import type {
   PlatformContextData,
   ProblemDetails,
   TenantContextData,
-} from '@peanut-admin/admin-core'
+} from '@peanut-admin/admin/core'
 
 import {
   authenticatedLogin,

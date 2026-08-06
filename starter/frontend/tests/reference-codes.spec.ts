@@ -6,7 +6,7 @@ describe('internal starter reference-code consumption', () => {
     expect(existsSync(new URL('../src/app/modules.ts', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../src/modules/peanut-reference-codes.ts', import.meta.url))).toBe(true)
 
-    const referenceCodesPackage = await import('@peanut-admin/reference-codes')
+    const referenceCodesPackage = await import('@peanut-admin/admin/reference-codes')
     const { createStarterModules } = await import('../src/app/modules')
     const host = createStarterModules({
       baseUrl: 'https://starter.example.test',

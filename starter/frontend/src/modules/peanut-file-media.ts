@@ -1,6 +1,6 @@
-import { createFileMediaModuleContribution, createFileMediaRuntime } from '@peanut-admin/file-media'
-import type { FileMediaRuntime, FileMediaTransport, FileTransportResult } from '@peanut-admin/file-media'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createFileMediaModuleContribution, createFileMediaRuntime } from '@peanut-admin/admin/file-media'
+import type { FileMediaRuntime, FileMediaTransport, FileTransportResult } from '@peanut-admin/admin/file-media'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutFileMediaHostOptions {
   baseUrl: string

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { PageContent, PageHeader } from '@peanut-admin/admin-shell'
-import { usePlatformContext, useTenantContext } from '@peanut-admin/admin-core'
+import { PageContent, PageHeader } from '@peanut-admin/admin/shell'
+import { usePlatformContext, useTenantContext } from '@peanut-admin/admin/core'
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 

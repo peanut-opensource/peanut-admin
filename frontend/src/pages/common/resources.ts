@@ -1,4 +1,4 @@
-import type { ApiAudience } from '@peanut-admin/admin-core'
+import type { ApiAudience } from '@peanut-admin/admin/core'
 
 import { apiCollection } from '../../app/contracts'
 import type { ApiCollection } from '../../app/contracts'

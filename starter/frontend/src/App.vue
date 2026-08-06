@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ADMIN_CORE_PACKAGE } from '@peanut-admin/admin-core'
-import { AdminShell, PageContent, PageHeader, ShellHeader, ShellSidebar } from '@peanut-admin/admin-shell'
+import { ADMIN_CORE_PACKAGE } from '@peanut-admin/admin/core'
+import { AdminShell, PageContent, PageHeader, ShellHeader, ShellSidebar } from '@peanut-admin/admin/shell'
 
 import { exampleGreetingModule } from './modules/example-greeting'
 </script>

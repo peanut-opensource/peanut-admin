@@ -1,6 +1,6 @@
-import { createIntegrationSecurityModuleContribution, createIntegrationSecurityRuntime } from '@peanut-admin/integration-security'
-import type { IntegrationSecurityPermissions, IntegrationSecurityRuntime, IntegrationSecurityTransport, TransportResult } from '@peanut-admin/integration-security'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createIntegrationSecurityModuleContribution, createIntegrationSecurityRuntime } from '@peanut-admin/admin/integration-security'
+import type { IntegrationSecurityPermissions, IntegrationSecurityRuntime, IntegrationSecurityTransport, TransportResult } from '@peanut-admin/admin/integration-security'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutIntegrationSecurityHostOptions {
   baseUrl: string

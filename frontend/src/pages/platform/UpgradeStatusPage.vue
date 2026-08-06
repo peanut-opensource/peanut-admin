@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
+import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin/shell'
 import { computed, onMounted, ref } from 'vue'
 
 import { envelopeData, isRecord } from '../../app/contracts'

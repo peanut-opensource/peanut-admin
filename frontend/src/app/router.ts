@@ -4,7 +4,7 @@ import {
   runAdminRouteGuard,
   usePlatformContext,
   useTenantContext,
-} from '@peanut-admin/admin-core'
+} from '@peanut-admin/admin/core'
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteLocationNormalized, RouteRecordRaw } from 'vue-router'
 

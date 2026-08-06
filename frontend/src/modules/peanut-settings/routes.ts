@@ -1,5 +1,5 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient, components } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient, components } from '@peanut-admin/admin/core'
 import {
   SETTINGS_MANAGE_PERMISSION,
   SETTINGS_MODULE_KEY,
@@ -7,14 +7,14 @@ import {
   SETTINGS_ROUTE_NAME,
   SETTINGS_ROUTE_PATH,
   SETTINGS_STORE_KEY,
-} from '@peanut-admin/settings'
+} from '@peanut-admin/admin/settings'
 import type {
   ReplaceSettingRequest,
   SettingsRuntime,
   SettingsTransport,
   SettingsTransportResult,
   UnsetSettingRequest,
-} from '@peanut-admin/settings'
+} from '@peanut-admin/admin/settings'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -80,7 +80,7 @@ export const createPeanutSettingsModule = (options: PeanutSettingsModuleOptions)
   let settingsRuntime: SettingsRuntime | null = null
 
   const loadSettingsRoute = async () => {
-    const settingsPackage = await import('@peanut-admin/settings')
+    const settingsPackage = await import('@peanut-admin/admin/settings')
     const runtime = settingsRuntime ?? settingsPackage.createSettingsRuntime({
       transport,
       canRead: () => hasPermission(useTenantContext().permissionSet, SETTINGS_READ_PERMISSION),

@@ -7,7 +7,7 @@ import {
   RateLimitState,
   ServiceUnavailableState,
   SessionExpiredState,
-} from '@peanut-admin/admin-shell'
+} from '@peanut-admin/admin/shell'
 import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 

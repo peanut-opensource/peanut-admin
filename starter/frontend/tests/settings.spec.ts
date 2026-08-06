@@ -6,7 +6,7 @@ describe('internal starter Settings consumption', () => {
     expect(existsSync(new URL('../src/app/modules.ts', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../src/modules/peanut-settings.ts', import.meta.url))).toBe(true)
 
-    const settingsPackage = await import('@peanut-admin/settings')
+    const settingsPackage = await import('@peanut-admin/admin/settings')
     const { createStarterModules } = await import('../src/app/modules')
     let request: Request | null = null
     const host = createStarterModules({

@@ -1,7 +1,7 @@
-import { defineAdminModule } from '@peanut-admin/admin-core'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
-import { createOpsConsoleFetchTransport, createOpsConsoleRuntime, OPS_CONSOLE_STORE_KEY, OpsConsolePage, opsConsoleRuntimeKey } from '@peanut-admin/ops-console'
-import type { OpsConsoleRuntime, OpsProviderOption } from '@peanut-admin/ops-console'
+import { defineAdminModule } from '@peanut-admin/admin/core'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
+import { createOpsConsoleFetchTransport, createOpsConsoleRuntime, OPS_CONSOLE_STORE_KEY, OpsConsolePage, opsConsoleRuntimeKey } from '@peanut-admin/admin/ops-console'
+import type { OpsConsoleRuntime, OpsProviderOption } from '@peanut-admin/admin/ops-console'
 import { defineComponent, h, provide } from 'vue'
 
 export interface PeanutOpsConsoleHostOptions {

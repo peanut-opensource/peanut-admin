@@ -1,6 +1,6 @@
-import { createTaskJobModuleContribution, createTaskJobRuntime } from '@peanut-admin/task-job'
-import type { TaskJobRuntime, TaskJobTransport, TaskTransportResult } from '@peanut-admin/task-job'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createTaskJobModuleContribution, createTaskJobRuntime } from '@peanut-admin/admin/task-job'
+import type { TaskJobRuntime, TaskJobTransport, TaskTransportResult } from '@peanut-admin/admin/task-job'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutTaskJobHostOptions {
   baseUrl: string

@@ -1,11 +1,11 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 import {
   INTEGRATION_SECURITY_MODULE_KEY,
   INTEGRATION_SECURITY_ROUTE_PATH,
   INTEGRATION_SECURITY_ROUTE_PERMISSION,
-} from '@peanut-admin/integration-security'
-import type { IntegrationSecurityRuntime, IntegrationSecurityTransport, TransportResult } from '@peanut-admin/integration-security'
+} from '@peanut-admin/admin/integration-security'
+import type { IntegrationSecurityRuntime, IntegrationSecurityTransport, TransportResult } from '@peanut-admin/admin/integration-security'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -85,7 +85,7 @@ export const createPeanutIntegrationSecurityModule = (options: PeanutIntegration
   let runtime: IntegrationSecurityRuntime | null = null
 
   const load = async () => {
-    const feature = await import('@peanut-admin/integration-security')
+    const feature = await import('@peanut-admin/admin/integration-security')
     const active = runtime ?? feature.createIntegrationSecurityRuntime({
       transport,
       permissions: {

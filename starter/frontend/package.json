@@ -11,16 +11,7 @@
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@peanut-admin/admin-core": "workspace:0.1.0",
-    "@peanut-admin/admin-shell": "workspace:0.1.0",
-    "@peanut-admin/file-media": "workspace:0.1.0",
-    "@peanut-admin/import-export": "workspace:0.1.0",
-    "@peanut-admin/integration-security": "workspace:0.1.0",
-    "@peanut-admin/notification-sms": "workspace:0.1.0",
-    "@peanut-admin/ops-console": "workspace:0.1.0",
-    "@peanut-admin/reference-codes": "workspace:0.1.0",
-    "@peanut-admin/settings": "workspace:0.1.0",
-    "@peanut-admin/task-job": "workspace:0.1.0",
+    "@peanut-admin/admin": "workspace:0.1.0-alpha.1",
     "element-plus": "2.14.3",
     "pinia": "4.0.2",
     "vue": "3.5.39",

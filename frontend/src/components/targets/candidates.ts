@@ -1,4 +1,4 @@
-import type { TargetCandidate } from '@peanut-admin/admin-core'
+import type { TargetCandidate } from '@peanut-admin/admin/core'
 
 import { apiCollection, targetCandidates } from '../../app/contracts'
 import type { AdminRuntime } from '../../app/runtime'

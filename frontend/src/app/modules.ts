@@ -1,4 +1,4 @@
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 
 import { exampleReferenceModule } from '../modules/example-reference'
 import { exampleTargetModule } from '../modules/example-target'

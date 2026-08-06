@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 describe('internal starter file-media consumption', () => {
   it('composes the package contribution without a second demo', async () => {
     expect(existsSync(new URL('../src/modules/peanut-file-media.ts', import.meta.url))).toBe(true)
-    const fileMedia = await import('@peanut-admin/file-media')
+    const fileMedia = await import('@peanut-admin/admin/file-media')
     const { createStarterModules } = await import('../src/app/modules')
     const host = createStarterModules({
       baseUrl: 'https://starter.example.test', canRead: () => true,

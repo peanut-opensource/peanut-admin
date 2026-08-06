@@ -1,5 +1,5 @@
-import { ADMIN_CORE_VERSION } from '@peanut-admin/admin-core'
-import { ADMIN_SHELL_VERSION } from '@peanut-admin/admin-shell'
+import { ADMIN_CORE_VERSION } from '@peanut-admin/admin/core'
+import { ADMIN_SHELL_VERSION } from '@peanut-admin/admin/shell'
 import { describe, expect, it } from 'vitest'
 
 import { exampleGreetingModule } from '../src/modules/example-greeting'

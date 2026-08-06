@@ -2,9 +2,9 @@ import {
   createSettingsFetchTransport,
   createSettingsModuleContribution,
   createSettingsRuntime,
-} from '@peanut-admin/settings'
-import type { SettingsRuntime } from '@peanut-admin/settings'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+} from '@peanut-admin/admin/settings'
+import type { SettingsRuntime } from '@peanut-admin/admin/settings'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutSettingsHostOptions {
   baseUrl: string

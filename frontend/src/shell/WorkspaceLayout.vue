@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { AdminShell, PlatformShell } from '@peanut-admin/admin-shell'
+import { AdminShell, PlatformShell } from '@peanut-admin/admin/shell'
 import { computed } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import type { Component } from 'vue'
-import type { ApiAudience } from '@peanut-admin/admin-core'
-import type { ShellBreadcrumbItem, ShellNavigationItem } from '@peanut-admin/admin-shell'
+import type { ApiAudience } from '@peanut-admin/admin/core'
+import type { ShellBreadcrumbItem, ShellNavigationItem } from '@peanut-admin/admin/shell'
 
 import type { AdminMenuItem } from '../app/contracts'
 import { useAdminRuntime } from '../app/runtime'

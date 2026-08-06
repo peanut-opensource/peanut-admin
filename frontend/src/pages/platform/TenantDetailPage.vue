@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
+import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin/shell'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 

@@ -31,7 +31,7 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@peanut-admin/admin-core', () => ({
+vi.mock('@peanut-admin/admin/core', () => ({
   useTenantContext: () => mocks.context,
 }))
 

@@ -5,7 +5,7 @@ import {
   registerTenantDisposer,
   useTenantAuth,
   useTenantContext,
-} from '@peanut-admin/admin-core'
+} from '@peanut-admin/admin/core'
 
 import { createAdminRuntime } from '../src/app/runtime'
 import { useWorkspaceStore } from '../src/app/store'

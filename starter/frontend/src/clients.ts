@@ -1,5 +1,5 @@
-import { createProtectedFetch } from '@peanut-admin/admin-core'
-import type { RefreshCoordinator } from '@peanut-admin/admin-core'
+import { createProtectedFetch } from '@peanut-admin/admin/core'
+import type { RefreshCoordinator } from '@peanut-admin/admin/core'
 
 export interface TenantClientDefinition {
   key: string

@@ -1,12 +1,12 @@
-import { runAdminRouteGuard } from '@peanut-admin/admin-core'
+import { runAdminRouteGuard } from '@peanut-admin/admin/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 beforeEach(() => {
-  vi.doMock('@peanut-admin/file-media', () => import('../../packages/web/file-media/src/index'))
+  vi.doMock('@peanut-admin/admin/file-media', () => import('../../packages/web/file-media/src/index'))
 })
 
 afterEach(() => {
-  vi.doUnmock('@peanut-admin/file-media')
+  vi.doUnmock('@peanut-admin/admin/file-media')
   vi.doUnmock('../src/app/runtime')
   vi.resetModules()
 })

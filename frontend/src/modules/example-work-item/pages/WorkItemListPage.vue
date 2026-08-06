@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar, TargetScopeSummary, TargetSelector } from '@peanut-admin/admin-shell'
-import { hasPermission, useOperationTargets, useTenantContext } from '@peanut-admin/admin-core'
-import type { OperationTargetScope, TargetCandidate, TypedTarget } from '@peanut-admin/admin-core'
+import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar, TargetScopeSummary, TargetSelector } from '@peanut-admin/admin/shell'
+import { hasPermission, useOperationTargets, useTenantContext } from '@peanut-admin/admin/core'
+import type { OperationTargetScope, TargetCandidate, TypedTarget } from '@peanut-admin/admin/core'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 import { apiCollection, isRecord, stringValue } from '../../../app/contracts'

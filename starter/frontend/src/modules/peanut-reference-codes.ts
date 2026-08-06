@@ -2,9 +2,9 @@ import {
   createReferenceCodesFetchTransport,
   createReferenceCodesModuleContribution,
   createReferenceCodesRuntime,
-} from '@peanut-admin/reference-codes'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
-import type { ReferenceCodesRuntime } from '@peanut-admin/reference-codes'
+} from '@peanut-admin/admin/reference-codes'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
+import type { ReferenceCodesRuntime } from '@peanut-admin/admin/reference-codes'
 
 export interface PeanutReferenceCodesHostOptions {
   baseUrl: string

@@ -1,13 +1,13 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 import {
   NOTIFICATION_SMS_MODULE_KEY,
   NOTIFICATION_SMS_READ_PERMISSION,
   NOTIFICATION_SMS_ROUTE_NAME,
   NOTIFICATION_SMS_ROUTE_PATH,
   NOTIFICATION_SMS_STORE_KEY,
-} from '@peanut-admin/notification-sms'
-import type { NotificationRuntime, NotificationTransport, NotificationTransportResult } from '@peanut-admin/notification-sms'
+} from '@peanut-admin/admin/notification-sms'
+import type { NotificationRuntime, NotificationTransport, NotificationTransportResult } from '@peanut-admin/admin/notification-sms'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -45,7 +45,7 @@ export const createPeanutNotificationSmsModule = (options: PeanutNotificationSms
   let runtime: NotificationRuntime | null = null
 
   const loadNotificationRoute = async () => {
-    const notification = await import('@peanut-admin/notification-sms')
+    const notification = await import('@peanut-admin/admin/notification-sms')
     const active = runtime ?? notification.createNotificationRuntime({
       transport,
       canRead: () => hasPermission(useTenantContext().permissionSet, NOTIFICATION_SMS_READ_PERMISSION),
