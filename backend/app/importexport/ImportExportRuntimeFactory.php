@@ -20,17 +20,26 @@ use PeanutAdmin\TaskJob\Submission\TrustedJobPublisher;
 
 final class ImportExportRuntimeFactory
 {
-    public static function service(PDO $pdo):ImportExportService
+    public static function service(PDO $pdo): ImportExportService
     {
-        $jobs=new PdoTaskJobRepository($pdo);return new ImportExportService(new PdoImportExportRepository($pdo),self::providers($pdo),new TrustedJobPublisher($jobs,new TaskSubmissionRegistry([new ImportExportTaskSubmissionProvider()]),self::codec()),new TaskJobService($jobs),new PdoAuditRepository($pdo));
+        $jobs = new PdoTaskJobRepository($pdo);
+        return new ImportExportService(new PdoImportExportRepository($pdo), self::providers($pdo), new TrustedJobPublisher($jobs, new TaskSubmissionRegistry([new ImportExportTaskSubmissionProvider()]), self::codec()), new TaskJobService($jobs), new PdoAuditRepository($pdo));
     }
-    public static function handler(PDO $pdo):ImportExportTaskHandler
+    public static function handler(PDO $pdo): ImportExportTaskHandler
     {
-        $repository=new PdoImportExportRepository($pdo);return new ImportExportTaskHandler(new CsvOperationRunner($repository,self::providers($pdo),new PdoFileMediaGateway($pdo),new PdoAuditRepository($pdo)));
+        $repository = new PdoImportExportRepository($pdo);
+        return new ImportExportTaskHandler(new CsvOperationRunner($repository, self::providers($pdo), new PdoFileMediaGateway($pdo), new PdoAuditRepository($pdo)));
     }
-    private static function providers(PDO $pdo):DataProviderRegistry{return new DataProviderRegistry([new TenantMemberDirectoryProvider($pdo)]);}
-    private static function codec():TrustedEnvelopeCodec
+    private static function providers(PDO $pdo): DataProviderRegistry
     {
-        $config=require dirname(__DIR__,2).'/config/notification-sms.php';$key=$config['envelope_key']??null;if(!is_string($key)||strlen($key)<32)throw new \RuntimeException('TASK_ENVELOPE_KEY_UNAVAILABLE');return new TrustedEnvelopeCodec($key);
+        return new DataProviderRegistry([new TenantMemberDirectoryProvider($pdo)]);
+    }
+    private static function codec(): TrustedEnvelopeCodec
+    {
+        $config = require dirname(__DIR__, 2) . '/config/notification-sms.php';
+        $key = $config['envelope_key'] ?? null;
+        if (!is_string($key) || strlen($key) < 32) {
+            throw new \RuntimeException('TASK_ENVELOPE_KEY_UNAVAILABLE');
+        }return new TrustedEnvelopeCodec($key);
     }
 }

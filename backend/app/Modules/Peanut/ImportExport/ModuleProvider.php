@@ -8,7 +8,13 @@ use PeanutAdmin\App\module\TenantWideModuleProvider;
 
 final class ModuleProvider extends TenantWideModuleProvider
 {
-    public function moduleKey(): string { return 'peanut.import-export'; }
+    public function moduleKey(): string
+    {
+        return 'peanut.import-export';
+    }
 
-    protected function tenantColumn(): string { return 'operation.tenant_id'; }
+    protected function tenantColumn(): string
+    {
+        return 'operation.tenant_id';
+    }
 }

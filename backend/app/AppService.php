@@ -12,7 +12,7 @@ final class AppService extends Service
     public function register(): void
     {
         $this->app->bind(PDO::class, function (): PDO {
-            $host     = getenv('DB_HOST')     ?: '127.0.0.1';
+            $host     = getenv('DB_HOST') ?: '127.0.0.1';
             $port     = (int) (getenv('DB_PORT') ?: 3306);
             $database = getenv('DB_DATABASE') ?: 'peanut_admin';
             $username = getenv('DB_USERNAME') ?: 'peanut_admin';

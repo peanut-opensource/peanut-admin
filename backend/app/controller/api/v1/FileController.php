@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\App\controller\api\v1;
 
-use PeanutAdmin\App\filemedia\FileRuntimeFactory;
 use PeanutAdmin\App\filemedia\FileDeliveryHttpRuntime;
+use PeanutAdmin\App\filemedia\FileRuntimeFactory;
 use PeanutAdmin\Kernel\Api\OpenApiHandlerContract;
 use think\Request;
 use think\Response;

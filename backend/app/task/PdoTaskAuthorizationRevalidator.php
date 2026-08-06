@@ -30,7 +30,7 @@ final readonly class PdoTaskAuthorizationRevalidator implements AsyncAuthorizati
         if (preg_match('/^job_[0-9a-f]{32}$/D', $envelope->operationId) !== 1) {
             throw new AuthException('CONTEXT_SYSTEM_ACTOR_INVALID', 403);
         }
-        $now=new DateTimeImmutable('now',new DateTimeZone('UTC'));
+        $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
         (new ModuleGuard(new PdoModuleRuntimeRepository($this->pdo)))->assertTenant(
             $envelope->tenantId,
             'peanut.notification-sms',
@@ -45,12 +45,16 @@ JOIN pa_module_installation mi ON mi.module_key = 'peanut.notification-sms' AND 
 JOIN pa_tenant_module tmi ON tmi.tenant_id = tm.tenant_id AND tmi.module_key = mi.module_key AND tmi.status = 'enabled'
 WHERE tm.tenant_id = :tenant_id AND tm.id = :member_id AND tm.account_id = :account_id AND tm.status = 'active'
 SQL);
-        $statement->execute(['tenant_id'=>$envelope->tenantId,'member_id'=>$envelope->memberId,'account_id'=>$envelope->accountId]);
-        $revision=$statement->fetchColumn();
-        if(!is_int($revision)&&!(is_string($revision)&&ctype_digit($revision)))throw new AuthException('CONTEXT_SYSTEM_ACTOR_INVALID',403);
-        $repository=new PdoTenantAuthorizationRepository($this->pdo);
-        if(!$repository->permissions($envelope->tenantId,$envelope->memberId)->allows('peanut.notification-sms.manage'))throw new AuthException('CONTEXT_SYSTEM_ACTOR_INVALID',403);
-        $context=TenantContext::fromValidatedSession(new ValidatedTenantSession(1,'async-job', $envelope->tenantId,$envelope->accountId,$envelope->memberId,'admin-web',$now,(int)$revision),$envelope->traceId);
-        return AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow($context,$envelope->resourceKey,$envelope->operation,$envelope->requestedTargets,$repository->revision($envelope->tenantId,$envelope->memberId)));
+        $statement->execute(['tenant_id' => $envelope->tenantId,'member_id' => $envelope->memberId,'account_id' => $envelope->accountId]);
+        $revision = $statement->fetchColumn();
+        if (!is_int($revision) && !(is_string($revision) && ctype_digit($revision))) {
+            throw new AuthException('CONTEXT_SYSTEM_ACTOR_INVALID', 403);
+        }
+        $repository = new PdoTenantAuthorizationRepository($this->pdo);
+        if (!$repository->permissions($envelope->tenantId, $envelope->memberId)->allows('peanut.notification-sms.manage')) {
+            throw new AuthException('CONTEXT_SYSTEM_ACTOR_INVALID', 403);
+        }
+        $context = TenantContext::fromValidatedSession(new ValidatedTenantSession(1, 'async-job', $envelope->tenantId, $envelope->accountId, $envelope->memberId, 'admin-web', $now, (int) $revision), $envelope->traceId);
+        return AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow($context, $envelope->resourceKey, $envelope->operation, $envelope->requestedTargets, $repository->revision($envelope->tenantId, $envelope->memberId)));
     }
 }

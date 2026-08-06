@@ -24,11 +24,14 @@ final class IntegrationSecurityRuntimeFactory
     {
         $config = self::config();
         $catalog = new MachineScopeCatalog($config['machine_scopes']);
-        $resolver = new class($config['machine_scopes']) implements MachineScopeGrantResolver {
+        $resolver = new class ($config['machine_scopes']) implements MachineScopeGrantResolver {
             /** @param list<string> $scopes */
             public function __construct(private array $scopes) {}
             /** @return list<string> */
-            public function grantableScopes(AuthorizedOperationContext $context): array { return $this->scopes; }
+            public function grantableScopes(AuthorizedOperationContext $context): array
+            {
+                return $this->scopes;
+            }
         };
         return new MachineIdentityService(new PdoIntegrationSecurityRepository($pdo), new MachineScopeGrantPolicy($catalog, $resolver));
     }
@@ -43,8 +46,14 @@ final class IntegrationSecurityRuntimeFactory
         );
     }
 
-    public static function deliveries(PDO $pdo): WebhookDeliveryLogService { return new WebhookDeliveryLogService(new PdoIntegrationSecurityRepository($pdo)); }
-    public static function sessions(PDO $pdo): SessionSecurityService { return new SessionSecurityService(new PdoIntegrationSecurityRepository($pdo)); }
+    public static function deliveries(PDO $pdo): WebhookDeliveryLogService
+    {
+        return new WebhookDeliveryLogService(new PdoIntegrationSecurityRepository($pdo));
+    }
+    public static function sessions(PDO $pdo): SessionSecurityService
+    {
+        return new SessionSecurityService(new PdoIntegrationSecurityRepository($pdo));
+    }
 
     /** @return array{key_id:string,base64_key:string,machine_scopes:list<string>} */
     private static function config(): array

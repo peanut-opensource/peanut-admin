@@ -97,8 +97,12 @@ final class TenantModuleRuntime
             new PlatformAuthorizationEvaluator(new PdoPlatformAuthorizationRepository($pdo), new RevisionPermissionCache()),
         );
         $noTargets = new DataPermissionAdapter(
-            static function (): QueryConstraint { throw new LogicException('This operation does not accept query authorization.'); },
-            static function (): never { throw new LogicException('This operation does not accept typed targets.'); },
+            static function (): QueryConstraint {
+                throw new LogicException('This operation does not accept query authorization.');
+            },
+            static function (): never {
+                throw new LogicException('This operation does not accept typed targets.');
+            },
         );
 
         return new ExternalOperationHost(
@@ -124,8 +128,7 @@ final class TenantModuleRuntime
         AuthorizedExternalOperation $authorized,
         string $resourceKey,
         string $operation,
-    ): AuthorizedOperationContext
-    {
+    ): AuthorizedOperationContext {
         $context = self::context($authorized);
         return AuthorizedOperationContext::fromDecision(AuthorizationDecision::allow(
             $context,
@@ -160,12 +163,16 @@ final class TenantModuleRuntime
     public static function expectedRevision(ExternalOperationRequest $request, bool $optional = false): ?int
     {
         $value = $request->body['if_match'] ?? null;
-        if ($optional && ($value === null || $value === '')) return null;
+        if ($optional && ($value === null || $value === '')) {
+            return null;
+        }
         if (!is_string($value) || preg_match('/^"rev-([1-9][0-9]*)"$/D', $value, $matches) !== 1) {
             throw new ApiException('PRECONDITION_REQUIRED', 428, 'A strong revision precondition is required.');
         }
         $revision = filter_var($matches[1], FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if (!is_int($revision)) throw new ApiException('PRECONDITION_REQUIRED', 428, 'A strong revision precondition is required.');
+        if (!is_int($revision)) {
+            throw new ApiException('PRECONDITION_REQUIRED', 428, 'A strong revision precondition is required.');
+        }
         return $revision;
     }
 
@@ -174,7 +181,9 @@ final class TenantModuleRuntime
     {
         return static function (AuthorizedExternalOperation $authorized, ExternalOperationRequest $request, PDO $pdo) use ($moduleKey): void {
             $context = self::context($authorized);
-            if (!$pdo->inTransaction()) throw new LogicException('Module command guard requires an active transaction.');
+            if (!$pdo->inTransaction()) {
+                throw new LogicException('Module command guard requires an active transaction.');
+            }
             $deployment = $pdo->prepare('SELECT module_key FROM pa_module_installation WHERE module_key = :module_key FOR SHARE');
             $deployment->execute(['module_key' => $moduleKey]);
             $tenant = $pdo->prepare('SELECT tenant_id FROM pa_tenant_module WHERE tenant_id = :tenant_id AND module_key = :module_key FOR SHARE');
@@ -189,7 +198,9 @@ final class TenantModuleRuntime
     {
         $integer = is_int($value) ? $value : (is_string($value) && preg_match('/^[1-9][0-9]*$/D', $value) === 1
             ? filter_var($value, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) : false);
-        if (!is_int($integer) || $integer > $maximum) throw new ApiException('VALIDATION_FAILED', 422, 'A positive integer is required.');
+        if (!is_int($integer) || $integer > $maximum) {
+            throw new ApiException('VALIDATION_FAILED', 422, 'A positive integer is required.');
+        }
         return $integer;
     }
 
@@ -200,9 +211,14 @@ final class TenantModuleRuntime
         $authConfig = require $root . '/backend/config/auth.php';
         return new ExternalHostConfiguration(
             new ModuleHostLayout('backend/app/Modules', 'PeanutAdmin\\App\\Modules', 'frontend/src/modules'),
-            $moduleConfig['roots'], '/api/v1', '/api/platform/v1', 'docs/api/openapi.yaml',
-            'backend/route/openapi-generated.php', 'packages/web/admin-core/src/generated/api.d.ts',
-            $authConfig['tenant']['clients'], 'X-Request-Id',
+            $moduleConfig['roots'],
+            '/api/v1',
+            '/api/platform/v1',
+            'docs/api/openapi.yaml',
+            'backend/route/openapi-generated.php',
+            'packages/web/admin-core/src/generated/api.d.ts',
+            $authConfig['tenant']['clients'],
+            'X-Request-Id',
         );
     }
 

@@ -14,6 +14,12 @@ use PeanutAdmin\OpsConsole\Application\PlatformPermissionChecker;
 final readonly class PdoPlatformPermissionChecker implements PlatformPermissionChecker
 {
     private PlatformAuthorizationEvaluator $evaluator;
-    public function __construct(PDO $pdo){$this->evaluator=new PlatformAuthorizationEvaluator(new PdoPlatformAuthorizationRepository($pdo),new RevisionPermissionCache());}
-    public function allows(PlatformContext $context,string $permissionKey):bool{return $this->evaluator->allows($context,$permissionKey);}
+    public function __construct(PDO $pdo)
+    {
+        $this->evaluator = new PlatformAuthorizationEvaluator(new PdoPlatformAuthorizationRepository($pdo), new RevisionPermissionCache());
+    }
+    public function allows(PlatformContext $context, string $permissionKey): bool
+    {
+        return $this->evaluator->allows($context, $permissionKey);
+    }
 }

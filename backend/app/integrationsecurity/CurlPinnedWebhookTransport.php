@@ -13,12 +13,18 @@ final class CurlPinnedWebhookTransport implements WebhookTransport
 {
     public function send(WebhookRequest $request): WebhookResponse
     {
-        if (!function_exists('curl_init')) throw IntegrationSecurityException::destinationDenied();
+        if (!function_exists('curl_init')) {
+            throw IntegrationSecurityException::destinationDenied();
+        }
         $address = $request->destination->approvedAddresses[0];
         $handle = curl_init($request->destination->url);
-        if ($handle === false) throw IntegrationSecurityException::destinationDenied();
+        if ($handle === false) {
+            throw IntegrationSecurityException::destinationDenied();
+        }
         $headers = [];
-        foreach ($request->headers as $name => $value) $headers[] = $name . ': ' . $value;
+        foreach ($request->headers as $name => $value) {
+            $headers[] = $name . ': ' . $value;
+        }
         $started = hrtime(true);
         try {
             curl_setopt_array($handle, [
@@ -39,7 +45,9 @@ final class CurlPinnedWebhookTransport implements WebhookTransport
                 CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
                 CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS,
             ]);
-            if (curl_exec($handle) === false) throw IntegrationSecurityException::destinationDenied();
+            if (curl_exec($handle) === false) {
+                throw IntegrationSecurityException::destinationDenied();
+            }
             $status = curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
             $duration = min(30000, (int) ((hrtime(true) - $started) / 1_000_000));
             return new WebhookResponse($status, $duration);
