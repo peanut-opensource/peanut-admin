@@ -350,7 +350,9 @@ files before the single allowed rerun of that failed verification group:
 - `backend/tests/Contract/ModuleGuardMiddlewareTest.php`;
 - `backend/tests/Install/ProductProfileTest.php`;
 - `packages/php/kernel/tests/Integration/Schema/MigrationInventoryTest.php`;
-- `packages/php/kernel/tests/Unit/Menu/MenuCatalogSynchronizerTest.php`.
+- `packages/php/kernel/tests/Unit/Menu/MenuCatalogSynchronizerTest.php`;
+- `backend/app/Modules/Peanut/IntegrationSecurity/Resources/permissions.json`;
+- `starter/backend/src/Modules/Peanut/IntegrationSecurity/Resources/permissions.json`.
 
 The two Module manifests may only replace their legacy string dependency list
 with the existing object-shaped dependency contract while retaining the new
@@ -361,6 +363,11 @@ No production PHP behavior, schema, migration, menu catalog, Product Profile,
 package boundary, authorization, Tenant, audit, or user-visible result may
 change. After one static batch repair, only `./scripts/check-workspace` may be
 rerun once; another failure blocks P1-PKG01.
+
+The two Integration Security permission catalogs may only replace the invalid
+permission type `navigation` with the schema-defined navigation permission type
+`menu`. Permission keys, names, risk levels, routes, authorization semantics,
+and every other catalog entry remain unchanged.
 
 ## Publication Stop Line
 
