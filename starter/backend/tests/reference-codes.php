@@ -96,6 +96,9 @@ try {
     if (!is_string($kernelRoot) || !is_string($dataPermissionRoot) || !is_string($referenceCodesRoot)) {
         throw new RuntimeException('Starter package installation paths are unavailable.');
     }
+    $kernelRoot .= '/kernel';
+    $dataPermissionRoot .= '/data-permission';
+    $referenceCodesRoot .= '/reference-codes';
     $migrate($kernelRoot . '/database/migrations', 'pa_kernel_migration');
     $migrate($dataPermissionRoot . '/database/migrations', 'pa_data_permission_migration');
 

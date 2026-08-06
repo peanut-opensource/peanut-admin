@@ -14,7 +14,7 @@ final class HostPackageBoundaryTest extends TestCase
 {
     public function testReferenceHostConsumesPublicPackageExports(): void
     {
-        self::assertSame('peanut-admin/kernel', KernelPackage::NAME);
-        self::assertSame('peanut-admin/data-permission', DataPermissionPackage::NAME);
+        self::assertSame('peanut-admin/core', KernelPackage::NAME);
+        self::assertSame('peanut-admin/core', DataPermissionPackage::NAME);
     }
 }

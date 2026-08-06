@@ -41,7 +41,7 @@ final readonly class ModuleRegistryFactory
             $config['roots'],
         );
         $registry = (new ModuleRegistryCompiler(
-            new OpisManifestSchemaValidator($kernelRoot . '/resources/schemas/module-manifest.schema.json'),
+            new OpisManifestSchemaValidator($kernelRoot . '/kernel/resources/schemas/module-manifest.schema.json'),
             new ComposerVersionConstraintMatcher(),
             new ReflectionContractInspector(),
             KernelPackage::VERSION,

@@ -15,6 +15,8 @@ $ownedTableOwners = $registry->ownedTableOwners;
 ksort($ownedTableOwners);
 $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 $dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
+$kernelRoot = is_string($kernelRoot) ? $kernelRoot . '/kernel' : $kernelRoot;
+$dataPermissionRoot = is_string($dataPermissionRoot) ? $dataPermissionRoot . '/data-permission' : $dataPermissionRoot;
 $valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
     && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings']

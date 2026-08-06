@@ -495,7 +495,7 @@ SQL);
             $roots,
             $config['frontend_components'],
             $config['kernel_version'],
-            $this->packagePath(KernelPackage::NAME) . '/resources/schemas/module-manifest.schema.json',
+            $this->packagePath(KernelPackage::NAME) . '/kernel/resources/schemas/module-manifest.schema.json',
         ))->compileAndCheckBoundaries();
     }
 

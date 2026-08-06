@@ -6,77 +6,7 @@
   "repositories": [
     {
       "type": "path",
-      "url": "packages/php/kernel",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/data-permission",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/testing",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/settings",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/reference-codes",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/file-media",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/task-job",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/notification-sms",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/import-export",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/ops-console",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "path",
-      "url": "packages/php/integration-security",
+      "url": "packages/php",
       "options": {
         "symlink": true
       }
@@ -85,16 +15,7 @@
   "require": {
     "php": "^8.3",
     "opis/json-schema": "^2.6.0",
-    "peanut-admin/data-permission": "^0.1.0",
-    "peanut-admin/kernel": "^0.1.0",
-    "peanut-admin/file-media": "^0.1.0",
-    "peanut-admin/import-export": "^0.1.0",
-    "peanut-admin/integration-security": "^0.1.0",
-    "peanut-admin/notification-sms": "^0.1.0",
-    "peanut-admin/ops-console": "^0.1.0",
-    "peanut-admin/reference-codes": "^0.1.0",
-    "peanut-admin/settings": "^0.1.0",
-    "peanut-admin/task-job": "^0.1.0",
+    "peanut-admin/core": "0.1.0-alpha.1",
     "topthink/framework": "^8.1.4",
     "topthink/think-migration": "^3.1.1",
     "topthink/think-orm": "^4.0.51"
@@ -102,7 +23,6 @@
   "require-dev": {
     "deptrac/deptrac": "^4.6.2",
     "friendsofphp/php-cs-fixer": "^3.95.15",
-    "peanut-admin/testing": "^0.1.0",
     "phpstan/phpstan": "^2.2.5",
     "phpunit/phpunit": "^12.5.31"
   },
@@ -113,7 +33,14 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "PeanutAdmin\\App\\Tests\\": "backend/tests/"
+      "PeanutAdmin\\App\\Tests\\": "backend/tests/",
+      "PeanutAdmin\\DataPermission\\Tests\\": "packages/php/data-permission/tests/",
+      "PeanutAdmin\\FileMedia\\Tests\\": "packages/php/file-media/tests/",
+      "PeanutAdmin\\Kernel\\Tests\\": "packages/php/kernel/tests/",
+      "PeanutAdmin\\ReferenceCodes\\Tests\\": "packages/php/reference-codes/tests/",
+      "PeanutAdmin\\Settings\\Tests\\": "packages/php/settings/tests/",
+      "PeanutAdmin\\Testing\\": "packages/php/testing/src/",
+      "PeanutAdmin\\Testing\\Tests\\": "packages/php/testing/tests/"
     }
   },
   "config": {

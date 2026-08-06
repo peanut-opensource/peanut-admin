@@ -28,7 +28,7 @@ final class RuntimeModuleRegistry
             ),
             $config['frontend_components'],
             $config['kernel_version'],
-            rtrim($kernelPath, '/') . '/resources/schemas/module-manifest.schema.json',
+            rtrim($kernelPath, '/') . '/kernel/resources/schemas/module-manifest.schema.json',
         ))->compileAndCheckBoundaries();
     }
 

@@ -64,7 +64,7 @@ $databasePort = $requiredPort('DB_PORT');
 require $root . '/backend/vendor/autoload.php';
 
 if (!class_exists(SettingsPackage::class)) {
-    fwrite(STDERR, "ERROR: starter does not consume peanut-admin/settings through Composer\n");
+    fwrite(STDERR, "ERROR: starter does not consume peanut-admin/core through Composer\n");
     exit(1);
 }
 
@@ -118,6 +118,8 @@ try {
     if (!is_string($kernelRoot) || !is_string($settingsPackageRoot)) {
         throw new RuntimeException('Starter package installation paths are unavailable.');
     }
+    $kernelRoot .= '/kernel';
+    $settingsPackageRoot .= '/settings';
     $assertSame('0.1.0', SettingsPackage::VERSION, 'Unexpected Settings package version.');
     $installedSettingsRoot = realpath($settingsPackageRoot);
     $vendorRoot = realpath($root . '/backend/vendor');
