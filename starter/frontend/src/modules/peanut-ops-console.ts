@@ -1,7 +1,7 @@
-import { defineAdminModule } from '@peanut-admin/admin/core'
-import type { AdminModuleContribution } from '@peanut-admin/admin/core'
-import { createOpsConsoleFetchTransport, createOpsConsoleRuntime, OPS_CONSOLE_STORE_KEY, OpsConsolePage, opsConsoleRuntimeKey } from '@peanut-admin/admin/ops-console'
+import type { AdminNavigationRoute } from '@peanut-admin/admin/core'
+import { createOpsConsoleFetchTransport, createOpsConsoleRuntime, OpsConsolePage, opsConsoleRuntimeKey } from '@peanut-admin/admin/ops-console'
 import type { OpsConsoleRuntime, OpsProviderOption } from '@peanut-admin/admin/ops-console'
+import type { Component } from 'vue'
 import { defineComponent, h, provide } from 'vue'
 
 export interface PeanutOpsConsoleHostOptions {
@@ -16,7 +16,11 @@ export interface PeanutOpsConsoleHostOptions {
   canMaintain?: () => boolean
   canReadLogs?: () => boolean
 }
-export interface PeanutOpsConsoleHost { module: AdminModuleContribution; runtime: OpsConsoleRuntime }
+export interface PeanutOpsConsoleRoute extends AdminNavigationRoute {
+  component: () => Promise<{ default: Component }>
+}
+
+export interface PeanutOpsConsoleHost { route: PeanutOpsConsoleRoute; runtime: OpsConsoleRuntime }
 
 export const createPeanutOpsConsoleHost = (options: PeanutOpsConsoleHostOptions): PeanutOpsConsoleHost => {
   const denied = (): boolean => false
@@ -27,6 +31,12 @@ export const createPeanutOpsConsoleHost = (options: PeanutOpsConsoleHostOptions)
     canMaintain: options.canMaintain ?? denied, canReadLogs: options.canReadLogs ?? denied,
   })
   const page = defineComponent({ name: 'StarterOpsConsoleHostPage', setup() { provide(opsConsoleRuntimeKey, runtime); return () => h(OpsConsolePage) } })
-  const module = defineAdminModule({ key: 'peanut.ops-console', routes: [{ name: 'peanut.ops-console.page', path: '/platform/ops', component: async () => ({ default: page }), access: { permissionKeys: ['platform.ops.read'] } }], stores: [{ key: OPS_CONSOLE_STORE_KEY, dispose: runtime.dispose }] })
-  return { module, runtime }
+  const route: PeanutOpsConsoleRoute = {
+    name: 'peanut.ops-console.page',
+    path: '/platform/ops',
+    audience: 'platform',
+    permission: 'platform.ops.read',
+    component: async () => ({ default: page }),
+  }
+  return { route, runtime }
 }

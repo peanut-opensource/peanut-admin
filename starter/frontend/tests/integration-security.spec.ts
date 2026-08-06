@@ -18,7 +18,6 @@ describe('internal starter Integration Security consumption', () => {
       'peanut.notification-sms',
       'peanut.import-export',
       'peanut.integration-security',
-      'peanut.ops-console',
     ])
     expect(host.integrationSecurityModule.routes[0]).toMatchObject({ path: '/app/integration-security' })
     expect(host.integrationSecurityRuntime.state.disclosure).toBeNull()

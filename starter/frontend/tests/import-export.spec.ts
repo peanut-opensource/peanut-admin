@@ -19,7 +19,6 @@ describe('internal starter Import/Export consumption', () => {
       'peanut.notification-sms',
       'peanut.import-export',
       'peanut.integration-security',
-      'peanut.ops-console',
     ])
     expect(host.importExportModule.routes[0]).toMatchObject({ name: 'peanut.import-export.list', path: '/app/import-export' })
     await host.importExportRuntime.load()

@@ -12,7 +12,7 @@ describe('internal starter Task/Job consumption', () => {
       }), { status: 200, headers: { 'Content-Type': 'application/json' } }),
     })
     expect(host.modules.map(module => module.key)).toEqual([
-      'example.greeting', 'peanut.settings', 'peanut.reference-codes', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.import-export', 'peanut.integration-security', 'peanut.ops-console',
+      'example.greeting', 'peanut.settings', 'peanut.reference-codes', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.import-export', 'peanut.integration-security',
     ])
     expect(host.taskJobModule.routes[0]).toMatchObject({ name: 'peanut.task-job.list', path: '/app/tasks' })
     await host.taskJobRuntime.load()
