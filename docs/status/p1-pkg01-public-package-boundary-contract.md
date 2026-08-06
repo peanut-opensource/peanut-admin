@@ -589,6 +589,34 @@ checks the exact three-file write set and lock delta, then reruns only the
 failed `pnpm test:unit` group once. A changed path outside this inventory or a
 second failure blocks P1-PKG01.
 
+## P1-PKG01-R01 Root Peer Consumer Remediation
+
+The original P1-PKG01 unit budget is closed after its second failure. R01 is an
+independent dependency-layout repair with verification identifier
+`P1-PKG01-R01-UNIT-001`; it does not reopen or rewrite the prior results.
+
+Static resolution evidence shows that `packages/web` and `frontend` can both
+resolve `vue/server-renderer`, while the repository-root Vitest consumer cannot.
+The root now directly consumes `@peanut-admin/admin` for package-boundary tests
+but does not install that package's required Vue peer. Only these files may
+change:
+
+- `package.json`;
+- `pnpm-lock.yaml`.
+
+The root manifest may add `vue` at the already locked exact version `3.5.39`
+as a development-only dependency. The root lock may add only the matching root
+importer entry; no package snapshot, third-party version, integrity, peer graph,
+other importer, source, test, configuration, or runtime behavior may change.
+Adding Vue as a production dependency of `@peanut-admin/admin`, changing peer
+requirements, adding an alias, hoisting dependency layouts, or adding another
+package is forbidden.
+
+The R01 owner refreshes the dependency layout offline, proves a root Node
+consumer can import `vue/server-renderer`, verifies the exact two-file write
+set and lock delta, then runs `pnpm test:unit` once. A failure receives one
+read-only diagnosis and stops R01; it does not authorize another unit rerun.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
