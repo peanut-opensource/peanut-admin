@@ -412,6 +412,18 @@ configuration weakening, inline `@var` overrides, compatibility shims, and new
 dependencies are forbidden. Each disjoint file group receives static review
 and `php -l`; the integration owner runs PHPStan once on the combined tree.
 
+## Workspace Deptrac Baseline Repair Write Set
+
+After PHPStan passed, the authorized workspace continuation exposed four
+identical Deptrac violations because the shared
+`PeanutAdmin\App\module\TenantWideModuleProvider` abstraction was collected as
+general Backend code. Only `deptrac.yaml` may change in this repair. It must
+place that exact class in a dedicated module-provider support layer, remove it
+from the general Backend collector, and allow only Module Internals to depend
+on the new layer. It must not allow Module Internals to depend on the Backend
+layer, change source code, suppress a violation, or weaken uncovered-symbol
+enforcement.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
