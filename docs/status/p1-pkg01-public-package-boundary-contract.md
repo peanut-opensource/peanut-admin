@@ -636,6 +636,48 @@ the fixed frontend instance and `vue/server-renderer` no longer resolves below
 `vue.esm-bundler.js`. It then runs `pnpm test:unit` once. A failure receives one
 read-only diagnosis and stops R02; it does not authorize another unit rerun.
 
+## P1-PKG01-R03 Starter Platform Route Ownership Remediation
+
+R02 is closed after its single unit run. Its read-only failure diagnosis proved
+that the Starter registers the platform Ops Console route through
+`defineAdminModule`, whose Tenant Module contract correctly accepts only
+`/app/*` routes. The reference Host already owns `/platform/ops` as a platform
+route outside its Tenant Module array. R03 is an independent Starter assembly
+repair with verification identifier `P1-PKG01-R03-UNIT-001`.
+
+Only these files may change:
+
+- `starter/frontend/src/modules/peanut-ops-console.ts`;
+- `starter/frontend/src/app/modules.ts`;
+- `starter/frontend/tests/ops-console.spec.ts`;
+- `starter/frontend/tests/settings.spec.ts`;
+- `starter/frontend/tests/reference-codes.spec.ts`;
+- `starter/frontend/tests/file-media.spec.ts`;
+- `starter/frontend/tests/task-job.spec.ts`;
+- `starter/frontend/tests/notification-sms.spec.ts`;
+- `starter/frontend/tests/import-export.spec.ts`;
+- `starter/frontend/tests/integration-security.spec.ts`.
+
+The Ops Console Host must expose a Host-owned platform route and its existing
+runtime. The route remains `/platform/ops`, uses the platform audience and
+`platform.ops.read` permission, and renders the existing package page with the
+existing fail-closed runtime. `createStarterModules` must keep the Ops Console
+route and runtime available to the Host while excluding it from the Tenant
+`modules` array. The seven existing Tenant Module inventory assertions may
+only remove the Ops Console key. The Ops Console test must assert the platform
+route contract and its absence from the Tenant Module inventory.
+
+Changing `defineAdminModule`, accepting `/platform/*` as a Tenant Module route,
+moving the Ops Console below `/app`, changing a production route, permission,
+transport, runtime capability, page, or user-visible behavior, or adding an
+alias or compatibility layer is forbidden.
+
+The R03 owner statically verifies this exact ten-file write set, runs
+`git diff --check`, and then runs `pnpm test:unit` once. A failure receives one
+read-only diagnosis and stops R03; it does not authorize another unit rerun.
+After R03 passes, the P1-PKG01 integration owner may continue with the not-yet-
+run `pnpm build` and `docker compose config --quiet` groups exactly once each.
+
 ## Publication Stop Line
 
 P1-PKG01 produces a fixed package-boundary candidate only. It does not create
