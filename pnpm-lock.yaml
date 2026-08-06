@@ -57,6 +57,9 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@6.4.3(@types/node@24.10.1)(lightningcss@1.32.0)(yaml@2.9.0))
+      vue:
+        specifier: 3.5.39
+        version: 3.5.39(typescript@5.9.3)
       vue-tsc:
         specifier: 3.3.7
         version: 3.3.7(typescript@5.9.3)
