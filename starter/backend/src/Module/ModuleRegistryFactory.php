@@ -29,7 +29,7 @@ final readonly class ModuleRegistryFactory
             'ExampleHost\\App\\Modules',
             'frontend/src/modules',
         );
-        /** @var array{roots: list<string>, frontend_components: list<string>, registered_client_keys: list<string>} $config */
+        /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>, registered_client_keys: list<string>} $config */
         $config = require $this->root . '/backend/config/modules.php';
         $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
         if (!is_string($kernelRoot) || $kernelRoot === '') {
@@ -44,7 +44,7 @@ final readonly class ModuleRegistryFactory
             new OpisManifestSchemaValidator($kernelRoot . '/kernel/resources/schemas/module-manifest.schema.json'),
             new ComposerVersionConstraintMatcher(),
             new ReflectionContractInspector(),
-            KernelPackage::VERSION,
+            $config['kernel_version'],
             $config['frontend_components'],
             $layout,
             [

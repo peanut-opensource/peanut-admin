@@ -97,6 +97,41 @@ foreach ([
     }
 }
 
+$moduleConfig = require $root . '/backend/config/modules.php';
+if (($moduleConfig['kernel_version'] ?? null) !== '1.0.0') {
+    fwrite(STDERR, "ERROR: starter must declare Kernel compatibility version 1.0.0\n");
+    exit(1);
+}
+foreach ($moduleConfig['roots'] ?? [] as $moduleRoot) {
+    $moduleManifest = json_decode(
+        (string) file_get_contents($root . '/' . $moduleRoot . '/module.json'),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
+    if (($moduleManifest['kernel_constraint'] ?? null) !== '^1.0') {
+        fwrite(STDERR, "ERROR: starter Module manifest is incompatible with Kernel protocol 1.0.0: {$moduleRoot}\n");
+        exit(1);
+    }
+    $menusPath = $moduleManifest['backend']['menus'] ?? null;
+    if (!is_string($menusPath)) {
+        continue;
+    }
+    $menus = json_decode(
+        (string) file_get_contents($root . '/' . $moduleRoot . '/' . $menusPath),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
+    foreach ($menus as $menu) {
+        if (($menu['scope'] ?? null) === 'tenant'
+            && ($menu['client_keys'] ?? null) !== ['operations-web']) {
+            fwrite(STDERR, "ERROR: starter Tenant Module menu does not target operations-web: {$moduleRoot}\n");
+            exit(1);
+        }
+    }
+}
+
 $hostRoots = [$root . '/backend/public', $root . '/backend/src', $root . '/backend/tests', $root . '/frontend/src'];
 foreach ($hostRoots as $hostRoot) {
     $files = new RecursiveIteratorIterator(
@@ -138,9 +173,4 @@ if (($fileMediaManifest['backend']['provider'] ?? null)
     fwrite(STDERR, "ERROR: starter File/Media manifest does not use its external host namespace\n");
     exit(1);
 }
-if (($fileMediaManifest['kernel_constraint'] ?? null) !== '^0.1') {
-    fwrite(STDERR, "ERROR: starter File/Media manifest is incompatible with the fixed Kernel package\n");
-    exit(1);
-}
-
 fwrite(STDOUT, "Generated starter contract: OK\n");

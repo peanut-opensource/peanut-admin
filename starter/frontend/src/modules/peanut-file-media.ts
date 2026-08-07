@@ -15,7 +15,8 @@ export interface PeanutFileMediaHost {
   runtime: FileMediaRuntime
 }
 
-const result = async (response: Response): Promise<FileTransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<FileTransportResult> => {
+  const response = await responsePromise
   const text = await response.text()
   let body: unknown = null
   if (text !== '') {

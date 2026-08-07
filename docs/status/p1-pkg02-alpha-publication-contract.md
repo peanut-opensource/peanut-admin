@@ -203,3 +203,157 @@ continues once from `./scripts/check-dependency-decisions` through the remaining
 commands in `scripts/check`, in the same order and environment, without
 rerunning `check-doc-content-status` or `check-docs`. A failure receives one
 read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R04 Starter Kernel Compatibility Version Remediation
+
+R03 reached the internal Starter verification and stopped because the Starter
+passed `KernelPackage::VERSION` (`0.1.0`) to the Module compiler while the
+current Kernel compatibility protocol and Stage C Module manifests use
+`1.0.0` / `^1.0`. Package release versions and the Module compatibility
+protocol are separate version axes. A package version must never be used as a
+substitute for the Host's declared compatibility version.
+
+R04 may change only:
+
+- `docs/status/p1-pkg02-alpha-publication-contract.md`;
+- `scripts/verify-doc-examples` (the retained R03 count correction only);
+- `starter/backend/config/modules.php`;
+- `starter/backend/src/Module/ModuleRegistryFactory.php`;
+- `starter/backend/tests/settings.php`;
+- `starter/backend/tests/smoke.php`;
+- `starter/backend/src/Modules/Example/Greeting/module.json`;
+- `starter/backend/src/Modules/Peanut/Settings/module.json`;
+- `starter/backend/src/Modules/Peanut/ReferenceCodes/module.json`;
+- `starter/backend/src/Modules/Peanut/FileMedia/module.json`;
+- `starter/backend/src/Modules/Peanut/TaskJob/module.json`;
+- `starter/backend/src/Modules/Peanut/NotificationSms/module.json`;
+- `tests/starter/assert-generated-starter.php`;
+- `tools/project-generator/src/ProjectGenerator.php`;
+- `tests/project-generator/static-contract.php`;
+- `tests/project-generator/run.php`.
+
+The Starter Module config and every generated project config must declare
+`kernel_version` as `1.0.0`. The Starter compiler and the one direct compiler
+fixture must consume that value. All Starter Module manifests must declare the
+already documented `^1.0` compatibility protocol. Package smoke assertions
+must continue to prove the independently versioned `0.1.0` package contents.
+The generator and generated-Starter assertions must reject a missing or drifted
+compatibility version.
+
+R04 must not change the published package version, Module versions, Runtime
+behavior, schemas, routes, operations, permissions, package manifests, release
+candidate identity, test selection, or compatibility matcher. It must not
+weaken a Module constraint to make compilation pass.
+
+After static review and `git diff --check`, R04 runs `./scripts/check-docs`
+once with the complete R01/R02 environment. If it passes, qualification
+continues once from `./scripts/check-dependency-decisions` through the remaining
+commands in `scripts/check`, in the same order and environment, without
+rerunning `check-doc-content-status` or `check-docs`. A failure receives one
+read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R05 Starter Admin Client Menu Remediation
+
+R04 passed the Kernel compatibility boundary and then stopped when the Starter
+compiler rejected `peanut.task-job.page` because it targeted the unregistered
+`admin-web` Client. Read-only diagnosis confirmed that the Starter's declared
+admin Client is `operations-web`: it is registered by backend auth, exposed by
+the frontend Client registry, used by the earlier Starter Modules, and fixed by
+the internal-Starter guide. Four later Module menus copied the reference Host's
+`admin-web` key without registering or exposing that Client.
+
+R05 retains the exact R03 and R04 changes above and may additionally change
+only:
+
+- `starter/backend/src/Modules/Peanut/TaskJob/Resources/menus.json`;
+- `starter/backend/src/Modules/Peanut/NotificationSms/Resources/menus.json`;
+- `starter/backend/src/Modules/Peanut/ImportExport/Resources/menus.json`;
+- `starter/backend/src/Modules/Peanut/IntegrationSecurity/Resources/menus.json`;
+- `tests/starter/assert-generated-starter.php`.
+
+Each listed Tenant menu must target only `operations-web`. The generated
+Starter assertion must prove that every configured Tenant Module menu targets
+that registered admin Client. Adding `admin-web` to auth, frontend, or Module
+configuration, retaining both keys, changing the platform Client, or weakening
+unknown-Client rejection is forbidden. Project generation continues to replace
+the template key with the application's explicitly selected admin Client.
+
+After static review and `git diff --check`, R05 runs `./scripts/check-docs`
+once with the complete R01/R02 environment. If it passes, qualification
+continues once from `./scripts/check-dependency-decisions` through the remaining
+commands in `scripts/check`, in the same order and environment, without
+rerunning `check-doc-content-status` or `check-docs`. A failure receives one
+read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R06 Consolidated Settings Install Root Remediation
+
+R05 passed Module compilation and then stopped because the Starter Settings
+fixture still required `settings/composer.json`. P1-PKG01 intentionally removed
+all internal domain manifests: `peanut-admin/core/composer.json` is now the only
+Composer manifest, and its PSR-4 map owns `settings/src/`. Read-only diagnosis
+found no second Starter fixture that requires an internal domain manifest.
+
+R06 retains the exact R03 through R05 changes and may additionally change only
+`starter/backend/tests/settings.php`. The fixture must continue to prove that
+Composer installed `peanut-admin/core` below the Starter vendor directory. It
+must verify the public core manifest at the installed package root and the
+Settings `src/Package.php` below that root. It must not require, recreate, or
+accept an internal Settings manifest, path repository, copied source tree,
+fallback root, or compatibility package.
+
+After static review and `git diff --check`, R06 runs `./scripts/check-docs`
+once with the complete R01/R02 environment. If it passes, qualification
+continues once from `./scripts/check-dependency-decisions` through the remaining
+commands in `scripts/check`, in the same order and environment, without
+rerunning `check-doc-content-status` or `check-docs`. A failure receives one
+read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R07 Structured Module Dependency Assertion Remediation
+
+R06 passed the consolidated Settings install check and then stopped because the
+Starter Import/Export fixture still expected the pre-schema string dependency
+list. The committed manifest uses the current versioned dependency objects for
+File/Media and Task/Job. Static review found no second Starter fixture with the
+same stale assertion.
+
+R07 retains the exact R03 through R06 changes and may additionally change only
+`starter/backend/tests/import-export.php`. The assertion must require the exact
+ordered dependency objects `peanut.file-media@^0.1` and
+`peanut.task-job@^0.1`. It must not change the manifest, dependency versions,
+Module compiler, schema, dependency resolution, or Tenant requirement list,
+and it must not accept both the old and current shapes.
+
+After static review and `git diff --check`, R07 runs `./scripts/check-docs`
+once with the complete R01/R02 environment. If it passes, qualification
+continues once from `./scripts/check-dependency-decisions` through the remaining
+commands in `scripts/check`, in the same order and environment, without
+rerunning `check-doc-content-status` or `check-docs`. A failure receives one
+read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R08 Starter Web Async Response Remediation
+
+R07 passed every PHP Starter integration and then stopped in the Starter Web
+typecheck. Four Host adapters passed the `Promise<Response>` returned by their
+required fetch function directly to local helpers typed for a resolved
+`Response`. The public transport contracts already require the resulting
+Promises and must not be widened or weakened.
+
+R08 retains the exact R03 through R07 changes and may additionally change only:
+
+- `starter/frontend/src/modules/peanut-file-media.ts`;
+- `starter/frontend/src/modules/peanut-task-job.ts`;
+- `starter/frontend/src/modules/peanut-import-export.ts`;
+- `starter/frontend/src/modules/peanut-integration-security.ts`.
+
+Each local result helper must accept `Promise<Response>`, await it exactly once,
+and derive body, headers, and status from the resolved Response. R08 must not
+change request URLs, methods, headers, credentials, abort signals, response
+parsing, runtime permissions, public package types, or allow both synchronous
+and asynchronous fetch contracts.
+
+After static review and `git diff --check`, R08 runs `./scripts/check-docs`
+once with the complete R01/R02 environment. If it passes, qualification
+continues once from `./scripts/check-dependency-decisions` through the remaining
+commands in `scripts/check`, in the same order and environment, without
+rerunning `check-doc-content-status` or `check-docs`. A failure receives one
+read-only diagnosis and stops PKG02 qualification.

@@ -9,7 +9,8 @@ export interface PeanutIntegrationSecurityHostOptions {
 }
 export interface PeanutIntegrationSecurityHost { module: AdminModuleContribution; runtime: IntegrationSecurityRuntime }
 
-const result = async (response: Response): Promise<TransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<TransportResult> => {
+  const response = await responsePromise
   const text = await response.text(); let body: unknown = null
   if (text !== '') { try { body = JSON.parse(text) as unknown } catch { body = null } }
   return { body, headers: response.headers, status: response.status }

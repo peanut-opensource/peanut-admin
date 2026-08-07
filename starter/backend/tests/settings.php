@@ -114,21 +114,24 @@ $migrate = static function (string $path, string $table) use (
 
 try {
     $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
-    $settingsPackageRoot = InstalledVersions::getInstallPath(SettingsPackage::NAME);
-    if (!is_string($kernelRoot) || !is_string($settingsPackageRoot)) {
+    $corePackageRoot = InstalledVersions::getInstallPath(SettingsPackage::NAME);
+    if (!is_string($kernelRoot) || !is_string($corePackageRoot)) {
         throw new RuntimeException('Starter package installation paths are unavailable.');
     }
     $kernelRoot .= '/kernel';
-    $settingsPackageRoot .= '/settings';
+    $settingsPackageRoot = $corePackageRoot . '/settings';
     $assertSame('0.1.0', SettingsPackage::VERSION, 'Unexpected Settings package version.');
+    $installedCoreRoot = realpath($corePackageRoot);
     $installedSettingsRoot = realpath($settingsPackageRoot);
     $vendorRoot = realpath($root . '/backend/vendor');
-    if (!is_string($installedSettingsRoot)
+    if (!is_string($installedCoreRoot)
+        || !is_string($installedSettingsRoot)
         || !is_string($vendorRoot)
-        || !str_starts_with($installedSettingsRoot, $vendorRoot . DIRECTORY_SEPARATOR)
-        || !is_file($settingsPackageRoot . '/composer.json')
+        || !str_starts_with($installedCoreRoot, $vendorRoot . DIRECTORY_SEPARATOR)
+        || !str_starts_with($installedSettingsRoot, $installedCoreRoot . DIRECTORY_SEPARATOR)
+        || !is_file($corePackageRoot . '/composer.json')
         || !is_file($settingsPackageRoot . '/src/Package.php')) {
-        throw new RuntimeException('Settings must resolve through its installed package root.');
+        throw new RuntimeException('Settings must resolve through the installed core package root.');
     }
 
     $settingsModuleRoot = $root . '/backend/src/Modules/Peanut/Settings';
@@ -162,7 +165,7 @@ SQL);
         new OpisManifestSchemaValidator($kernelRoot . '/resources/schemas/module-manifest.schema.json'),
         new ComposerVersionConstraintMatcher(),
         new ReflectionContractInspector(),
-        KernelPackage::VERSION,
+        $moduleConfig['kernel_version'],
         $moduleConfig['frontend_components'],
         $layout,
         [

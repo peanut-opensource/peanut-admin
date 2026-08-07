@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 return [
+    'kernel_version' => '1.0.0',
     'roots' => [
         'backend/src/Modules/Example/Greeting',
         'backend/src/Modules/Peanut/Settings',

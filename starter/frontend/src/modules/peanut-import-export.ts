@@ -12,7 +12,8 @@ export interface PeanutImportExportHostOptions {
 
 export interface PeanutImportExportHost { module: AdminModuleContribution; runtime: ImportExportRuntime }
 
-const result = async (response: Response): Promise<ImportExportTransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<ImportExportTransportResult> => {
+  const response = await responsePromise
   const text = await response.text()
   let body: unknown = null
   if (text !== '') { try { body = JSON.parse(text) as unknown } catch { body = null } }

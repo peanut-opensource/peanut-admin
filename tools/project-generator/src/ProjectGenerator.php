@@ -722,6 +722,7 @@ final class ProjectGenerator
             'platform-web',
         ]));
         $this->writePhpConfig($target . '/backend/config/modules.php', [
+            'kernel_version' => '1.0.0',
             'roots' => $moduleRoots,
             'frontend_components' => $frontendComponents,
             'registered_client_keys' => $registeredClients,
