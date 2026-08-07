@@ -537,6 +537,64 @@ exact PHP and Web projections from this candidate. If it fails, the owner
 performs one read-only diagnosis and stops. Any source repair requires a new
 remediation contract and candidate rollover.
 
+## P1-PKG02-R26 Explicit Authentication PDO Injection
+
+R25 passed the package, supply-chain, unit, and Web groups and completed the
+integration group. Nine HTTP-fixture errors shared one cause: the fixtures
+create authentication before the ThinkPHP application registers `AppService`,
+so the Runtime factories attempted to reflectively construct PDO. The same
+group also proved the Kernel ledger now contains exactly 40 migrations rather
+than the stale expected 38.
+
+R26 may change only:
+
+- this contract;
+- `backend/app/middleware/TenantAuthRuntimeFactory.php`;
+- `backend/app/middleware/PlatformAuthRuntimeFactory.php`;
+- the four HTTP integration fixtures that call those factories before App
+  startup;
+- `packages/php/kernel/tests/Integration/Schema/KernelMigrationTest.php`.
+
+Each factory may accept an explicit nullable PDO dependency. When absent it
+must retain the existing fail-closed ThinkPHP container lookup; it must not
+construct a fallback connection or read additional environment configuration.
+The four fixtures must pass their already isolated PDO explicitly. Production
+controllers and middleware continue to call the default container-backed path.
+The Kernel migration test must require exactly 40 ledger rows while retaining
+its complete table, index, repeat-install, and rollback checks.
+
+R26 must not add a compatibility route or field, change authentication,
+authorization, transaction, schema, migration, or connection behavior, or
+weaken any assertion. After `git diff --check`, the owner runs the four focused
+HTTP integration files and Kernel migration test once with the complete
+R01/R02 environment. A passing source commit becomes the next package
+candidate and a separate planning commit records its exact hash.
+
+R26 removed all nine pre-application PDO construction errors and the corrected
+Kernel migration assertion passed. Seven real HTTP requests still returned 500
+because the application path contains `AppService` but no ThinkPHP
+`app/service.php` registration file. ThinkPHP therefore never executes the
+existing PDO binding when the HTTP application loads, and the middleware's
+default container-backed factory call again reaches reflective PDO
+construction.
+
+## P1-PKG02-R27 ThinkPHP Application Service Registration
+
+R27 retains the exact R26 changes and may additionally add only
+`backend/app/service.php`. The file must use ThinkPHP's standard application
+service list and register only `PeanutAdmin\App\AppService`. The existing
+`AppService` remains the sole owner of the PDO binding and production Runtime
+factories must continue to use the container-backed path.
+
+R27 must not construct a fallback PDO, duplicate database environment parsing,
+change middleware, controller, route, authentication, authorization, schema,
+migration, or error behavior, or add a test-only application service. After
+`git diff --check`, the owner reruns only the four focused HTTP integration
+files and Kernel migration test once with the complete R01/R02 environment. A
+passing source commit becomes the next package candidate and a separate
+planning commit records its exact hash before one new aggregate qualification
+run.
+
 ## P1-PKG02-R20 Old-Lock Upgrade Test Process Isolation
 
 R19 passed supply-chain qualification, PHP unit tests, and Web tests, then the
