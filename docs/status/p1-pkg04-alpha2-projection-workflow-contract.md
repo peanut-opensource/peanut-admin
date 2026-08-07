@@ -81,3 +81,25 @@ tests, and every other qualification result remain unchanged. After static
 review and `git diff --check`, the integration owner runs the projection script
 once against a new empty temporary directory. A failure receives one read-only
 diagnosis and stops.
+
+## R02 Credential-Content Scan Remediation
+
+The R01 invocation reproduced the commit-rooted Composer digest and then
+stopped because the preflight treated any source filename containing `secret`
+or `credential` as a leaked credential. The matched files are the qualified
+Settings secret-protection contracts, Integration Security crypto adapters,
+and Kernel credential models and tests. No environment file, private-key file,
+or credential payload was found.
+
+R02 may change only `scripts/check-alpha2-package-projections`. The Composer and
+npm projections must reject `.env` files, private-key or certificate-key files,
+and content matching a private-key header, npm access token, or AWS access-key
+identifier. They must not reject a source path merely because a qualified
+security type contains the words `secret`, `credential`, or `private`.
+
+R02 must not weaken digest, file-count, package-name, version, license, PSR-4,
+export, dry-run/tarball parity, or output-directory checks; change package
+source or evidence; or add a secret exception list. After static review and
+`git diff --check`, the integration owner runs the complete projection script
+once against a new empty directory. A failure receives one read-only diagnosis
+and stops.
