@@ -176,6 +176,9 @@ The post-`alpha.1` [P1-OVR01 Admin Web Override Registry Contract](./p1-ovr01-ad
 defines the first standard application override boundary for services,
 components, pages, and route loaders. It is an unqualified candidate task and
 does not change the fixed publication source or downstream-consumption lock.
+The candidate implementation provides one typed, fail-closed build-time
+registry with exact contract-version matching and immutable resolution source
+metadata; it remains unqualified and is not approved for downstream use.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the

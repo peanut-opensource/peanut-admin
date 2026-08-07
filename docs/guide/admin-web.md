@@ -46,6 +46,42 @@ export default defineAdminModule({
 
 Remote component paths, `eval`, and runtime Plugin JavaScript are not supported in P0.
 
+## Application Overrides
+
+Reusable Web implementations can declare typed build-time override slots through
+`@peanut-admin/admin/core`. A slot key is a lowercase dotted identifier that
+includes its owner and kind, and its contract version is matched exactly:
+
+```ts
+import { createAdminOverrideRegistry } from '@peanut-admin/admin/core'
+
+const registry = createAdminOverrideRegistry({
+  slots: [{
+    key: 'peanut.shell.component.header',
+    kind: 'component',
+    contractVersion: '1.0.0',
+    defaultValue: DefaultHeader,
+    validate: (value): value is typeof DefaultHeader => typeof value === 'function',
+  }],
+  overrides: [{
+    key: 'peanut.shell.component.header',
+    kind: 'component',
+    contractVersion: '1.0.0',
+    value: ApplicationHeader,
+  }],
+})
+
+const header = registry.resolve('peanut.shell.component.header')
+// header.value is selected once at startup; header.source is `default` or `application`.
+```
+
+Registry construction fails with an `ADMIN_OVERRIDE_` error for an invalid or
+duplicate slot, an unknown or duplicate replacement, a kind or exact-version
+mismatch, or a value rejected by its slot validator. There is no fallback for
+an invalid replacement. `diagnostics()` returns immutable key, kind, version,
+and source metadata only; values, Tenant data, credentials, and API responses
+must remain outside diagnostics.
+
 ## Zero, One, And Many Targets
 
 The operation target store is keyed by Module, protected resource, operation, target type, and cardinality.
