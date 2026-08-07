@@ -640,6 +640,43 @@ replacement candidate commit; a separate planning commit records its exact
 hash before qualification resumes through recovery and the remaining
 unexecuted groups. A failure receives one read-only diagnosis and stops.
 
+## P1-PKG02-R35 Created Entry Snapshot Advancement
+
+R34 removed the transient dialog geometry failure, and all four Reference
+Codes variants completed validation and received `201` from the real create
+endpoint. The following list refresh remained fixed at the deliberately
+historical `2000-01-01T00:00:00.000Z` snapshot and correctly returned no
+entries. The created entry has a backdated effective version but a 2026 system
+creation time; the existing bitemporal query correctly hides an identity before
+its actual creation. The page therefore waited for a row that cannot exist in
+that historical snapshot. Forty-two other browser tests passed.
+
+R35 retains the exact R32 through R34 source changes and may additionally
+change only:
+
+- `packages/web/reference-codes/src/runtime.ts`.
+
+After a create response is parsed and its entry identity is validated, the
+Runtime must advance `state.asOf` to the authoritative `createdAt` returned by
+that response before it reloads the collection. It must continue using the
+existing parsed instant contract and existing collection reload. This moves
+the operator from the historical snapshot to the first snapshot in which the
+new identity exists while preserving the submitted effective interval,
+including backdated or future-effective versions.
+
+R35 must not change repository or query bitemporal semantics, derive the new
+snapshot from the client clock, alter create input, response parsing, API,
+schema, transaction, authorization, idempotency, browser assertion, timeout,
+or test data, or add a compatibility path. Append, replace, retire, stale
+reload, and ordinary filter behavior remain unchanged.
+
+After static review and `git diff --check`, the owner runs
+`./scripts/test-browser` once with the complete R01/R02 environment. If it
+passes, all retained R32-R35 source files form one clean replacement candidate
+commit; a separate planning commit records its exact hash before qualification
+resumes through recovery and the remaining unexecuted groups. A failure
+receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R26 Explicit Authentication PDO Injection
 
 R25 passed the package, supply-chain, unit, and Web groups and completed the
