@@ -153,10 +153,12 @@ directories remain ownership boundaries, not packages. Publication, release,
 stable compatibility, and downstream lock movement remain separate decisions.
 
 The [P1-PKG02 Alpha Publication Contract](./p1-pkg02-alpha-publication-contract.md)
-fixes `be87bfd7653bc628c62337dd373fa52f7d993818` as the package source
+fixes `0ed843aad95497f162815a472ea9005d5bc1a5c6` as the package source
 candidate after its retained R32-R38 browser remediation passed all 46 declared
 Playwright tests and R39 passed recovery, clean-install, and internal Starter
-verification. It separates aggregate qualification from external publication.
+verification. R40 also passed all seven performance scenarios and focused
+performance contracts. It separates aggregate qualification from external
+publication.
 No registry version, Composer split repository, tag, or Release is authorized
 until the fixed-tree gate, package-content evidence, registry ownership,
 credentials, provenance, and immutable rollback contract are all recorded.

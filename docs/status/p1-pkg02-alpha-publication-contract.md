@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: be87bfd7653bc628c62337dd373fa52f7d993818
+package_candidate_commit: 0ed843aad95497f162815a472ea9005d5bc1a5c6
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,11 +25,12 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`be87bfd7653bc628c62337dd373fa52f7d993818`. Its retained R32-R38 browser
+`0ed843aad95497f162815a472ea9005d5bc1a5c6`. Its retained R32-R38 browser
 remediation passed all 46 declared Playwright tests, and R39 passed recovery,
-clean-install, and internal Starter verification. The planning commit that
-fixes this contract may be checked out above that candidate, but no package or
-Runtime source may change before qualification.
+clean-install, and internal Starter verification. R40 passed all seven
+performance scenarios and the focused performance contracts. The planning
+commit that fixes this contract may be checked out above that candidate, but no
+package or Runtime source may change before qualification.
 
 `P1-PKG02-QUALIFICATION` runs the repository aggregate gate exactly once:
 
