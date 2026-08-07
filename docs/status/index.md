@@ -243,6 +243,13 @@ Host chains and the three client subpaths. Versioning, aggregate qualification,
 registry ownership, and publication remain separate gates; external publication
 is still unauthorized.
 
+The [P1-PKG04 Alpha.2 Projection Workflow Contract](./p1-pkg04-alpha2-projection-workflow-contract.md)
+adds a manually dispatched, read-only preflight for the fixed Alpha.2 candidate.
+It regenerates the Composer and npm projections, checks their package metadata,
+public boundaries, file lists, and qualified SHA-256 digests, and has no
+publication, repository, tag, Release, registry, credential, or artifact-upload
+authority.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
