@@ -36,8 +36,9 @@ This task does not add:
   menu resolver, token store, API client, or business-data request;
 - a server-driven component loader, component path, remote JavaScript, `eval`,
   dynamic import derived from server data, or plugin marketplace;
-- an application business page, DCS concept, product workflow, generic CRUD
-  engine, form schema, DataGrid, dashboard builder, or marketing page;
+- an application business page, consumer-specific concept, product workflow,
+  generic CRUD engine, form schema, DataGrid, dashboard builder, or marketing
+  page;
 - a new dependency, package publication, release, production-readiness claim,
   or downstream-consumption approval.
 
@@ -219,8 +220,8 @@ compose.yaml
 playwright.config.ts
 ```
 
-Company-os Patch files, P1-R01/P1-R02 internals, P1-B03/P1-B04 worktrees, DCS
-files, and every other repository are outside this task.
+Company-os Patch files, P1-R01/P1-R02 internals, P1-B03/P1-B04 worktrees,
+downstream application files, and every other repository are outside this task.
 
 ## Test Contract
 
@@ -265,4 +266,4 @@ The implementation is one independently reviewable commit after this canonical
 contract commit. Completion makes W03 only an unqualified P1 candidate. It does
 not move `0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`, authorize a downstream
 consumer, publish a package, create a tag or release, claim production
-readiness, start P1-Q01, or add DCS business logic.
+readiness, start P1-Q01, or add downstream product business logic.

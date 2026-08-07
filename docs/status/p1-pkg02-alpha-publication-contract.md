@@ -435,7 +435,7 @@ one read-only diagnosis and stops PKG02 qualification.
 ## P1-PKG02-R12 Public Package Documentation Remediation
 
 R11 removed the Host's monorepo package paths, after which the architecture
-gate found the internal project name `DCS` in two README files included in the
+gate found an internal project name in two README files included in the
 Composer projection. Public package documentation must describe only generic
 downstream consumption boundaries.
 

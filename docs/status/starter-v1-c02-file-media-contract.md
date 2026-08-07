@@ -238,7 +238,7 @@ After this independent contract commit, implementation may change only:
   `docs/content-status.json`, `README.md`, and the generated lock evidence.
 
 The implementation must not change `dev`, the external-host consumption lock,
-release/tag metadata, DCS or another product, CompanyOS/Runtime content, old
+release/tag metadata, any downstream product, CompanyOS/Runtime content, old
 WIP/Q01 branches, existing account/authorization semantics, third-party
 versions, or create another demo. A required file outside this set requires a
 separate contract amendment before editing.
