@@ -3,7 +3,7 @@
 ## Status
 
 ```text
-state: accepted
+state: implemented
 prerequisite_commit: a4e1ca9
 package: @peanut-admin/admin
 runtime_operations: none

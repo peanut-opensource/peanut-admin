@@ -53,27 +53,20 @@ Reusable Web implementations can declare typed build-time override slots through
 includes its owner and kind, and its contract version is matched exactly:
 
 ```ts
-import { createAdminOverrideRegistry } from '@peanut-admin/admin/core'
+import type { AdminOverride } from '@peanut-admin/admin/core'
+import { WORKSPACE_SHELL_OVERRIDE_KEY } from '@peanut-admin/admin/shell'
 
-const registry = createAdminOverrideRegistry({
-  slots: [{
-    key: 'peanut.shell.component.header',
-    kind: 'component',
-    contractVersion: '1.0.0',
-    defaultValue: DefaultHeader,
-    validate: (value): value is typeof DefaultHeader => typeof value === 'function',
-  }],
-  overrides: [{
-    key: 'peanut.shell.component.header',
-    kind: 'component',
-    contractVersion: '1.0.0',
-    value: ApplicationHeader,
-  }],
-})
-
-const header = registry.resolve('peanut.shell.component.header')
-// header.value is selected once at startup; header.source is `default` or `application`.
+export const ADMIN_HOST_OVERRIDES: readonly AdminOverride[] = [{
+  key: WORKSPACE_SHELL_OVERRIDE_KEY,
+  kind: 'service',
+  contractVersion: '1.0.0',
+  value: audience => audience === 'tenant' ? ApplicationTenantShell : ApplicationPlatformShell,
+}]
 ```
+
+The reference Host constructs one registry from package-owned slot declarations
+and the application list. `WorkspaceLayout` calls the selected resolver; it does
+not import the default shells or fall back after an invalid application result.
 
 Registry construction fails with an `ADMIN_OVERRIDE_` error for an invalid or
 duplicate slot, an unknown or duplicate replacement, a kind or exact-version

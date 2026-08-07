@@ -1,4 +1,5 @@
 import {
+  createAdminOverrideRegistry,
   createPlatformApiClient,
   createAdminNavigationRegistry,
   createTenantApiClient,
@@ -20,7 +21,14 @@ import type {
   PlatformContextData,
   ProblemDetails,
   TenantContextData,
+  AdminOverride,
 } from '@peanut-admin/admin/core'
+import {
+  ADMIN_SHELL_OVERRIDE_SLOTS,
+  resolveWorkspaceShell,
+} from '@peanut-admin/admin/shell'
+import type { AdminShellOverrideRegistry } from '@peanut-admin/admin/shell'
+import type { Component } from 'vue'
 
 import {
   authenticatedLogin,
@@ -36,6 +44,7 @@ import type { AdminMenuItem, TenantLoginResult } from './contracts'
 import { createContextGeneration } from './context-generation'
 import { readAdminHostConfig } from './host-config'
 import { createAppModules } from './modules'
+import { ADMIN_HOST_OVERRIDES } from './overrides'
 import { APP_ROUTE_REGISTRATIONS } from './routes'
 import { useWorkspaceStore } from './store'
 import type { WorkspaceIdentity } from './store'
@@ -148,7 +157,9 @@ export interface AdminRuntime {
   modules: readonly AdminModuleContribution[]
   navigation: AdminNavigationRegistry
   routeRegistry: ReadonlyMap<string, AdminNavigationRoute>
+  overrides: AdminShellOverrideRegistry
   generation: ReturnType<typeof createContextGeneration>
+  workspaceShell: (audience: ApiAudience) => Component
   tenantLogin: (email: string, password: string, tenantCode: string | null) => Promise<TenantLoginResult>
   beginTenantSwitch: () => Promise<TenantLoginResult>
   selectTenant: (challengeToken: string, tenantId: string) => Promise<void>
@@ -162,6 +173,7 @@ export interface AdminRuntime {
 
 export interface AdminRuntimeDependencies {
   fetch?: (request: Request) => Promise<Response>
+  overrides?: readonly AdminOverride[]
 }
 
 let installedRuntime: AdminRuntime | null = null
@@ -172,6 +184,10 @@ export const createAdminRuntime = (
 ): AdminRuntime => {
   const config = defineAdminHostConfig(inputConfig)
   const fetcher = dependencies.fetch ?? globalThis.fetch.bind(globalThis)
+  const overrides = createAdminOverrideRegistry({
+    slots: ADMIN_SHELL_OVERRIDE_SLOTS,
+    overrides: dependencies.overrides ?? ADMIN_HOST_OVERRIDES,
+  })
   const tenantAuth = useTenantAuth()
   const platformAuth = usePlatformAuth()
   const tenantContext = useTenantContext()
@@ -272,8 +288,10 @@ export const createAdminRuntime = (
     modules,
     navigation,
     routeRegistry,
+    overrides,
     generation,
     unwrap,
+    workspaceShell: audience => resolveWorkspaceShell(overrides, audience),
     async tenantLogin(email, password, tenantCode) {
       await clearTenantState(true)
       const result = tenantLoginResult(unwrap(await tenantClient.POST('/api/v1/auth/login', {
