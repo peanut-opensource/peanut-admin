@@ -532,6 +532,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-cl01-ui-neutral-client-transport-contract.md",
+      "title": "P1-CL01 UI-Neutral Client Transport Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

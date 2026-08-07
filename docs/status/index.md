@@ -214,6 +214,12 @@ Web registry. [P1-OVR05-R01](./p1-ovr05-r01-web-type-narrowing-remediation-contr
 authorizes only the fail-closed `Map.get()` expression repair and one Q3 rerun;
 the Q3 rerun passed and the earlier Q1 and Q2 groups remained sealed.
 
+The [P1-CL01 UI-Neutral Client Transport Contract](./p1-cl01-ui-neutral-client-transport-contract.md)
+defines `./client`, `./client/nuxt`, and `./client/uniapp` as three subpaths of
+the existing `@peanut-admin/admin` package. It is an accepted candidate task for
+shared request/session behavior and does not add a third public package or
+authorize Peanut Admin application migration.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
