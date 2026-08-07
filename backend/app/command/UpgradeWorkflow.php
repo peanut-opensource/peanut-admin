@@ -15,6 +15,7 @@ use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\RepositoryUpgradeTargetVerifier;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
+use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
 use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
 use PeanutAdmin\Kernel\Menu\MenuCatalogSynchronizer;
@@ -70,11 +71,11 @@ final readonly class UpgradeWorkflow
                 );
             }
             $this->assertPackageMigrationCurrent(
-                $this->root . '/packages/php/kernel/database/migrations',
+                $this->kernelMigrationsPath(),
                 'pa_kernel_migration',
             );
             $this->assertPackageMigrationCurrent(
-                $this->root . '/packages/php/data-permission/database/migrations',
+                $this->dataPermissionMigrationsPath(),
                 'pa_data_permission_migration',
             );
             foreach ($registry->modules as $module) {
@@ -160,12 +161,12 @@ final readonly class UpgradeWorkflow
             }
         }
         $this->migratePackage(
-            $this->root . '/packages/php/kernel/database/migrations',
+            $this->kernelMigrationsPath(),
             'kernel',
             'pa_kernel_migration',
         );
         $this->migratePackage(
-            $this->root . '/packages/php/data-permission/database/migrations',
+            $this->dataPermissionMigrationsPath(),
             'data_permission',
             'pa_data_permission_migration',
         );
@@ -727,7 +728,7 @@ SQL);
     private function executeMigration(MigrationInterface $migration): void
     {
         $manager = $this->manager(
-            $this->root . '/packages/php/kernel/database/migrations',
+            $this->kernelMigrationsPath(),
             'runtime',
             'pa_kernel_migration',
         );
@@ -882,6 +883,16 @@ SQL);
         }
 
         return rtrim($path, '/');
+    }
+
+    private function kernelMigrationsPath(): string
+    {
+        return $this->packagePath(KernelPackage::NAME) . '/kernel/database/migrations';
+    }
+
+    private function dataPermissionMigrationsPath(): string
+    {
+        return $this->packagePath(DataPermissionPackage::NAME) . '/data-permission/database/migrations';
     }
 
     private function now(): string

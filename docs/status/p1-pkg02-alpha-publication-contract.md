@@ -357,3 +357,97 @@ continues once from `./scripts/check-dependency-decisions` through the remaining
 commands in `scripts/check`, in the same order and environment, without
 rerunning `check-doc-content-status` or `check-docs`. A failure receives one
 read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R09 Vue Relative Import Architecture Remediation
+
+R08 completed `check-docs`, and the resumed dependency-decision gate passed.
+The Runtime architecture gate then rejected four same-directory Vue component
+imports. Its relative resolver recognizes TypeScript files and TypeScript index
+files but not `.vue`, so a valid import such as `./FileAssetSelector.vue` is
+reported as unresolved or cross-package before the existing package-root check
+can classify it.
+
+R09 may change only this contract and `scripts/check-architecture`. The
+relative resolver must recognize an exact `.vue` target while retaining the
+existing internal module roots, allowed dependency matrix, private-import
+rejection, package-root containment check, TypeScript resolution, and cycle
+analysis. It must not treat arbitrary extensions as source, scan generated
+output, permit parent-directory escape, or remove any architecture check.
+
+After static review and `git diff --check`, R09 reruns only
+`PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture` once with the
+complete R01/R02 environment. If it passes, qualification continues from
+`./scripts/check-openapi` through the remaining commands in `scripts/check`, in
+the same order and environment. Passed documentation and dependency-decision
+groups are not rerun. A failure receives one read-only diagnosis and stops
+PKG02 qualification.
+
+## P1-PKG02-R10 Explicit Vue Specifier Resolution Remediation
+
+R09 retained the architecture boundary but appended `.vue` to an import that
+already ended in `.vue`, producing a nonexistent `.vue.vue` candidate. The
+read-only diagnosis confirmed that the original resolved path exists and is
+inside its internal module root.
+
+R10 retains the R09 write set. The resolver must use the original resolved path
+only when the specifier explicitly ends in `.vue`; extensionless imports keep
+the existing TypeScript and index candidates. Every selected candidate must be
+an existing regular file. No other extension, directory, generated file,
+parent escape, dependency edge, or public package import becomes allowed.
+
+After static review and `git diff --check`, R10 reruns only
+`PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture` once with the
+complete R01/R02 environment. If it passes, qualification continues from
+`./scripts/check-openapi` through the remaining commands in `scripts/check`, in
+the same order and environment. Passed groups are not rerun. A failure receives
+one read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R11 Installed Core Migration Path Remediation
+
+R10 resolved the Vue imports, after which the architecture gate rejected five
+Host references to monorepo `packages/php/*` migration directories in
+`UpgradeWorkflow`. The workflow already resolves its Kernel schema through
+Composer `InstalledVersions`; installed applications must use that same public
+package root for core migrations instead of requiring a source checkout.
+
+R11 retains the R09/R10 write set and may additionally change only
+`backend/app/command/UpgradeWorkflow.php`. Kernel and DataPermission migration
+paths must resolve from their package names through the existing fail-closed
+`packagePath()` helper and then append the corresponding internal directory.
+All current, run, and individual-migration paths must use those helpers.
+
+R11 must not accept the Host repository root as a fallback package root, add a
+constructor override, change migration ordering or ledger names, alter release
+verification, weaken unavailable-package failure, change a package name, or
+relax the architecture prohibition on Host filesystem references to
+`packages/php` or `packages/web`.
+
+After static review and `git diff --check`, R11 reruns only
+`PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture` once with the
+complete R01/R02 environment. If it passes, qualification continues from
+`./scripts/check-openapi` through the remaining commands in `scripts/check`, in
+the same order and environment. Passed groups are not rerun. A failure receives
+one read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R12 Public Package Documentation Remediation
+
+R11 removed the Host's monorepo package paths, after which the architecture
+gate found the internal project name `DCS` in two README files included in the
+Composer projection. Public package documentation must describe only generic
+downstream consumption boundaries.
+
+R12 retains the R09 through R11 changes and may additionally change only:
+
+- `packages/php/import-export/README.md`;
+- `packages/php/integration-security/README.md`.
+
+The two references must use generic downstream-consumption wording without
+changing capability, ownership, qualification, release, or stop-line meaning.
+R12 must not exclude README files from the package, weaken the public-content
+gate, rename a product in code, or alter Runtime behavior.
+
+Because these README files are part of `peanut-admin/core`, the resulting R12
+commit supersedes `deb85a7e3e65b4d323a6eff4c694724a1fd23338` as package source.
+A separate planning commit must record the exact resulting 40-character commit
+before any qualification resumes. No prior fixed-candidate qualification result
+is evidence for the new projection.

@@ -68,7 +68,10 @@ const sourceFiles = directory => fs.readdirSync(directory, { withFileTypes: true
 
 const resolveRelative = (file, specifier) => {
   const base = path.resolve(path.dirname(file), specifier)
-  return [`${base}.ts`, `${base}.d.ts`, path.join(base, 'index.ts')].find(fs.existsSync) ?? null
+  const candidates = specifier.endsWith('.vue')
+    ? [base]
+    : [`${base}.ts`, `${base}.d.ts`, path.join(base, 'index.ts')]
+  return candidates.find(candidate => fs.existsSync(candidate) && fs.statSync(candidate).isFile()) ?? null
 }
 
 for (const [packageName, packageRoot] of packages) {
