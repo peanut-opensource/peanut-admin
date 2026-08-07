@@ -1,10 +1,11 @@
 import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
+import { createStarterModules } from '../src/app/modules'
+
 describe('internal starter Import/Export consumption', () => {
   it('composes the package route and Host transport', async () => {
     expect(existsSync(new URL('../src/modules/peanut-import-export.ts', import.meta.url))).toBe(true)
-    const { createStarterModules } = await import('../src/app/modules')
     let request: Request | null = null
     const host = createStarterModules({
       baseUrl: 'https://starter.example.test', canRead: () => true, canManage: () => false,

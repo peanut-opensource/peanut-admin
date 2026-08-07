@@ -2,6 +2,7 @@
 
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AdminShell, PlatformShell } from '@peanut-admin/admin/shell'
 
 import { readShellHostConfig } from '../src/shell/host-config'
 import StatusPage from '../src/pages/status/StatusPage.vue'
@@ -78,6 +79,7 @@ vi.mock('../src/app/runtime', () => ({
     beginTenantSwitch: mocks.beginTenantSwitch,
     logout: mocks.logout,
     routeRegistry: mocks.routeRegistry,
+    workspaceShell: (audience: 'tenant' | 'platform') => audience === 'tenant' ? AdminShell : PlatformShell,
   }),
 }))
 

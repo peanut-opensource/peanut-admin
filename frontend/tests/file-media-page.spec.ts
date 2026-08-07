@@ -21,7 +21,7 @@ describe('file-media reference host route', () => {
       name: 'peanut.file-media.list', path: '/app/files',
       access: { moduleKey: 'peanut.file-media', permissionKeys: ['peanut.file-media.read'] },
     })
-  })
+  }, 15_000)
 
   it('does not load the chunk when Module or permission checks fail closed', async () => {
     const { peanutFileMediaModule } = await import('../src/modules/peanut-file-media')

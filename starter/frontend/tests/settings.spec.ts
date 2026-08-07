@@ -1,13 +1,14 @@
 import { existsSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import * as settingsPackage from '@peanut-admin/admin/settings'
+
+import { createStarterModules } from '../src/app/modules'
 
 describe('internal starter Settings consumption', () => {
   it('composes the package contribution through the generated package root', async () => {
     expect(existsSync(new URL('../src/app/modules.ts', import.meta.url))).toBe(true)
     expect(existsSync(new URL('../src/modules/peanut-settings.ts', import.meta.url))).toBe(true)
 
-    const settingsPackage = await import('@peanut-admin/admin/settings')
-    const { createStarterModules } = await import('../src/app/modules')
     let request: Request | null = null
     const host = createStarterModules({
       baseUrl: 'https://starter.example.test',
