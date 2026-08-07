@@ -595,6 +595,29 @@ passing source commit becomes the next package candidate and a separate
 planning commit records its exact hash before one new aggregate qualification
 run.
 
+R27 removed every HTTP 500 and 10 of the 11 focused tests passed. The remaining
+effective-access test rejected the substring `session` anywhere in the encoded
+response, but the accepted Integration Security catalog now legitimately
+publishes `session-read` and `session-revoke` operation names. The response did
+not expose a session field or credential.
+
+## P1-PKG02-R28 Exact Redacted-Field Assertion
+
+R28 retains R26/R27 and may additionally change only
+`backend/tests/Integration/EffectiveAccessPreviewHttpIntegrationTest.php`. Its
+redaction assertion must continue to reject every existing forbidden field,
+including `session`, as an exact JSON object key rather than rejecting the same
+text inside an unrelated public catalog value. All response, authorization,
+data-scope, audit, cross-Tenant, validation, and no-security-event assertions
+must remain unchanged.
+
+R28 must not allow a forbidden response key, remove a forbidden name, alter
+production code, filter an accepted operation, or weaken any other assertion.
+After `git diff --check`, the owner reruns the same failed five-file focused
+group once with the complete R01/R02 environment. A passing source commit
+becomes the next package candidate and a separate planning commit records its
+exact hash before one new aggregate qualification run.
+
 ## P1-PKG02-R20 Old-Lock Upgrade Test Process Isolation
 
 R19 passed supply-chain qualification, PHP unit tests, and Web tests, then the
