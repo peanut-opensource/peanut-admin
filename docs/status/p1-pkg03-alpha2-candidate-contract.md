@@ -139,6 +139,27 @@ contracts, dependencies, schemas, generated artifacts, or any other path.
 After the exact write-set and `git diff --check` pass, only the failed PHP CS
 Fixer group runs once. A second failure blocks Alpha.2.
 
+## Web Unit Remediation Slice
+
+The next Alpha.2 workspace gate passed lint and all Web typechecks, then found
+six test-adapter failures while 215 Web tests passed. One separate remediation
+commit may change only:
+
+- `frontend/tests/account-page.spec.ts`;
+- `frontend/tests/file-media-page.spec.ts`;
+- `frontend/tests/w03-shell.spec.ts`;
+- `starter/frontend/tests/file-media.spec.ts`;
+- `starter/frontend/tests/reference-codes.spec.ts`;
+- `starter/frontend/tests/settings.spec.ts`.
+
+The remediation updates stale mocks for the already qualified override Host,
+moves deterministic Starter package imports outside the per-test timer, and
+may set a local 15-second limit only on the lazy-route test whose dynamic
+import is itself the behavior under test. It must not change production code,
+global timeouts, assertions, package exports, dependencies, or user-visible
+behavior. After an exact write-set check and `git diff --check`, only
+`pnpm test:unit` runs once. A second Web unit failure blocks Alpha.2.
+
 ## Fixed Candidate Qualification
 
 After a separate planning record fixes the exact version-candidate commit, the
