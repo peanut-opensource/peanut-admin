@@ -192,8 +192,8 @@ The [P1-OVR03 SMS Provider Host Consumption Contract](./p1-ovr03-sms-provider-ho
 defines the first real ThinkPHP Host consumption path for the PHP registry. It
 moves SMS provider selection to one declared service slot with a disabled
 package default and one application-owned override list. The accepted task is
-candidate-only and does not authorize package publication or application
-consumption.
+implemented as a candidate-only reference Host chain and does not authorize
+package publication or application consumption.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the

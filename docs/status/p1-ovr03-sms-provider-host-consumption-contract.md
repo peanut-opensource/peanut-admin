@@ -3,9 +3,8 @@
 ## Status
 
 ```text
-state: accepted
+state: implemented
 prerequisite_commit: 694a6e26708d47949f3176d07064cfd1bfc5a90a
-implementation_commit: pending
 packages: peanut-admin/core
 runtime_operations: none
 qualification_status: candidate-only

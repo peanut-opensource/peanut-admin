@@ -12,7 +12,7 @@ use PeanutAdmin\Kernel\Async\TrustedEnvelopeCodec;
 use PeanutAdmin\NotificationSms\Application\NotificationService;
 use PeanutAdmin\NotificationSms\Application\TemplateRenderer;
 use PeanutAdmin\NotificationSms\Persistence\PdoNotificationRepository;
-use PeanutAdmin\NotificationSms\Sms\LocalDevSmsProvider;
+use PeanutAdmin\NotificationSms\Sms\SmsProvider;
 use PeanutAdmin\NotificationSms\Task\InboxTaskHandler;
 use PeanutAdmin\NotificationSms\Task\NotificationOutboxDispatcher;
 use PeanutAdmin\NotificationSms\Task\OutboxTaskSubmissionProvider;
@@ -38,15 +38,18 @@ final class NotificationRuntimeFactory
         return new NotificationOutboxDispatcher(new PdoNotificationRepository($pdo), self::publisher($pdo));
     }
 
-    public static function worker(PDO $pdo, int $tenantId, string $workerId): LocalWorker
+    public static function worker(
+        PDO $pdo,
+        int $tenantId,
+        string $workerId,
+        ?SmsProvider $smsProvider = null,
+    ): LocalWorker
     {
         $config = self::config();
-        if ($config['provider'] !== 'local-dev') {
-            throw new RuntimeException('SMS_PROVIDER_UNAVAILABLE');
-        }
+        $smsProvider ??= app(SmsProvider::class);
         $recipients = new PdoRecipientResolver($pdo, $config['recipient_directory'], $config['recipient_digest_key']);
         $repository = new PdoNotificationRepository($pdo);
-        $handlers = new TaskHandlerRegistry([new InboxTaskHandler($repository),new SmsTaskHandler($repository, $recipients, new LocalDevSmsProvider()),ImportExportRuntimeFactory::handler($pdo)]);
+        $handlers = new TaskHandlerRegistry([new InboxTaskHandler($repository),new SmsTaskHandler($repository, $recipients, $smsProvider),ImportExportRuntimeFactory::handler($pdo)]);
         return new LocalWorker($tenantId, $workerId, new PdoTaskJobRepository($pdo), $handlers, new JobHandlerAdapter(self::codec(), new PdoTaskAuthorizationRevalidator($pdo)));
     }
 
@@ -63,11 +66,11 @@ final class NotificationRuntimeFactory
         }return new TrustedEnvelopeCodec($key);
     }
 
-    /** @return array{provider:string,envelope_key:string,recipient_digest_key:string,recipient_directory:array<string,mixed>} */
+    /** @return array{envelope_key:string,recipient_digest_key:string,recipient_directory:array<string,mixed>} */
     private static function config(): array
     {
         $config = require dirname(__DIR__, 3) . '/backend/config/notification-sms.php';
-        if (!is_array($config) || !is_string($config['provider'] ?? null) || !is_string($config['envelope_key'] ?? null) || !is_string($config['recipient_digest_key'] ?? null) || !is_array($config['recipient_directory'] ?? null)) {
+        if (!is_array($config) || !is_string($config['envelope_key'] ?? null) || !is_string($config['recipient_digest_key'] ?? null) || !is_array($config['recipient_directory'] ?? null)) {
             throw new RuntimeException('NOTIFICATION_CONFIG_INVALID');
         }
         return $config;
