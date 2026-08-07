@@ -204,12 +204,15 @@ does not authorize npm publication or Peanut Admin application migration.
 The [P1-OVR05 Override Host Consumption Qualification Contract](./p1-ovr05-override-host-qualification-contract.md)
 fixes the combined post-`alpha.1` source candidate and assigns one consolidated
 PHP behavior group, Web behavior group, and Web public-type group. Qualification
-is pending and carries no publication or downstream-consumption authority.
+passed: PHP completed 20 tests and 30 assertions, Web behavior completed 10
+tests, and both the public npm package and reference Host passed typecheck. The
+[qualification record](../reviews/p1-override-host-consumption-qualification.md)
+carries no publication or downstream-consumption authority.
 
 The first P1-OVR05 Q3 type group exposed one control-flow narrowing error in the
 Web registry. [P1-OVR05-R01](./p1-ovr05-r01-web-type-narrowing-remediation-contract.md)
 authorizes only the fail-closed `Map.get()` expression repair and one Q3 rerun;
-the passed Q1 and Q2 groups remain sealed.
+the Q3 rerun passed and the earlier Q1 and Q2 groups remained sealed.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the

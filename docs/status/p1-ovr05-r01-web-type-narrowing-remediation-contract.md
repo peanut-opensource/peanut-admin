@@ -3,7 +3,7 @@
 ## Status
 
 ```text
-state: accepted
+state: resolved
 qualification_contract: P1-OVR05
 failed_group: Q3 Web Public Types
 source_candidate_commit: de35258601fabf4da6e737961762c3ba7264b780

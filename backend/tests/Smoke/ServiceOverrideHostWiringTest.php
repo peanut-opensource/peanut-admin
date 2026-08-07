@@ -17,8 +17,14 @@ use think\App;
 
 final class ServiceOverrideHostWiringTest extends TestCase
 {
+    private mixed $initialErrorHandler;
+
+    private mixed $initialExceptionHandler;
+
     protected function setUp(): void
     {
+        $this->initialErrorHandler = self::currentErrorHandler();
+        $this->initialExceptionHandler = self::currentExceptionHandler();
         putenv('PEANUT_SMS_PROVIDER_IMPLEMENTATION');
         putenv('PEANUT_TASK_ENVELOPE_KEY=test-envelope-key-with-at-least-32-bytes');
     }
@@ -27,6 +33,12 @@ final class ServiceOverrideHostWiringTest extends TestCase
     {
         putenv('PEANUT_SMS_PROVIDER_IMPLEMENTATION');
         putenv('PEANUT_TASK_ENVELOPE_KEY');
+        if (self::currentErrorHandler() !== $this->initialErrorHandler) {
+            restore_error_handler();
+        }
+        if (self::currentExceptionHandler() !== $this->initialExceptionHandler) {
+            restore_exception_handler();
+        }
     }
 
     public function testHostBindsDisabledDefaultAndFactoryConsumesIt(): void
@@ -74,5 +86,21 @@ final class ServiceOverrideHostWiringTest extends TestCase
         $app->initialize();
 
         return $app;
+    }
+
+    private static function currentErrorHandler(): mixed
+    {
+        $current = set_error_handler(static fn(): bool => false);
+        restore_error_handler();
+
+        return $current;
+    }
+
+    private static function currentExceptionHandler(): mixed
+    {
+        $current = set_exception_handler(static function (\Throwable $exception): void {});
+        restore_exception_handler();
+
+        return $current;
     }
 }

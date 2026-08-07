@@ -3,11 +3,11 @@
 ## Status
 
 ```text
-state: accepted
+state: qualified
 source_candidate_commit: de35258601fabf4da6e737961762c3ba7264b780
 scope: P1-OVR01 through P1-OVR04
 runtime_operations: none
-qualification_status: pending
+qualification_status: passed
 ```
 
 ## Objective

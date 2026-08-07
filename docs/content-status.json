@@ -525,6 +525,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/reviews/p1-override-host-consumption-qualification.md",
+      "title": "P1 Override Host Consumption Qualification",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
