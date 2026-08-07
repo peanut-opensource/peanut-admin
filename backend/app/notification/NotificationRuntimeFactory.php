@@ -23,6 +23,7 @@ use PeanutAdmin\TaskJob\Persistence\PdoTaskJobRepository;
 use PeanutAdmin\TaskJob\Submission\TaskSubmissionRegistry;
 use PeanutAdmin\TaskJob\Submission\TrustedJobPublisher;
 use RuntimeException;
+use think\Container;
 
 final class NotificationRuntimeFactory
 {
@@ -46,7 +47,7 @@ final class NotificationRuntimeFactory
     ): LocalWorker
     {
         $config = self::config();
-        $smsProvider ??= app(SmsProvider::class);
+        $smsProvider ??= Container::getInstance()->make(SmsProvider::class);
         $recipients = new PdoRecipientResolver($pdo, $config['recipient_directory'], $config['recipient_digest_key']);
         $repository = new PdoNotificationRepository($pdo);
         $handlers = new TaskHandlerRegistry([new InboxTaskHandler($repository),new SmsTaskHandler($repository, $recipients, $smsProvider),ImportExportRuntimeFactory::handler($pdo)]);
