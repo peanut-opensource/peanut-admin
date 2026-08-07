@@ -492,6 +492,13 @@
       "replacement": null
     },
     {
+      "path": "docs/decisions/releases/p1-pkg03-alpha2-publication-approval.md",
+      "title": "P1-PKG03 Alpha.2 Publication Approval",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-ovr01-admin-web-override-registry-contract.md",
       "title": "P1-OVR01 Admin Web Override Registry Contract",
       "status": "canonical",

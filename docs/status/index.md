@@ -229,6 +229,13 @@ records the passing retained aggregate groups, Q04 performance evidence,
 repository tail guards, and exact Composer/npm projection digests. Alpha.2 is
 qualified but remains unpublished and is not approved for downstream use.
 
+The [Alpha.2 publication approval record](../decisions/releases/p1-pkg03-alpha2-publication-approval.md)
+fixes the current repositories, versions, immutable projection digests,
+publication order, credential boundary, and rollback policy. Its state is
+`preflight-open`; npm and Packagist ownership, the generated split repository,
+publication workflow identities, and registry consumers remain pending, so
+`publication_authorized` is still false.
+
 The [P1-PKG03 Alpha.2 Candidate Contract](./p1-pkg03-alpha2-candidate-contract.md)
 retires the unpublished Alpha.1 projection as the next publication target and
 defines one `0.1.0-alpha.2` fixed candidate containing the qualified override
