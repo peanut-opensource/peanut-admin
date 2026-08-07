@@ -4,7 +4,7 @@
 
 ```text
 state: accepted
-package_candidate_commit: ad8fc0bc06fa40c36c43ab47c61437dd99c68b59
+package_candidate_commit: b0dc376c2147b98522764486342c9525fe5678ce
 composer_package: peanut-admin/core@0.1.0-alpha.2
 npm_package: @peanut-admin/admin@0.1.0-alpha.2
 qualification_status: pending
@@ -91,6 +91,37 @@ history rewrite is allowed. After exact write-set review and
 remediation. A passing remediation becomes a new fixed candidate for a
 separate no-repeat qualification continuation beginning after the retained
 license-inventory result.
+
+## Q03 No-Repeat Qualification Continuation
+
+The remediation's one `check-secrets` run passed both Git history and current
+working-tree scans. Candidate
+`b0dc376c2147b98522764486342c9525fe5678ce` is therefore the new fixed
+Alpha.2 candidate. Q03 retains every Q02 result through third-party license
+inventory plus the remediation secret-scan result. It must not rerun those
+groups.
+
+The isolated Q02 MySQL 8.4.10 container remains healthy on port `33432`; the
+cache and all application/browser ports remain free. With the unchanged Fixed
+Environment, Q03 runs the remaining aggregate commands once, in this order:
+
+```bash
+php vendor/bin/phpunit tests/supply-chain
+./scripts/test-unit
+./scripts/test-integration
+./scripts/test-security --php-only
+./scripts/test-browser
+./scripts/test-recovery
+./scripts/test-performance
+./scripts/verify-internal-starter
+./scripts/check-workspace
+```
+
+After those commands pass, Q03 performs the unchanged repository tail guards
+from `scripts/check`: approved Apache-2.0 root license hash, forbidden private
+or product-specific documentation tokens, required/deferred directory state,
+and `git diff --check`. A failure receives one read-only diagnosis and stops;
+repair requires another independent contract and fixed candidate.
 
 ## Package Content Inspection
 
