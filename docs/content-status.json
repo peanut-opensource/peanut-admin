@@ -497,6 +497,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-ovr03-sms-provider-host-consumption-contract.md",
+      "title": "P1-OVR03 SMS Provider Host Consumption Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
