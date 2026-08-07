@@ -55,7 +55,8 @@ change only:
 - `starter/frontend/package.json` and `starter/pnpm-lock.yaml`;
 - `scripts/check-workspace`, only to update Alpha.2 version assertions and add
   `./client`, `./client/nuxt`, and `./client/uniapp` to its exact expected Web
-  export list;
+  export list, and to point lock verification at the new
+  `p1-pkg03-lock-evidence.json` record;
 - `tests/starter/assert-generated-starter.php`;
 - `README.md` and `starter/README.md` for current candidate wording;
 - `docs/status/index.md` for current candidate wording;
