@@ -574,6 +574,39 @@ Starter verification, workspace checks, and the remaining `scripts/check`
 guards in their original order. Previously passed groups remain authoritative
 and must not be rerun. A failure receives one read-only diagnosis and stops.
 
+R32 resolved both Settings failures and allowed every Reference Codes route to
+load through the real configured Tenant Client. Forty-two browser tests passed
+and the four Reference Codes variants reached `GET
+/api/v1/reference-code-sets`, which returned `200` with `items: []`. The
+declaring infrastructure Module correctly owns an empty
+`reference-code-sets.json`; no application Module in the reference profile
+declares a set, while the workflow test requires one selectable declaration.
+
+## P1-PKG02-R33 Reference Application Set Declaration
+
+R33 retains the exact R32 fixture permissions and process-local Settings
+keyring and may additionally change only:
+
+- `backend/app/Modules/Example/Reference/module.json`;
+- new `backend/app/Modules/Example/Reference/Resources/reference-code-sets.json`.
+
+The fictional `example.reference` Module must declare its trusted
+`reference_code_sets` resource and exactly one neutral example set containing
+only the required `key`, `name`, and `description` fields. The declaration
+exists to make the reference application exercise the reusable Reference Codes
+workflow; it contains no code value, Tenant identifier, permission, business
+state, default entry, or application rule. The reusable
+`peanut.reference-codes` Module must retain its empty definition resource.
+
+R33 must not change the loader, registry, synchronization, API, schema,
+migration, permission, browser assertion, route, package manifest, public
+export, or production fallback behavior. After static review and
+`git diff --check`, the owner runs `./scripts/test-browser` once with the
+complete R01/R02 environment. If it passes, all four R32/R33 source files form
+one clean replacement candidate commit; a separate planning commit records its
+exact hash before qualification resumes through recovery and the remaining
+unexecuted groups. A failure receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R26 Explicit Authentication PDO Injection
 
 R25 passed the package, supply-chain, unit, and Web groups and completed the
