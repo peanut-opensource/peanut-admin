@@ -149,3 +149,33 @@ R01 may run only `./scripts/check` once with the exact environment above. It
 may not change package source, tests, assertions, configuration, database
 contracts, authorization, Tenant isolation, or qualification thresholds. A
 failure receives one read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R02 Fixed PHP And Composer Toolchain Retry
+
+R01 passed the documentation status checks and then stopped at the first PHP
+autoload because the shell selected PHP 8.1.33 while the locked dependencies
+require PHP 8.3 or newer. No PHP, Web, database, browser, recovery,
+performance, or Starter test ran. The repository-required tools already exist
+locally as PHP 8.3.24 and Composer 2.10.2.
+
+R02 authorizes one new aggregate invocation against the unchanged package
+candidate and unchanged R01 service environment. Before the invocation, the
+owner may create only the temporary executable link
+`/private/tmp/peanut-pkg02-toolchain/composer` pointing to
+`/private/tmp/peanut-composer-2.10.2`. The command environment must additionally
+contain:
+
+```bash
+export PATH=/private/tmp/peanut-pkg02-toolchain:/opt/homebrew/opt/php@8.3/bin:$PATH
+export PEANUT_COMPOSER=/private/tmp/peanut-composer-2.10.2
+```
+
+Immediately before the aggregate invocation, `php -r 'echo PHP_VERSION;'` must
+report `8.3.24`, `composer --version` must report `2.10.2`, and
+`$PEANUT_COMPOSER --version` must report `2.10.2`. These are preflight facts,
+not additional qualification runs.
+
+R02 may then run only `./scripts/check` once with the complete R01 and R02
+environment. It may not edit dependencies, locks, package source, tests,
+assertions, configuration, qualification thresholds, or committed files. A
+failure receives one read-only diagnosis and stops PKG02 qualification.
