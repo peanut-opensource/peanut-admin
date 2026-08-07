@@ -581,6 +581,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg04-alpha2-projection-workflow-contract.md",
+      "title": "P1-PKG04 Alpha.2 Projection Workflow Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
