@@ -537,6 +537,43 @@ exact PHP and Web projections from this candidate. If it fails, the owner
 performs one read-only diagnosis and stops. Any source repair requires a new
 remediation contract and candidate rollover.
 
+## P1-PKG02-R32 Browser Fixture Capability And Secret Remediation
+
+R31 started and health-checked PHP on the accepted qualification port. Forty
+desktop/mobile browser tests passed and six failed. Trace inspection proved
+that all four Reference Codes failures entered the configured Runtime path:
+the authenticated context included the `peanut.reference-codes` Module, but
+the browser fixture role omitted both `peanut.reference-codes.read` and
+`peanut.reference-codes.manage`. The route guard therefore rejected the page
+before its component or transport loaded. The two Settings failures reached
+the real API and returned `SETTING_SECRET_UNAVAILABLE` because the browser
+test process did not provide the Settings Sodium keyring environment.
+
+R32 retains R31 and may additionally change only:
+
+- `frontend/tests/fixtures/full-stack-setup.php`;
+- `scripts/test-browser`.
+
+The full-stack fixture must grant the two accepted Reference Codes permissions
+to the existing Alpha and Beta browser-owner roles. It must not bypass the
+route guard, widen a production role, alter Module activation, or change any
+API, menu, permission catalog, route, or product behavior.
+
+`scripts/test-browser` must generate one fresh XChaCha20-Poly1305 key with the
+existing PHP Sodium runtime for each invocation. It must export that key as a
+single-entry JSON keyring through `PEANUT_SETTINGS_SECRET_KEYS` and select the
+same entry through `PEANUT_SETTINGS_ACTIVE_SECRET_KEY_ID` before fixture setup
+and Playwright start. The key must remain process-local and unlogged. R32 must
+not add a production fallback, fixed key, committed secret, weaker cipher, or
+Settings behavior change.
+
+After static review and `git diff --check`, the owner runs
+`./scripts/test-browser` once with the complete R01/R02 environment. If it
+passes, qualification continues once through recovery, performance, internal
+Starter verification, workspace checks, and the remaining `scripts/check`
+guards in their original order. Previously passed groups remain authoritative
+and must not be rerun. A failure receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R26 Explicit Authentication PDO Injection
 
 R25 passed the package, supply-chain, unit, and Web groups and completed the
