@@ -26,7 +26,7 @@ final class ServiceOverrideHostWiringTest extends TestCase
         $this->initialErrorHandler = self::currentErrorHandler();
         $this->initialExceptionHandler = self::currentExceptionHandler();
         putenv('PEANUT_SMS_PROVIDER_IMPLEMENTATION');
-        putenv('PEANUT_TASK_ENVELOPE_KEY=test-envelope-key-with-at-least-32-bytes');
+        putenv('PEANUT_TASK_ENVELOPE_KEY=' . str_repeat('x', 32));
     }
 
     protected function tearDown(): void
