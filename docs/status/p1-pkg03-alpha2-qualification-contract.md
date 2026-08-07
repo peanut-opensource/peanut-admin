@@ -123,6 +123,30 @@ or product-specific documentation tokens, required/deferred directory state,
 and `git diff --check`. A failure receives one read-only diagnosis and stops;
 repair requires another independent contract and fixed candidate.
 
+## Q04 Performance Toolchain Environment Retry
+
+Q03 retained the passing supply-chain, unit, integration, security, browser,
+recovery, internal Starter, and workspace evidence. Its only remaining group,
+`./scripts/test-performance`, stopped in the PHP environment preflight before
+executing a performance scenario because the invoking shell resolved PHP
+8.1.33 instead of the fixed PHP 8.3.24 toolchain. No package, Runtime, test,
+threshold, fixture, dependency, lock, or committed file changed.
+
+Q04 authorizes one new invocation of `./scripts/test-performance` against the
+unchanged candidate `b0dc376c2147b98522764486342c9525fe5678ce`. It uses the
+complete Fixed Environment above and must additionally verify immediately
+before the invocation that `command -v php` resolves below
+`/opt/homebrew/opt/php@8.3/bin`, PHP reports `8.3.24`, and
+`$PEANUT_COMPOSER --version` reports Composer `2.10.2`. These are environment
+preflight facts, not qualification groups.
+
+Q04 must not rerun any passing group, change a source or test file, lower a
+performance threshold, select another database, or use a compatibility
+runtime. If the performance group passes, qualification proceeds directly to
+the unchanged repository tail guards and Package Content Inspection below. A
+failure receives one read-only diagnosis and stops; a source repair requires
+another independent contract and fixed candidate.
+
 ## Package Content Inspection
 
 After the aggregate gate passes, one read-only package inspection must:
