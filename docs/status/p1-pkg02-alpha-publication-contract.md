@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: 9c91228e02c34e550daa4f1bd869d01f5269333b
+package_candidate_commit: cd6207f28532dec305214b38c662a3e891f7692a
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,7 +25,7 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`9c91228e02c34e550daa4f1bd869d01f5269333b`. The planning commit that fixes this
+`cd6207f28532dec305214b38c662a3e891f7692a`. The planning commit that fixes this
 contract may be checked out above that candidate, but no package or Runtime
 source may change before qualification.
 
@@ -517,3 +517,22 @@ A separate planning commit must replace the exact 40-character
 `package_candidate_commit` before the aggregate `./scripts/check` is run once
 against that unchanged candidate. Previous R13 partial results are diagnostics
 only and are not carried forward as fixed-candidate qualification evidence.
+
+## P1-PKG02-R16 Advisory-Remediated Candidate Qualification
+
+R15 produced the clean replacement source commit
+`cd6207f28532dec305214b38c662a3e891f7692a`. Its only changes from the R13
+candidate are the R14/R15 contract record, three exact root workspace
+overrides, and their corresponding root lock resolutions. The Composer and npm
+public package projections are otherwise unchanged.
+
+R16 may change only this contract and `docs/status/index.md` to record the new
+candidate. With the complete R01/R02 environment, the qualification owner runs
+`./scripts/check` exactly once against the planning commit above the unchanged
+R15 source candidate. Previous partial results are historical diagnostics and
+are not carried forward as fixed-candidate evidence.
+
+If the aggregate gate passes, package-content inspection proceeds against the
+exact PHP and Web projections from this candidate. If it fails, the owner
+performs one read-only diagnosis and stops. Any source repair requires a new
+remediation contract and candidate rollover.
