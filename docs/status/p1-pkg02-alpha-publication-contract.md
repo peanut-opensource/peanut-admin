@@ -471,3 +471,49 @@ exact PHP and Web projections from the replacement candidate. If it fails, the
 owner performs one read-only diagnosis and stops. Any source repair requires a
 new remediation contract and, when the package projection changes, another
 explicit candidate rollover.
+
+## P1-PKG02-R14 Supply-Chain Audit Diagnosis
+
+R13 passed documentation, dependency, architecture, OpenAPI, Runtime coverage,
+Starter build, and production-build gates, then stopped at the root pnpm audit
+inside `scripts/check-supply-chain`. Composer audit passed. The required single
+read-only diagnosis recorded six high-severity advisories and no critical
+advisory:
+
+- `js-yaml 4.2.0` is affected below `4.3.1`;
+- `brace-expansion 2.1.2` is affected below `2.1.4`;
+- `brace-expansion 5.0.7` is affected below `5.0.9`.
+
+All three are transitive development-tool dependencies in the root workspace
+lock. The supply-chain gate audits only the root workspace; it does not audit
+the independently locked generated Starter. R14 performs no committed write
+and supplies no qualification evidence.
+
+## P1-PKG02-R15 Transitive Advisory Remediation
+
+R15 may change only:
+
+- this contract;
+- `pnpm-workspace.yaml`;
+- `pnpm-lock.yaml`.
+
+The root workspace must add exact major-scoped overrides resolving
+`js-yaml@4` to `4.3.1`, `brace-expansion@2` to `2.1.4`, and
+`brace-expansion@5` to `5.0.9`. The lock must be regenerated with the declared
+pnpm 11.13.0 toolchain and must remove only the three vulnerable resolutions
+identified by R14 in favor of those exact safe versions.
+
+R15 must not change a direct dependency manifest, Starter lock, package public
+manifest or export, audit threshold, supply-chain script, license gate, Runtime
+source, schema, route, permission, Tenant behavior, or user-visible behavior.
+It must not use an ignore rule, advisory exception, patched fork, compatibility
+package, or broader dependency upgrade.
+
+After static review and `git diff --check`, R15 runs `pnpm install
+--lockfile-only --frozen-lockfile=false` once, followed by `pnpm audit
+--audit-level high --json` once. If the audit has zero high and critical
+advisories, the resulting clean source commit becomes a new package candidate.
+A separate planning commit must replace the exact 40-character
+`package_candidate_commit` before the aggregate `./scripts/check` is run once
+against that unchanged candidate. Previous R13 partial results are diagnostics
+only and are not carried forward as fixed-candidate qualification evidence.
