@@ -195,6 +195,12 @@ package default and one application-owned override list. The accepted task is
 implemented as a candidate-only reference Host chain and does not authorize
 package publication or application consumption.
 
+The [P1-OVR04 Admin Shell Host Consumption Contract](./p1-ovr04-admin-shell-host-consumption-contract.md)
+defines the matching first Web Host chain. It moves tenant/platform workspace
+shell selection to one package-owned resolver slot and one application-owned
+override list. The accepted task remains candidate-only and does not authorize
+npm publication or Peanut Admin application migration.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
