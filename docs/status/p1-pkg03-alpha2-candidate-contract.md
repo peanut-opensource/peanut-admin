@@ -160,6 +160,24 @@ global timeouts, assertions, package exports, dependencies, or user-visible
 behavior. After an exact write-set check and `git diff --check`, only
 `pnpm test:unit` runs once. A second Web unit failure blocks Alpha.2.
 
+## Web Unit Successor Remediation Slice
+
+The blocked Web unit run proved the preceding six-file corrections, with all
+original failures removed, and then exposed the same per-test dynamic-import
+budget defect in two additional Starter tests. A new fixed-candidate
+remediation commit may contain the already reviewed six-file corrections plus:
+
+- `starter/frontend/tests/import-export.spec.ts`;
+- `starter/frontend/tests/notification-sms.spec.ts`.
+
+Those two tests must import `createStarterModules` statically, matching the
+three corrected Starter package-consumption tests. The complete successor write
+set is exactly these two files plus the six paths in the preceding Web Unit
+Remediation Slice. Production code, global timeouts, assertions, dependencies,
+exports, and user-visible behavior remain unchanged. After `git diff --check`
+and an exact write-set review, `pnpm test:unit` runs once against the successor
+tree. Failure blocks this successor candidate.
+
 ## Fixed Candidate Qualification
 
 After a separate planning record fixes the exact version-candidate commit, the
