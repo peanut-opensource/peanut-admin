@@ -178,6 +178,24 @@ exports, and user-visible behavior remain unchanged. After `git diff --check`
 and an exact write-set review, `pnpm test:unit` runs once against the successor
 tree. Failure blocks this successor candidate.
 
+## Final Starter Import Remediation Slice
+
+An exhaustive static scan of `starter/frontend/tests/*.spec.ts` after the first
+successor commit found exactly three remaining deterministic imports inside a
+per-test timer:
+
+- `starter/frontend/tests/integration-security.spec.ts`;
+- `starter/frontend/tests/ops-console.spec.ts`;
+- `starter/frontend/tests/task-job.spec.ts`.
+
+One final remediation commit may move only each file's
+`createStarterModules` import to module scope. Dynamic imports in reference Host
+lazy-route and Mock-order tests remain unchanged because loading order is part
+of their assertion. No timeout, assertion, production source, dependency,
+export, or behavior may change. After exact write-set review and
+`git diff --check`, `pnpm test:unit` runs once. Failure blocks the final Starter
+import remediation.
+
 ## Fixed Candidate Qualification
 
 After a separate planning record fixes the exact version-candidate commit, the
