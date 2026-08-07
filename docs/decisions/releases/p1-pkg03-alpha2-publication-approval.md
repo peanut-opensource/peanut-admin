@@ -41,7 +41,7 @@ execution contract changes this record to `approved`.
 
 | Artifact | Source | Qualified SHA-256 |
 | --- | --- | --- |
-| Composer split | Candidate subtree `packages/php/` | `314f7eb0aaff6f288859b8dfab950487bd2b8b933b41a92dd02c49a09cf84411` |
+| Composer split | Candidate commit path `packages/php/` | `176608c1602b0ccf8acf79a9755eb7417c25445330ccde7baddcae7df8620bdc` |
 | npm tarball | Candidate subtree `packages/web/`, packed by pnpm 11.13.0 | `94b15ddcbe031b109e687b01c61002b343c8259d4b0745b05e64b391718b13ef` |
 
 The monorepo remains authoritative. The Composer split is generated output and

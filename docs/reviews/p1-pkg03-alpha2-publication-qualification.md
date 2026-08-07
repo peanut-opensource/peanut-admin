@@ -34,10 +34,12 @@ required/deferred-directory, and diff tail guards also passed.
 
 | Projection | Content result | SHA-256 |
 | --- | --- | --- |
-| Composer `packages/php/` | 604 files; valid manifest; Apache-2.0 license; exactly 10 Runtime PSR-4 roots and override contracts | `314f7eb0aaff6f288859b8dfab950487bd2b8b933b41a92dd02c49a09cf84411` |
+| Composer `packages/php/` | 604 files; valid manifest; Apache-2.0 license; exactly 10 Runtime PSR-4 roots and override contracts | `176608c1602b0ccf8acf79a9755eb7417c25445330ccde7baddcae7df8620bdc` |
 | npm `packages/web/` | 67 packed files; all 14 exports, including `./client`, `./client/nuxt`, and `./client/uniapp`; dry-run and tarball lists identical | `94b15ddcbe031b109e687b01c61002b343c8259d4b0745b05e64b391718b13ef` |
 
-Both projections exclude Host applications, environment files, credentials,
+The Composer archive is rooted at the qualified commit and `packages/php`
+path, so its tar headers inherit the fixed commit timestamp. Both projections
+exclude Host applications, environment files, credentials,
 secrets, and unrelated monorepo content. Composer strict validation reported
 only its standard recommendation to omit the manifest `version`; the accepted
 Alpha.2 contract intentionally fixes that version, so the warning is retained
