@@ -83,6 +83,37 @@ This group runs once. A failure receives one read-only diagnosis and one static
 batch correction inside this write set; only the failed group may run once
 more. The passing clean commit becomes the fixed Alpha.2 candidate.
 
+## PHPStan Remediation Slice
+
+The first Alpha.2 workspace gate reached PHPStan after all 582 PHPUnit tests
+passed and exposed thirteen existing static-analysis errors in the qualified
+override Host chain. Before the version candidate can be fixed, one separate
+remediation commit may change only:
+
+- `backend/app/AppService.php`;
+- `backend/app/notification/NotificationRuntimeFactory.php`;
+- `packages/php/kernel/src/Override/ServiceOverrideRegistry.php`;
+- `packages/php/kernel/tests/Unit/Override/ServiceOverrideRegistryTest.php`.
+
+The remediation may narrow and validate configuration values, preserve the
+Registry's fail-closed runtime validation for untrusted arrays, resolve the
+Host container through an analyzable boundary, and make negative-test fixtures
+explicitly typed. It must not change service keys, contract versions, default
+or application resolution precedence, exception codes, container bindings,
+notification behavior, package exports, dependencies, schemas, or public API.
+
+After one static batch correction, only the failed PHPStan group runs once:
+
+```bash
+php vendor/bin/phpstan analyse --no-progress --memory-limit=512M
+```
+
+The remediation owner then performs an exact write-set check and
+`git diff --check`, commits the four-file correction independently, and returns
+the unchanged version-candidate write set to its workspace gate. A second
+PHPStan failure blocks Alpha.2; it must not be suppressed with ignores,
+baselines, assertions, casts, or widened types.
+
 ## Fixed Candidate Qualification
 
 After a separate planning record fixes the exact version-candidate commit, the
