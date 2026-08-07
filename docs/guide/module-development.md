@@ -83,6 +83,45 @@ PEANUT_INTEGRATION=1 php vendor/bin/phpunit \
 
 The tutorial fixture intentionally covers one Tenant with several Project and Queue targets. It demonstrates cross-Module calls through contracts, a unified shared reference, one-target writes, multi-target reads, policy publication, and fail-closed category checks.
 
+### Override A Declared Service
+
+Reusable PHP code declares application-replaceable services explicitly. A
+`ServiceOverrideSlot` names one interface, exact contract version, and package
+default. The application may supply a matching `ServiceOverride` at Host
+startup:
+
+```php
+use PeanutAdmin\Kernel\Override\ServiceOverride;
+use PeanutAdmin\Kernel\Override\ServiceOverrideRegistry;
+use PeanutAdmin\Kernel\Override\ServiceOverrideSlot;
+
+$registry = new ServiceOverrideRegistry(
+    [new ServiceOverrideSlot(
+        'peanut.notification.service.sms-provider',
+        SmsProvider::class,
+        '1.0.0',
+        DisabledSmsProvider::class,
+    )],
+    [new ServiceOverride(
+        'peanut.notification.service.sms-provider',
+        SmsProvider::class,
+        '1.0.0',
+        ApplicationSmsProvider::class,
+    )],
+);
+
+foreach ($registry->bindings() as $contract => $implementation) {
+    $app->bind($contract, $implementation);
+}
+```
+
+The registry validates the declared interface and implementation classes,
+rejects unknown or duplicate keys, and requires an exact version match. An
+invalid application override fails startup; it never falls back to the package
+default. Module discovery, Tenant enablement, permissions, and route guards
+remain separate authorities. Core code stays independent of ThinkPHP and does
+not read Host configuration directly.
+
 ## 7. Compose An Atomic Command
 
 An external Module owns its domain callable and, when needed, its outbox

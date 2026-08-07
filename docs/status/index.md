@@ -184,6 +184,9 @@ The [P1-OVR02 PHP Service Override Registry Contract](./p1-ovr02-php-service-ove
 defines the matching framework-independent interface-to-implementation
 selection boundary for `peanut-admin/core`. Host container wiring is explicitly
 deferred until a real application service slot is migrated.
+The candidate implementation exposes immutable resolutions, bindings, and
+redacted diagnostics with exact interface and contract-version enforcement; it
+remains unqualified and has no Runtime wiring.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
