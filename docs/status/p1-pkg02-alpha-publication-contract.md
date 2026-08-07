@@ -677,6 +677,51 @@ commit; a separate planning commit records its exact hash before qualification
 resumes through recovery and the remaining unexecuted groups. A failure
 receives one read-only diagnosis and stops.
 
+## P1-PKG02-R36 Historical Retirement Response Parsing
+
+R35 advanced the create snapshot and all four real Reference Codes variants
+completed create, append, competing update, stale reload, replacement, and
+retirement. The post-retirement refresh intentionally retained the snapshot
+captured immediately before retirement. The backend correctly returned the
+entry as active at that snapshot while retaining its later `retired_at` audit
+instant. The Web response parser incorrectly required every active snapshot to
+have a null `retired_at`, rejected the valid bitemporal response, and replaced
+the collection with a protocol error.
+
+One unrelated mock-backed desktop test failed because its hashed JavaScript
+chunk request received Chromium `net::ERR_NETWORK_CHANGED`. The same test
+passed in the mobile project and in prior qualification runs. R36 records this
+as a browser-environment interruption and authorizes no product, fixture,
+assertion, timeout, retry-policy, or network-handling change for it.
+
+R36 retains the exact R32 through R35 source changes and may additionally
+change only:
+
+- `packages/web/reference-codes/src/contracts.ts`;
+- `packages/web/reference-codes/tests/contracts.spec.ts`.
+
+The shared entry parser must continue to require a non-null `retiredAt` for a
+retired lifecycle. When parsing a list, it must normalize the envelope `as_of`
+once and validate lifecycle relative to that snapshot: a non-null retirement
+at or before `as_of` is retired, while a null or later retirement is active.
+The parser must accept an active historical entry that carries a later
+retirement audit instant. The focused contract test must prove that accepted
+case and retain fail-closed coverage for inconsistent lifecycle/timestamp
+combinations.
+
+R36 must not remove `retired_at`, hide it from historical responses, change
+the backend bitemporal query, mutation response, API, schema, authorization,
+filters, browser workflow, or add a compatibility shape. Direct entry parsing
+must still reject a retired lifecycle without a retirement instant.
+
+After static review and `git diff --check`, the owner runs the focused
+`packages/web/reference-codes/tests/contracts.spec.ts` Vitest file once and
+then `./scripts/test-browser` once with the complete R01/R02 environment. If
+both pass, all retained R32-R36 source and test files form one clean
+replacement candidate commit; a separate planning commit records its exact
+hash before qualification resumes through recovery and the remaining
+unexecuted groups. A failure receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R26 Explicit Authentication PDO Injection
 
 R25 passed the package, supply-chain, unit, and Web groups and completed the
