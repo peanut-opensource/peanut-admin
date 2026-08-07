@@ -134,6 +134,8 @@ $tenantPermissions = [
     'example.work-item.create',
     'example.work-item.update',
     'example.work-item.policy-publish',
+    'peanut.reference-codes.read',
+    'peanut.reference-codes.manage',
     'peanut.settings.read',
     'peanut.settings.manage',
 ];

@@ -16,7 +16,8 @@
     "migrations": "Database/Migrations",
     "menus": "Resources/menus.json",
     "permissions": "Resources/permissions.json",
-    "protected_resources": "Resources/protected-resources.json"
+    "protected_resources": "Resources/protected-resources.json",
+    "reference_code_sets": "Resources/reference-code-sets.json"
   },
   "frontend": {
     "entry": "frontend/src/modules/example-reference/index.ts",
