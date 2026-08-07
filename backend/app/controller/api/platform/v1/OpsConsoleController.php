@@ -118,9 +118,9 @@ final class OpsConsoleController
         }return $v;
     }private function revision(Request $r, bool $allowZero = false): int
     {
-        $v = MemberAdminRuntime::header($r,'if-match');
+        $v = MemberAdminRuntime::header($r, 'if-match');
         $pattern = $allowZero ? '/^"rev-(0|[1-9][0-9]*)"$/D' : '/^"rev-([1-9][0-9]*)"$/D';
-        if (!is_string($v) || preg_match($pattern,$v,$m) !== 1) {
+        if (!is_string($v) || preg_match($pattern, $v, $m) !== 1) {
             throw OpsConsoleException::revisionConflict();
         }return (int) $m[1];
     }

@@ -109,7 +109,7 @@ final class ImportExportHttpRuntime
         }
     }
     /** @param array<string,mixed> $p */
-    private static function string(array $p,string $key): string
+    private static function string(array $p, string $key): string
     {
         $v = $p[$key] ?? null;
         if (!is_string($v)) {
@@ -119,8 +119,8 @@ final class ImportExportHttpRuntime
     private static function problem(ImportExportException $e): ApiException
     {
         $status = match ($e->problemCode) {
-            'IMPORT_EXPORT_PERMISSION_DENIED' => 403,'IMPORT_EXPORT_NOT_FOUND' => 404,'IMPORT_EXPORT_IDEMPOTENCY_CONFLICT','IMPORT_EXPORT_STATE_CONFLICT' => 409,'IMPORT_EXPORT_INTERNAL_ERROR' => 500,default => 422
+            'IMPORT_EXPORT_PERMISSION_DENIED' => 403,'IMPORT_EXPORT_NOT_FOUND' => 404,'IMPORT_EXPORT_IDEMPOTENCY_CONFLICT','IMPORT_EXPORT_STATE_CONFLICT' => 409,'IMPORT_EXPORT_INTERNAL_ERROR' => 500,default => 422,
         };
-        return new ApiException($e->problemCode,$status,'The import/export operation could not be completed.');
+        return new ApiException($e->problemCode, $status, 'The import/export operation could not be completed.');
     }
 }

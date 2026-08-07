@@ -196,8 +196,8 @@ final class NotificationHttpRuntime
     private static function problem(NotificationException $e): ApiException
     {
         $status = match ($e->problemCode) {
-            'NOTIFICATION_NOT_FOUND' => 404,'NOTIFICATION_STATE_CONFLICT' => 409,'NOTIFICATION_PERMISSION_DENIED' => 403,default => 422
+            'NOTIFICATION_NOT_FOUND' => 404,'NOTIFICATION_STATE_CONFLICT' => 409,'NOTIFICATION_PERMISSION_DENIED' => 403,default => 422,
         };
-        return new ApiException($e->problemCode,$status,'The notification operation could not be completed.');
+        return new ApiException($e->problemCode, $status, 'The notification operation could not be completed.');
     }
 }

@@ -44,8 +44,7 @@ final class NotificationRuntimeFactory
         int $tenantId,
         string $workerId,
         ?SmsProvider $smsProvider = null,
-    ): LocalWorker
-    {
+    ): LocalWorker {
         $config = self::config();
         $smsProvider ??= Container::getInstance()->make(SmsProvider::class);
         $recipients = new PdoRecipientResolver($pdo, $config['recipient_directory'], $config['recipient_digest_key']);

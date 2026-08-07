@@ -42,7 +42,7 @@ final readonly class PdoRuntimeLogProvider implements RuntimeLogProvider
         $statement->execute();
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
         $records = array_values(array_map(static fn(array $r): StructuredLogRecord => new StructuredLogRecord((string) $r['event_type'], match ($r['outcome']) {
-            'success' => 'info','denied' => 'warning',default => 'error'
+            'success' => 'info','denied' => 'warning',default => 'error',
         }, 'platform', str_replace(' ', 'T', (string) $r['occurred_at']) . 'Z', is_string($r['request_id']) ? $r['request_id'] : null, 1), $rows));
         $last = $rows === [] ? null : (int) $rows[array_key_last($rows)]['id'];
         return new StructuredLogBatch($records, count($rows) === $query->pageSize && $last !== null ? 'cursor_' . dechex($last) : null);

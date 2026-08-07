@@ -57,6 +57,6 @@ final class IntegrationSecurityController
     }
     #[OpenApiHandlerContract] public function revokeSession(Request $r, string $sessionKey): Response
     {
-        return IntegrationSecurityHttpRuntime::revokeSession($r,$sessionKey);
+        return IntegrationSecurityHttpRuntime::revokeSession($r, $sessionKey);
     }
 }

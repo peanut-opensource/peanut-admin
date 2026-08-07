@@ -120,6 +120,6 @@ final class TaskHttpRuntime
     }
     private static function problem(TaskJobException $e): ApiException
     {
-        return new ApiException($e->problemCode,$e->status,'The task operation could not be completed.');
+        return new ApiException($e->problemCode, $e->status, 'The task operation could not be completed.');
     }
 }

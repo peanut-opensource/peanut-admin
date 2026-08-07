@@ -237,8 +237,8 @@ final class IntegrationSecurityHttpRuntime
     private static function problem(IntegrationSecurityException $e): ApiException
     {
         $status = match ($e->problemCode) {
-            'INTEGRATION_PERMISSION_DENIED' => 403,'MACHINE_IDENTITY_NOT_FOUND','WEBHOOK_ENDPOINT_NOT_FOUND','SESSION_DEVICE_NOT_FOUND' => 404,'INTEGRATION_REVISION_CONFLICT' => 409,'WEBHOOK_DESTINATION_DENIED' => 422,default => 422
+            'INTEGRATION_PERMISSION_DENIED' => 403,'MACHINE_IDENTITY_NOT_FOUND','WEBHOOK_ENDPOINT_NOT_FOUND','SESSION_DEVICE_NOT_FOUND' => 404,'INTEGRATION_REVISION_CONFLICT' => 409,'WEBHOOK_DESTINATION_DENIED' => 422,default => 422,
         };
-        return new ApiException($e->problemCode,$status,'The integration security operation could not be completed.');
+        return new ApiException($e->problemCode, $status, 'The integration security operation could not be completed.');
     }
 }

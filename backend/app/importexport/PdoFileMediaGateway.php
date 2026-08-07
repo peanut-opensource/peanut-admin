@@ -56,6 +56,6 @@ final readonly class PdoFileMediaGateway implements FileMediaGateway
     private function service(): FileService
     {
         $config = require dirname(__DIR__, 2) . '/config/file-media.php';
-        return new FileService(new PdoFileRepository($this->pdo), new LocalPrivateStorageProvider($config['local_root'], $config['public_roots']), new UploadPolicy(['text/csv'],$config['max_bytes']));
+        return new FileService(new PdoFileRepository($this->pdo), new LocalPrivateStorageProvider($config['local_root'], $config['public_roots']), new UploadPolicy(['text/csv'], $config['max_bytes']));
     }
 }

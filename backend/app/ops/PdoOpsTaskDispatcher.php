@@ -59,6 +59,6 @@ final readonly class PdoOpsTaskDispatcher implements OpsTaskDispatcher
     }
     private function instant(string $v): string
     {
-        return str_replace(' ','T',$v) . 'Z';
+        return str_replace(' ', 'T', $v) . 'Z';
     }
 }

@@ -192,6 +192,6 @@ final class FileDeliveryHttpRuntime
     }
     private static function problem(FileMediaException $e): ApiException
     {
-        return new ApiException($e->errorCode,$e->httpStatus,'The file delivery operation could not be completed.');
+        return new ApiException($e->errorCode, $e->httpStatus, 'The file delivery operation could not be completed.');
     }
 }
