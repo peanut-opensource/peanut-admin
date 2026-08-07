@@ -3,6 +3,7 @@
   "generated_at": "2026-08-07T11:37:15+08:00",
   "task": "P1-PKG02-QUALIFICATION",
   "input_commit": "0ed843aad95497f162815a472ea9005d5bc1a5c6",
+  "qualified_candidate_commit": "b84b8876cf24e7b749f0e79ab95053e772c922e7",
   "advisory_remediation_commit": "cd6207f28532dec305214b38c662a3e891f7692a",
   "slice_status": "fixed-package-alpha-candidate",
   "third_party_dependency_change": true,
@@ -35,13 +36,26 @@
   },
   "verification": {
     "lock_sha256_consistency": "checked",
-    "manifest_lock_consistency": "pending-workspace-resume",
+    "manifest_lock_consistency": "passed",
     "security_audit": "passed-no-high-or-critical-advisories",
-    "fixed_candidate_qualification": "in-progress"
+    "phpunit": "passed: 562 tests, 3516 assertions, 253 skipped",
+    "phpstan": "passed: 0 errors",
+    "deptrac": "passed: 0 violations, 0 uncovered",
+    "php_cs_fixer": "passed: 802 files after R42",
+    "web_lint": "passed",
+    "web_typecheck": "passed",
+    "web_unit": "passed: 51 files, 209 tests after R43",
+    "web_build": "passed",
+    "compose_config": "passed",
+    "root_license": "passed",
+    "product_neutral_content": "passed after R44",
+    "required_deferred_directories": "passed",
+    "fixed_candidate_qualification": "passed-by-authorized-resume"
   },
   "notes": [
     "The historical P1-PKG01 evidence remains unchanged and continues to describe its first-party-only consolidation state.",
     "Only the root pnpm lock changed after P1-PKG01, through the bounded R15 transitive advisory remediation.",
+    "R41 through R44 completed the fixed-candidate groups through explicit no-repeat resume contracts.",
     "This evidence does not publish a package, create a tag or Release, or approve downstream consumption."
   ]
 }

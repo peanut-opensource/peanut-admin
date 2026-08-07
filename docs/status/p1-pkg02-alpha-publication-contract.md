@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: 0ed843aad95497f162815a472ea9005d5bc1a5c6
+package_candidate_commit: b84b8876cf24e7b749f0e79ab95053e772c922e7
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,12 +25,14 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`0ed843aad95497f162815a472ea9005d5bc1a5c6`. Its retained R32-R38 browser
-remediation passed all 46 declared Playwright tests, and R39 passed recovery,
-clean-install, and internal Starter verification. R40 passed all seven
-performance scenarios and the focused performance contracts. The planning
-commit that fixes this contract may be checked out above that candidate, but no
-package or Runtime source may change before qualification.
+`b84b8876cf24e7b749f0e79ab95053e772c922e7`. Its retained R32-R38 browser
+remediation passed all 46 declared Playwright tests, R39 passed recovery,
+clean-install, and internal Starter verification, and R40 passed all seven
+performance scenarios and focused performance contracts. R41 through R44 then
+completed the fixed-tree workspace and repository guards through their
+explicit no-repeat resume contracts. The planning commit that fixes this
+contract may be checked out above that candidate, but no package or Runtime
+source may change before package-content inspection.
 
 `P1-PKG02-QUALIFICATION` runs the repository aggregate gate exactly once:
 
