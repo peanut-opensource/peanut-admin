@@ -483,6 +483,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-ovr01-admin-web-override-registry-contract.md",
+      "title": "P1-OVR01 Admin Web Override Registry Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

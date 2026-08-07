@@ -172,6 +172,11 @@ tag, projection digests, publication order, and rollback policy. Its state is
 repository, publication workflow, and registry consumer probes remain pending,
 so `publication_authorized` is still false.
 
+The post-`alpha.1` [P1-OVR01 Admin Web Override Registry Contract](./p1-ovr01-admin-web-override-registry-contract.md)
+defines the first standard application override boundary for services,
+components, pages, and route loaders. It is an unqualified candidate task and
+does not change the fixed publication source or downstream-consumption lock.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
