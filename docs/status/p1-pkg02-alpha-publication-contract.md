@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: 5a34f54829c3dd9e04365f3c65c5b5a6cc23daee
+package_candidate_commit: 344d18c150798ccf0800e682855f91cfbdd3fc53
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,7 +25,7 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`5a34f54829c3dd9e04365f3c65c5b5a6cc23daee`. The planning commit that fixes this
+`344d18c150798ccf0800e682855f91cfbdd3fc53`. The planning commit that fixes this
 contract may be checked out above that candidate, but no package or Runtime
 source may change before qualification.
 
@@ -674,6 +674,25 @@ service, or upgrade workflow, and must not weaken an exact assertion. After
 updated entry-point contract and reruns the same three focused test files once.
 A passing source commit becomes the next package candidate and a separate
 planning commit records its exact hash.
+
+## P1-PKG02-R25 Upgrade-Fixture Candidate Qualification
+
+R20 through R24 produced the clean replacement source commit
+`344d18c150798ccf0800e682855f91cfbdd3fc53`. The three focused install/upgrade
+files passed 12 tests and 666 assertions against healthy isolated MySQL and
+Valkey services. The commit changes qualification fixtures and their service
+entry point only; public package projections and production Runtime behavior
+remain unchanged.
+
+R25 may change only this contract and `docs/status/index.md` to record the new
+candidate. With the complete R01/R02 environment, the qualification owner runs
+`./scripts/check` exactly once against the planning commit above the unchanged
+source candidate. Previous partial results remain diagnostics only.
+
+If the aggregate gate passes, package-content inspection proceeds against the
+exact PHP and Web projections from this candidate. If it fails, the owner
+performs one read-only diagnosis and stops. Any source repair requires a new
+remediation contract and candidate rollover.
 
 ## P1-PKG02-R17 Generated License Inventory Remediation
 
