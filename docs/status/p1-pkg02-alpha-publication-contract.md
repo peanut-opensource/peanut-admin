@@ -607,6 +607,39 @@ one clean replacement candidate commit; a separate planning commit records its
 exact hash before qualification resumes through recovery and the remaining
 unexecuted groups. A failure receives one read-only diagnosis and stops.
 
+## P1-PKG02-R34 Reference Codes Dialog Viewport Remediation
+
+R33 loaded the fictional reference set, opened the real create workflow, and
+left forty-two browser tests passing. The four desktop/mobile Reference Codes
+variants then failed the same dialog geometry assertion. Trace measurement
+proved that the form and every interactive control were inside the viewport
+and did not overlap. The element carrying `role="dialog"` was Element Plus's
+full-viewport `.el-overlay-dialog`; while the dialog was already visible, the
+default `dialog-fade` enter transition still translated that element 20 pixels
+above the viewport. Its measured top was therefore `-20` until the decorative
+transition completed.
+
+R34 retains the exact R32 fixture permissions and process-local Settings
+keyring plus the R33 reference application declaration. It may additionally
+change only:
+
+- `packages/web/reference-codes/src/ReferenceCodesPage.vue`.
+
+All three Reference Codes `ElDialog` instances must use the Element Plus
+`transition` contract with CSS transitions disabled. Their existing titles,
+widths, viewport max-height, scroll behavior, forms, controls, close behavior,
+focus behavior, pending states, validation, and Runtime calls must remain
+unchanged. R34 must not change the browser assertion or timing, add a wait,
+alter global Element Plus behavior, change another page, or weaken viewport or
+overlap acceptance.
+
+After static review and `git diff --check`, the owner runs
+`./scripts/test-browser` once with the complete R01/R02 environment. If it
+passes, all four retained R32/R33 files and the R34 page fix form one clean
+replacement candidate commit; a separate planning commit records its exact
+hash before qualification resumes through recovery and the remaining
+unexecuted groups. A failure receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R26 Explicit Authentication PDO Injection
 
 R25 passed the package, supply-chain, unit, and Web groups and completed the
