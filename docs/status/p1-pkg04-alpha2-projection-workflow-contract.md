@@ -51,3 +51,33 @@ Release action. The integration owner runs the script once locally against an
 empty temporary output directory, verifies the exact write set, runs
 `git diff --check`, commits once, and stops. A failure receives one read-only
 diagnosis and stops; correction requires a new contract.
+
+## R01 Commit-Rooted Composer Archive Remediation
+
+The first local invocation stopped before extraction because the qualification
+digest was calculated from `candidate:packages/php`, which resolves to a tree
+object without a commit timestamp. `git archive` therefore wrote the invocation
+time into the tar headers, so identical package contents produced a different
+archive SHA-256 on a later run. This is an evidence reproducibility defect, not
+a package-content or candidate-source change.
+
+R01 fixes the projection root as the qualified candidate commit plus the
+`packages/php` path. The exact command shape is `git archive --format=tar
+<candidate> packages/php`; extraction strips the two path components. The
+resulting commit-rooted archive contains the same 604 files and has stable
+SHA-256
+`176608c1602b0ccf8acf79a9755eb7417c25445330ccde7baddcae7df8620bdc`.
+
+R01 may change only:
+
+- `scripts/check-alpha2-package-projections`;
+- `docs/reviews/p1-pkg03-alpha2-publication-qualification.md`;
+- `docs/decisions/releases/p1-pkg03-alpha2-publication-approval.md`;
+- this contract.
+
+The npm digest, package versions, candidate commit, file counts, public
+boundaries, workflow permissions, package source, manifests, locks, Runtime,
+tests, and every other qualification result remain unchanged. After static
+review and `git diff --check`, the integration owner runs the projection script
+once against a new empty temporary directory. A failure receives one read-only
+diagnosis and stops.
