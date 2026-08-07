@@ -165,6 +165,13 @@ No registry version, Composer split repository, tag, or Release is authorized
 until registry ownership, credentials, provenance, immutable rollback, and
 isolated registry-consumer evidence are recorded.
 
+The [P1-PKG02 publication approval record](../decisions/releases/p1-pkg02-publication-approval.md)
+fixes the intended public repositories, package names, alpha dist-tag, immutable
+tag, projection digests, publication order, and rollback policy. Its state is
+`preflight-open`; npm scope ownership, Packagist ownership, the generated split
+repository, publication workflow, and registry consumer probes remain pending,
+so `publication_authorized` is still false.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
