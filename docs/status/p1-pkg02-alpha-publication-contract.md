@@ -637,6 +637,28 @@ exact PHP and Web projections from this candidate. If it fails, the owner
 performs one read-only diagnosis and stops. Any source repair requires a new
 remediation contract and candidate rollover.
 
+R29 passed documentation, dependency, architecture, OpenAPI, Runtime coverage,
+supply-chain, PHP unit, Web unit, MySQL integration, and PHP security groups.
+The browser group stopped before executing any browser assertion because the
+local Playwright cache lacked the Chromium Headless Shell revision required by
+the locked `@playwright/test` 1.61.1. The cache contained only unrelated older
+and newer revisions; the package manifest and lock remained unchanged.
+
+## P1-PKG02-R30 Locked Playwright Browser Environment Retry
+
+R30 changes no committed file other than this contract. The qualification
+owner may run `pnpm exec playwright install chromium` once to install the exact
+browser revision selected by the committed lock. It must not change a package
+manifest, dependency lock, Playwright version, browser project, test, source,
+threshold, or qualification assertion.
+
+After installation, qualification resumes once from `./scripts/test-browser`
+through the remaining `scripts/check` commands in their original order:
+recovery, performance, internal Starter verification, workspace checks, the
+fixed license hash, private-path/product-content guards, required/deferred
+directory checks, and `git diff --check`. Previously passed groups must not be
+rerun. Any resumed-group failure receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R20 Old-Lock Upgrade Test Process Isolation
 
 R19 passed supply-chain qualification, PHP unit tests, and Web tests, then the
