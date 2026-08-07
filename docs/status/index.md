@@ -158,10 +158,12 @@ candidate. Its retained R32-R38 browser remediation passed all 46 declared
 Playwright tests; R39 passed recovery, clean-install, and internal Starter
 verification; R40 passed all seven performance scenarios; and R41-R44
 completed the remaining fixed-tree groups through explicit no-repeat resume
-contracts. Package-content inspection and external publication remain separate.
+contracts. The
+[alpha publication qualification](../reviews/p1-pkg02-alpha-publication-qualification.md)
+records passing fixed-tree and package-content evidence for both projections.
 No registry version, Composer split repository, tag, or Release is authorized
-until the fixed-tree gate, package-content evidence, registry ownership,
-credentials, provenance, and immutable rollback contract are all recorded.
+until registry ownership, credentials, provenance, immutable rollback, and
+isolated registry-consumer evidence are recorded.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
