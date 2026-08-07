@@ -63,7 +63,8 @@ change only:
 - `docs/reference/third-party-licenses.generated.md`, generated only by its
   existing writer;
 - new `docs/decisions/dependencies/p1-pkg03-lock-evidence.json`;
-- `docs/content-status.json` to register that evidence.
+- `docs/content-status.json` must not register the JSON evidence because the
+  documentation manifest covers Markdown documents only.
 
 Historical P1-PKG01/P1-PKG02 contracts, qualifications, lock evidence, override
 contracts, and their fixed hashes must not be rewritten. Package source,
@@ -195,6 +196,22 @@ of their assertion. No timeout, assertion, production source, dependency,
 export, or behavior may change. After exact write-set review and
 `git diff --check`, `pnpm test:unit` runs once. Failure blocks the final Starter
 import remediation.
+
+## Lock Evidence Registration Remediation
+
+The first fixed-candidate aggregate qualification stopped before any test
+because `docs/content-status.json` registered
+`docs/decisions/dependencies/p1-pkg03-lock-evidence.json`. The repository's
+documentation manifest intentionally accepts Markdown only, and the historical
+P1-PKG02 JSON lock evidence is likewise referenced from Markdown rather than
+registered directly.
+
+One metadata-only remediation commit may remove exactly that JSON document
+entry from `docs/content-status.json`. The lock evidence file, hashes,
+candidate versions, package contents, Runtime, tests, dependencies, and all
+Markdown registrations remain unchanged. After `jq empty`, `git diff --check`,
+and exact write-set review, the resulting commit becomes the new Alpha.2 fixed
+candidate for a separately updated qualification plan.
 
 ## Fixed Candidate Qualification
 
