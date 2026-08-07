@@ -518,6 +518,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-ovr05-r01-web-type-narrowing-remediation-contract.md",
+      "title": "P1-OVR05-R01 Web Override Type Narrowing Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

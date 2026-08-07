@@ -206,6 +206,11 @@ fixes the combined post-`alpha.1` source candidate and assigns one consolidated
 PHP behavior group, Web behavior group, and Web public-type group. Qualification
 is pending and carries no publication or downstream-consumption authority.
 
+The first P1-OVR05 Q3 type group exposed one control-flow narrowing error in the
+Web registry. [P1-OVR05-R01](./p1-ovr05-r01-web-type-narrowing-remediation-contract.md)
+authorizes only the fail-closed `Map.get()` expression repair and one Q3 rerun;
+the passed Q1 and Q2 groups remain sealed.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
