@@ -659,6 +659,31 @@ fixed license hash, private-path/product-content guards, required/deferred
 directory checks, and `git diff --check`. Previously passed groups must not be
 rerun. Any resumed-group failure receives one read-only diagnosis and stops.
 
+R30 installed the exact locked Chromium revision and browser execution began.
+Thirty mock-backed desktop/mobile tests passed. All 16 real-backend tests
+failed at their first API request because `playwright.config.ts` started and
+health-checked PHP on a hard-coded port 4180 while the accepted qualification
+environment and the full-stack Vite proxy used
+`PEANUT_BROWSER_BACKEND_PORT=38212`. The resulting proxy connection refusal is
+test-service wiring, not a product response or browser assertion failure.
+
+## P1-PKG02-R31 Playwright Backend Port Wiring Remediation
+
+R31 may change only this contract and `playwright.config.ts`. The Playwright
+configuration must parse and validate `PEANUT_BROWSER_BACKEND_PORT` with the
+same integer range contract as the frontend port, retaining 4180 only as the
+local default. The PHP web-server command and its health URL must both use the
+resolved backend port so they match the existing full-stack Vite proxy.
+
+R31 must not change the qualification environment, Vite proxy, browser
+projects, test selection, retry/worker/skip policy, application source, API,
+fixture data, manifest, lock, or assertion. After `git diff --check`, the owner
+runs `./scripts/test-browser` once with the complete R01/R02 environment. If it
+passes, qualification continues once through recovery, performance, internal
+Starter verification, workspace checks, and the remaining `scripts/check`
+guards in their original order. Previously passed groups remain authoritative
+and must not be rerun. A failure receives one read-only diagnosis and stops.
+
 ## P1-PKG02-R20 Old-Lock Upgrade Test Process Isolation
 
 R19 passed supply-chain qualification, PHP unit tests, and Web tests, then the
