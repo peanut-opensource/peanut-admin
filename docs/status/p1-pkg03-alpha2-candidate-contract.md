@@ -114,6 +114,31 @@ the unchanged version-candidate write set to its workspace gate. A second
 PHPStan failure blocks Alpha.2; it must not be suppressed with ignores,
 baselines, assertions, casts, or widened types.
 
+## PHP CS Fixer Remediation Slice
+
+The next Alpha.2 workspace gate passed PHPUnit, PHPStan, and Deptrac, then
+reported mechanical formatting differences in exactly these files:
+
+- `backend/app/controller/api/platform/v1/OpsConsoleController.php`;
+- `backend/app/controller/api/v1/IntegrationSecurityController.php`;
+- `backend/app/filemedia/FileDeliveryHttpRuntime.php`;
+- `backend/app/importexport/ImportExportHttpRuntime.php`;
+- `backend/app/importexport/PdoFileMediaGateway.php`;
+- `backend/app/integrationsecurity/IntegrationSecurityHttpRuntime.php`;
+- `backend/app/notification/NotificationHttpRuntime.php`;
+- `backend/app/notification/NotificationRuntimeFactory.php`;
+- `backend/app/ops/PdoOpsTaskDispatcher.php`;
+- `backend/app/ops/PdoRuntimeLogProvider.php`;
+- `backend/app/task/TaskHttpRuntime.php`;
+- `packages/php/integration-security/tests/mysql-harness.php`;
+- `packages/php/kernel/tests/Unit/Override/ServiceOverrideRegistryTest.php`.
+
+One separate remediation commit may apply only the existing
+`scripts/php-cs-fixer.php` rules to those files. It must not change behavior,
+contracts, dependencies, schemas, generated artifacts, or any other path.
+After the exact write-set and `git diff --check` pass, only the failed PHP CS
+Fixer group runs once. A second failure blocks Alpha.2.
+
 ## Fixed Candidate Qualification
 
 After a separate planning record fixes the exact version-candidate commit, the
