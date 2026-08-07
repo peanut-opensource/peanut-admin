@@ -542,8 +542,7 @@ SQL);
         PDO $database,
         array $excludedTables = [],
         ?array $includedTables = null,
-    ): array
-    {
+    ): array {
         $statement = $database->query(<<<'SQL'
 SELECT table_name, engine, table_collation
 FROM information_schema.tables
