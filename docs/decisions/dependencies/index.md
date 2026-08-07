@@ -39,6 +39,11 @@ toolchain already locked by the repository. Its machine-readable
 path/workspace lock changes and development checks; audit, clean starter
 installs, and fixed-candidate qualification remain deferred.
 
+P1-PKG02 retains the two consolidated public package boundaries while updating
+three root transitive development resolutions to security-fixed versions. Its
+[current lock evidence](./p1-pkg02-lock-evidence.json) records the four exact
+lock hashes and preserves the historical P1-PKG01 evidence unchanged.
+
 Starter v1 C02 File And Media also adds no third-party dependency. The bounded
 local adapter uses PHP fileinfo, hashing, PDO, and filesystem primitives behind
 the first-party storage provider contract. Its machine-readable

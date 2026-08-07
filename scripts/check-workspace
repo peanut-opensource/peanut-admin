@@ -18,7 +18,7 @@ required=(
   starter/frontend/package.json
   starter/pnpm-lock.yaml
   compose.yaml
-  docs/decisions/dependencies/p1-pkg01-lock-evidence.json
+  docs/decisions/dependencies/p1-pkg02-lock-evidence.json
 )
 
 for path in "${required[@]}"; do
@@ -61,7 +61,7 @@ $fail = static function (string $message): never {
     exit(1);
 };
 
-$evidence = $decode("docs/decisions/dependencies/p1-pkg01-lock-evidence.json");
+$evidence = $decode("docs/decisions/dependencies/p1-pkg02-lock-evidence.json");
 foreach ([
     "composer.lock",
     "pnpm-lock.yaml",
