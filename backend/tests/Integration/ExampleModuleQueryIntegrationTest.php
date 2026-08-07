@@ -134,7 +134,7 @@ final class ExampleModuleQueryIntegrationTest extends TestCase
             [['example.project' => $projectSetId]],
         );
 
-        $authentication = TenantAuthRuntimeFactory::create()->login(
+        $authentication = TenantAuthRuntimeFactory::create(pdo: $this->pdo)->login(
             'query-owner@example.test',
             $password,
             'query-test',

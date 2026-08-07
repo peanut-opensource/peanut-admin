@@ -18,14 +18,14 @@ final class PlatformAuthRuntimeFactory
 {
     private function __construct() {}
 
-    public static function create(): PlatformAuthService
+    public static function create(?PDO $pdo = null): PlatformAuthService
     {
         $hmacKey = getenv('AUTH_IDENTIFIER_HMAC_KEY');
         if (!is_string($hmacKey) || strlen($hmacKey) < 32) {
             throw new RuntimeException('AUTH_IDENTIFIER_HMAC_KEY must contain at least 32 bytes.');
         }
 
-        $pdo = Container::getInstance()->make(PDO::class);
+        $pdo ??= Container::getInstance()->make(PDO::class);
 
         return new PlatformAuthService(
             new PdoTransactionManager($pdo),

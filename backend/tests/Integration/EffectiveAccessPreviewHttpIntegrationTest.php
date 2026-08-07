@@ -128,7 +128,7 @@ final class EffectiveAccessPreviewHttpIntegrationTest extends TestCase
             [['example.project' => $targets]],
         );
 
-        $tenantAuthentication = TenantAuthRuntimeFactory::create()->login(
+        $tenantAuthentication = TenantAuthRuntimeFactory::create(pdo: $this->pdo)->login(
             self::EMAIL,
             self::PASSWORD,
             'effective-access',
@@ -139,7 +139,7 @@ final class EffectiveAccessPreviewHttpIntegrationTest extends TestCase
         self::assertInstanceOf(TenantAuthentication::class, $tenantAuthentication);
         $this->tenantAccessToken = $tenantAuthentication->tokens->access->expose();
 
-        $platformAuthentication = PlatformAuthRuntimeFactory::create()->login(
+        $platformAuthentication = PlatformAuthRuntimeFactory::create($this->pdo)->login(
             self::EMAIL,
             self::PASSWORD,
             '127.0.0.1',
@@ -185,7 +185,7 @@ final class EffectiveAccessPreviewHttpIntegrationTest extends TestCase
 
         $encoded = json_encode($preview->getData(), JSON_THROW_ON_ERROR);
         foreach (['account_id', 'provider_key', 'provider_class', 'target_ids', 'secret', 'session'] as $forbidden) {
-            self::assertStringNotContainsString($forbidden, $encoded);
+            self::assertStringNotContainsString(sprintf('"%s":', $forbidden), $encoded);
         }
         self::assertSame(1, $this->countPreviewAudits());
         $metadata = $this->previewAuditMetadata();

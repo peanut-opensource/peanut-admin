@@ -80,7 +80,7 @@ final class AccountSelfServiceHttpIntegrationTest extends TestCase
                 'owner_name' => 'Account Owner',
             ],
         );
-        $authentication = TenantAuthRuntimeFactory::create()->login(
+        $authentication = TenantAuthRuntimeFactory::create(pdo: $this->pdo)->login(
             self::EMAIL,
             self::PASSWORD,
             'account-http',

@@ -84,7 +84,7 @@ final class ExampleModuleHttpIntegrationTest extends TestCase
         $this->memberId = (int) $installation['tenant']['owner_member_id'];
         $this->seedExampleData();
         $this->seedAuthorization();
-        $authentication = TenantAuthRuntimeFactory::create()->login(
+        $authentication = TenantAuthRuntimeFactory::create(pdo: $this->pdo)->login(
             'http-owner@example.test',
             $password,
             'http-test',
