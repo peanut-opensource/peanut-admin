@@ -201,6 +201,11 @@ shell selection to one package-owned resolver slot and one application-owned
 override list. The implemented reference Host chain remains candidate-only and
 does not authorize npm publication or Peanut Admin application migration.
 
+The [P1-OVR05 Override Host Consumption Qualification Contract](./p1-ovr05-override-host-qualification-contract.md)
+fixes the combined post-`alpha.1` source candidate and assigns one consolidated
+PHP behavior group, Web behavior group, and Web public-type group. Qualification
+is pending and carries no publication or downstream-consumption authority.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

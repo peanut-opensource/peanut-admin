@@ -511,6 +511,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-ovr05-override-host-qualification-contract.md",
+      "title": "P1-OVR05 Override Host Consumption Qualification Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
