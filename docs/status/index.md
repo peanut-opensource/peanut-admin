@@ -146,11 +146,13 @@ ledger contains 75 P0 and 64 P1 operations. These statements describe the
 candidate tree only and do not establish qualification, publication, release,
 or downstream consumption approval.
 
-The P1-PKG01 package-boundary candidate exposes the same Runtime through two
-installable boundaries: `peanut-admin/core` for PHP and
-`@peanut-admin/admin` for Admin Web. Both use `0.1.0-alpha.1`; internal domain
-directories remain ownership boundaries, not packages. Publication, release,
-stable compatibility, and downstream lock movement remain separate decisions.
+The historical P1-PKG01 package-boundary candidate first exposed the same
+Runtime through two installable boundaries: `peanut-admin/core` for PHP and
+`@peanut-admin/admin` for Admin Web, both at `0.1.0-alpha.1`. Internal domain
+directories remain ownership boundaries, not packages. P1-PKG03 below replaces
+that unpublished version as the current publication candidate; publication,
+release, stable compatibility, and downstream lock movement remain separate
+decisions.
 
 The [P1-PKG02 Alpha Publication Contract](./p1-pkg02-alpha-publication-contract.md)
 fixes `b84b8876cf24e7b749f0e79ab95053e772c922e7` as the package source

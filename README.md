@@ -57,10 +57,11 @@ release, or downstream consumption lock.
 
 P1-PKG01 consolidates the installable Runtime surface into exactly two public
 package boundaries: Composer package `peanut-admin/core` and npm package
-`@peanut-admin/admin`, both at candidate version `0.1.0-alpha.1`. Domain source
-directories remain separate inside those packages, but are not independently
-installable or publishable. This candidate is not yet a registry publication,
-release, stable compatibility promise, or downstream consumption approval.
+`@peanut-admin/admin`. The current P1-PKG03 projection sets both boundaries to
+candidate version `0.1.0-alpha.2`. Domain source directories remain separate
+inside those packages, but are not independently installable or publishable.
+This candidate is not yet a registry publication, release, stable compatibility
+promise, or downstream consumption approval.
 
 ## Principles
 

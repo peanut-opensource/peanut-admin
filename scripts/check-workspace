@@ -18,7 +18,7 @@ required=(
   starter/frontend/package.json
   starter/pnpm-lock.yaml
   compose.yaml
-  docs/decisions/dependencies/p1-pkg02-lock-evidence.json
+  docs/decisions/dependencies/p1-pkg03-lock-evidence.json
 )
 
 for path in "${required[@]}"; do
@@ -61,7 +61,7 @@ $fail = static function (string $message): never {
     exit(1);
 };
 
-$evidence = $decode("docs/decisions/dependencies/p1-pkg02-lock-evidence.json");
+$evidence = $decode("docs/decisions/dependencies/p1-pkg03-lock-evidence.json");
 foreach ([
     "composer.lock",
     "pnpm-lock.yaml",
@@ -101,8 +101,8 @@ foreach ($starterPackages as $name => $package) {
 foreach (["root" => $rootPackages, "starter" => $starterPackages] as $label => $packages) {
     $package = $packages["peanut-admin/core"] ?? null;
     $expectedSymlink = $label === "root";
-    if (!is_array($package) || ($package["version"] ?? null) !== "0.1.0-alpha.1") {
-        $fail("{$label} Composer lock is missing peanut-admin/core@0.1.0-alpha.1");
+    if (!is_array($package) || ($package["version"] ?? null) !== "0.1.0-alpha.2") {
+        $fail("{$label} Composer lock is missing peanut-admin/core@0.1.0-alpha.2");
     }
     if (($package["dist"]["type"] ?? null) !== "path"
         || ($package["transport-options"]["symlink"] ?? null) !== $expectedSymlink
@@ -125,7 +125,7 @@ $expectedAutoload = [
     "PeanutAdmin\\TaskJob\\" => "task-job/src/",
 ];
 if (($php["name"] ?? null) !== "peanut-admin/core"
-    || ($php["version"] ?? null) !== "0.1.0-alpha.1"
+    || ($php["version"] ?? null) !== "0.1.0-alpha.2"
     || ($php["license"] ?? null) !== "Apache-2.0"
     || ($php["autoload"]["psr-4"] ?? null) !== $expectedAutoload
     || ($php["autoload-dev"]["psr-4"]["PeanutAdmin\\Testing\\"] ?? null) !== "testing/src/") {
@@ -148,8 +148,8 @@ $assertComposerConsumer = static function (
         static fn(string $name): bool => str_starts_with($name, "peanut-admin/"),
         ARRAY_FILTER_USE_KEY,
     );
-    if ($firstParty !== ["peanut-admin/core" => "0.1.0-alpha.1"]) {
-        $fail("{$path} must require only peanut-admin/core@0.1.0-alpha.1");
+    if ($firstParty !== ["peanut-admin/core" => "0.1.0-alpha.2"]) {
+        $fail("{$path} must require only peanut-admin/core@0.1.0-alpha.2");
     }
     $repositories = $manifest["repositories"] ?? [];
     if (count($repositories) !== 1
@@ -167,13 +167,14 @@ $web = $decode("packages/web/package.json");
 $expectedExports = [
     "./core", "./shell", "./settings", "./reference-codes", "./file-media",
     "./task-job", "./notification-sms", "./import-export", "./ops-console",
-    "./integration-security", "./testing",
+    "./integration-security", "./testing", "./client", "./client/nuxt",
+    "./client/uniapp",
 ];
 $actualExports = array_keys($web["exports"] ?? []);
 sort($expectedExports);
 sort($actualExports);
 if (($web["name"] ?? null) !== "@peanut-admin/admin"
-    || ($web["version"] ?? null) !== "0.1.0-alpha.1"
+    || ($web["version"] ?? null) !== "0.1.0-alpha.2"
     || ($web["license"] ?? null) !== "Apache-2.0"
     || $actualExports !== $expectedExports
     || !isset($web["exports"]["./testing"]["development"])) {
@@ -197,7 +198,7 @@ $assertWebConsumer = static function (string $path, string $version) use ($decod
     }
 };
 $assertWebConsumer("frontend/package.json", "workspace:^");
-$assertWebConsumer("starter/frontend/package.json", "workspace:0.1.0-alpha.1");
+$assertWebConsumer("starter/frontend/package.json", "workspace:0.1.0-alpha.2");
 '
 
 if ! rg -q '^  - packages/web$' pnpm-workspace.yaml \

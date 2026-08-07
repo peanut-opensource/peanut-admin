@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-07T14:51:57+08:00",
+  "task": "P1-PKG03-VERSION-CANDIDATE",
+  "prerequisite_commit": "0e78711",
+  "candidate_commit": "the commit containing this evidence",
+  "slice_status": "alpha2-version-candidate",
+  "third_party_dependency_change": false,
+  "public_runtime_packages": [
+    "peanut-admin/core@0.1.0-alpha.2",
+    "@peanut-admin/admin@0.1.0-alpha.2"
+  ],
+  "toolchain": {
+    "php": "8.3.24",
+    "composer": "2.10.2",
+    "node": "24.13.0",
+    "pnpm": "11.13.0"
+  },
+  "locks": {
+    "composer.lock": {
+      "sha256": "65efd044c5277b09c3cb73048d14494e126dc33d3fdd3ddc8ff88444ba6d65f0",
+      "delta": "peanut-admin/core first-party version and path reference only"
+    },
+    "pnpm-lock.yaml": {
+      "sha256": "f92974a887d3d4227876b73d9de6d16064a3f5d12bb7974c9021ac5872e9c489",
+      "delta": "@peanut-admin/admin workspace specifier only"
+    },
+    "starter/backend/composer.lock": {
+      "sha256": "9667edf7b9a6a0b5d151f5697919cee34fc198cf17697860089fe423af63a923",
+      "delta": "peanut-admin/core first-party version and path reference only"
+    },
+    "starter/pnpm-lock.yaml": {
+      "sha256": "a997248a7833f5bc84c15fff2cf2985978da4fe8a8ac600d1aa7c274569ba906",
+      "delta": "@peanut-admin/admin workspace specifier only"
+    }
+  },
+  "verification": {
+    "manifest_lock_consistency": "passed: ./scripts/check-workspace",
+    "fixed_candidate_qualification": "pending separate fixed-commit plan",
+    "publication": "not authorized"
+  },
+  "notes": [
+    "No third-party dependency or resolution changed in this candidate.",
+    "Historical P1-PKG01 and P1-PKG02 lock evidence remains unchanged.",
+    "This evidence does not publish a package, create a tag or Release, or approve downstream consumption."
+  ]
+}

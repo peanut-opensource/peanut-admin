@@ -9,7 +9,7 @@ The generated project contains:
 - a minimal ThinkPHP backend host with an external Module namespace;
 - a Vue and Vite Admin Web host;
 - local snapshots of `peanut-admin/core` and `@peanut-admin/admin` at version
-  `0.1.0-alpha.1`;
+  `0.1.0-alpha.2`;
 - complete package snapshots including every internal Module migration and schema;
 - a schema-validated fictional `example.greeting` Module;
 - a host-owned `peanut.settings` Module backed by the Settings directory in
