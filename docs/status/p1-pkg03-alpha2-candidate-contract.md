@@ -53,7 +53,9 @@ change only:
 - `starter/backend/composer.json` and `starter/backend/composer.lock`;
 - `package.json` and `pnpm-lock.yaml`;
 - `starter/frontend/package.json` and `starter/pnpm-lock.yaml`;
-- `scripts/check-workspace`;
+- `scripts/check-workspace`, only to update Alpha.2 version assertions and add
+  `./client`, `./client/nuxt`, and `./client/uniapp` to its exact expected Web
+  export list;
 - `tests/starter/assert-generated-starter.php`;
 - `README.md` and `starter/README.md` for current candidate wording;
 - `docs/status/index.md` for current candidate wording;
@@ -65,8 +67,8 @@ change only:
 Historical P1-PKG01/P1-PKG02 contracts, qualifications, lock evidence, override
 contracts, and their fixed hashes must not be rewritten. Package source,
 dependencies, exports, lock resolution other than the first-party version,
-tests, scripts other than the exact version assertions above, and publication
-records must not change.
+tests, scripts other than the exact version and export assertions above, and
+publication records must not change.
 
 The integration owner updates structured manifests first, regenerates the four
 locks with the existing package managers, regenerates the license inventory,
