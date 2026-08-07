@@ -536,3 +536,58 @@ If the aggregate gate passes, package-content inspection proceeds against the
 exact PHP and Web projections from this candidate. If it fails, the owner
 performs one read-only diagnosis and stops. Any source repair requires a new
 remediation contract and candidate rollover.
+
+## P1-PKG02-R17 Generated License Inventory Remediation
+
+R16 passed the Composer and pnpm security audits, then stopped because the
+generated third-party license inventory still recorded the three transitive
+versions replaced by R15. The existing generator and accepted-license policy
+are correct; only their committed output is stale.
+
+R17 may change only this contract and
+`docs/reference/third-party-licenses.generated.md`. The owner runs
+`./scripts/check-third-party-licenses --write` once with the R01/R02 toolchain.
+The generated diff must replace only `js-yaml 4.2.0`,
+`brace-expansion 2.1.2`, and `brace-expansion 5.0.7` with the exact R15
+versions while preserving package count, ecosystem, package names, SPDX
+licenses, ordering, and generated-file header.
+
+R17 must not change the generator, accepted-license list, dependency manifest,
+lock, override, audit threshold, package projection, Runtime behavior, or any
+manually maintained documentation. After `git diff --check`, the owner runs
+`./scripts/check-third-party-licenses` once. A passing clean source commit
+becomes the next package candidate; a separate planning commit must record its
+exact 40-character hash before one new aggregate qualification run.
+
+R17 did not produce a candidate. Regeneration added every installed Composer
+development dependency because the existing generator reads the mutable
+`vendor/` installation through `composer licenses`; the prior committed
+inventory contained no Composer row. The generated output therefore failed
+R17's preserved-package-count acceptance condition and remains uncommitted.
+
+## P1-PKG02-R18 Lock-Derived License Inventory Remediation
+
+R18 may change only:
+
+- this contract;
+- `scripts/check-third-party-licenses`;
+- `tests/supply-chain/SupplyChainQualificationContractTest.php`;
+- `docs/reference/third-party-licenses.generated.md`.
+
+The generator must derive Composer rows directly from the committed
+`composer.lock` `packages` and `packages-dev` arrays. It must reject a missing
+or malformed package name, version, or license and retain the existing SPDX
+allowlist, pnpm inventory path, deterministic ordering, deduplication, and
+generated-file format. It must not inspect `vendor/`, invoke `composer
+licenses`, omit development dependencies, or infer a license.
+
+The supply-chain contract test must prove that the generator names
+`composer.lock` and no longer invokes `composer licenses`. The regenerated
+inventory must contain the complete lock-derived Composer rows plus the R15
+pnpm versions. R18 must not change either dependency lock, manifest, override,
+accepted-license list, security audit, package projection, or Runtime behavior.
+
+After `git diff --check`, R18 runs the focused supply-chain PHPUnit group once
+and `./scripts/check-third-party-licenses` once. A passing clean source commit
+becomes the next package candidate; a separate planning commit records its
+exact 40-character hash before one new aggregate qualification run.

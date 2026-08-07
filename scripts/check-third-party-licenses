@@ -36,7 +36,16 @@ function commandJson(array $command): array
 }
 
 try {
-    $composer = commandJson(['composer', 'licenses', '--format=json']);
+    $composerLockPath = $root . '/composer.lock';
+    if (!is_file($composerLockPath)) {
+        throw new RuntimeException('composer.lock is missing.');
+    }
+    $composer = json_decode(
+        (string) file_get_contents($composerLockPath),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
     $pnpm = commandJson(['pnpm', 'licenses', 'list', '--json']);
 } catch (Throwable $exception) {
     fwrite(STDERR, 'ERROR: ' . $exception->getMessage() . "\n");
@@ -56,7 +65,17 @@ $acceptedLicenses = [
     'Python-2.0',
 ];
 $rows = [];
-foreach (($composer['dependencies'] ?? []) as $name => $package) {
+$composerPackages = array_merge(
+    is_array($composer['packages'] ?? null) ? $composer['packages'] : [],
+    is_array($composer['packages-dev'] ?? null) ? $composer['packages-dev'] : [],
+);
+foreach ($composerPackages as $package) {
+    $name = $package['name'] ?? null;
+    $version = $package['version'] ?? null;
+    if (!is_string($name) || $name === '' || !is_string($version) || $version === '') {
+        fwrite(STDERR, "ERROR: Composer lock contains a malformed package\n");
+        exit(1);
+    }
     $licenses = $package['license'] ?? [];
     if (!is_array($licenses) || $licenses === []) {
         fwrite(STDERR, "ERROR: Composer dependency {$name} has no declared license\n");
@@ -68,7 +87,7 @@ foreach (($composer['dependencies'] ?? []) as $name => $package) {
             exit(1);
         }
     }
-    $rows[] = ['Composer', (string) $name, (string) ($package['version'] ?? ''), implode(' OR ', $licenses)];
+    $rows[] = ['Composer', $name, $version, implode(' OR ', $licenses)];
 }
 foreach ($pnpm as $license => $packages) {
     if (!in_array($license, $acceptedLicenses, true)) {
