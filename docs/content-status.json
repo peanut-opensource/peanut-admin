@@ -555,6 +555,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-pkg03-alpha2-qualification-contract.md",
+      "title": "P1-PKG03 Alpha.2 Qualification Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/decisions/dependencies/p1-pkg03-lock-evidence.json",
       "title": "P1-PKG03 Alpha.2 Lock Evidence",
       "status": "canonical",
