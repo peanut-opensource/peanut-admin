@@ -4,7 +4,7 @@
 
 ```text
 state: accepted
-package_candidate_commit: f837d3bf037d7da895cbe987f503fc9e7bf13388
+package_candidate_commit: ad8fc0bc06fa40c36c43ab47c61437dd99c68b59
 composer_package: peanut-admin/core@0.1.0-alpha.2
 npm_package: @peanut-admin/admin@0.1.0-alpha.2
 qualification_status: pending
@@ -50,6 +50,21 @@ Immediately before the gate, PHP must report `8.3.24`, Composer `2.10.2`, Node
 
 A failure receives one read-only diagnosis and stops qualification. A fix
 requires an independent remediation contract and a new fixed candidate.
+
+## Q01 Documentation Manifest Stop And Q02 Qualification
+
+Q01 stopped in `check-doc-content-status` before any test or service start
+because the candidate incorrectly registered JSON lock evidence in the
+Markdown-only documentation manifest. The remediation contract at `6837570`
+and candidate commit `ad8fc0bc06fa40c36c43ab47c61437dd99c68b59`
+remove only that registration. Package source, locks, Runtime, dependencies,
+tests, and projection contents are unchanged.
+
+All six fixed ports were confirmed free again after the remediation. Q02 may
+run `./scripts/check` once with the unchanged Fixed Environment above against
+the new candidate. Q01 provides no retained passing test evidence because it
+stopped before the first test. A Q02 failure receives one read-only diagnosis
+and stops qualification.
 
 ## Package Content Inspection
 
