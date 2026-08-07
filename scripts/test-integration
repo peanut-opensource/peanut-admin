@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-for required_port in MYSQL_PORT DB_PORT; do
+for required_port in MYSQL_PORT DB_PORT CACHE_PORT; do
   value="${!required_port-}"
   if [[ -z "$value" ]]; then
     echo "ERROR: $required_port is required for integration tests" >&2
@@ -16,7 +16,7 @@ for required_port in MYSQL_PORT DB_PORT; do
   fi
 done
 
-docker compose up -d mysql
+docker compose up -d mysql cache
 
 for attempt in $(seq 1 60); do
   if php -r '
@@ -36,6 +36,32 @@ for attempt in $(seq 1 60); do
 
   if [[ "$attempt" -eq 60 ]]; then
     echo 'ERROR: MySQL 8 did not become ready for integration tests' >&2
+    exit 1
+  fi
+  sleep 2
+done
+
+for attempt in $(seq 1 60); do
+  if php -r '
+    $socket = @stream_socket_client(
+        "tcp://127.0.0.1:" . getenv("CACHE_PORT"),
+        $errorCode,
+        $errorMessage,
+        0.5,
+    );
+    if (!is_resource($socket)) {
+        exit(1);
+    }
+    fwrite($socket, "*1\r\n\x244\r\nPING\r\n");
+    $reply = fgets($socket);
+    fclose($socket);
+    exit($reply === "+PONG\r\n" ? 0 : 1);
+  ' 2>/dev/null; then
+    break
+  fi
+
+  if [[ "$attempt" -eq 60 ]]; then
+    echo 'ERROR: Valkey did not become ready for integration tests' >&2
     exit 1
   fi
   sleep 2

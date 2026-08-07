@@ -537,6 +537,144 @@ exact PHP and Web projections from this candidate. If it fails, the owner
 performs one read-only diagnosis and stops. Any source repair requires a new
 remediation contract and candidate rollover.
 
+## P1-PKG02-R20 Old-Lock Upgrade Test Process Isolation
+
+R19 passed supply-chain qualification, PHP unit tests, and Web tests, then the
+integration group terminated while the old-lock upgrade compatibility test
+scanned a temporary clone. The shared PHPUnit process had already loaded the
+current Host's global `CreateExampleTargets` migration class; loading the same
+class name from the clone caused a duplicate-class fatal before PHPUnit could
+finish reporting the group.
+
+R20 may change only this contract and
+`backend/tests/Upgrade/SettingsUpgradeTest.php`. The old-lock compatibility
+test method must run in a separate PHPUnit process with parent global-state
+preservation disabled. Its existing database setup, immutable old commit/tree
+assertions, upgrade, compatibility, backup, restore, and cleanup behavior must
+remain unchanged.
+
+R20 must not rename or namespace a migration, alter migration discovery or
+execution, suppress PHP errors, split the aggregate gate, change production
+upgrade code, or weaken any assertion. After `git diff --check`, the owner runs
+only that focused integration test once with the complete R01/R02 environment.
+A passing clean source commit becomes the next package candidate; a separate
+planning commit records its exact hash before one new aggregate qualification
+run.
+
+R20 removed the duplicate-class fatal. The focused test then reached its first
+upgrade-result assertion and reported 13 applied module migrations instead of
+the stale expected 8. Static inventory reconciliation proved that the fixed old
+lock owns exactly 3 module migrations and the current candidate owns exactly
+16, so both the current-install expectation 11 and upgrade-delta expectation 8
+predate five already accepted Module migrations.
+
+## P1-PKG02-R21 Current Module Migration Count Remediation
+
+R21 retains the R20 process-isolation change and may additionally change only:
+
+- `backend/tests/Install/InstallWorkflowIntegrationTest.php`;
+- `backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php`;
+- `backend/tests/Upgrade/SettingsUpgradeTest.php`.
+
+Every exact current module-migration count in those tests must be 16. Every
+exact upgrade delta from the immutable old-lock count 3 must be 13. The old
+count, zero-repeat counts, concrete Settings migration keys, installation
+state, schema signatures, backup, restore, rollback, compatibility, and
+database-cleanup assertions must remain unchanged.
+
+R21 must not calculate the expected value from production output, accept a
+range, change a migration or manifest, alter migration discovery or execution,
+or modify production code. After `git diff --check`, the owner runs the three
+focused install/upgrade integration files once with the complete R01/R02
+environment. A passing clean source commit becomes the next package candidate;
+a separate planning commit records its exact hash before one new aggregate
+qualification run.
+
+R21 reached the corrected counts, but the focused group terminated when
+`UpgradeWorkflowIntegrationTest` loaded the migration classes from its
+class-owned temporary clone after another focused test had loaded the current
+tree. This class creates one clone in `setUpBeforeClass()` and intentionally
+reuses it across all of its methods, so method-level isolation is not the
+correct boundary.
+
+## P1-PKG02-R22 Upgrade Integration Class Process Isolation
+
+R22 retains R20/R21 and may additionally change only
+`backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php`. The complete class
+must run in one separate PHPUnit process with parent global-state preservation
+disabled. Its single class-level clone, per-test database reset, old-release
+fixture, ordering, idempotency, checksum, locking, definition, backup, and
+cleanup assertions must remain unchanged.
+
+R22 must not isolate individual methods, create multiple clones, rename a
+migration, change production code, suppress errors, or weaken an assertion.
+After `git diff --check`, the owner reruns the same three focused
+install/upgrade integration files once with the complete R01/R02 environment.
+A passing clean source commit becomes the next package candidate; a separate
+planning commit records its exact hash before one new aggregate qualification
+run.
+
+R22 removed the clone-class fatal and exposed three independent stale fixture
+assumptions: the accepted Module set now contains 10 rather than 6 Modules; the
+old-release installer used the current Composer autoloader without prepending
+the immutable old source paths; and the old-table preservation assertion
+compared newly created Module tables as though they existed before upgrade.
+
+## P1-PKG02-R23 Expanded Module Upgrade Fixture Remediation
+
+R23 retains R20 through R22 and may change only this contract plus the same
+three focused test files authorized by R21. Their exact expected Module order
+and installation counts must include the 10 current Modules. The immutable
+old-release install subprocess must prepend the old App, Kernel, and Data
+Permission PSR-4 roots and reload the corresponding Composer install paths
+before it instantiates the old `UpgradeWorkflow`; framework dependencies may
+continue to come from the current vendor directory.
+
+The Settings old-lock test must compare post-upgrade structure signatures only
+for tables that existed before upgrade. It must continue to prove every such
+table is unchanged, every expected Settings table and migration was added, and
+the restored database contains exactly the old table set. Newly added Module
+tables must not be treated as mutations of old tables.
+
+R23 must not load current application or core classes as the old release,
+exclude an old table from comparison, alter an accepted Module, migration,
+manifest, package, production autoloader, or upgrade workflow, or weaken backup
+and rollback assertions. After `git diff --check`, the owner reruns the same
+three focused install/upgrade integration files once with the complete R01/R02
+environment. A passing source commit becomes the next package candidate and a
+separate planning commit records its exact hash.
+
+R23 resolved Module order and old-table preservation. The focused group then
+showed that the remaining authorization/menu counts still describe six
+Modules, the immutable old `UpgradeWorkflow` exposes `run()` rather than the
+current `installEmptyDatabase()`, and the old health endpoint correctly reports
+`degraded` when its non-critical cache probe is absent. An isolated current
+install fixed the authoritative catalog counts at 82 permissions, 10 protected
+resources, 35 operations, 27 menus, 19 Tenant menus, and 8 platform menus.
+
+## P1-PKG02-R24 Catalog Count And Integration Cache Remediation
+
+R24 retains R20 through R23 and may additionally change only
+`scripts/test-integration`. The focused current-install assertions must use the
+exact catalog counts above while retaining the existing exact target-type,
+operation-target, condition, and condition-operation counts. The old-release
+subprocess must call its own `UpgradeWorkflow::run()` after the R23 old-source
+autoload is installed.
+
+The integration entry point must require `CACHE_PORT`, start both `mysql` and
+`cache`, and wait for an exact Valkey `PONG` before PHPUnit starts. It must keep
+the existing MySQL readiness and test selection unchanged. Old-lock health
+must remain exactly `healthy`; accepting `degraded`, skipping cache, relying on
+an already-running container, or changing production health semantics is
+forbidden.
+
+R24 must not alter a production catalog, Module, migration, route, health
+service, or upgrade workflow, and must not weaken an exact assertion. After
+`git diff --check`, the owner starts the two declared services through the
+updated entry-point contract and reruns the same three focused test files once.
+A passing source commit becomes the next package candidate and a separate
+planning commit records its exact hash.
+
 ## P1-PKG02-R17 Generated License Inventory Remediation
 
 R16 passed the Composer and pnpm security audits, then stopped because the

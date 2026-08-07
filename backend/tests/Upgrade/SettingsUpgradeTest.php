@@ -12,6 +12,8 @@ use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
 use PeanutAdmin\App\upgrade\UpgradePreflight;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
@@ -152,7 +154,7 @@ final class SettingsUpgradeTest extends TestCase
 
         $first = $workflow->installEmptyDatabase();
         self::assertContains('peanut.settings', $first['modules']);
-        self::assertSame(11, $first['applied_module_migrations']);
+        self::assertSame(16, $first['applied_module_migrations']);
         self::assertSame(4, $this->settingsTableCount($this->database));
         self::assertSame(self::SETTINGS_MIGRATIONS, $this->columnValues(
             $this->database,
@@ -194,6 +196,8 @@ WHERE status IN ('applying', 'rolled_back', 'failed')
 SQL));
     }
 
+    #[PreserveGlobalState(false)]
+    #[RunInSeparateProcess]
     public function testOldLockRunsAgainstUpgradedDatabaseAndRollbackRestoresBackup(): void
     {
         $root = dirname(__DIR__, 3);
@@ -231,9 +235,13 @@ SQL));
             self::assertFileExists($backup . '/dump.sql');
 
             $preUpgradeTableSignatures = $this->tableSignatures($this->database);
+            $preUpgradeTables = array_map(
+                static fn(string $value): string => strstr($value, ':', true) ?: $value,
+                $preUpgradeTableSignatures,
+            );
             $upgrade = (new UpgradeWorkflow($targetRoot, $this->database))
                 ->run($this->upgradePlan($targetRoot, $oldRoot));
-            self::assertSame(8, $upgrade['applied_module_migrations']);
+            self::assertSame(13, $upgrade['applied_module_migrations']);
             self::assertSame(4, $this->settingsTableCount($this->database));
             self::assertSame(self::SETTINGS_MIGRATIONS, $this->columnValues(
                 $this->database,
@@ -248,7 +256,8 @@ SELECT COUNT(*) FROM pa_module_migration WHERE status = 'rolled_back'
 SQL));
             self::assertSame($preUpgradeTableSignatures, $this->tableSignatures(
                 $this->database,
-                ['pa_setting_definition', 'pa_setting_deployment_value', 'pa_setting_tenant_value', 'pa_setting_target_value'],
+                [],
+                $preUpgradeTables,
             ));
 
             $compatibility = $this->json($this->runCommand(
@@ -526,9 +535,14 @@ SQL);
 
     /**
      * @param list<string> $excludedTables
+     * @param list<string>|null $includedTables
      * @return list<string>
      */
-    private function tableSignatures(PDO $database, array $excludedTables = []): array
+    private function tableSignatures(
+        PDO $database,
+        array $excludedTables = [],
+        ?array $includedTables = null,
+    ): array
     {
         $statement = $database->query(<<<'SQL'
 SELECT table_name, engine, table_collation
@@ -540,7 +554,8 @@ SQL);
         $signatures = [];
         while (($row = $statement->fetch(PDO::FETCH_NUM)) !== false) {
             $table = (string) $row[0];
-            if (in_array($table, $excludedTables, true)) {
+            if (in_array($table, $excludedTables, true)
+                || ($includedTables !== null && !in_array($table, $includedTables, true))) {
                 continue;
             }
             $columns = $database->query('SHOW CREATE TABLE `' . $table . '`');
