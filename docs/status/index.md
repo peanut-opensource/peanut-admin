@@ -220,6 +220,10 @@ the existing `@peanut-admin/admin` package. It is an accepted candidate task for
 shared request/session behavior and does not add a third public package or
 authorize Peanut Admin application migration.
 
+The current candidate implements the core state machine and its Nuxt and UniApp
+transport adapters, with focused tests and package subpath registration. It
+remains unqualified and is not approved for publication or downstream use.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

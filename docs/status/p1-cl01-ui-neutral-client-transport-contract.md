@@ -3,7 +3,7 @@
 ## Status
 
 ```text
-state: accepted
+state: implemented
 prerequisite_commit: 17181ab741ff635fb171b430257be4c2e4922ed7
 package: @peanut-admin/admin
 public_subpaths: ./client, ./client/nuxt, ./client/uniapp
