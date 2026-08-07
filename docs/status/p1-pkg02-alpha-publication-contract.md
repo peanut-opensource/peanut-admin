@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: cd6207f28532dec305214b38c662a3e891f7692a
+package_candidate_commit: 5a34f54829c3dd9e04365f3c65c5b5a6cc23daee
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,7 +25,7 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`cd6207f28532dec305214b38c662a3e891f7692a`. The planning commit that fixes this
+`5a34f54829c3dd9e04365f3c65c5b5a6cc23daee`. The planning commit that fixes this
 contract may be checked out above that candidate, but no package or Runtime
 source may change before qualification.
 
@@ -591,3 +591,20 @@ After `git diff --check`, R18 runs the focused supply-chain PHPUnit group once
 and `./scripts/check-third-party-licenses` once. A passing clean source commit
 becomes the next package candidate; a separate planning commit records its
 exact 40-character hash before one new aggregate qualification run.
+
+## P1-PKG02-R19 Lock-Derived Candidate Qualification
+
+R18 produced the clean replacement source commit
+`5a34f54829c3dd9e04365f3c65c5b5a6cc23daee`. Relative to R15, its package
+projections remain unchanged; it only makes release license evidence complete
+and deterministic and records the failed R17 diagnosis.
+
+R19 may change only this contract and `docs/status/index.md` to record the new
+candidate. With the complete R01/R02 environment, the qualification owner runs
+`./scripts/check` exactly once against the planning commit above the unchanged
+R18 source candidate. Previous partial results remain diagnostics only.
+
+If the aggregate gate passes, package-content inspection proceeds against the
+exact PHP and Web projections from this candidate. If it fails, the owner
+performs one read-only diagnosis and stops. Any source repair requires a new
+remediation contract and candidate rollover.

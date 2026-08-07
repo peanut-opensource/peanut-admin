@@ -153,7 +153,7 @@ directories remain ownership boundaries, not packages. Publication, release,
 stable compatibility, and downstream lock movement remain separate decisions.
 
 The [P1-PKG02 Alpha Publication Contract](./p1-pkg02-alpha-publication-contract.md)
-fixes `cd6207f28532dec305214b38c662a3e891f7692a` as the package source
+fixes `5a34f54829c3dd9e04365f3c65c5b5a6cc23daee` as the package source
 candidate and separates aggregate qualification from external publication.
 No registry version, Composer split repository, tag, or Release is authorized
 until the fixed-tree gate, package-content evidence, registry ownership,
