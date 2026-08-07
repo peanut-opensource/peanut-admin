@@ -223,15 +223,18 @@ shared request/session behavior and does not add a third public package or
 authorize Peanut Admin application migration.
 
 The current candidate implements the core state machine and its Nuxt and UniApp
-transport adapters, with focused tests and package subpath registration. It
-remains unqualified and is not approved for publication or downstream use.
+transport adapters, with focused tests and package subpath registration. The
+[Alpha.2 publication qualification](../reviews/p1-pkg03-alpha2-publication-qualification.md)
+records the passing retained aggregate groups, Q04 performance evidence,
+repository tail guards, and exact Composer/npm projection digests. Alpha.2 is
+qualified but remains unpublished and is not approved for downstream use.
 
 The [P1-PKG03 Alpha.2 Candidate Contract](./p1-pkg03-alpha2-candidate-contract.md)
 retires the unpublished Alpha.1 projection as the next publication target and
 defines one `0.1.0-alpha.2` fixed candidate containing the qualified override
 Host chains and the three client subpaths. Versioning, aggregate qualification,
-package-content inspection, registry ownership, and publication remain separate
-gates; external publication is still unauthorized.
+registry ownership, and publication remain separate gates; external publication
+is still unauthorized.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the

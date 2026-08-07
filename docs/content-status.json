@@ -471,6 +471,13 @@
       "replacement": null
     },
     {
+      "path": "docs/reviews/p1-pkg03-alpha2-publication-qualification.md",
+      "title": "P1-PKG03 Alpha.2 Publication Qualification",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-pkg02-r50-publication-approval-record-contract.md",
       "title": "P1-PKG02-R50 Publication Approval Record Contract",
       "status": "canonical",
