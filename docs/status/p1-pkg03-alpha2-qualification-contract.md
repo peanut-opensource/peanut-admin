@@ -147,6 +147,26 @@ the unchanged repository tail guards and Package Content Inspection below. A
 failure receives one read-only diagnosis and stops; a source repair requires
 another independent contract and fixed candidate.
 
+## Q05 Pinned pnpm Projection Retry
+
+Q04 passed all seven performance scenarios and the focused performance
+contract. The repository tail guards also passed. Package inspection then
+validated the Composer projection and its ten Runtime PSR-4 roots; Composer
+reported only the retained recommendation about the contractually fixed
+manifest `version` field. The npm projection stopped before packing because a
+temporary directory outside the monorepo resolved the global pnpm 9.15.6
+instead of the fixed pnpm 11.13.0 toolchain, and that older executable rejected
+the declared dry-run option.
+
+Q05 retains the Composer projection result and authorizes only the unfinished
+npm projection inspection. Immediately before packing, `corepack
+pnpm@11.13.0 --version` must report `11.13.0`; both the dry-run and tarball
+commands must use that exact executable. Q05 must not rerun the Composer
+projection, a qualification group, or a repository tail guard, and must not
+change package source, manifests, locks, exports, tool versions, or registry
+state. A failure receives one read-only diagnosis and stops; a source repair
+requires another independent contract and fixed candidate.
+
 ## Package Content Inspection
 
 After the aggregate gate passes, one read-only package inspection must:
