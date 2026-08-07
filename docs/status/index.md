@@ -224,6 +224,13 @@ The current candidate implements the core state machine and its Nuxt and UniApp
 transport adapters, with focused tests and package subpath registration. It
 remains unqualified and is not approved for publication or downstream use.
 
+The [P1-PKG03 Alpha.2 Candidate Contract](./p1-pkg03-alpha2-candidate-contract.md)
+retires the unpublished Alpha.1 projection as the next publication target and
+defines one `0.1.0-alpha.2` fixed candidate containing the qualified override
+Host chains and the three client subpaths. Versioning, aggregate qualification,
+package-content inspection, registry ownership, and publication remain separate
+gates; external publication is still unauthorized.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

@@ -546,6 +546,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg03-alpha2-candidate-contract.md",
+      "title": "P1-PKG03 Alpha.2 Candidate Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
