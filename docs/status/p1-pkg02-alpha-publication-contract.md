@@ -117,3 +117,35 @@ Work stops before publication when any of these remains unknown or false:
 - an immutable version can be created without replacing existing history;
 - provenance and registry consumer probes can be recorded without exposing a
   credential.
+
+## P1-PKG02-R01 Qualification Environment Retry
+
+The first aggregate invocation stopped in the `scripts/check` preflight before
+any check or test ran because `MYSQL_PORT` and `DB_PORT` were absent. This is an
+environment-contract failure, not package or Runtime evidence. R01 authorizes
+one new aggregate invocation against the unchanged package candidate with the
+following complete isolated environment:
+
+```bash
+export COMPOSE_PROJECT_NAME=peanut-admin-pkg02-q01
+export MYSQL_PORT=33412
+export CACHE_PORT=36412
+export BACKEND_PORT=38112
+export FRONTEND_PORT=35212
+export PEANUT_BROWSER_BACKEND_PORT=38212
+export PEANUT_BROWSER_FRONTEND_PORT=35312
+export MYSQL_DATABASE=peanut_admin_pkg02_qualification
+export DB_HOST=127.0.0.1
+export DB_PORT=33412
+```
+
+All six host ports were confirmed free before this contract. The repository
+Compose file remains the sole service definition and starts MySQL 8.4.10 and
+Valkey when their owning checks require them. `MYSQL_PORT` and `DB_PORT` must
+remain equal; no existing application, shared database, fallback port, remote
+database, or compatibility environment file may be used.
+
+R01 may run only `./scripts/check` once with the exact environment above. It
+may not change package source, tests, assertions, configuration, database
+contracts, authorization, Tenant isolation, or qualification thresholds. A
+failure receives one read-only diagnosis and stops PKG02 qualification.
