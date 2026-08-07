@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: deb85a7e3e65b4d323a6eff4c694724a1fd23338
+package_candidate_commit: 9c91228e02c34e550daa4f1bd869d01f5269333b
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,7 +25,7 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`deb85a7e3e65b4d323a6eff4c694724a1fd23338`. The planning commit that adds this
+`9c91228e02c34e550daa4f1bd869d01f5269333b`. The planning commit that fixes this
 contract may be checked out above that candidate, but no package or Runtime
 source may change before qualification.
 
@@ -451,3 +451,23 @@ commit supersedes `deb85a7e3e65b4d323a6eff4c694724a1fd23338` as package source.
 A separate planning commit must record the exact resulting 40-character commit
 before any qualification resumes. No prior fixed-candidate qualification result
 is evidence for the new projection.
+
+## P1-PKG02-R13 Replacement Candidate Qualification
+
+R12 produced the clean replacement source commit
+`9c91228e02c34e550daa4f1bd869d01f5269333b`. Relative to the former package
+projection, its Composer content changes only the two public README references;
+the same commit also contains the qualified Starter/Host and architecture-gate
+repairs recorded by R03 through R11.
+
+R13 may change only this contract and `docs/status/index.md` to record the
+replacement candidate. With the complete R01/R02 environment, the qualification
+owner runs `./scripts/check` exactly once against the planning commit above that
+unchanged source candidate. Previous partial or complete results are historical
+diagnostics and are not carried forward as fixed-candidate evidence.
+
+If the aggregate gate passes, package-content inspection proceeds against the
+exact PHP and Web projections from the replacement candidate. If it fails, the
+owner performs one read-only diagnosis and stops. Any source repair requires a
+new remediation contract and, when the package projection changes, another
+explicit candidate rollover.
