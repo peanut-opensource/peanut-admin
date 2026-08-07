@@ -4,7 +4,7 @@
 
 ```text
 state: approved-planning-contract
-package_candidate_commit: 344d18c150798ccf0800e682855f91cfbdd3fc53
+package_candidate_commit: f9a8fe38c18db2637fb2ac8f4cfad02332209403
 composer_package: peanut-admin/core@0.1.0-alpha.1
 npm_package: @peanut-admin/admin@0.1.0-alpha.1
 qualification_owner: P1-PKG02-QUALIFICATION
@@ -25,7 +25,7 @@ lock.
 ## Fixed Candidate Qualification
 
 The package source candidate is the clean commit
-`344d18c150798ccf0800e682855f91cfbdd3fc53`. The planning commit that fixes this
+`f9a8fe38c18db2637fb2ac8f4cfad02332209403`. The planning commit that fixes this
 contract may be checked out above that candidate, but no package or Runtime
 source may change before qualification.
 
@@ -617,6 +617,25 @@ After `git diff --check`, the owner reruns the same failed five-file focused
 group once with the complete R01/R02 environment. A passing source commit
 becomes the next package candidate and a separate planning commit records its
 exact hash before one new aggregate qualification run.
+
+## P1-PKG02-R29 Registered-Service Candidate Qualification
+
+R26 through R28 produced the clean replacement source commit
+`f9a8fe38c18db2637fb2ac8f4cfad02332209403`. The four HTTP integration files
+and Kernel migration test passed 11 tests and 271 assertions. The replacement
+registers the already defined application PDO service, keeps production
+authentication on the ThinkPHP container path, and changes no public package
+manifest, version, namespace, export, schema, migration, route, or operation.
+
+R29 may change only this contract and `docs/status/index.md` to record the new
+candidate. With the complete R01/R02 environment, the qualification owner runs
+`./scripts/check` exactly once against the planning commit above the unchanged
+source candidate. Previous partial results remain diagnostics only.
+
+If the aggregate gate passes, package-content inspection proceeds against the
+exact PHP and Web projections from this candidate. If it fails, the owner
+performs one read-only diagnosis and stops. Any source repair requires a new
+remediation contract and candidate rollover.
 
 ## P1-PKG02-R20 Old-Lock Upgrade Test Process Isolation
 
