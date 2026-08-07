@@ -66,6 +66,32 @@ the new candidate. Q01 provides no retained passing test evidence because it
 stopped before the first test. A Q02 failure receives one read-only diagnosis
 and stops qualification.
 
+## Q02 Secret Fixture Stop And Remediation
+
+Q02 passed documentation, reproducible Starter, dependency decisions,
+architecture, OpenAPI, Runtime coverage, Composer and pnpm audits, and license
+inventory. It then stopped in the gitleaks history scan on one redacted
+`generic-api-key` finding from test-fixture commit
+`a4e1ca9d20296b2ec1bd42dfea82eeefe225e27e` at
+`backend/tests/Smoke/ServiceOverrideHostWiringTest.php:23`. The value is a
+literal test envelope key, not a production credential, but current source and
+history must both be handled explicitly.
+
+One independent remediation commit may change only:
+
+- `backend/tests/Smoke/ServiceOverrideHostWiringTest.php`, replacing the
+  literal value with a runtime-constructed 32-byte non-secret placeholder;
+- new `.gitleaksignore`, containing only this exact historical fingerprint:
+  `a4e1ca9d20296b2ec1bd42dfea82eeefe225e27e:backend/tests/Smoke/ServiceOverrideHostWiringTest.php:generic-api-key:23`.
+
+No wildcard, rule suppression, path exclusion, secret-scanner configuration,
+production credential, assertion, Runtime behavior, dependency, lock, or
+history rewrite is allowed. After exact write-set review and
+`git diff --check`, `./scripts/check-secrets` runs once. A failure blocks the
+remediation. A passing remediation becomes a new fixed candidate for a
+separate no-repeat qualification continuation beginning after the retained
+license-inventory result.
+
 ## Package Content Inspection
 
 After the aggregate gate passes, one read-only package inspection must:
