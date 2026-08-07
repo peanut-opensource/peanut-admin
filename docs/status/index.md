@@ -180,6 +180,11 @@ The candidate implementation provides one typed, fail-closed build-time
 registry with exact contract-version matching and immutable resolution source
 metadata; it remains unqualified and is not approved for downstream use.
 
+The [P1-OVR02 PHP Service Override Registry Contract](./p1-ovr02-php-service-override-contract.md)
+defines the matching framework-independent interface-to-implementation
+selection boundary for `peanut-admin/core`. Host container wiring is explicitly
+deferred until a real application service slot is migrated.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

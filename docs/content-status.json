@@ -490,6 +490,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-ovr02-php-service-override-contract.md",
+      "title": "P1-OVR02 PHP Service Override Registry Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
