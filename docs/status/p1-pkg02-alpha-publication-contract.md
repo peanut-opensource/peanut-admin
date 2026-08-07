@@ -179,3 +179,27 @@ R02 may then run only `./scripts/check` once with the complete R01 and R02
 environment. It may not edit dependencies, locks, package source, tests,
 assertions, configuration, qualification thresholds, or committed files. A
 failure receives one read-only diagnosis and stops PKG02 qualification.
+
+## P1-PKG02-R03 Documentation Runtime Count Remediation
+
+R02 fixed the PHP and Composer toolchain, passed documentation status, Module
+manifest verification, and the first two documentation PHPUnit groups, then
+stopped in `scripts/verify-doc-examples`. Static diagnosis found one stale
+Stage B assertion that still expects 75 P0 plus 4 P1 operations and 79 generated
+routes. The authoritative Runtime ledger and generated route table both contain
+75 P0 plus 64 P1 operations, for 139 routes.
+
+Only `scripts/verify-doc-examples` may change. Its executable documentation
+assertion and matching error message must replace the stale P1 and total-route
+counts with `64` and `139`. It must retain the exact 75-operation P0 assertion,
+per-P0 generated-route lookup, concrete-handler rejection, JSON parsing,
+installation example, database isolation, Starter verification, and every
+other check unchanged. Changing the Runtime ledger, OpenAPI, generated routes,
+handlers, test selection, threshold logic, or accepting a range is forbidden.
+
+After static review and `git diff --check`, R03 runs `./scripts/check-docs`
+once with the complete R01/R02 environment. If it passes, qualification
+continues once from `./scripts/check-dependency-decisions` through the remaining
+commands in `scripts/check`, in the same order and environment, without
+rerunning `check-doc-content-status` or `check-docs`. A failure receives one
+read-only diagnosis and stops PKG02 qualification.
