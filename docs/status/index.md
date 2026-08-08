@@ -264,6 +264,9 @@ authorizes a metadata-only npm correction after a real TypeScript `node`
 resolver consumer found that Alpha.2 lacked `typesVersions` mappings for its
 fourteen public subpaths. The task leaves Runtime behavior and Composer Alpha.2
 unchanged and requires a clean classic-resolution consumer before publication.
+Its first focused consumer also exposed one ES2020 library mismatch in request
+ID normalization; the corrected contract authorizes the single equivalent
+regular-expression replacement before the consumer gate is restarted.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the

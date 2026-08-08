@@ -24,7 +24,14 @@ Publish one immutable npm correction that makes all fourteen existing public
 subpaths resolvable by classic TypeScript consumers. The correction adds
 standard package metadata; it does not add an alias package, application path
 mapping, duplicate export, compatibility runtime, route, UI, API, schema,
-authorization rule, state transition, dependency, or source-code change.
+authorization rule, state transition, or dependency.
+
+The first focused consumer reached the package source after the metadata fix
+and then stopped because `admin-core` used `String.replaceAll`, while the
+consumer's declared compilation library is ES2020. The implementation therefore
+also performs one behavior-preserving normalization change from
+`replaceAll('-', '')` to `replace(/-/g, '')` in the request-id generator. This
+does not change generated values or the public API.
 
 Composer `peanut-admin/core@0.1.0-alpha.2` is unaffected and remains the current
 PHP package. The two ecosystems may carry different alpha patch numbers until
@@ -39,9 +46,11 @@ After this contract is committed independently, implementation may change only:
 - `package.json` and `starter/frontend/package.json`, to require the matching
   workspace version;
 - `pnpm-lock.yaml` and `starter/pnpm-lock.yaml`, only for those version changes;
+- `packages/web/admin-core/src/api/client.ts`, only to replace the single
+  request-id `replaceAll('-', '')` call with `replace(/-/g, '')`;
 - `docs/status/index.md`, only to record the candidate result.
 
-No TypeScript, Vue, test, Host, PHP, Composer, OpenAPI, generated, schema,
+No other TypeScript, Vue, test, Host, PHP, Composer, OpenAPI, generated, schema,
 migration, or application file may change. If this whitelist is insufficient,
 implementation stops and this contract is amended separately.
 
