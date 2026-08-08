@@ -595,6 +595,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg06-release-merge-gate-remediation-contract.md",
+      "title": "P1-PKG06 Release Merge Gate Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

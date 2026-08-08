@@ -278,9 +278,15 @@ ES2020, classic-resolution registry consumer passed the same no-emit gate. The
 matching
 [`v0.1.0-alpha.3` GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.3)
 is published. Active repository rulesets require pull requests and reject
-deletion or non-fast-forward updates for `main`; `v*` release tags reject
-updates, deletion, and non-fast-forward changes. Alpha.3 publication is
-operationally complete.
+deletion or non-fast-forward updates for the current `dev` default branch and
+any future `main`; `v*` release tags reject updates, deletion, and
+non-fast-forward changes. Alpha.3 publication is operationally complete.
+
+The [P1-PKG06 Release Merge Gate Remediation Contract](./p1-pkg06-release-merge-gate-remediation-contract.md)
+owns the bounded CI repair discovered by the Alpha.3 merge PR. It restores
+required database-port inputs, the fixed PHP performance baseline, dependency
+review availability, and the patched transitive `nanoid` resolution without
+changing Runtime behavior or weakening a gate.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
