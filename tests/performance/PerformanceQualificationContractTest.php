@@ -49,6 +49,20 @@ final class PerformanceQualificationContractTest extends TestCase
         );
     }
 
+    public function testCiUsesTheFixedPhpPerformanceImage(): void
+    {
+        $dockerfile = (string) file_get_contents($this->root . '/docker/php/Dockerfile');
+        self::assertStringStartsWith("FROM php:8.3.24-cli-bookworm\n", $dockerfile);
+
+        $script = (string) file_get_contents($this->root . '/scripts/test-performance');
+        self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE', $script);
+        self::assertStringContainsString('docker run --rm --network host', $script);
+
+        $workflow = (string) file_get_contents($this->root . '/.github/workflows/performance.yml');
+        self::assertStringContainsString('docker build --tag peanut-admin-performance-php:8.3.24', $workflow);
+        self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE: peanut-admin-performance-php:8.3.24', $workflow);
+    }
+
     public function testTypedTargetBenchmarkUsesTheRealResolverAndPaginatedQuery(): void
     {
         $runner = (string) file_get_contents($this->root . '/tests/performance/run.php');

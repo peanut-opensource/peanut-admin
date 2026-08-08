@@ -174,7 +174,7 @@ $actualExports = array_keys($web["exports"] ?? []);
 sort($expectedExports);
 sort($actualExports);
 if (($web["name"] ?? null) !== "@peanut-admin/admin"
-    || ($web["version"] ?? null) !== "0.1.0-alpha.2"
+    || ($web["version"] ?? null) !== "0.1.0-alpha.3"
     || ($web["license"] ?? null) !== "Apache-2.0"
     || $actualExports !== $expectedExports
     || !isset($web["exports"]["./testing"]["development"])) {
@@ -198,7 +198,7 @@ $assertWebConsumer = static function (string $path, string $version) use ($decod
     }
 };
 $assertWebConsumer("frontend/package.json", "workspace:^");
-$assertWebConsumer("starter/frontend/package.json", "workspace:0.1.0-alpha.2");
+$assertWebConsumer("starter/frontend/package.json", "workspace:0.1.0-alpha.3");
 '
 
 if ! rg -q '^  - packages/web$' pnpm-workspace.yaml \

@@ -4,9 +4,28 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+php_command=(php)
+phpunit_cache=''
+performance_php_image="${PEANUT_PERFORMANCE_PHP_IMAGE-}"
+if [[ -n "$performance_php_image" ]]; then
+  if [[ ! "$performance_php_image" =~ ^[a-z0-9][a-z0-9._/-]*(:[A-Za-z0-9._-]+)?$ ]]; then
+    echo 'ERROR: PEANUT_PERFORMANCE_PHP_IMAGE must be a valid local image reference' >&2
+    exit 1
+  fi
+  phpunit_cache="$(mktemp -d "${TMPDIR:-/tmp}/peanut-admin-phpunit-cache.XXXXXX")"
+  php_command=(
+    docker run --rm --network host
+    --volume "$ROOT:/workspace:ro"
+    --volume "$phpunit_cache:/workspace/.cache/phpunit"
+    --workdir /workspace
+    "$performance_php_image"
+    php
+  )
+fi
+
 docker compose up -d mysql
 for attempt in $(seq 1 60); do
-  if php -r '
+  if "${php_command[@]}" -r '
     try {
         new PDO(
             "mysql:host=127.0.0.1;port=" . (getenv("MYSQL_PORT") ?: "3306"),
@@ -28,9 +47,15 @@ for attempt in $(seq 1 60); do
 done
 
 report="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-performance.XXXXXX")"
-trap 'rm -f "$report"' EXIT
-php tests/performance/run.php > "$report"
-php -r '
+cleanup() {
+  rm -f "$report"
+  if [[ -n "$phpunit_cache" ]]; then
+    rm -rf "$phpunit_cache"
+  fi
+}
+trap cleanup EXIT
+"${php_command[@]}" tests/performance/run.php > "$report"
+"${php_command[@]}" -r '
 $baseline = json_decode((string) file_get_contents("tests/performance/p0-baseline.json"), true, 512, JSON_THROW_ON_ERROR);
 $report = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
 $environment = $baseline["environment"] ?? null;
@@ -74,6 +99,6 @@ foreach (($baseline["scenarios"] ?? []) as $name => $expected) {
     }
 }
 ' "$report"
-php vendor/bin/phpunit tests/performance
+"${php_command[@]}" vendor/bin/phpunit tests/performance
 
 echo 'Performance qualification: OK'
