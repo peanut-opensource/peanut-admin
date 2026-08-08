@@ -267,6 +267,9 @@ unchanged and requires a clean classic-resolution consumer before publication.
 Its first focused consumer also exposed one ES2020 library mismatch in request
 ID normalization; the corrected contract authorizes the single equivalent
 regular-expression replacement before the consumer gate is restarted.
+The corrected candidate now declares Alpha.3, supplies all fourteen classic
+resolver mappings, and applies that equivalent request-id normalization. Its
+focused qualification and registry publication remain pending.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
