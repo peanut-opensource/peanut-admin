@@ -3,7 +3,7 @@
 ## Status
 
 ```text
-state: accepted
+state: npm published and registry consumer verified
 prerequisite_commit: 35bc40b0ff45b57b0ce7b50c9313c47c69f8102e
 package: @peanut-admin/admin@0.1.0-alpha.3
 dependency_change: none
@@ -81,6 +81,23 @@ After all focused gates pass, publication may create only:
 Alpha.2 must not be overwritten, retagged, unpublished, or deleted. Rollback is
 by deprecating Alpha.3 and publishing a newer immutable version. npm `latest`
 is not changed by this task.
+
+## Publication Result
+
+The focused gates passed on source commit `4b197fc`, and immutable tag
+`v0.1.0-alpha.3` was pushed before publication. npm publication completed on
+2026-08-08:
+
+- package: [`@peanut-admin/admin@0.1.0-alpha.3`](https://www.npmjs.com/package/@peanut-admin/admin/v/0.1.0-alpha.3);
+- registry tarball SHA-1: `c80aeccb32aa542f55f01e9d58a61dba8a4b67f5`, matching the qualified candidate;
+- dist-tags: `alpha` points to Alpha.3 and `latest` remains on Alpha.2;
+- registry consumer: a clean TypeScript 4.9.5, ES2020,
+  `moduleResolution: node` consumer imported `@peanut-admin/admin/core` and
+  passed the same no-emit gate with dependency declaration checking skipped.
+
+The matching GitHub prerelease is still pending because the local GitHub CLI
+credential is invalid. This does not change the published npm artifact, but the
+release task remains operationally incomplete until the prerelease exists.
 
 ## Stop Line
 

@@ -267,9 +267,16 @@ unchanged and requires a clean classic-resolution consumer before publication.
 Its first focused consumer also exposed one ES2020 library mismatch in request
 ID normalization; the corrected contract authorizes the single equivalent
 regular-expression replacement before the consumer gate is restarted.
-The corrected candidate now declares Alpha.3, supplies all fourteen classic
+The corrected candidate declares Alpha.3, supplies all fourteen classic
 resolver mappings, and applies that equivalent request-id normalization. Its
-focused qualification and registry publication remain pending.
+focused qualification passed and
+[`@peanut-admin/admin@0.1.0-alpha.3`](https://www.npmjs.com/package/@peanut-admin/admin/v/0.1.0-alpha.3)
+is published with candidate-matching SHA-1
+`c80aeccb32aa542f55f01e9d58a61dba8a4b67f5`. A clean TypeScript 4.9.5,
+ES2020, classic-resolution registry consumer passed the same no-emit gate. The
+`alpha` dist-tag points to Alpha.3 while `latest` remains on Alpha.2. The
+matching GitHub prerelease is the only remaining operational publication step;
+the local GitHub CLI credential was invalid when npm publication completed.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
