@@ -227,28 +227,37 @@ transport adapters, with focused tests and package subpath registration. The
 [Alpha.2 publication qualification](../reviews/p1-pkg03-alpha2-publication-qualification.md)
 records the passing retained aggregate groups, Q04 performance evidence,
 repository tail guards, and exact Composer/npm projection digests. Alpha.2 is
-qualified but remains unpublished and is not approved for downstream use.
+qualified and published as an alpha release; stable compatibility and
+downstream-consumption locks remain separate decisions.
 
 The [Alpha.2 publication approval record](../decisions/releases/p1-pkg03-alpha2-publication-approval.md)
-fixes the current repositories, versions, immutable projection digests,
-publication order, credential boundary, and rollback policy. Its state is
-`preflight-open`; npm and Packagist ownership, the generated split repository,
-publication workflow identities, and registry consumers remain pending, so
-`publication_authorized` is still false.
+records completed, authorized publication from source commit
+`b0dc376c2147b98522764486342c9525fe5678ce` and generated-only Composer split
+commit `330e76787ba754e1c7c11c2204c1c7f1e9560bb1`. Composer
+`peanut-admin/core@0.1.0-alpha.2` and npm
+`@peanut-admin/admin@0.1.0-alpha.2` passed clean PHP 8.3 and npm consumer
+probes, with the recorded 604-file/10-PSR-4-root and 14-export projections.
+The [GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.2),
+[Packagist package](https://packagist.org/packages/peanut-admin/core), and
+[npm package](https://www.npmjs.com/package/@peanut-admin/admin/v/0.1.0-alpha.2)
+are the published destinations; `publication_authorized` is true.
+
+Post-publication operations record two limits: npm `alpha` and `latest` both
+point to Alpha.2, and Packagist is currently not auto-updated. The Packagist
+condition does not block Alpha.2 consumption.
 
 The [P1-PKG03 Alpha.2 Candidate Contract](./p1-pkg03-alpha2-candidate-contract.md)
-retires the unpublished Alpha.1 projection as the next publication target and
-defines one `0.1.0-alpha.2` fixed candidate containing the qualified override
-Host chains and the three client subpaths. Versioning, aggregate qualification,
-registry ownership, and publication remain separate gates; external publication
-is still unauthorized.
+defined the `0.1.0-alpha.2` fixed candidate containing the qualified override
+Host chains and the three client subpaths. Its versioning and qualification
+gates are historical evidence for the completed approval record; stable
+compatibility and downstream-consumption decisions remain separate.
 
 The [P1-PKG04 Alpha.2 Projection Workflow Contract](./p1-pkg04-alpha2-projection-workflow-contract.md)
 adds a manually dispatched, read-only preflight for the fixed Alpha.2 candidate.
 It regenerates the Composer and npm projections, checks their package metadata,
-public boundaries, file lists, and qualified SHA-256 digests, and has no
-publication, repository, tag, Release, registry, credential, or artifact-upload
-authority.
+public boundaries, file lists, and qualified SHA-256 digests. Its pre-publication
+stop line is historical; the completed approval record above captures the actual
+publication result.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
