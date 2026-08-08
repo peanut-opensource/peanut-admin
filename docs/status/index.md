@@ -288,6 +288,12 @@ required database-port inputs, the fixed PHP performance baseline, dependency
 review availability, and the patched transitive `nanoid` resolution without
 changing Runtime behavior or weakening a gate.
 
+The [P1-PKG07 CI Fixed Runtime Follow-up Contract](./p1-pkg07-ci-fixed-runtime-follow-up-contract.md)
+owns the separately authorized correction after P1-PKG06's second CI result.
+It aligns stale Starter checks and generated license evidence with Alpha.3 and
+executes the unchanged performance baseline through the repository's existing
+fixed PHP 8.3.24 image instead of accepting the hosted runner's newer patch.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

@@ -602,6 +602,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg07-ci-fixed-runtime-follow-up-contract.md",
+      "title": "P1-PKG07 CI Fixed Runtime Follow-up Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
