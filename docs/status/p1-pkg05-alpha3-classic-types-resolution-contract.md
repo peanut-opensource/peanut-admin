@@ -95,9 +95,12 @@ The focused gates passed on source commit `4b197fc`, and immutable tag
   `moduleResolution: node` consumer imported `@peanut-admin/admin/core` and
   passed the same no-emit gate with dependency declaration checking skipped.
 
-The matching GitHub prerelease is still pending because the local GitHub CLI
-credential is invalid. This does not change the published npm artifact, but the
-release task remains operationally incomplete until the prerelease exists.
+The matching
+[`v0.1.0-alpha.3` GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.3)
+was created after GitHub CLI authentication was restored. Repository rulesets
+now require pull requests for `main`, reject deletion and non-fast-forward
+updates of `main`, and reject updates, deletion, and non-fast-forward changes
+for `v*` tags. The Alpha.3 publication task is operationally complete.
 
 ## Stop Line
 

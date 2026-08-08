@@ -275,8 +275,12 @@ is published with candidate-matching SHA-1
 `c80aeccb32aa542f55f01e9d58a61dba8a4b67f5`. A clean TypeScript 4.9.5,
 ES2020, classic-resolution registry consumer passed the same no-emit gate. The
 `alpha` dist-tag points to Alpha.3 while `latest` remains on Alpha.2. The
-matching GitHub prerelease is the only remaining operational publication step;
-the local GitHub CLI credential was invalid when npm publication completed.
+matching
+[`v0.1.0-alpha.3` GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.3)
+is published. Active repository rulesets require pull requests and reject
+deletion or non-fast-forward updates for `main`; `v*` release tags reject
+updates, deletion, and non-fast-forward changes. Alpha.3 publication is
+operationally complete.
 
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
