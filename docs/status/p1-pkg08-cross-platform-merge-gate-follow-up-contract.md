@@ -27,6 +27,8 @@ published artifacts, or release tags, and it does not weaken or skip a gate.
 
 - `docs/status/p1-pkg04-alpha2-projection-workflow-contract.md`;
 - `pnpm-workspace.yaml`;
+- `scripts/check-third-party-licenses` only to classify the newly visible
+  standard SPDX `0BSD` license used by the locked `tslib@2.8.1` package;
 - `docs/reference/third-party-licenses.generated.md`, generated only through
   `./scripts/check-third-party-licenses --write`;
 - `scripts/test-performance`;
@@ -43,7 +45,9 @@ span so VitePress cannot interpret it as an HTML element.
 The workspace declares every operating system, CPU, and libc variant present
 in the fixed pnpm lock as a supported architecture. The license checker
 therefore inventories the same optional packages on every supported host; it
-does not filter platform packages from release evidence.
+does not filter platform packages from release evidence. The resulting
+cross-platform inventory exposes `tslib@2.8.1` under its standard SPDX `0BSD`
+license, which is explicitly reviewed with the existing permissive licenses.
 
 When the fixed PHP image is selected, the performance script discovers the
 network attached to the Compose MySQL service, joins that network, and uses the

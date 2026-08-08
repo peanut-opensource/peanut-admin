@@ -56,7 +56,12 @@ final class PerformanceQualificationContractTest extends TestCase
 
         $script = (string) file_get_contents($this->root . '/scripts/test-performance');
         self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE', $script);
-        self::assertStringContainsString('docker run --rm --network host', $script);
+        self::assertStringContainsString('docker compose ps -q mysql', $script);
+        self::assertStringContainsString('docker run --rm --network "$performance_docker_network"', $script);
+        self::assertStringContainsString("--env 'DB_HOST=mysql'", $script);
+        self::assertStringContainsString("--env 'DB_PORT=3306'", $script);
+        self::assertStringContainsString("report_argument='/workspace/.cache/phpunit/performance-report.json'", $script);
+        self::assertStringNotContainsString('docker run --rm --network host', $script);
 
         $workflow = (string) file_get_contents($this->root . '/.github/workflows/performance.yml');
         self::assertStringContainsString('docker build --tag peanut-admin-performance-php:8.3.24', $workflow);

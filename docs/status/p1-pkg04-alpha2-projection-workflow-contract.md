@@ -62,8 +62,8 @@ archive SHA-256 on a later run. This is an evidence reproducibility defect, not
 a package-content or candidate-source change.
 
 R01 fixes the projection root as the qualified candidate commit plus the
-`packages/php` path. The exact command shape is `git archive --format=tar
-<candidate> packages/php`; extraction strips the two path components. The
+`packages/php` path. The exact command shape is
+`git archive --format=tar <candidate> packages/php`; extraction strips the two path components. The
 resulting commit-rooted archive contains the same 604 files and has stable
 SHA-256
 `176608c1602b0ccf8acf79a9755eb7417c25445330ccde7baddcae7df8620bdc`.
