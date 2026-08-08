@@ -259,6 +259,12 @@ public boundaries, file lists, and qualified SHA-256 digests. Its pre-publicatio
 stop line is historical; the completed approval record above captures the actual
 publication result.
 
+The [P1-PKG05 Admin Web Alpha.3 Classic Type Resolution Contract](./p1-pkg05-alpha3-classic-types-resolution-contract.md)
+authorizes a metadata-only npm correction after a real TypeScript `node`
+resolver consumer found that Alpha.2 lacked `typesVersions` mappings for its
+fourteen public subpaths. The task leaves Runtime behavior and Composer Alpha.2
+unchanged and requires a clean classic-resolution consumer before publication.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

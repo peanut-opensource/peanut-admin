@@ -588,6 +588,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg05-alpha3-classic-types-resolution-contract.md",
+      "title": "P1-PKG05 Admin Web Alpha.3 Classic Type Resolution Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
