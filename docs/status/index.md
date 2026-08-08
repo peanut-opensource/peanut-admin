@@ -294,6 +294,12 @@ It aligns stale Starter checks and generated license evidence with Alpha.3 and
 executes the unchanged performance baseline through the repository's existing
 fixed PHP 8.3.24 image instead of accepting the hosted runner's newer patch.
 
+The [P1-PKG08 Cross-Platform Merge Gate Follow-up Contract](./p1-pkg08-cross-platform-merge-gate-follow-up-contract.md)
+owns the final environment-specific corrections exposed by P1-PKG07. It makes
+the generated license inventory platform-independent, connects the fixed PHP
+performance container to the Compose MySQL network, and fixes the malformed
+documentation placeholder without changing Runtime or release artifacts.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

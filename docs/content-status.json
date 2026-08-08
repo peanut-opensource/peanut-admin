@@ -609,6 +609,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg08-cross-platform-merge-gate-follow-up-contract.md",
+      "title": "P1-PKG08 Cross-Platform Merge Gate Follow-up Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
