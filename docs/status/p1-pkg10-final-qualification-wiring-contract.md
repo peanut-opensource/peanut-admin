@@ -30,6 +30,8 @@ artifacts, or release tags.
 ## Exact Write Set
 
 - `.github/workflows/security.yml`;
+- `.github/workflows/ci.yml` only to supply the same fixed performance PHP
+  image already required by the dedicated Performance workflow;
 - `backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php`;
 - `scripts/test-performance`;
 - `tests/performance/PerformanceQualificationContractTest.php`;
@@ -52,7 +54,9 @@ remain append-only, and the only intentional mismatch is the empty database.
 Performance waits for the Compose MySQL health contract, then runs the fixed
 PHP image once against the Runner-local temporary service. A failure exposes
 only the direct Docker or PDO reason and never logs credentials. Local PHP
-continues to use the caller's host and published port.
+continues to use the caller's host and published port. The aggregate Quality
+job builds and supplies that same image only when its repository gate reaches
+the performance step.
 
 ## Focused Acceptance And Completion
 

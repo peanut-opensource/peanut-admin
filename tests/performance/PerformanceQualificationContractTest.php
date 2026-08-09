@@ -71,6 +71,10 @@ final class PerformanceQualificationContractTest extends TestCase
         $workflow = (string) file_get_contents($this->root . '/.github/workflows/performance.yml');
         self::assertStringContainsString('docker build --tag peanut-admin-performance-php:8.3.24', $workflow);
         self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE: peanut-admin-performance-php:8.3.24', $workflow);
+
+        $qualityWorkflow = (string) file_get_contents($this->root . '/.github/workflows/ci.yml');
+        self::assertStringContainsString('docker build --tag peanut-admin-performance-php:8.3.24', $qualityWorkflow);
+        self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE: peanut-admin-performance-php:8.3.24', $qualityWorkflow);
     }
 
     public function testTypedTargetBenchmarkUsesTheRealResolverAndPaginatedQuery(): void
