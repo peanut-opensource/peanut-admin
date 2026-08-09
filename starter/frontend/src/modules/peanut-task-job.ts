@@ -1,6 +1,6 @@
-import { createTaskJobModuleContribution, createTaskJobRuntime } from '@peanut-admin/task-job'
-import type { TaskJobRuntime, TaskJobTransport, TaskTransportResult } from '@peanut-admin/task-job'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createTaskJobModuleContribution, createTaskJobRuntime } from '@peanut-admin/admin/task-job'
+import type { TaskJobRuntime, TaskJobTransport, TaskTransportResult } from '@peanut-admin/admin/task-job'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutTaskJobHostOptions {
   baseUrl: string
@@ -11,7 +11,8 @@ export interface PeanutTaskJobHostOptions {
 
 export interface PeanutTaskJobHost { module: AdminModuleContribution; runtime: TaskJobRuntime }
 
-const result = async (response: Response): Promise<TaskTransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<TaskTransportResult> => {
+  const response = await responsePromise
   const text = await response.text()
   let body: unknown = null
   if (text !== '') { try { body = JSON.parse(text) as unknown } catch { body = null } }

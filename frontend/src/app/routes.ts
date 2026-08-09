@@ -1,5 +1,5 @@
-import { createAdminNavigationRegistry } from '@peanut-admin/admin-core'
-import type { AdminNavigationRoute, ApiAudience } from '@peanut-admin/admin-core'
+import { createAdminNavigationRegistry } from '@peanut-admin/admin/core'
+import type { AdminNavigationRoute, ApiAudience } from '@peanut-admin/admin/core'
 
 import { exampleReferenceModule } from '../modules/example-reference'
 import { exampleTargetModule } from '../modules/example-target'

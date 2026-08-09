@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "59f7933281b9ea41eedbdf92cda93cd8",
+    "content-hash": "8f61bcc8079281f960c1d69e72c17aac",
     "packages": [
         {
             "name": "opis/json-schema",
@@ -197,325 +197,55 @@
             "time": "2021-05-22T15:57:08+00:00"
         },
         {
-            "name": "peanut-admin/data-permission",
-            "version": "0.1.0",
+            "name": "peanut-admin/core",
+            "version": "0.1.0-alpha.2",
             "dist": {
                 "type": "path",
-                "url": "packages/php/data-permission",
-                "reference": "22f497c2fc5c679bec11d55e362347e22bba2111"
-            },
-            "require": {
-                "peanut-admin/kernel": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\DataPermission\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\DataPermission\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin data authorization contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/file-media",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/file-media",
-                "reference": "cb53de0802ea6a4e8b8102304970d3b4b2535c42"
+                "url": "packages/php",
+                "reference": "8c2a0b20b1091f5b1a0b63324feaac01b81f8e7d"
             },
             "require": {
                 "ext-fileinfo": "*",
-                "ext-pdo": "*",
-                "peanut-admin/kernel": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\FileMedia\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\FileMedia\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin reusable Tenant-private file metadata and storage contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/import-export",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/import-export",
-                "reference": "8da0895badc9cb176ca6609e7c5b7ead4ce6f9a4"
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-pdo": "*",
-                "peanut-admin/file-media": "^0.1.0",
-                "peanut-admin/kernel": "^0.1.0",
-                "peanut-admin/task-job": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\ImportExport\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\ImportExport\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin Tenant CSV import/export orchestration contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/integration-security",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/integration-security",
-                "reference": "ac042ecfd3534fe252e97e794323870ee30b74a6"
-            },
-            "require": {
                 "ext-json": "*",
                 "ext-openssl": "*",
                 "ext-pdo": "*",
-                "peanut-admin/kernel": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\IntegrationSecurity\\": "src/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin Tenant machine identity, webhook, and session security contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/kernel",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/kernel",
-                "reference": "38f9bf9fa5d100948befd115f733e94e8dc8038e"
-            },
-            "require": {
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\Kernel\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\Kernel\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin security and runtime kernel contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/notification-sms",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/notification-sms",
-                "reference": "9ac66378e5be72c78ee715d9860dc177f37e5ac1"
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-pdo": "*",
-                "peanut-admin/kernel": "^0.1.0",
-                "peanut-admin/task-job": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\NotificationSms\\": "src/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin reusable Tenant notification inbox and SMS delivery contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/ops-console",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/ops-console",
-                "reference": "c91676fb45f6e2fd5f6eaea7adf388d7575922e5"
-            },
-            "require": {
-                "peanut-admin/kernel": "^0.1.0",
-                "peanut-admin/task-job": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\OpsConsole\\": "src/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin platform operations evidence and controlled action contracts",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/reference-codes",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/reference-codes",
-                "reference": "5371b348f077bd7007ac259c000a4771e6515b3d"
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-pdo": "*",
-                "peanut-admin/kernel": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\ReferenceCodes\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\ReferenceCodes\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin reusable tenant-owned reference-code contracts and persistence",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/settings",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/settings",
-                "reference": "73909d5e0ad7be12fd6dbd41bd5816a2cbdd085d"
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-pdo": "*",
                 "ext-sodium": "*",
                 "opis/json-schema": "^2.6.0",
-                "peanut-admin/kernel": "^0.1.0",
                 "php": "^8.3"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^12.5.31"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
-                    "PeanutAdmin\\Settings\\": "src/"
+                    "PeanutAdmin\\DataPermission\\": "data-permission/src/",
+                    "PeanutAdmin\\FileMedia\\": "file-media/src/",
+                    "PeanutAdmin\\ImportExport\\": "import-export/src/",
+                    "PeanutAdmin\\IntegrationSecurity\\": "integration-security/src/",
+                    "PeanutAdmin\\Kernel\\": "kernel/src/",
+                    "PeanutAdmin\\NotificationSms\\": "notification-sms/src/",
+                    "PeanutAdmin\\OpsConsole\\": "ops-console/src/",
+                    "PeanutAdmin\\ReferenceCodes\\": "reference-codes/src/",
+                    "PeanutAdmin\\Settings\\": "settings/src/",
+                    "PeanutAdmin\\TaskJob\\": "task-job/src/"
                 }
             },
             "autoload-dev": {
                 "psr-4": {
-                    "PeanutAdmin\\Settings\\Tests\\": "tests/"
+                    "PeanutAdmin\\DataPermission\\Tests\\": "data-permission/tests/",
+                    "PeanutAdmin\\FileMedia\\Tests\\": "file-media/tests/",
+                    "PeanutAdmin\\Kernel\\Tests\\": "kernel/tests/",
+                    "PeanutAdmin\\ReferenceCodes\\Tests\\": "reference-codes/tests/",
+                    "PeanutAdmin\\Settings\\Tests\\": "settings/tests/",
+                    "PeanutAdmin\\Testing\\": "testing/src/",
+                    "PeanutAdmin\\Testing\\Tests\\": "testing/tests/"
                 }
             },
             "license": [
                 "Apache-2.0"
             ],
-            "description": "Peanut Admin reusable settings contracts and persistence",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "peanut-admin/task-job",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/task-job",
-                "reference": "9dde20643a0c4bbeb5eb37c2a66c5d49870cdeed"
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-pdo": "*",
-                "peanut-admin/kernel": "^0.1.0",
-                "php": "^8.3"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\TaskJob\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\TaskJob\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin reusable Tenant task ledger and local worker contracts",
+            "description": "Peanut Admin reusable administration runtime packages",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -1909,40 +1639,6 @@
                 "source": "https://github.com/nikic/PHP-Parser/tree/v5.8.0"
             },
             "time": "2026-07-04T14:30:18+00:00"
-        },
-        {
-            "name": "peanut-admin/testing",
-            "version": "0.1.0",
-            "dist": {
-                "type": "path",
-                "url": "packages/php/testing",
-                "reference": "f9839c66a81731385fe442ea7e6c98e6107340e3"
-            },
-            "require": {
-                "peanut-admin/data-permission": "^0.1.0",
-                "peanut-admin/kernel": "^0.1.0",
-                "php": "^8.3",
-                "phpunit/phpunit": "^12.5.31"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PeanutAdmin\\Testing\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "PeanutAdmin\\Testing\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "Apache-2.0"
-            ],
-            "description": "Peanut Admin reusable PHP test support",
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
         },
         {
             "name": "phar-io/manifest",
@@ -6113,7 +5809,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "peanut-admin/core": 15
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

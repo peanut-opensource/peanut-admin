@@ -1,5 +1,5 @@
-import { defineShellHostConfig } from '@peanut-admin/admin-shell'
-import type { ShellHostConfig } from '@peanut-admin/admin-shell'
+import { defineShellHostConfig } from '@peanut-admin/admin/shell'
+import type { ShellHostConfig } from '@peanut-admin/admin/shell'
 
 type ShellEnvironment = Readonly<Record<string, unknown>>
 

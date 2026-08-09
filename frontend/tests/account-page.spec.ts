@@ -31,7 +31,8 @@ const mocks = vi.hoisted(() => ({
   },
 }))
 
-vi.mock('@peanut-admin/admin-core', () => ({
+vi.mock('@peanut-admin/admin/core', () => ({
+  defineAdminOverrideSlot: <Slot,>(slot: Slot): Slot => slot,
   useTenantContext: () => mocks.context,
 }))
 

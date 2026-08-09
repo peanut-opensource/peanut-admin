@@ -16,9 +16,13 @@ use PeanutAdmin\App\upgrade\UpgradePlan;
 use PeanutAdmin\App\upgrade\UpgradePreflight;
 use PeanutAdmin\Kernel\Menu\PdoMenuCatalogRepository;
 use PeanutAdmin\Kernel\Module\ModuleException;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+use PHPUnit\Framework\Attributes\RunClassInSeparateProcess;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+#[PreserveGlobalState(false)]
+#[RunClassInSeparateProcess]
 final class UpgradeWorkflowIntegrationTest extends TestCase
 {
     private const DATABASE = 'peanut_admin_ops_upgrade_test';
@@ -30,7 +34,7 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$repositoryRoot = '/private/tmp/peanut-upgrade-git-' . bin2hex(random_bytes(8));
+        self::$repositoryRoot = sys_get_temp_dir() . '/peanut-upgrade-git-' . bin2hex(random_bytes(8));
         self::runCommand([
             'git', 'clone', '--quiet', '--no-hardlinks', dirname(__DIR__, 3), self::$repositoryRoot,
         ]);
@@ -80,29 +84,33 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
             'example.reference',
             'example.work-item',
             'peanut.file-media',
+            'peanut.task-job',
+            'peanut.import-export',
+            'peanut.integration-security',
+            'peanut.notification-sms',
             'peanut.reference-codes',
             'peanut.settings',
         ], $first['modules']);
-        self::assertSame(11, $first['applied_module_migrations']);
+        self::assertSame(16, $first['applied_module_migrations']);
         self::assertSame(0, $second['applied_module_migrations']);
-        self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_module_installation WHERE status = 'active'"));
-        self::assertSame(11, $this->scalar("SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'"));
-        self::assertSame(60, $this->scalar("SELECT COUNT(*) FROM pa_permission WHERE status = 'active'"));
+        self::assertSame(10, $this->scalar("SELECT COUNT(*) FROM pa_module_installation WHERE status = 'active'"));
+        self::assertSame(16, $this->scalar("SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'"));
+        self::assertSame(82, $this->scalar("SELECT COUNT(*) FROM pa_permission WHERE status = 'active'"));
         self::assertSame(1, $this->scalar(<<<'SQL'
 SELECT COUNT(*) FROM pa_permission
 WHERE `key` = 'core.member.effective-access.read'
   AND module_key = 'core' AND type = 'api' AND risk_level = 'sensitive' AND status = 'active'
 SQL));
-        self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_protected_resource WHERE status = 'active'"));
+        self::assertSame(10, $this->scalar("SELECT COUNT(*) FROM pa_protected_resource WHERE status = 'active'"));
         self::assertSame(2, $this->scalar("SELECT COUNT(*) FROM pa_target_type WHERE status = 'active'"));
-        self::assertSame(20, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation WHERE status = 'active'"));
+        self::assertSame(35, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation WHERE status = 'active'"));
         self::assertSame(17, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_target_type WHERE status = 'active'"));
         self::assertSame(6, $this->scalar("SELECT COUNT(*) FROM pa_data_condition_definition WHERE status = 'active'"));
         self::assertSame(40, $this->scalar("SELECT COUNT(*) FROM pa_resource_operation_condition WHERE status = 'active'"));
-        self::assertSame(19, $this->scalar("SELECT COUNT(*) FROM pa_menu_definition WHERE status = 'active'"));
+        self::assertSame(27, $this->scalar("SELECT COUNT(*) FROM pa_menu_definition WHERE status = 'active'"));
         $menus = new PdoMenuCatalogRepository($this->database);
-        self::assertCount(14, $menus->activeDefinitions('tenant'));
-        self::assertCount(5, $menus->activeDefinitions('platform'));
+        self::assertCount(19, $menus->activeDefinitions('tenant'));
+        self::assertCount(8, $menus->activeDefinitions('platform'));
         self::assertSame([
             'peanut.settings:20260719030101_create_setting_definitions',
             'peanut.settings:20260719030102_create_setting_deployment_values',
@@ -126,10 +134,15 @@ SQL));
     public function testEvidenceBoundUpgradeRejectsTheWrongSourceDatabaseBeforeMutation(): void
     {
         $root = self::$repositoryRoot;
-        $source = $this->sourceInventory($root);
+        $parentLine = self::runCommand(['git', '-C', $root, 'rev-list', '--parents', '-n', '1', 'HEAD']);
+        $sourceRevision = count(preg_split('/\s+/', $parentLine) ?: []) > 2 ? 'HEAD^2' : 'HEAD^';
+        $sourceCommit = self::runCommand(['git', '-C', $root, 'rev-parse', $sourceRevision]);
+        $source = (new RepositoryInspector())->inventoryAtCommit($root, $sourceCommit);
 
         try {
-            (new UpgradeWorkflow($root, $this->database))->run($this->plan($root, $source));
+            (new UpgradeWorkflow($root, $this->database))->run(
+                $this->plan($root, $source, null, $sourceRevision),
+            );
         } catch (ModuleException $exception) {
             self::assertSame('UPGRADE_SOURCE_DATABASE_MISMATCH', $exception->errorCode);
             self::assertSame(0, $this->scalar(<<<'SQL'
@@ -156,7 +169,7 @@ SQL));
             $workflow->assertCurrentReleaseNoop();
         } catch (ModuleException $exception) {
             self::assertSame('MODULE_MIGRATION_CHECKSUM_MISMATCH', $exception->errorCode);
-            self::assertSame(11, $this->scalar(
+            self::assertSame(16, $this->scalar(
                 "SELECT COUNT(*) FROM pa_module_migration WHERE status = 'applied'",
             ));
 
@@ -169,7 +182,7 @@ SQL));
     public function testEvidenceBoundOldReleaseUpgradesToCurrentAndRepeatsAsNoop(): void
     {
         $root = self::$repositoryRoot;
-        $oldRoot = '/private/tmp/peanut-upgrade-old-' . bin2hex(random_bytes(8));
+        $oldRoot = sys_get_temp_dir() . '/peanut-upgrade-old-' . bin2hex(random_bytes(8));
         try {
             self::runCommand(['git', 'clone', '--quiet', '--no-hardlinks', $root, $oldRoot]);
             self::runCommand(['git', '-C', $oldRoot, 'checkout', '--quiet', '--detach', self::OLD_RELEASE]);
@@ -182,7 +195,7 @@ SQL));
             $repeat = (new UpgradeWorkflow($root, $this->database))->assertCurrentReleaseNoop();
 
             self::assertSame(3, $old['applied_module_migrations']);
-            self::assertSame(8, $result['applied_module_migrations']);
+            self::assertSame(13, $result['applied_module_migrations']);
             self::assertSame(0, $repeat['applied_module_migrations']);
             self::assertSame(1, $this->scalar(
                 "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '"
@@ -288,11 +301,15 @@ SQL);
         self::fail('A definition required by the current registry must remain active.');
     }
 
-    private function plan(string $root, MigrationInventory $source, ?string $sourceRoot = null): UpgradePlan
-    {
+    private function plan(
+        string $root,
+        MigrationInventory $source,
+        ?string $sourceRoot = null,
+        ?string $sourceRevision = null,
+    ): UpgradePlan {
         $target = (new TargetMigrationInventory())->scan($root);
         $sourceRepository = $sourceRoot ?? $root;
-        $sourceRevision = $sourceRoot === null ? 'HEAD^' : 'HEAD';
+        $sourceRevision ??= $sourceRoot === null ? 'HEAD^' : 'HEAD';
         $sourceCommit = self::runCommand(['git', '-C', $sourceRepository, 'rev-parse', $sourceRevision]);
         $sourceTree = self::runCommand([
             'git', '-C', $sourceRepository, 'rev-parse', $sourceCommit . '^{tree}',
@@ -331,13 +348,36 @@ SQL);
     {
         $code = <<<'PHP'
 require $argv[1];
+$oldRoot = $argv[2];
+$prefixes = [
+    'PeanutAdmin\\DataPermission\\' => $oldRoot . '/packages/php/data-permission/src/',
+    'PeanutAdmin\\Kernel\\' => $oldRoot . '/packages/php/kernel/src/',
+    'PeanutAdmin\\App\\' => $oldRoot . '/backend/app/',
+];
+spl_autoload_register(static function (string $class) use ($prefixes): void {
+    foreach ($prefixes as $prefix => $directory) {
+        if (!str_starts_with($class, $prefix)) {
+            continue;
+        }
+        $file = $directory . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+        if (is_file($file)) {
+            require $file;
+        }
+
+        return;
+    }
+}, true, true);
+$installed = Composer\InstalledVersions::getRawData();
+$installed['versions']['peanut-admin/kernel']['install_path'] = $oldRoot . '/packages/php/kernel';
+$installed['versions']['peanut-admin/data-permission']['install_path'] = $oldRoot . '/packages/php/data-permission';
+Composer\InstalledVersions::reload($installed);
 $pdo = new PDO(
     sprintf('mysql:host=127.0.0.1;port=%d;dbname=%s;charset=utf8mb4', getenv('DB_PORT'), getenv('DB_DATABASE')),
     'root',
     getenv('MYSQL_ROOT_PASSWORD') ?: 'peanut_admin_root_dev',
     [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
 );
-$result = (new PeanutAdmin\App\command\UpgradeWorkflow($argv[2], $pdo))->installEmptyDatabase();
+$result = (new PeanutAdmin\App\command\UpgradeWorkflow($oldRoot, $pdo))->run();
 fwrite(STDOUT, json_encode($result, JSON_THROW_ON_ERROR));
 PHP;
         $command = [PHP_BINARY, '-r', $code, dirname(__DIR__, 3) . '/vendor/autoload.php', $root];
@@ -360,13 +400,6 @@ PHP;
 
         /** @var array{modules: list<string>, applied_module_migrations: int} $result */
         return $result;
-    }
-
-    private function sourceInventory(string $root): MigrationInventory
-    {
-        $sourceCommit = self::runCommand(['git', '-C', $root, 'rev-parse', 'HEAD^']);
-
-        return (new RepositoryInspector())->inventoryAtCommit($root, $sourceCommit);
     }
 
     /** @param list<string> $command */

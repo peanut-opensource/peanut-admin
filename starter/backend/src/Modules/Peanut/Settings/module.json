@@ -4,10 +4,10 @@
   "name": "Peanut Settings",
   "description": "Reusable typed settings infrastructure consumed by the starter host",
   "version": "0.1.0",
-  "kernel_constraint": "^0.1",
+  "kernel_constraint": "^1.0",
   "license": "Apache-2.0",
-  "php_package": "peanut-admin/settings",
-  "web_package": "@peanut-admin/settings",
+  "php_package": "peanut-admin/core",
+  "web_package": "@peanut-admin/admin/settings",
   "dependencies": [],
   "backend": {
     "provider": "ExampleHost\\App\\Modules\\Peanut\\Settings\\ModuleProvider",

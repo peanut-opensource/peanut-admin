@@ -146,6 +146,171 @@ ledger contains 75 P0 and 64 P1 operations. These statements describe the
 candidate tree only and do not establish qualification, publication, release,
 or downstream consumption approval.
 
+The historical P1-PKG01 package-boundary candidate first exposed the same
+Runtime through two installable boundaries: `peanut-admin/core` for PHP and
+`@peanut-admin/admin` for Admin Web, both at `0.1.0-alpha.1`. Internal domain
+directories remain ownership boundaries, not packages. P1-PKG03 below replaces
+that unpublished version as the current publication candidate; publication,
+release, stable compatibility, and downstream lock movement remain separate
+decisions.
+
+The [P1-PKG02 Alpha Publication Contract](./p1-pkg02-alpha-publication-contract.md)
+fixes `b84b8876cf24e7b749f0e79ab95053e772c922e7` as the package source
+candidate. Its retained R32-R38 browser remediation passed all 46 declared
+Playwright tests; R39 passed recovery, clean-install, and internal Starter
+verification; R40 passed all seven performance scenarios; and R41-R44
+completed the remaining fixed-tree groups through explicit no-repeat resume
+contracts. The
+[alpha publication qualification](../reviews/p1-pkg02-alpha-publication-qualification.md)
+records passing fixed-tree and package-content evidence for both projections.
+No registry version, Composer split repository, tag, or Release is authorized
+until registry ownership, credentials, provenance, immutable rollback, and
+isolated registry-consumer evidence are recorded.
+
+The [P1-PKG02 publication approval record](../decisions/releases/p1-pkg02-publication-approval.md)
+fixes the intended public repositories, package names, alpha dist-tag, immutable
+tag, projection digests, publication order, and rollback policy. Its state is
+`preflight-open`; npm scope ownership, Packagist ownership, the generated split
+repository, publication workflow, and registry consumer probes remain pending,
+so `publication_authorized` is still false.
+
+The post-`alpha.1` [P1-OVR01 Admin Web Override Registry Contract](./p1-ovr01-admin-web-override-registry-contract.md)
+defines the first standard application override boundary for services,
+components, pages, and route loaders. It is an unqualified candidate task and
+does not change the fixed publication source or downstream-consumption lock.
+The candidate implementation provides one typed, fail-closed build-time
+registry with exact contract-version matching and immutable resolution source
+metadata; it remains unqualified and is not approved for downstream use.
+
+The [P1-OVR02 PHP Service Override Registry Contract](./p1-ovr02-php-service-override-contract.md)
+defines the matching framework-independent interface-to-implementation
+selection boundary for `peanut-admin/core`. Host container wiring is explicitly
+deferred until a real application service slot is migrated.
+The candidate implementation exposes immutable resolutions, bindings, and
+redacted diagnostics with exact interface and contract-version enforcement; it
+remains unqualified and has no Runtime wiring.
+
+The [P1-OVR03 SMS Provider Host Consumption Contract](./p1-ovr03-sms-provider-host-consumption-contract.md)
+defines the first real ThinkPHP Host consumption path for the PHP registry. It
+moves SMS provider selection to one declared service slot with a disabled
+package default and one application-owned override list. The accepted task is
+implemented as a candidate-only reference Host chain and does not authorize
+package publication or application consumption.
+
+The [P1-OVR04 Admin Shell Host Consumption Contract](./p1-ovr04-admin-shell-host-consumption-contract.md)
+defines the matching first Web Host chain. It moves tenant/platform workspace
+shell selection to one package-owned resolver slot and one application-owned
+override list. The implemented reference Host chain remains candidate-only and
+does not authorize npm publication or Peanut Admin application migration.
+
+The [P1-OVR05 Override Host Consumption Qualification Contract](./p1-ovr05-override-host-qualification-contract.md)
+fixes the combined post-`alpha.1` source candidate and assigns one consolidated
+PHP behavior group, Web behavior group, and Web public-type group. Qualification
+passed: PHP completed 20 tests and 30 assertions, Web behavior completed 10
+tests, and both the public npm package and reference Host passed typecheck. The
+[qualification record](../reviews/p1-override-host-consumption-qualification.md)
+carries no publication or downstream-consumption authority.
+
+The first P1-OVR05 Q3 type group exposed one control-flow narrowing error in the
+Web registry. [P1-OVR05-R01](./p1-ovr05-r01-web-type-narrowing-remediation-contract.md)
+authorizes only the fail-closed `Map.get()` expression repair and one Q3 rerun;
+the Q3 rerun passed and the earlier Q1 and Q2 groups remained sealed.
+
+The [P1-CL01 UI-Neutral Client Transport Contract](./p1-cl01-ui-neutral-client-transport-contract.md)
+defines `./client`, `./client/nuxt`, and `./client/uniapp` as three subpaths of
+the existing `@peanut-admin/admin` package. It is an accepted candidate task for
+shared request/session behavior and does not add a third public package or
+authorize Peanut Admin application migration.
+
+The current candidate implements the core state machine and its Nuxt and UniApp
+transport adapters, with focused tests and package subpath registration. The
+[Alpha.2 publication qualification](../reviews/p1-pkg03-alpha2-publication-qualification.md)
+records the passing retained aggregate groups, Q04 performance evidence,
+repository tail guards, and exact Composer/npm projection digests. Alpha.2 is
+qualified and published as an alpha release; stable compatibility and
+downstream-consumption locks remain separate decisions.
+
+The [Alpha.2 publication approval record](../decisions/releases/p1-pkg03-alpha2-publication-approval.md)
+records completed, authorized publication from source commit
+`b0dc376c2147b98522764486342c9525fe5678ce` and generated-only Composer split
+commit `330e76787ba754e1c7c11c2204c1c7f1e9560bb1`. Composer
+`peanut-admin/core@0.1.0-alpha.2` and npm
+`@peanut-admin/admin@0.1.0-alpha.2` passed clean PHP 8.3 and npm consumer
+probes, with the recorded 604-file/10-PSR-4-root and 14-export projections.
+The [GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.2),
+[Packagist package](https://packagist.org/packages/peanut-admin/core), and
+[npm package](https://www.npmjs.com/package/@peanut-admin/admin/v/0.1.0-alpha.2)
+are the published destinations; `publication_authorized` is true.
+
+Post-publication operations record two limits: npm `alpha` and `latest` both
+point to Alpha.2, and Packagist is currently not auto-updated. The Packagist
+condition does not block Alpha.2 consumption.
+
+The [P1-PKG03 Alpha.2 Candidate Contract](./p1-pkg03-alpha2-candidate-contract.md)
+defined the `0.1.0-alpha.2` fixed candidate containing the qualified override
+Host chains and the three client subpaths. Its versioning and qualification
+gates are historical evidence for the completed approval record; stable
+compatibility and downstream-consumption decisions remain separate.
+
+The [P1-PKG04 Alpha.2 Projection Workflow Contract](./p1-pkg04-alpha2-projection-workflow-contract.md)
+adds a manually dispatched, read-only preflight for the fixed Alpha.2 candidate.
+It regenerates the Composer and npm projections, checks their package metadata,
+public boundaries, file lists, and qualified SHA-256 digests. Its pre-publication
+stop line is historical; the completed approval record above captures the actual
+publication result.
+
+The [P1-PKG05 Admin Web Alpha.3 Classic Type Resolution Contract](./p1-pkg05-alpha3-classic-types-resolution-contract.md)
+authorizes a metadata-only npm correction after a real TypeScript `node`
+resolver consumer found that Alpha.2 lacked `typesVersions` mappings for its
+fourteen public subpaths. The task leaves Runtime behavior and Composer Alpha.2
+unchanged and requires a clean classic-resolution consumer before publication.
+Its first focused consumer also exposed one ES2020 library mismatch in request
+ID normalization; the corrected contract authorizes the single equivalent
+regular-expression replacement before the consumer gate is restarted.
+The corrected candidate declares Alpha.3, supplies all fourteen classic
+resolver mappings, and applies that equivalent request-id normalization. Its
+focused qualification passed and
+[`@peanut-admin/admin@0.1.0-alpha.3`](https://www.npmjs.com/package/@peanut-admin/admin/v/0.1.0-alpha.3)
+is published with candidate-matching SHA-1
+`c80aeccb32aa542f55f01e9d58a61dba8a4b67f5`. A clean TypeScript 4.9.5,
+ES2020, classic-resolution registry consumer passed the same no-emit gate. The
+`alpha` dist-tag points to Alpha.3 while `latest` remains on Alpha.2. The
+matching
+[`v0.1.0-alpha.3` GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.3)
+is published. Active repository rulesets require pull requests and reject
+deletion or non-fast-forward updates for the current `dev` default branch and
+any future `main`; `v*` release tags reject updates, deletion, and
+non-fast-forward changes. Alpha.3 publication is operationally complete.
+
+The [P1-PKG06 Release Merge Gate Remediation Contract](./p1-pkg06-release-merge-gate-remediation-contract.md)
+owns the bounded CI repair discovered by the Alpha.3 merge PR. It restores
+required database-port inputs, the fixed PHP performance baseline, dependency
+review availability, and the patched transitive `nanoid` resolution without
+changing Runtime behavior or weakening a gate.
+
+The [P1-PKG07 CI Fixed Runtime Follow-up Contract](./p1-pkg07-ci-fixed-runtime-follow-up-contract.md)
+owns the separately authorized correction after P1-PKG06's second CI result.
+It aligns stale Starter checks and generated license evidence with Alpha.3 and
+executes the unchanged performance baseline through the repository's existing
+fixed PHP 8.3.24 image instead of accepting the hosted runner's newer patch.
+
+The [P1-PKG08 Cross-Platform Merge Gate Follow-up Contract](./p1-pkg08-cross-platform-merge-gate-follow-up-contract.md)
+owns the final environment-specific corrections exposed by P1-PKG07. It makes
+the generated license inventory platform-independent, connects the fixed PHP
+performance container to the Compose MySQL network, and fixes the malformed
+documentation placeholder without changing Runtime or release artifacts.
+
+The [P1-PKG09 CI Environment Wiring Contract](./p1-pkg09-ci-environment-wiring-contract.md)
+owns the separately authorized runner corrections exposed after P1-PKG08. It
+propagates browser ports, fixes portable integration fixture inputs, and lets
+the fixed performance PHP image reach only the Runner-local temporary MySQL;
+it does not change a downstream or production database connection.
+
+The [P1-PKG10 Final Qualification Wiring Contract](./p1-pkg10-final-qualification-wiring-contract.md)
+owns the remaining Chromium installation, PR-merge-topology, and fixed-PHP
+performance diagnostics. It is restricted to GitHub Runner qualification and
+does not alter any downstream database or published Alpha.3 artifact.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

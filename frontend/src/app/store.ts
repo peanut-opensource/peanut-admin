@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { ApiAudience, ProblemDetails } from '@peanut-admin/admin-core'
+import type { ApiAudience, ProblemDetails } from '@peanut-admin/admin/core'
 
 import type { AdminMenuItem, TenantLoginSelection } from './contracts'
 

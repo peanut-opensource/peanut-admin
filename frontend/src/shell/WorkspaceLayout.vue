@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { AdminShell, PlatformShell } from '@peanut-admin/admin-shell'
 import { computed } from 'vue'
 import { RouterView, useRoute, useRouter } from 'vue-router'
 import type { Component } from 'vue'
-import type { ApiAudience } from '@peanut-admin/admin-core'
-import type { ShellBreadcrumbItem, ShellNavigationItem } from '@peanut-admin/admin-shell'
+import type { ApiAudience } from '@peanut-admin/admin/core'
+import type { ShellBreadcrumbItem, ShellNavigationItem } from '@peanut-admin/admin/shell'
 
 import type { AdminMenuItem } from '../app/contracts'
 import { useAdminRuntime } from '../app/runtime'
@@ -17,7 +16,7 @@ const runtime = useAdminRuntime()
 const workspace = useWorkspaceStore()
 const shellConfig = readShellHostConfig(import.meta.env)
 const audience = computed<ApiAudience>(() => route.meta.audience ?? 'tenant')
-const shellComponent = computed<Component>(() => audience.value === 'tenant' ? AdminShell : PlatformShell)
+const shellComponent = computed<Component>(() => runtime.workspaceShell(audience.value))
 const identity = computed(() => audience.value === 'tenant' ? workspace.tenantIdentity : workspace.platformIdentity)
 const title = computed(() => typeof route.meta.title === 'string' ? route.meta.title : '工作台')
 

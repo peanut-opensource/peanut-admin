@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { hasPermission, usePlatformContext } from '@peanut-admin/admin-core'
-import { createOpsConsoleRuntime, OPS_BACKUP_PERMISSION, OPS_LOGS_PERMISSION, OPS_MAINTENANCE_PERMISSION, OPS_READ_PERMISSION, OPS_RESTORE_PERMISSION, OpsConsolePage, opsConsoleRuntimeKey } from '@peanut-admin/ops-console'
-import type { OpsConsoleTransport, OpsTransportResult } from '@peanut-admin/ops-console'
+import { hasPermission, usePlatformContext } from '@peanut-admin/admin/core'
+import { createOpsConsoleRuntime, OPS_BACKUP_PERMISSION, OPS_LOGS_PERMISSION, OPS_MAINTENANCE_PERMISSION, OPS_READ_PERMISSION, OPS_RESTORE_PERMISSION, OpsConsolePage, opsConsoleRuntimeKey } from '@peanut-admin/admin/ops-console'
+import type { OpsConsoleTransport, OpsTransportResult } from '@peanut-admin/admin/ops-console'
 import { onBeforeUnmount, provide } from 'vue'
 import { useAdminRuntime } from '../../app/runtime'
 

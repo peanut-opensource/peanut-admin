@@ -1,5 +1,5 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 import {
   REFERENCE_CODES_MANAGE_PERMISSION,
   REFERENCE_CODES_MODULE_KEY,
@@ -7,7 +7,7 @@ import {
   REFERENCE_CODES_ROUTE_NAME,
   REFERENCE_CODES_ROUTE_PATH,
   REFERENCE_CODES_STORE_KEY,
-} from '@peanut-admin/reference-codes'
+} from '@peanut-admin/admin/reference-codes'
 import type {
   ReferenceCodeCreateRequest,
   ReferenceCodeListQuery,
@@ -16,7 +16,7 @@ import type {
   ReferenceCodesRuntime,
   ReferenceCodesTransport,
   ReferenceCodesTransportResult,
-} from '@peanut-admin/reference-codes'
+} from '@peanut-admin/admin/reference-codes'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -135,7 +135,7 @@ export const createPeanutReferenceCodesModule = (options: PeanutReferenceCodesMo
   let referenceCodesRuntime: ReferenceCodesRuntime | null = null
 
   const loadReferenceCodesRoute = async () => {
-    const referenceCodesPackage = await import('@peanut-admin/reference-codes')
+    const referenceCodesPackage = await import('@peanut-admin/admin/reference-codes')
     const runtime = referenceCodesRuntime ?? referenceCodesPackage.createReferenceCodesRuntime({
       transport,
       canRead: () => hasPermission(useTenantContext().permissionSet, REFERENCE_CODES_READ_PERMISSION),

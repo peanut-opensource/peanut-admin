@@ -2,6 +2,7 @@
 
 import { flushPromises, mount } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AdminShell, PlatformShell } from '@peanut-admin/admin/shell'
 
 import { readShellHostConfig } from '../src/shell/host-config'
 import StatusPage from '../src/pages/status/StatusPage.vue'
@@ -10,6 +11,18 @@ import WorkspaceLayout from '../src/shell/WorkspaceLayout.vue'
 const mocks = vi.hoisted(() => ({
   beginTenantSwitch: vi.fn(),
   logout: vi.fn(),
+  routeRegistry: new Map([
+    ['tenant.members.list', {
+      name: 'tenant.members.list',
+      path: '/app/members',
+      audience: 'tenant' as const,
+    }],
+    ['platform.tenants.list', {
+      name: 'platform.tenants.list',
+      path: '/platform/tenants',
+      audience: 'platform' as const,
+    }],
+  ]),
   push: vi.fn(),
   replace: vi.fn(),
   route: {
@@ -65,6 +78,8 @@ vi.mock('../src/app/runtime', () => ({
   useAdminRuntime: () => ({
     beginTenantSwitch: mocks.beginTenantSwitch,
     logout: mocks.logout,
+    routeRegistry: mocks.routeRegistry,
+    workspaceShell: (audience: 'tenant' | 'platform') => audience === 'tenant' ? AdminShell : PlatformShell,
   }),
 }))
 

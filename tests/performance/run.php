@@ -194,7 +194,7 @@ SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
         [['example.project' => $targetSetId]],
     );
 
-    $auth = TenantAuthRuntimeFactory::create();
+    $auth = TenantAuthRuntimeFactory::create(pdo: $pdo);
     $initial = $auth->login(
         'performance@example.test',
         $password,

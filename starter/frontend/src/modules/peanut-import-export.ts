@@ -1,6 +1,6 @@
-import { createImportExportModuleContribution, createImportExportRuntime } from '@peanut-admin/import-export'
-import type { ImportExportRuntime, ImportExportTransport, ImportExportTransportResult } from '@peanut-admin/import-export'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createImportExportModuleContribution, createImportExportRuntime } from '@peanut-admin/admin/import-export'
+import type { ImportExportRuntime, ImportExportTransport, ImportExportTransportResult } from '@peanut-admin/admin/import-export'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutImportExportHostOptions {
   baseUrl: string
@@ -12,7 +12,8 @@ export interface PeanutImportExportHostOptions {
 
 export interface PeanutImportExportHost { module: AdminModuleContribution; runtime: ImportExportRuntime }
 
-const result = async (response: Response): Promise<ImportExportTransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<ImportExportTransportResult> => {
+  const response = await responsePromise
   const text = await response.text()
   let body: unknown = null
   if (text !== '') { try { body = JSON.parse(text) as unknown } catch { body = null } }

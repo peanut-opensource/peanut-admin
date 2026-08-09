@@ -4,7 +4,7 @@
 
 This inventory is generated from `composer.lock` and `pnpm-lock.yaml`. It is release evidence, not legal advice.
 
-Packages recorded: **484**.
+Packages recorded: **561**.
 
 | Ecosystem | Package | Version | SPDX license |
 | --- | --- | --- | --- |
@@ -24,9 +24,7 @@ Packages recorded: **484**.
 | Composer | `opis/json-schema` | `2.6.0` | `Apache-2.0` |
 | Composer | `opis/string` | `2.1.0` | `Apache-2.0` |
 | Composer | `opis/uri` | `1.1.0` | `Apache-2.0` |
-| Composer | `peanut-admin/data-permission` | `0.1.0` | `Apache-2.0` |
-| Composer | `peanut-admin/kernel` | `0.1.0` | `Apache-2.0` |
-| Composer | `peanut-admin/testing` | `0.1.0` | `Apache-2.0` |
+| Composer | `peanut-admin/core` | `0.1.0-alpha.2` | `Apache-2.0` |
 | Composer | `phar-io/manifest` | `2.0.4` | `BSD-3-Clause` |
 | Composer | `phar-io/version` | `3.2.1` | `BSD-3-Clause` |
 | Composer | `phpdocumentor/graphviz` | `2.1.0` | `MIT` |
@@ -128,7 +126,35 @@ Packages recorded: **484**.
 | pnpm | `@docsearch/js` | `3.8.2` | `MIT` |
 | pnpm | `@docsearch/react` | `3.8.2` | `MIT` |
 | pnpm | `@element-plus/icons-vue` | `2.3.2` | `MIT` |
+| pnpm | `@emnapi/core` | `1.11.1` | `MIT` |
+| pnpm | `@emnapi/runtime` | `1.11.1` | `MIT` |
+| pnpm | `@emnapi/wasi-threads` | `1.2.2` | `MIT` |
+| pnpm | `@esbuild/aix-ppc64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/android-arm` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/android-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/android-x64` | `0.25.12` | `MIT` |
 | pnpm | `@esbuild/darwin-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/darwin-x64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/freebsd-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/freebsd-x64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-arm` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-ia32` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-loong64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-mips64el` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-ppc64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-riscv64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-s390x` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/linux-x64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/netbsd-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/netbsd-x64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/openbsd-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/openbsd-x64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/openharmony-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/sunos-x64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/win32-arm64` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/win32-ia32` | `0.25.12` | `MIT` |
+| pnpm | `@esbuild/win32-x64` | `0.25.12` | `MIT` |
 | pnpm | `@eslint-community/eslint-utils` | `4.9.1` | `MIT` |
 | pnpm | `@eslint-community/regexpp` | `4.12.2` | `MIT` |
 | pnpm | `@eslint/config-array` | `0.23.5` | `Apache-2.0` |
@@ -152,6 +178,7 @@ Packages recorded: **484**.
 | pnpm | `@jridgewell/resolve-uri` | `3.1.2` | `MIT` |
 | pnpm | `@jridgewell/sourcemap-codec` | `1.5.5` | `MIT` |
 | pnpm | `@jridgewell/trace-mapping` | `0.3.31` | `MIT` |
+| pnpm | `@napi-rs/wasm-runtime` | `1.1.6` | `MIT` |
 | pnpm | `@one-ini/wasm` | `0.1.1` | `MIT` |
 | pnpm | `@oxc-project/types` | `0.139.0` | `MIT` |
 | pnpm | `@pkgjs/parseargs` | `0.11.0` | `MIT` |
@@ -160,9 +187,47 @@ Packages recorded: **484**.
 | pnpm | `@redocly/cli` | `2.39.0` | `MIT` |
 | pnpm | `@redocly/config` | `0.22.0` | `MIT` |
 | pnpm | `@redocly/openapi-core` | `1.34.17` | `MIT` |
+| pnpm | `@rolldown/binding-android-arm64` | `1.1.5` | `MIT` |
 | pnpm | `@rolldown/binding-darwin-arm64` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-darwin-x64` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-freebsd-x64` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-arm-gnueabihf` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-arm64-gnu` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-arm64-musl` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-ppc64-gnu` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-s390x-gnu` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-x64-gnu` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-linux-x64-musl` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-openharmony-arm64` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-wasm32-wasi` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-win32-arm64-msvc` | `1.1.5` | `MIT` |
+| pnpm | `@rolldown/binding-win32-x64-msvc` | `1.1.5` | `MIT` |
 | pnpm | `@rolldown/pluginutils` | `1.0.1` | `MIT` |
+| pnpm | `@rollup/rollup-android-arm-eabi` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-android-arm64` | `4.62.2` | `MIT` |
 | pnpm | `@rollup/rollup-darwin-arm64` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-darwin-x64` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-freebsd-arm64` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-freebsd-x64` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-arm-gnueabihf` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-arm-musleabihf` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-arm64-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-arm64-musl` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-loong64-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-loong64-musl` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-ppc64-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-ppc64-musl` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-riscv64-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-riscv64-musl` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-s390x-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-x64-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-linux-x64-musl` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-openbsd-x64` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-openharmony-arm64` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-win32-arm64-msvc` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-win32-ia32-msvc` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-win32-x64-gnu` | `4.62.2` | `MIT` |
+| pnpm | `@rollup/rollup-win32-x64-msvc` | `4.62.2` | `MIT` |
 | pnpm | `@shikijs/core` | `2.5.0` | `MIT` |
 | pnpm | `@shikijs/engine-javascript` | `2.5.0` | `MIT` |
 | pnpm | `@shikijs/engine-oniguruma` | `2.5.0` | `MIT` |
@@ -173,6 +238,7 @@ Packages recorded: **484**.
 | pnpm | `@shikijs/vscode-textmate` | `10.0.2` | `MIT` |
 | pnpm | `@standard-schema/spec` | `1.1.0` | `MIT` |
 | pnpm | `@sxzz/popperjs-es` | `2.11.8` | `MIT` |
+| pnpm | `@tybys/wasm-util` | `0.10.3` | `MIT` |
 | pnpm | `@types/chai` | `5.2.3` | `MIT` |
 | pnpm | `@types/deep-eql` | `4.0.2` | `MIT` |
 | pnpm | `@types/esrecurse` | `4.3.1` | `MIT` |
@@ -258,8 +324,8 @@ Packages recorded: **484**.
 | pnpm | `balanced-match` | `4.0.4` | `MIT` |
 | pnpm | `birpc` | `2.9.0` | `MIT` |
 | pnpm | `boolbase` | `1.0.0` | `ISC` |
-| pnpm | `brace-expansion` | `2.1.2` | `MIT` |
-| pnpm | `brace-expansion` | `5.0.7` | `MIT` |
+| pnpm | `brace-expansion` | `2.1.4` | `MIT` |
+| pnpm | `brace-expansion` | `5.0.9` | `MIT` |
 | pnpm | `buffer-image-size` | `0.6.4` | `MIT` |
 | pnpm | `ccount` | `2.0.1` | `MIT` |
 | pnpm | `chai` | `6.2.2` | `MIT` |
@@ -343,7 +409,7 @@ Packages recorded: **484**.
 | pnpm | `js-cookie` | `3.0.8` | `MIT` |
 | pnpm | `js-levenshtein` | `1.1.6` | `MIT` |
 | pnpm | `js-tokens` | `4.0.0` | `MIT` |
-| pnpm | `js-yaml` | `4.2.0` | `MIT` |
+| pnpm | `js-yaml` | `4.3.1` | `MIT` |
 | pnpm | `jsesc` | `3.1.0` | `MIT` |
 | pnpm | `json-buffer` | `3.0.1` | `MIT` |
 | pnpm | `json-schema-traverse` | `0.4.1` | `MIT` |
@@ -353,7 +419,17 @@ Packages recorded: **484**.
 | pnpm | `keyv` | `4.5.4` | `MIT` |
 | pnpm | `levn` | `0.4.1` | `MIT` |
 | pnpm | `lightningcss` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-android-arm64` | `1.32.0` | `MPL-2.0` |
 | pnpm | `lightningcss-darwin-arm64` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-darwin-x64` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-freebsd-x64` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-linux-arm-gnueabihf` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-linux-arm64-gnu` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-linux-arm64-musl` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-linux-x64-gnu` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-linux-x64-musl` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-win32-arm64-msvc` | `1.32.0` | `MPL-2.0` |
+| pnpm | `lightningcss-win32-x64-msvc` | `1.32.0` | `MPL-2.0` |
 | pnpm | `local-pkg` | `1.2.1` | `MIT` |
 | pnpm | `locate-path` | `6.0.0` | `MIT` |
 | pnpm | `lodash` | `4.18.1` | `MIT` |
@@ -379,7 +455,7 @@ Packages recorded: **484**.
 | pnpm | `mlly` | `1.8.2` | `MIT` |
 | pnpm | `ms` | `2.1.3` | `MIT` |
 | pnpm | `muggle-string` | `0.4.1` | `MIT` |
-| pnpm | `nanoid` | `3.3.16` | `MIT` |
+| pnpm | `nanoid` | `3.3.17` | `MIT` |
 | pnpm | `natural-compare` | `1.4.0` | `MIT` |
 | pnpm | `nopt` | `7.2.1` | `ISC` |
 | pnpm | `normalize-wheel-es` | `1.2.0` | `BSD-3-Clause` |
@@ -451,6 +527,7 @@ Packages recorded: **484**.
 | pnpm | `tinyrainbow` | `3.1.0` | `MIT` |
 | pnpm | `trim-lines` | `3.0.1` | `MIT` |
 | pnpm | `ts-api-utils` | `2.5.0` | `MIT` |
+| pnpm | `tslib` | `2.8.1` | `0BSD` |
 | pnpm | `type-check` | `0.4.0` | `MIT` |
 | pnpm | `type-fest` | `4.41.0` | `(MIT OR CC0-1.0)` |
 | pnpm | `typescript` | `5.9.3` | `Apache-2.0` |

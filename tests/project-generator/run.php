@@ -364,6 +364,8 @@ try {
     assertTrue(($authConfig['admin_client_key'] ?? null) === 'field-console', 'Admin Client was not rendered.');
     assertTrue(($authConfig['tenant_clients'][0]['api_prefix'] ?? null) === '/api/field/v1/', 'Tenant Client structure was lost.');
     assertTrue(str_contains((string) file_get_contents($first . '/backend/config/modules.php'), 'peanut.settings'), 'Selected Settings Module is absent.');
+    $moduleConfig = require $first . '/backend/config/modules.php';
+    assertTrue(($moduleConfig['kernel_version'] ?? null) === '1.0.0', 'Kernel compatibility version was not rendered.');
     assertTrue(!str_contains((string) file_get_contents($first . '/backend/config/modules.php'), 'peanut.reference-codes'), 'Unselected Module was enabled.');
     assertTrue(str_contains((string) file_get_contents($first . '/backend/config/modules.php'), 'peanut.ops-console.page'), 'Always-on Ops Console was removed.');
     assertTrue(is_file($first . '/frontend/src/modules/peanut-ops-console.ts'), 'Always-on Ops Console Host is absent.');

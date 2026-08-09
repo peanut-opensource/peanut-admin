@@ -55,10 +55,10 @@ final class RecoveryAcceptanceTest extends TestCase
     {
         self::assertSame(2, $this->scalar('SELECT COUNT(*) FROM pa_tenant'));
         self::assertSame(2, $this->scalar('SELECT COUNT(*) FROM pa_example_project'));
-        self::assertSame(3, $this->scalar(
+        self::assertSame(10, $this->scalar(
             "SELECT COUNT(*) FROM pa_module_installation WHERE status = 'active'",
         ));
-        self::assertSame(6, $this->scalar(
+        self::assertSame(20, $this->scalar(
             "SELECT COUNT(*) FROM pa_tenant_module WHERE status = 'enabled'",
         ));
 

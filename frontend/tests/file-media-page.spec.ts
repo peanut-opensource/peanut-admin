@@ -1,12 +1,12 @@
-import { runAdminRouteGuard } from '@peanut-admin/admin-core'
+import { runAdminRouteGuard } from '@peanut-admin/admin/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 beforeEach(() => {
-  vi.doMock('@peanut-admin/file-media', () => import('../../packages/web/file-media/src/index'))
+  vi.doMock('@peanut-admin/admin/file-media', () => import('../../packages/web/file-media/src/index'))
 })
 
 afterEach(() => {
-  vi.doUnmock('@peanut-admin/file-media')
+  vi.doUnmock('@peanut-admin/admin/file-media')
   vi.doUnmock('../src/app/runtime')
   vi.resetModules()
 })
@@ -21,7 +21,7 @@ describe('file-media reference host route', () => {
       name: 'peanut.file-media.list', path: '/app/files',
       access: { moduleKey: 'peanut.file-media', permissionKeys: ['peanut.file-media.read'] },
     })
-  })
+  }, 15_000)
 
   it('does not load the chunk when Module or permission checks fail closed', async () => {
     const { peanutFileMediaModule } = await import('../src/modules/peanut-file-media')

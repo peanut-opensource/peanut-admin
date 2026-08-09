@@ -29,7 +29,7 @@ export const createStarterModules = (options: StarterModuleOptions) => {
   const opsConsole = createPeanutOpsConsoleHost(options)
 
   return {
-    modules: [exampleGreetingModule, settings.module, referenceCodes.module, fileMedia.module, taskJob.module, notificationSms.module, importExport.module, integrationSecurity.module, opsConsole.module] as const,
+    modules: [exampleGreetingModule, settings.module, referenceCodes.module, fileMedia.module, taskJob.module, notificationSms.module, importExport.module, integrationSecurity.module] as const,
     settingsModule: settings.module,
     settingsRuntime: settings.runtime,
     referenceCodesModule: referenceCodes.module,
@@ -44,7 +44,7 @@ export const createStarterModules = (options: StarterModuleOptions) => {
     importExportRuntime: importExport.runtime,
     integrationSecurityModule: integrationSecurity.module,
     integrationSecurityRuntime: integrationSecurity.runtime,
-    opsConsoleModule: opsConsole.module,
+    opsConsoleRoute: opsConsole.route,
     opsConsoleRuntime: opsConsole.runtime,
   }
 }

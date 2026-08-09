@@ -1,5 +1,5 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 import {
   FILE_MEDIA_CREATE_PERMISSION,
   FILE_MEDIA_DELETE_PERMISSION,
@@ -8,8 +8,8 @@ import {
   FILE_MEDIA_ROUTE_NAME,
   FILE_MEDIA_ROUTE_PATH,
   FILE_MEDIA_STORE_KEY,
-} from '@peanut-admin/file-media'
-import type { FileMediaRuntime, FileMediaTransport, FileTransportResult } from '@peanut-admin/file-media'
+} from '@peanut-admin/admin/file-media'
+import type { FileMediaRuntime, FileMediaTransport, FileTransportResult } from '@peanut-admin/admin/file-media'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -67,7 +67,7 @@ export const createPeanutFileMediaModule = (options: PeanutFileMediaModuleOption
   let runtime: FileMediaRuntime | null = null
 
   const loadFileMediaRoute = async () => {
-    const fileMedia = await import('@peanut-admin/file-media')
+    const fileMedia = await import('@peanut-admin/admin/file-media')
     const active = runtime ?? fileMedia.createFileMediaRuntime({
       transport,
       canRead: () => hasPermission(useTenantContext().permissionSet, FILE_MEDIA_READ_PERMISSION),

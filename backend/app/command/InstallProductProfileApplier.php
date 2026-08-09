@@ -102,9 +102,9 @@ SQL);
     {
         $path = InstalledVersions::getInstallPath(KernelPackage::NAME);
         if (!is_string($path) || $path === '') {
-            throw new \RuntimeException('PACKAGE_INSTALL_PATH_UNAVAILABLE: peanut-admin/kernel.');
+            throw new \RuntimeException('PACKAGE_INSTALL_PATH_UNAVAILABLE: peanut-admin/core.');
         }
 
-        return rtrim($path, '/');
+        return rtrim($path, '/') . '/kernel';
     }
 }

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace PeanutAdmin\Kernel\Tests\Unit\Governance;
 
+use PeanutAdmin\Kernel\Audit\GovernanceAuditMetadata;
 use PeanutAdmin\Kernel\Authorization\Governance\GovernanceException;
 use PeanutAdmin\Kernel\Authorization\Governance\GovernancePermission;
 use PeanutAdmin\Kernel\Authorization\Governance\GovernancePermissionCatalog;
-use PeanutAdmin\Kernel\Audit\GovernanceAuditMetadata;
 use PeanutAdmin\Kernel\Menu\GovernanceRoute;
 use PeanutAdmin\Kernel\Menu\MenuDefinition;
 use PeanutAdmin\Kernel\Menu\MenuGovernance;
@@ -107,7 +107,10 @@ final class GovernanceWorkbenchTest extends TestCase
         );
     }
 
-    /** @param callable(): mixed $operation */
+    /**
+     * @param callable(): mixed $operation
+     * @param class-string<\Throwable> $class
+     */
     private function assertGovernanceFailure(string $code, callable $operation, string $class = GovernanceException::class): void
     {
         try {

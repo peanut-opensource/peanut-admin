@@ -29,6 +29,9 @@ final class SupplyChainQualificationContractTest extends TestCase
             'third-party-licenses.generated.md',
             (string) file_get_contents($this->root . '/scripts/check-third-party-licenses'),
         );
+        $licenseGate = (string) file_get_contents($this->root . '/scripts/check-third-party-licenses');
+        self::assertStringContainsString('composer.lock', $licenseGate);
+        self::assertStringNotContainsString("['composer', 'licenses'", $licenseGate);
         self::assertStringContainsString(
             './scripts/check-supply-chain',
             (string) file_get_contents($this->root . '/scripts/check'),

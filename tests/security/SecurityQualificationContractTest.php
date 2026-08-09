@@ -116,10 +116,13 @@ final class SecurityQualificationContractTest extends TestCase
             $browserTests .= (string) file_get_contents($path);
         }
         self::assertDoesNotMatchRegularExpression('/test\.(?:skip|fixme)\s*\(/', $browserTests);
+        $browserRunner = (string) file_get_contents($this->root . '/scripts/test-browser');
         self::assertStringContainsString(
             'full-stack browser evidence must not intercept API requests',
-            (string) file_get_contents($this->root . '/scripts/test-browser'),
+            $browserRunner,
         );
+        self::assertStringContainsString('export PEANUT_BROWSER_BACKEND_PORT=', $browserRunner);
+        self::assertStringContainsString('export PEANUT_BROWSER_FRONTEND_PORT=', $browserRunner);
     }
 
     public function testSecurityGateFailsWhenAnyTestIsSkipped(): void

@@ -1,5 +1,5 @@
-import { defineAdminHostConfig } from '@peanut-admin/admin-core'
-import type { AdminHostConfig } from '@peanut-admin/admin-core'
+import { defineAdminHostConfig } from '@peanut-admin/admin/core'
+import type { AdminHostConfig } from '@peanut-admin/admin/core'
 
 export type AdminHostEnvironment = Readonly<Record<string, string | boolean | undefined>>
 

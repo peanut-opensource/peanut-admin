@@ -1,4 +1,4 @@
-import { createMemoryRefreshCoordinator } from '@peanut-admin/admin-core'
+import { createMemoryRefreshCoordinator } from '@peanut-admin/admin/core'
 import { describe, expect, it, vi } from 'vitest'
 
 import { createTenantClientTransport, tenantClients } from '../src/clients'

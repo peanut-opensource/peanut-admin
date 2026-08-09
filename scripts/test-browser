@@ -4,6 +4,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+export PEANUT_BROWSER_BACKEND_PORT="${PEANUT_BROWSER_BACKEND_PORT:-4180}"
+export PEANUT_BROWSER_FRONTEND_PORT="${PEANUT_BROWSER_FRONTEND_PORT:-4173}"
+for required_port in PEANUT_BROWSER_BACKEND_PORT PEANUT_BROWSER_FRONTEND_PORT; do
+  value="${!required_port}"
+  if [[ ! "$value" =~ ^[0-9]+$ ]] || (( 10#$value < 1 || 10#$value > 65535 )); then
+    echo "ERROR: $required_port must be an integer between 1 and 65535" >&2
+    exit 1
+  fi
+done
+
 full_stack_test='frontend/tests/e2e/full-stack.e2e.ts'
 full_stack_fixture='frontend/tests/fixtures/full-stack.ts'
 if rg -n 'page\.route|context\.route|routeFromHAR|installApiFixture' "$full_stack_test" "$full_stack_fixture"; then
@@ -47,6 +57,8 @@ export DB_USERNAME=root
 export DB_PASSWORD="${MYSQL_ROOT_PASSWORD:-peanut_admin_root_dev}"
 export AUTH_IDENTIFIER_HMAC_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
 export PEANUT_BROWSER_PASSWORD="$(php -r 'echo bin2hex(random_bytes(24));')"
+export PEANUT_SETTINGS_ACTIVE_SECRET_KEY_ID=browser
+export PEANUT_SETTINGS_SECRET_KEYS="$(php -r 'echo json_encode(["browser" => base64_encode(random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_KEYBYTES))], JSON_THROW_ON_ERROR);')"
 
 cleanup() {
   php frontend/tests/fixtures/full-stack-setup.php drop >/dev/null 2>&1 || true

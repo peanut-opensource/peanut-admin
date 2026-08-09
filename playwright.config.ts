@@ -1,5 +1,9 @@
 import { defineConfig } from '@playwright/test'
 
+const backendPort = Number(process.env.PEANUT_BROWSER_BACKEND_PORT ?? '4180')
+if (!Number.isInteger(backendPort) || backendPort < 1 || backendPort > 65_535) {
+  throw new Error('PEANUT_BROWSER_BACKEND_PORT must be an integer between 1 and 65535')
+}
 const frontendPort = Number(process.env.PEANUT_BROWSER_FRONTEND_PORT ?? '4173')
 if (!Number.isInteger(frontendPort) || frontendPort < 1 || frontendPort > 65_535) {
   throw new Error('PEANUT_BROWSER_FRONTEND_PORT must be an integer between 1 and 65535')
@@ -46,8 +50,8 @@ export default defineConfig({
   ],
   webServer: [
     {
-      command: 'php -S 127.0.0.1:4180 -t backend/public backend/public/router.php',
-      url: 'http://127.0.0.1:4180/api/v1/health',
+      command: `php -S 127.0.0.1:${backendPort} -t backend/public backend/public/router.php`,
+      url: `http://127.0.0.1:${backendPort}/api/v1/health`,
       reuseExistingServer: false,
       timeout: 120_000,
       stdout: 'ignore',

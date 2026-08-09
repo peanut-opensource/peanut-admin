@@ -1,12 +1,12 @@
-import { runAdminRouteGuard } from '@peanut-admin/admin-core'
+import { runAdminRouteGuard } from '@peanut-admin/admin/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 beforeEach(() => {
-  vi.doMock('@peanut-admin/reference-codes', () => import('../../packages/web/reference-codes/src/index'))
+  vi.doMock('@peanut-admin/admin/reference-codes', () => import('../../packages/web/reference-codes/src/index'))
 })
 
 afterEach(() => {
-  vi.doUnmock('@peanut-admin/reference-codes')
+  vi.doUnmock('@peanut-admin/admin/reference-codes')
   vi.doUnmock('../src/app/runtime')
   vi.resetModules()
 })

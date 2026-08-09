@@ -135,8 +135,8 @@ $p1OperationCount = count(array_filter(
     static fn(array $operation): bool => ($operation["scope"] ?? null) === "p1",
 ));
 $p0OperationCount = count($p0Operations);
-if ($p0OperationCount !== 75 || $p1OperationCount !== 4 || count($routes) !== 79) {
-    fwrite(STDERR, "ERROR: documentation expects 75 P0 and 4 P1 Runtime operations\n");
+if ($p0OperationCount !== 75 || $p1OperationCount !== 64 || count($routes) !== 139) {
+    fwrite(STDERR, "ERROR: documentation expects 75 P0 and 64 P1 Runtime operations\n");
     exit(1);
 }
 $routesByOperation = [];

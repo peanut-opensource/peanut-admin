@@ -107,7 +107,7 @@ final readonly class BackupManifest
         ) !== 1) {
             throw new UpgradeFailure('UPGRADE_BACKUP_MANIFEST_INVALID');
         }
-        $fraction = $matches[2] ?? '';
+        $fraction = $matches[2];
         $offset = $matches[3] === 'Z' ? '+00:00' : $matches[3];
         $candidate = $matches[1]
             . ($fraction === '' ? '' : '.' . str_pad($fraction, 6, '0'))

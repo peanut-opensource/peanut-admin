@@ -6,70 +6,7 @@
   "repositories": [
     {
       "type": "path",
-      "url": "../packages/php/kernel",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/data-permission",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/settings",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/reference-codes",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/file-media",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/task-job",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/notification-sms",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/import-export",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/ops-console",
-      "options": {
-        "symlink": false
-      }
-    },
-    {
-      "type": "path",
-      "url": "../packages/php/integration-security",
+      "url": "../packages/php",
       "options": {
         "symlink": false
       }
@@ -79,16 +16,7 @@
     "composer/semver": "3.4.4",
     "opis/json-schema": "2.6.0",
     "php": "^8.3",
-    "peanut-admin/data-permission": "0.1.0",
-    "peanut-admin/kernel": "0.1.0",
-    "peanut-admin/file-media": "0.1.0",
-    "peanut-admin/import-export": "0.1.0",
-    "peanut-admin/integration-security": "0.1.0",
-    "peanut-admin/notification-sms": "0.1.0",
-    "peanut-admin/ops-console": "0.1.0",
-    "peanut-admin/reference-codes": "0.1.0",
-    "peanut-admin/settings": "0.1.0",
-    "peanut-admin/task-job": "0.1.0",
+    "peanut-admin/core": "0.1.0-alpha.2",
     "topthink/framework": "8.1.4",
     "topthink/think-migration": "3.1.1"
   },

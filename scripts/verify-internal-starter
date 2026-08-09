@@ -48,15 +48,13 @@ settings_required=(
   'frontend/src/app/modules.ts'
   'frontend/src/modules/peanut-settings.ts'
   'frontend/tests/settings.spec.ts'
-  'packages/php/settings/composer.json'
-  'packages/web/settings/package.json'
+  'packages/php/composer.json'
+  'packages/web/package.json'
   'backend/src/Modules/Peanut/ReferenceCodes/module.json'
   'backend/src/Modules/Peanut/ReferenceCodes/ModuleProvider.php'
   'backend/tests/reference-codes.php'
   'frontend/src/modules/peanut-reference-codes.ts'
   'frontend/tests/reference-codes.spec.ts'
-  'packages/php/reference-codes/composer.json'
-  'packages/web/reference-codes/package.json'
   'backend/config/file-media.php'
   'backend/src/FileMedia/FileMediaStorageFactory.php'
   'backend/src/FileMedia/LocalPrivateStorageProvider.php'
@@ -65,8 +63,6 @@ settings_required=(
   'frontend/src/modules/peanut-file-media.ts'
   'frontend/tests/file-media.spec.ts'
   'backend/tests/file-media.php'
-  'packages/php/file-media/composer.json'
-  'packages/web/file-media/package.json'
   'backend/src/Modules/Peanut/TaskJob/module.json'
   'backend/src/Modules/Peanut/NotificationSms/module.json'
   'backend/config/notification-sms.php'
@@ -74,10 +70,6 @@ settings_required=(
   'frontend/src/modules/peanut-notification-sms.ts'
   'frontend/tests/task-job.spec.ts'
   'frontend/tests/notification-sms.spec.ts'
-  'packages/php/task-job/composer.json'
-  'packages/php/notification-sms/composer.json'
-  'packages/web/task-job/package.json'
-  'packages/web/notification-sms/package.json'
   'backend/src/Modules/Peanut/ImportExport/module.json'
   'backend/src/Modules/Peanut/IntegrationSecurity/module.json'
   'backend/config/integration-security.php'
@@ -89,12 +81,6 @@ settings_required=(
   'frontend/tests/import-export.spec.ts'
   'frontend/tests/integration-security.spec.ts'
   'frontend/tests/ops-console.spec.ts'
-  'packages/php/import-export/composer.json'
-  'packages/php/ops-console/composer.json'
-  'packages/php/integration-security/composer.json'
-  'packages/web/import-export/package.json'
-  'packages/web/ops-console/package.json'
-  'packages/web/integration-security/package.json'
 )
 for path in "${settings_required[@]}"; do
   if [[ ! -f "$first/$path" ]]; then
@@ -122,31 +108,19 @@ diff -ru "$ROOT/packages/php/integration-security/src" "$first/packages/php/inte
 diff -ru "$ROOT/packages/web/import-export/src" "$first/packages/web/import-export/src"
 diff -ru "$ROOT/packages/web/ops-console/src" "$first/packages/web/ops-console/src"
 diff -ru "$ROOT/packages/web/integration-security/src" "$first/packages/web/integration-security/src"
-cmp "$ROOT/packages/php/settings/composer.json" "$first/packages/php/settings/composer.json"
-cmp "$ROOT/packages/web/settings/package.json" "$first/packages/web/settings/package.json"
-cmp "$ROOT/packages/php/reference-codes/composer.json" "$first/packages/php/reference-codes/composer.json"
-cmp "$ROOT/packages/web/reference-codes/package.json" "$first/packages/web/reference-codes/package.json"
-cmp "$ROOT/packages/php/file-media/composer.json" "$first/packages/php/file-media/composer.json"
-cmp "$ROOT/packages/web/file-media/package.json" "$first/packages/web/file-media/package.json"
-cmp "$ROOT/packages/php/task-job/composer.json" "$first/packages/php/task-job/composer.json"
-cmp "$ROOT/packages/php/notification-sms/composer.json" "$first/packages/php/notification-sms/composer.json"
-cmp "$ROOT/packages/web/task-job/package.json" "$first/packages/web/task-job/package.json"
-cmp "$ROOT/packages/web/notification-sms/package.json" "$first/packages/web/notification-sms/package.json"
-cmp "$ROOT/packages/php/import-export/composer.json" "$first/packages/php/import-export/composer.json"
-cmp "$ROOT/packages/php/ops-console/composer.json" "$first/packages/php/ops-console/composer.json"
-cmp "$ROOT/packages/php/integration-security/composer.json" "$first/packages/php/integration-security/composer.json"
-cmp "$ROOT/packages/web/import-export/package.json" "$first/packages/web/import-export/package.json"
-cmp "$ROOT/packages/web/ops-console/package.json" "$first/packages/web/ops-console/package.json"
-cmp "$ROOT/packages/web/integration-security/package.json" "$first/packages/web/integration-security/package.json"
+cmp "$ROOT/packages/php/composer.json" "$first/packages/php/composer.json"
+cmp "$ROOT/packages/php/LICENSE" "$first/packages/php/LICENSE"
+cmp "$ROOT/packages/web/package.json" "$first/packages/web/package.json"
+cmp "$ROOT/packages/web/LICENSE" "$first/packages/web/LICENSE"
 
 php tests/starter/assert-generated-starter.php "$first"
 
-if rg -n '/Users/|/home/[^/]+/|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|password\s*=' "$first"; then
+if grep -R -n -E '/Users/|/home/[^/]+/|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|password[[:space:]]*=' "$first"; then
   echo 'ERROR: generated starter contains a private path or secret-like value' >&2
   exit 1
 fi
-if rg -ni '\bDCS\b|Finance Manager|门店|仓库|商品|库存|结算|\bwarehouse\b|\binventory\b|\btrade\b|\bsettlement\b' \
-  -g '!LICENSE' "$first"; then
+if grep -R -n -i -E --exclude=LICENSE '(^|[^[:alnum:]_])DCS([^[:alnum:]_]|$)|Finance Manager|门店|仓库|商品|库存|结算|(^|[^[:alnum:]_])warehouse([^[:alnum:]_]|$)|(^|[^[:alnum:]_])inventory([^[:alnum:]_]|$)|(^|[^[:alnum:]_])trade([^[:alnum:]_]|$)|(^|[^[:alnum:]_])settlement([^[:alnum:]_]|$)' \
+  "$first"; then
   echo 'ERROR: generated starter contains product-specific language' >&2
   exit 1
 fi

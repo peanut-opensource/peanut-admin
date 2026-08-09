@@ -1,4 +1,4 @@
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 
 export const UNCONFIGURED_TENANT_CLIENT = new Proxy({} as AudienceApiClient, {
   get() {

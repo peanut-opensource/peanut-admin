@@ -156,6 +156,10 @@ try {
         }
     }
     $moduleConfig = (string) file_get_contents($target . '/backend/config/modules.php');
+    $moduleConfigValues = require $target . '/backend/config/modules.php';
+    if (($moduleConfigValues['kernel_version'] ?? null) !== '1.0.0') {
+        throw new RuntimeException('Generated Host Kernel compatibility version is invalid.');
+    }
     if (!str_contains($moduleConfig, 'peanut.ops-console.page')
         || !is_file($target . '/frontend/src/modules/peanut-ops-console.ts')) {
         throw new RuntimeException('Generated standard-admin Host is missing the always-on Ops Console.');

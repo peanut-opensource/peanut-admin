@@ -1,4 +1,4 @@
-import { defineAdminModule } from '@peanut-admin/admin-core'
+import { defineAdminModule } from '@peanut-admin/admin/core'
 
 export const exampleGreetingModule = defineAdminModule({
   key: 'example.greeting',

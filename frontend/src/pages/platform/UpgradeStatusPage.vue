@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
+import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin/shell'
 import { computed, onMounted, ref } from 'vue'
 
 import { envelopeData, isRecord } from '../../app/contracts'
@@ -87,7 +87,12 @@ onMounted(load)
   <PageContent>
     <PageHeader>版本与升级</PageHeader>
     <PageToolbar label="升级状态操作">
-      <el-button :loading="loading" @click="load">刷新状态</el-button>
+      <el-button
+        :loading="loading"
+        @click="load"
+      >
+        刷新状态
+      </el-button>
     </PageToolbar>
     <el-alert
       v-if="failure"
@@ -95,7 +100,9 @@ onMounted(load)
       :closable="false"
       :title="failure.detail"
     >
-      <template v-if="failure.requestId">请求编号：{{ failure.requestId }}</template>
+      <template v-if="failure.requestId">
+        请求编号：{{ failure.requestId }}
+      </template>
     </el-alert>
     <template v-else-if="status">
       <el-alert
@@ -104,16 +111,32 @@ onMounted(load)
         :title="stateLabel"
         :description="status.preflight.code"
       />
-      <el-descriptions :column="1" border class="upgrade-details">
-        <el-descriptions-item label="当前提交">{{ short(status.current?.commit) }}</el-descriptions-item>
-        <el-descriptions-item label="当前 Tree">{{ short(status.current?.tree) }}</el-descriptions-item>
-        <el-descriptions-item label="工作区状态">{{ status.current?.clean ? '干净' : '存在未提交变化' }}</el-descriptions-item>
-        <el-descriptions-item label="目标版本">{{ status.target?.release_id ?? '尚未配置' }}</el-descriptions-item>
-        <el-descriptions-item label="目标提交">{{ short(status.target?.commit) }}</el-descriptions-item>
+      <el-descriptions
+        :column="1"
+        border
+        class="upgrade-details"
+      >
+        <el-descriptions-item label="当前提交">
+          {{ short(status.current?.commit) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="当前 Tree">
+          {{ short(status.current?.tree) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="工作区状态">
+          {{ status.current?.clean ? '干净' : '存在未提交变化' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="目标版本">
+          {{ status.target?.release_id ?? '尚未配置' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="目标提交">
+          {{ short(status.target?.commit) }}
+        </el-descriptions-item>
         <el-descriptions-item label="备份证据">
           {{ status.backup.valid && status.backup.source_identity_matches ? '有效且匹配当前来源' : '缺失、无效或不匹配' }}
         </el-descriptions-item>
-        <el-descriptions-item label="执行方式">仅由运维人员在主机终端执行</el-descriptions-item>
+        <el-descriptions-item label="执行方式">
+          仅由运维人员在主机终端执行
+        </el-descriptions-item>
       </el-descriptions>
       <el-alert
         type="info"

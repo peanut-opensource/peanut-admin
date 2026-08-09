@@ -1,6 +1,6 @@
-import { defineAdminModule } from '@peanut-admin/admin-core'
+import { defineAdminModule } from '@peanut-admin/admin/core'
 import { inject, reactive } from 'vue'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 import type { InjectionKey } from 'vue'
 
 import {
@@ -525,6 +525,7 @@ export const createReferenceCodesRuntime = (options: ReferenceCodesRuntimeOption
       try {
         const parsed = parsedMutation(result)
         assertMutationEntry(parsed, input.code)
+        if (Date.parse(state.asOf) < Date.parse(parsed.createdAt)) state.asOf = parsed.createdAt
         state.createDraft = null
         delete state.stale[input.code]
         clearMutationKey(scope)

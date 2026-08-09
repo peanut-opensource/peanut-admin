@@ -1,9 +1,10 @@
 # Reference Codes PHP Package
 
-`peanut-admin/reference-codes` provides neutral, reusable reference-code set
-definitions and Tenant-owned, immutable code identities with append-only
-versions. It does not define application categories, workflow states, units,
-taxonomies, or default values.
+The Reference Codes namespace inside `peanut-admin/core` provides neutral,
+reusable reference-code set definitions and Tenant-owned, immutable code
+identities with append-only versions. Its Admin contribution is exported as
+`@peanut-admin/admin/reference-codes`. It does not define application
+categories, workflow states, units, taxonomies, or default values.
 
 ## Ownership
 

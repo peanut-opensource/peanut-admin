@@ -71,6 +71,8 @@ try {
     if (!is_string($kernelRoot) || !is_string($dataPermissionRoot)) {
         throw new RuntimeException('Starter package installation paths are unavailable.');
     }
+    $kernelRoot .= '/kernel';
+    $dataPermissionRoot .= '/data-permission';
     $migrate($kernelRoot . '/database/migrations', 'pa_kernel_migration');
     $migrate($dataPermissionRoot . '/database/migrations', 'pa_data_permission_migration');
     $pdo = new PDO($dsn . ";dbname={$databaseName}", 'root', $rootCredential, $options);

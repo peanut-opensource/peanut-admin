@@ -1,6 +1,8 @@
 # Data Permission Package
 
-`peanut-admin/data-permission` applies resource and operation data scopes after the Kernel functional permission check. It never grants a functional permission and it has no super-user bypass.
+The Data Permission namespace inside `peanut-admin/core` applies resource and
+operation data scopes after the Kernel functional permission check. It never
+grants a functional permission and it has no super-user bypass.
 
 ## Evaluation Order
 

@@ -1,6 +1,9 @@
 # Admin Web Composition
 
-The reference Admin Web is one Vue 3 build with strictly separated tenant and platform workspaces. Reusable behavior lives in `@peanut-admin/admin-core` and `@peanut-admin/admin-shell`; final routing, pages, branding, and Module assembly live in `frontend`.
+The reference Admin Web is one Vue 3 build with strictly separated tenant and
+platform workspaces. Reusable behavior comes from
+`@peanut-admin/admin/core` and `@peanut-admin/admin/shell`; final routing,
+pages, branding, and Module assembly live in `frontend`.
 
 ## Audience Clients
 
@@ -24,7 +27,7 @@ Non-idempotent requests are replayed only when they carry an `Idempotency-Key`.
 ## Module Contribution
 
 ```ts
-import { defineAdminModule } from '@peanut-admin/admin-core'
+import { defineAdminModule } from '@peanut-admin/admin/core'
 
 export default defineAdminModule({
   key: 'example.work-item',
@@ -42,6 +45,35 @@ export default defineAdminModule({
 ```
 
 Remote component paths, `eval`, and runtime Plugin JavaScript are not supported in P0.
+
+## Application Overrides
+
+Reusable Web implementations can declare typed build-time override slots through
+`@peanut-admin/admin/core`. A slot key is a lowercase dotted identifier that
+includes its owner and kind, and its contract version is matched exactly:
+
+```ts
+import type { AdminOverride } from '@peanut-admin/admin/core'
+import { WORKSPACE_SHELL_OVERRIDE_KEY } from '@peanut-admin/admin/shell'
+
+export const ADMIN_HOST_OVERRIDES: readonly AdminOverride[] = [{
+  key: WORKSPACE_SHELL_OVERRIDE_KEY,
+  kind: 'service',
+  contractVersion: '1.0.0',
+  value: audience => audience === 'tenant' ? ApplicationTenantShell : ApplicationPlatformShell,
+}]
+```
+
+The reference Host constructs one registry from package-owned slot declarations
+and the application list. `WorkspaceLayout` calls the selected resolver; it does
+not import the default shells or fall back after an invalid application result.
+
+Registry construction fails with an `ADMIN_OVERRIDE_` error for an invalid or
+duplicate slot, an unknown or duplicate replacement, a kind or exact-version
+mismatch, or a value rejected by its slot validator. There is no fallback for
+an invalid replacement. `diagnostics()` returns immutable key, kind, version,
+and source metadata only; values, Tenant data, credentials, and API responses
+must remain outside diagnostics.
 
 ## Zero, One, And Many Targets
 

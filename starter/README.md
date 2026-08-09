@@ -8,16 +8,18 @@ The generated project contains:
 
 - a minimal ThinkPHP backend host with an external Module namespace;
 - a Vue and Vite Admin Web host;
-- local package snapshots at version `0.1.0`;
-- complete local package snapshots including migrations and schemas;
+- local snapshots of `peanut-admin/core` and `@peanut-admin/admin` at version
+  `0.1.0-alpha.2`;
+- complete package snapshots including every internal Module migration and schema;
 - a schema-validated fictional `example.greeting` Module;
-- a host-owned `peanut.settings` Module backed by `peanut-admin/settings`;
+- a host-owned `peanut.settings` Module backed by the Settings directory in
+  `peanut-admin/core`;
 - a fictional typed setting definition with repeatable synchronization and
   default resolution evidence;
-- an `@peanut-admin/settings` Tenant contribution composed through its package
-  root;
+- an `@peanut-admin/admin/settings` Tenant contribution composed through the
+  consolidated Admin package;
 - a host-owned `peanut.reference-codes` Module and
-  `@peanut-admin/reference-codes` Tenant contribution with no committed
+  `@peanut-admin/admin/reference-codes` Tenant contribution with no committed
   application code sets or values;
 - host-owned Import/Export and Integration Security Modules with package-root
   Admin Web contributions;

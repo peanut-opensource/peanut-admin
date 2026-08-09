@@ -7,6 +7,11 @@ deptrac:
     - packages/php/file-media/src
     - packages/php/settings/src
     - packages/php/testing/src
+    - packages/php/task-job/src
+    - packages/php/notification-sms/src
+    - packages/php/import-export/src
+    - packages/php/ops-console/src
+    - packages/php/integration-security/src
   exclude_files:
     - '#.*tests.*#'
   layers:
@@ -42,10 +47,34 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^PeanutAdmin\\Testing\\#'
+    - name: TaskJob
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\TaskJob\\#'
+    - name: NotificationSms
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\NotificationSms\\#'
+    - name: ImportExport
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\ImportExport\\#'
+    - name: OpsConsole
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\OpsConsole\\#'
+    - name: IntegrationSecurity
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\IntegrationSecurity\\#'
     - name: Backend
       collectors:
         - type: classNameRegex
-          value: '#^PeanutAdmin\\App\\(?!Modules\\)#'
+          value: '#^PeanutAdmin\\App\\(?!Modules\\|module\\TenantWideModuleProvider$)#'
+    - name: ModuleProviderSupport
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\App\\module\\TenantWideModuleProvider$#'
     - name: ModuleContracts
       collectors:
         - type: classNameRegex
@@ -69,6 +98,20 @@ deptrac:
     Testing:
       - Kernel
       - DataPermission
+    TaskJob:
+      - Kernel
+    NotificationSms:
+      - Kernel
+      - TaskJob
+    ImportExport:
+      - Kernel
+      - FileMedia
+      - TaskJob
+    OpsConsole:
+      - Kernel
+      - TaskJob
+    IntegrationSecurity:
+      - Kernel
     Backend:
       - Framework
       - RuntimeLibraries
@@ -78,6 +121,14 @@ deptrac:
       - FileMedia
       - Settings
       - ModuleContracts
+      - TaskJob
+      - NotificationSms
+      - ImportExport
+      - OpsConsole
+      - IntegrationSecurity
+    ModuleProviderSupport:
+      - Kernel
+      - DataPermission
     ModuleContracts:
       - Kernel
       - DataPermission
@@ -89,3 +140,8 @@ deptrac:
       - FileMedia
       - Settings
       - ModuleContracts
+      - ModuleProviderSupport
+      - TaskJob
+      - NotificationSms
+      - ImportExport
+      - IntegrationSecurity

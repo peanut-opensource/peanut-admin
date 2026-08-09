@@ -5,6 +5,10 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
+  brace-expansion@2: 2.1.4
+  brace-expansion@5: 5.0.9
+  js-yaml@4: 4.3.1
+  nanoid@3: 3.3.17
   vitepress>@vitejs/plugin-vue: 5.2.4
   vitepress>vite: 6.4.3
 
@@ -12,6 +16,9 @@ importers:
 
   .:
     devDependencies:
+      '@peanut-admin/admin':
+        specifier: workspace:0.1.0-alpha.3
+        version: link:packages/web
       '@playwright/test':
         specifier: 1.61.1
         version: 1.61.1
@@ -54,42 +61,18 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@6.4.3(@types/node@24.10.1)(lightningcss@1.32.0)(yaml@2.9.0))
+      vue:
+        specifier: 3.5.39
+        version: 3.5.39(typescript@5.9.3)
       vue-tsc:
         specifier: 3.3.7
         version: 3.3.7(typescript@5.9.3)
 
   frontend:
     dependencies:
-      '@peanut-admin/admin-core':
+      '@peanut-admin/admin':
         specifier: workspace:^
-        version: link:../packages/web/admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../packages/web/admin-shell
-      '@peanut-admin/file-media':
-        specifier: workspace:^
-        version: link:../packages/web/file-media
-      '@peanut-admin/import-export':
-        specifier: workspace:^
-        version: link:../packages/web/import-export
-      '@peanut-admin/integration-security':
-        specifier: workspace:^
-        version: link:../packages/web/integration-security
-      '@peanut-admin/notification-sms':
-        specifier: workspace:^
-        version: link:../packages/web/notification-sms
-      '@peanut-admin/ops-console':
-        specifier: workspace:^
-        version: link:../packages/web/ops-console
-      '@peanut-admin/reference-codes':
-        specifier: workspace:^
-        version: link:../packages/web/reference-codes
-      '@peanut-admin/settings':
-        specifier: workspace:^
-        version: link:../packages/web/settings
-      '@peanut-admin/task-job':
-        specifier: workspace:^
-        version: link:../packages/web/task-job
+        version: link:../packages/web
       element-plus:
         specifier: 2.14.3
         version: 2.14.3(vue@3.5.39(typescript@5.9.3))
@@ -119,33 +102,14 @@ importers:
         specifier: 3.3.7
         version: 3.3.7(typescript@5.9.3)
 
-  packages/web/admin-core:
+  packages/web:
     dependencies:
-      openapi-fetch:
-        specifier: 0.17.0
-        version: 0.17.0
-      pinia:
-        specifier: 4.0.2
-        version: 4.0.2(@vue/devtools-api@8.1.5)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@6.4.3(@types/node@24.10.1)(lightningcss@1.32.0)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-
-  packages/web/admin-shell:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
       element-plus:
         specifier: 2.14.3
         version: 2.14.3(vue@3.5.39(typescript@5.9.3))
+      openapi-fetch:
+        specifier: 0.17.0
+        version: 0.17.0
       pinia:
         specifier: 4.0.2
         version: 4.0.2(@vue/devtools-api@8.1.5)(typescript@5.9.3)(vue@3.5.39(typescript@5.9.3))
@@ -171,275 +135,9 @@ importers:
       vue:
         specifier: 3.5.39
         version: 3.5.39(typescript@5.9.3)
-
-  packages/web/file-media:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
       vue-tsc:
         specifier: 3.3.7
         version: 3.3.7(typescript@5.9.3)
-
-  packages/web/import-export:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-      vue-tsc:
-        specifier: 3.3.7
-        version: 3.3.7(typescript@5.9.3)
-
-  packages/web/integration-security:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-      vue-tsc:
-        specifier: 3.3.7
-        version: 3.3.7(typescript@5.9.3)
-
-  packages/web/notification-sms:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-      vue-tsc:
-        specifier: 3.3.7
-        version: 3.3.7(typescript@5.9.3)
-
-  packages/web/ops-console:
-    dependencies:
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-      vue-tsc:
-        specifier: 3.3.7
-        version: 3.3.7(typescript@5.9.3)
-
-  packages/web/reference-codes:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-      vue-tsc:
-        specifier: 3.3.7
-        version: 3.3.7(typescript@5.9.3)
-
-  packages/web/settings:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-      happy-dom:
-        specifier: 20.10.6
-        version: 20.10.6
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vite:
-        specifier: 8.1.4
-        version: 8.1.4(@types/node@24.10.1)(yaml@2.9.0)
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@8.1.4(@types/node@24.10.1)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
-      vue-tsc:
-        specifier: 3.3.7
-        version: 3.3.7(typescript@5.9.3)
-
-  packages/web/task-job:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@peanut-admin/admin-shell':
-        specifier: workspace:^
-        version: link:../admin-shell
-      element-plus:
-        specifier: 2.14.3
-        version: 2.14.3(vue@3.5.39(typescript@5.9.3))
-      vue:
-        specifier: ^3.5.39
-        version: 3.5.39(typescript@5.9.3)
-
-  packages/web/testing:
-    dependencies:
-      '@peanut-admin/admin-core':
-        specifier: workspace:^
-        version: link:../admin-core
-      '@vue/test-utils':
-        specifier: 2.4.11
-        version: 2.4.11(@vue/compiler-dom@3.5.39)(@vue/server-renderer@3.5.39(vue@3.5.39(typescript@5.9.3)))(vue@3.5.39(typescript@5.9.3))
-    devDependencies:
-      typescript:
-        specifier: 5.9.3
-        version: 5.9.3
-      vitest:
-        specifier: 4.1.10
-        version: 4.1.10(@types/node@24.10.1)(happy-dom@20.10.6)(vite@6.4.3(@types/node@24.10.1)(lightningcss@1.32.0)(yaml@2.9.0))
-      vue:
-        specifier: 3.5.39
-        version: 3.5.39(typescript@5.9.3)
 
 packages:
 
@@ -1527,12 +1225,12 @@ packages:
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
 
-  brace-expansion@2.1.2:
-    resolution: {integrity: sha512-w5JZcKgdhDOgOwm8H+KgbosopHMuGcl6qbulwjtz3SM7I7P3yW1eAjzMPLrIE+NQ9vjgANKHWeMHnrT0OXW1oA==}
+  brace-expansion@2.1.4:
+    resolution: {integrity: sha512-hGfVzPxthbf3+2yjg/RBs60cB0FhqBS/zvdV/4wn4/BmN0bNMMHPc4V/BbFieqf1TKAGGAHnY4eSjajCl0f2Xg==}
 
-  brace-expansion@5.0.7:
-    resolution: {integrity: sha512-7oFy703dxfY3/NLxC1fh2SUCQ0H9rmAY+5EpDVfXjUTTs+HEwR2nYaqLv+GWcTsumwxPfiz6CzCNkwXwBUwqCA==}
-    engines: {node: 18 || 20 || >=22}
+  brace-expansion@5.0.9:
+    resolution: {integrity: sha512-ScQ4IuvIEF1TMlP7Zt+vjJ//9zlPb2SDcxWxM3bk8s6t6GGdJ7KO1dCcTidOPJKePW30LE/2cT7wCyPho9/Wxg==}
+    engines: {node: 20 || >=22}
 
   buffer-image-size@0.6.4:
     resolution: {integrity: sha512-nEh+kZOPY1w+gcCMobZ6ETUp9WfibndnosbpwB1iJk/8Gt5ZF2bhS6+B6bPYz424KtwsR6Rflc3tCz1/ghX2dQ==}
@@ -1871,8 +1569,8 @@ packages:
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
-  js-yaml@4.2.0:
-    resolution: {integrity: sha512-ePWsvanv0DWuDRsW8dnt+R4jQ31SCRCQ7hhNcPXZPsoBZiemuZNYGf7adZdqX2D86j6rvKp3RpCxVTSb8WQlOw==}
+  js-yaml@4.3.1:
+    resolution: {integrity: sha512-CY6crGq313MX8GkwvB7tzgp99vjQxY1++5y10/BKN/GUfHqWaOGQMNZkBvqSzsZKWk/ijwHlWzzkLulsGHhjWQ==}
     hasBin: true
 
   jsesc@3.1.0:
@@ -2064,8 +1762,8 @@ packages:
   muggle-string@0.4.1:
     resolution: {integrity: sha512-VNTrAak/KhO2i8dqqnqnAHOa3cYBwXEZe9h+D5h/1ZqFSTEFHdM65lR7RoIqq3tBBYavsOXV84NoHXZ0AkPyqQ==}
 
-  nanoid@3.3.16:
-    resolution: {integrity: sha512-bzlKTyNJ7+LdGIIwy8ijFpIqEQIvafahV7eYykJ8Cvh42EdJeODoJ6gUJXpQJvej1BddH8OqTXZNE/KfbWAu8Q==}
+  nanoid@3.3.17:
+    resolution: {integrity: sha512-xQLf0A3HOMlgHq0n247/LRuAOYmB7dXJ/DvAxGvsSBij45XtBSmQycu+F8ODbHwns/XyFZagyL1+J0Offw1E0g==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -3095,7 +2793,7 @@ snapshots:
       colorette: 1.4.0
       https-proxy-agent: 7.0.6(supports-color@10.2.2)
       js-levenshtein: 1.1.6
-      js-yaml: 4.2.0
+      js-yaml: 4.3.1
       minimatch: 5.1.9
       pluralize: 8.0.0
       yaml-ast-parser: 0.0.43
@@ -3723,11 +3421,11 @@ snapshots:
 
   boolbase@1.0.0: {}
 
-  brace-expansion@2.1.2:
+  brace-expansion@2.1.4:
     dependencies:
       balanced-match: 1.0.2
 
-  brace-expansion@5.0.7:
+  brace-expansion@5.0.9:
     dependencies:
       balanced-match: 4.0.4
 
@@ -4098,7 +3796,7 @@ snapshots:
 
   js-tokens@4.0.0: {}
 
-  js-yaml@4.2.0:
+  js-yaml@4.3.1:
     dependencies:
       argparse: 2.0.1
 
@@ -4237,15 +3935,15 @@ snapshots:
 
   minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.7
+      brace-expansion: 5.0.9
 
   minimatch@5.1.9:
     dependencies:
-      brace-expansion: 2.1.2
+      brace-expansion: 2.1.4
 
   minimatch@9.0.9:
     dependencies:
-      brace-expansion: 2.1.2
+      brace-expansion: 2.1.4
 
   minipass@7.1.3: {}
 
@@ -4264,7 +3962,7 @@ snapshots:
 
   muggle-string@0.4.1: {}
 
-  nanoid@3.3.16: {}
+  nanoid@3.3.17: {}
 
   natural-compare@1.4.0: {}
 
@@ -4387,7 +4085,7 @@ snapshots:
 
   postcss@8.5.19:
     dependencies:
-      nanoid: 3.3.16
+      nanoid: 3.3.17
       picocolors: 1.1.1
       source-map-js: 1.2.1
 

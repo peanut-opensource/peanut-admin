@@ -1,5 +1,5 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 import {
   IMPORT_EXPORT_CANCEL_PERMISSION,
   IMPORT_EXPORT_CREATE_PERMISSION,
@@ -8,8 +8,8 @@ import {
   IMPORT_EXPORT_ROUTE_NAME,
   IMPORT_EXPORT_ROUTE_PATH,
   IMPORT_EXPORT_STORE_KEY,
-} from '@peanut-admin/import-export'
-import type { ImportExportRuntime, ImportExportTransport, ImportExportTransportResult } from '@peanut-admin/import-export'
+} from '@peanut-admin/admin/import-export'
+import type { ImportExportRuntime, ImportExportTransport, ImportExportTransportResult } from '@peanut-admin/admin/import-export'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -66,7 +66,7 @@ export const createPeanutImportExportModule = (options: PeanutImportExportModule
   let runtime: ImportExportRuntime | null = null
 
   const load = async () => {
-    const feature = await import('@peanut-admin/import-export')
+    const feature = await import('@peanut-admin/admin/import-export')
     const active = runtime ?? feature.createImportExportRuntime({
       transport,
       canRead: () => hasPermission(useTenantContext().permissionSet, IMPORT_EXPORT_READ_PERMISSION),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar, TargetScopeSummary, TargetSelector } from '@peanut-admin/admin-shell'
-import type { TargetCandidate, TypedTarget } from '@peanut-admin/admin-core'
+import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar, TargetScopeSummary, TargetSelector } from '@peanut-admin/admin/shell'
+import type { TargetCandidate, TypedTarget } from '@peanut-admin/admin/core'
 import { onMounted, ref } from 'vue'
 
 import { apiCollection } from '../../../app/contracts'

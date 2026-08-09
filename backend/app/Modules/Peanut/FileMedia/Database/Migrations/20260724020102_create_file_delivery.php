@@ -9,9 +9,18 @@ final class CreateFileDelivery extends Migrator implements OwnedMigration
 {
     private const TABLES = ['pa_file_delivery_policy', 'pa_file_image_metadata', 'pa_file_image_variant', 'pa_file_delivery_nonce'];
 
-    public static function moduleKey(): string { return 'peanut.file-media'; }
-    public static function ownedTables(): array { return self::TABLES; }
-    public static function reversible(): bool { return true; }
+    public static function moduleKey(): string
+    {
+        return 'peanut.file-media';
+    }
+    public static function ownedTables(): array
+    {
+        return self::TABLES;
+    }
+    public static function reversible(): bool
+    {
+        return true;
+    }
 
     public function up(): void
     {
@@ -24,7 +33,9 @@ final class CreateFileDelivery extends Migrator implements OwnedMigration
 
     public function down(): void
     {
-        foreach (array_reverse(self::TABLES) as $table) $this->execute(sprintf('DROP TABLE IF EXISTS `%s`', $table));
+        foreach (array_reverse(self::TABLES) as $table) {
+            $this->execute(sprintf('DROP TABLE IF EXISTS `%s`', $table));
+        }
         $this->execute('ALTER TABLE `pa_file_object` DROP INDEX `uk_file_object_tenant_id`');
     }
 }

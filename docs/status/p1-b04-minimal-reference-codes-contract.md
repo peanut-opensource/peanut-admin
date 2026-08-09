@@ -56,8 +56,8 @@ OpenAPI/generated, dependency wiring, starter, and standard Admin Web
 integration may change. Historical Q01, aggregate environment, performance,
 browser-matrix, recovery, clean-install orchestration, and unrelated inherited
 tests or scripts are not implementation inputs for this slice. The fixed
-downstream lock, `dev`, DCS code, tags, releases, and dependency versions do not
-move.
+downstream lock, `dev`, downstream application code, tags, releases, and
+dependency versions do not move.
 
 Development acceptance requires focused PHP unit/integration, migration,
 Tenant-isolation, permission, OpenAPI/generated consistency, Reference Codes
@@ -745,7 +745,8 @@ development inputs and are not qualification namespace fallbacks.
 The negative environment test must cover the shared PHPUnit bootstrap and
 direct Compose interpolation in addition to the previously listed entrypoints.
 This amendment does not authorize changes to P0 Runtime connection defaults,
-application behavior, DCS logic, the qualified lock, or any product repository.
+application behavior, downstream product logic, the qualified lock, or any
+product repository.
 
 ## Parallel Implementation Ownership
 

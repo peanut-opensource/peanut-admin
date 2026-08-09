@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar, TargetScopeSummary } from '@peanut-admin/admin-shell'
+import { EmptyState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar, TargetScopeSummary } from '@peanut-admin/admin/shell'
 import { onMounted, ref, watch } from 'vue'
-import type { TargetCandidate } from '@peanut-admin/admin-core'
+import type { TargetCandidate } from '@peanut-admin/admin/core'
 
 import { AdminApiError, useAdminRuntime } from '../../../app/runtime'
 import { loadTargetCandidatePage } from '../../../components/targets/candidates'

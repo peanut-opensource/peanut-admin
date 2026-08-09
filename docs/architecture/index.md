@@ -6,14 +6,16 @@ Peanut Admin P0 is a modular monolith in one public monorepo. It uses PHP 8.3 an
 
 | Layer | Responsibility |
 | --- | --- |
-| `packages/php/*` | Reusable Kernel, data-permission, and testing packages with public Composer APIs. |
-| `packages/web/*` | Reusable admin-core, admin-shell, and web-testing npm packages. |
+| `packages/php` | The `peanut-admin/core` Composer package; internal directories preserve Kernel and domain ownership. |
+| `packages/web` | The `@peanut-admin/admin` npm package; explicit subpath exports expose Core, Shell, and domain contributions. |
 | `backend` | ThinkPHP reference host, HTTP adapters, configuration, and CLI composition. |
 | `frontend` | Reference Admin Web application consuming only public web-package exports. |
 | `docs` | Versioned developer manual, decisions, generated references, and status. |
 | `examples` | Fictional contract examples; never product-specific business logic. |
 
-Hosts compose reusable packages. Packages do not depend on host internals, and a host must not deep-import another package's private files.
+Hosts install the two public packages and compose their explicit APIs. Internal
+domains do not depend on host internals, and a host must not deep-import a
+domain's private files.
 
 ## Isolation Order
 

@@ -1,4 +1,4 @@
-import { createTenantLifecycle } from '@peanut-admin/admin-core'
+import { createTenantLifecycle } from '@peanut-admin/admin/core'
 
 export interface ContextGenerationTicket {
   value: number

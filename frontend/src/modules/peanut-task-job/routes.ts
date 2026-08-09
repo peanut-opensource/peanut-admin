@@ -1,5 +1,5 @@
-import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import type { AudienceApiClient } from '@peanut-admin/admin-core'
+import { defineAdminModule, hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import type { AudienceApiClient } from '@peanut-admin/admin/core'
 import {
   TASK_JOB_MANAGE_PERMISSION,
   TASK_JOB_MODULE_KEY,
@@ -7,8 +7,8 @@ import {
   TASK_JOB_ROUTE_NAME,
   TASK_JOB_ROUTE_PATH,
   TASK_JOB_STORE_KEY,
-} from '@peanut-admin/task-job'
-import type { TaskJobRuntime, TaskJobTransport, TaskTransportResult } from '@peanut-admin/task-job'
+} from '@peanut-admin/admin/task-job'
+import type { TaskJobRuntime, TaskJobTransport, TaskTransportResult } from '@peanut-admin/admin/task-job'
 import { defineComponent, h, provide } from 'vue'
 
 import { UNCONFIGURED_TENANT_CLIENT } from '../unconfigured-client'
@@ -46,7 +46,7 @@ export const createPeanutTaskJobModule = (options: PeanutTaskJobModuleOptions) =
   let runtime: TaskJobRuntime | null = null
 
   const loadTaskJobRoute = async () => {
-    const taskJob = await import('@peanut-admin/task-job')
+    const taskJob = await import('@peanut-admin/admin/task-job')
     const active = runtime ?? taskJob.createTaskJobRuntime({
       transport,
       canRead: () => hasPermission(useTenantContext().permissionSet, TASK_JOB_READ_PERMISSION),

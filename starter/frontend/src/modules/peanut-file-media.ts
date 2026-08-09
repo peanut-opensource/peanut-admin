@@ -1,6 +1,6 @@
-import { createFileMediaModuleContribution, createFileMediaRuntime } from '@peanut-admin/file-media'
-import type { FileMediaRuntime, FileMediaTransport, FileTransportResult } from '@peanut-admin/file-media'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createFileMediaModuleContribution, createFileMediaRuntime } from '@peanut-admin/admin/file-media'
+import type { FileMediaRuntime, FileMediaTransport, FileTransportResult } from '@peanut-admin/admin/file-media'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutFileMediaHostOptions {
   baseUrl: string
@@ -15,7 +15,8 @@ export interface PeanutFileMediaHost {
   runtime: FileMediaRuntime
 }
 
-const result = async (response: Response): Promise<FileTransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<FileTransportResult> => {
+  const response = await responsePromise
   const text = await response.text()
   let body: unknown = null
   if (text !== '') {

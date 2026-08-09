@@ -24,5 +24,9 @@ jobs:
           coverage: none
       - name: Install PHP dependencies
         run: composer install --no-interaction --prefer-dist
+      - name: Build fixed PHP 8.3.24 performance image
+        run: docker build --tag peanut-admin-performance-php:8.3.24 --file docker/php/Dockerfile .
       - name: Run versioned p95 gate
+        env:
+          PEANUT_PERFORMANCE_PHP_IMAGE: peanut-admin-performance-php:8.3.24
         run: ./scripts/test-performance

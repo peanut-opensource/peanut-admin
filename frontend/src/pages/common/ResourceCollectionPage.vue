@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { hasPermission, useTenantContext } from '@peanut-admin/admin-core'
-import { EmptyState, ForbiddenState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
+import { hasPermission, useTenantContext } from '@peanut-admin/admin/core'
+import { EmptyState, ForbiddenState, ModuleUnavailableState, PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin/shell'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 

@@ -22,8 +22,11 @@ final readonly class PdoRecipientResolver implements RecipientResolver, SmsRecip
         $row = $this->member($context->tenantId, $memberId);
         $sms = $requiresSms ? $this->resolve($context->tenantId, $memberId) : null;
         return new RecipientSnapshot(
-            (int) $row['id'], (int) $row['account_id'], (string) $row['display_name'],
-            $sms?->masked, $sms?->digest,
+            (int) $row['id'],
+            (int) $row['account_id'],
+            (string) $row['display_name'],
+            $sms?->masked,
+            $sms?->digest,
         );
     }
 
@@ -48,7 +51,9 @@ WHERE tm.tenant_id = :tenant_id AND tm.id = :member_id AND tm.status = 'active'
 SQL);
         $statement->execute(['tenant_id' => $tenantId, 'member_id' => $memberId]);
         $row = $statement->fetch(PDO::FETCH_ASSOC);
-        if (!is_array($row)) throw NotificationException::recipientUnavailable();
+        if (!is_array($row)) {
+            throw NotificationException::recipientUnavailable();
+        }
         return $row;
     }
 }

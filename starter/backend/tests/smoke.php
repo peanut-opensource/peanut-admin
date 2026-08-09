@@ -10,20 +10,31 @@ use PeanutAdmin\Kernel\Package as KernelPackage;
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 $root = dirname(__DIR__, 2);
+$moduleConfig = require $root . '/backend/config/modules.php';
 $registry = (new ModuleRegistryFactory($root))->compile();
 $ownedTableOwners = $registry->ownedTableOwners;
 ksort($ownedTableOwners);
 $kernelRoot = InstalledVersions::getInstallPath(KernelPackage::NAME);
 $dataPermissionRoot = InstalledVersions::getInstallPath(DataPermissionPackage::NAME);
+$kernelRoot = is_string($kernelRoot) ? $kernelRoot . '/kernel' : $kernelRoot;
+$dataPermissionRoot = is_string($dataPermissionRoot) ? $dataPermissionRoot . '/data-permission' : $dataPermissionRoot;
 $valid = KernelPackage::VERSION === '0.1.0'
     && DataPermissionPackage::VERSION === '0.1.0'
-    && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.task-job', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings']
+    && ($moduleConfig['kernel_version'] ?? null) === '1.0.0'
+    && $registry->moduleKeys() === ['example.greeting', 'peanut.file-media', 'peanut.task-job', 'peanut.import-export', 'peanut.integration-security', 'peanut.notification-sms', 'peanut.reference-codes', 'peanut.settings']
     && $ownedTableOwners === [
         'pa_file_delivery_nonce' => 'peanut.file-media',
         'pa_file_delivery_policy' => 'peanut.file-media',
         'pa_file_image_metadata' => 'peanut.file-media',
         'pa_file_image_variant' => 'peanut.file-media',
         'pa_file_object' => 'peanut.file-media',
+        'pa_import_export_operation' => 'peanut.import-export',
+        'pa_import_export_row_error' => 'peanut.import-export',
+        'pa_integration_machine_identity' => 'peanut.integration-security',
+        'pa_integration_security_event' => 'peanut.integration-security',
+        'pa_integration_webhook_attempt' => 'peanut.integration-security',
+        'pa_integration_webhook_delivery' => 'peanut.integration-security',
+        'pa_integration_webhook_endpoint' => 'peanut.integration-security',
         'pa_notification_attachment' => 'peanut.notification-sms',
         'pa_notification_event' => 'peanut.notification-sms',
         'pa_notification_message' => 'peanut.notification-sms',

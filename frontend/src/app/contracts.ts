@@ -1,5 +1,5 @@
-import { parseProblemDetails } from '@peanut-admin/admin-core'
-import type { ProblemDetails, TargetCandidate } from '@peanut-admin/admin-core'
+import { parseProblemDetails } from '@peanut-admin/admin/core'
+import type { ProblemDetails, TargetCandidate } from '@peanut-admin/admin/core'
 
 export type UnknownRecord = Record<string, unknown>
 

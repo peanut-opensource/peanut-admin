@@ -87,5 +87,5 @@ quota, cloud-vendor SDKs, permanent public URLs, arbitrary transforms, or
 retention deletion. Aggregate, browser matrix, performance, clean install,
 recovery, and cross-OS qualification remain deferred to the fixed candidate.
 Completion is development evidence only; it does not publish a package, move
-`dev` or a DCS consumption lock, create a tag/release, or claim production CDN
-or object-storage readiness.
+`dev` or a downstream-consumption lock, create a tag/release, or claim
+production CDN or object-storage readiness.

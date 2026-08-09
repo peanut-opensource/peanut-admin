@@ -9,8 +9,8 @@ import {
   projectAuditDetail,
   usePlatformContext,
   useTenantContext,
-} from '@peanut-admin/admin-core'
-import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin-shell'
+} from '@peanut-admin/admin/core'
+import { PageContent, PageHeader, PageToolbar } from '@peanut-admin/admin/shell'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -350,66 +350,225 @@ onMounted(load)
 
 <template>
   <PageContent>
-    <PageHeader><span :role="icon.role" :aria-label="icon.label">{{ icon.glyph }}</span> {{ audience === 'tenant' ? '权限治理' : '平台权限治理' }}</PageHeader>
-    <PageToolbar label="治理工作台操作"><el-button :loading="loading" @click="load">刷新</el-button></PageToolbar>
-    <el-alert v-if="failure" type="error" :closable="false" :title="failure.detail">请求编号：{{ failure.requestId || '-' }}</el-alert>
-    <el-alert v-if="success" type="success" :closable="false" :title="success" />
+    <PageHeader>
+      <span
+        :role="icon.role"
+        :aria-label="icon.label"
+      >{{ icon.glyph }}</span> {{ audience === 'tenant' ? '权限治理' : '平台权限治理' }}
+    </PageHeader>
+    <PageToolbar label="治理工作台操作">
+      <el-button
+        :loading="loading"
+        @click="load"
+      >
+        刷新
+      </el-button>
+    </PageToolbar>
+    <el-alert
+      v-if="failure"
+      type="error"
+      :closable="false"
+      :title="failure.detail"
+    >
+      请求编号：{{ failure.requestId || '-' }}
+    </el-alert>
+    <el-alert
+      v-if="success"
+      type="success"
+      :closable="false"
+      :title="success"
+    />
 
     <el-tabs>
       <el-tab-pane label="角色权限">
-        <el-select v-model="selectedRoleId" placeholder="选择角色" @change="selectRole">
-          <el-option v-for="role in roles" :key="String(role.id)" :label="String(role.name)" :value="String(role.id)" />
+        <el-select
+          v-model="selectedRoleId"
+          placeholder="选择角色"
+          @change="selectRole"
+        >
+          <el-option
+            v-for="role in roles"
+            :key="String(role.id)"
+            :label="String(role.name)"
+            :value="String(role.id)"
+          />
         </el-select>
-        <el-checkbox-group v-if="canPermissions" v-model="selectedPermissionKeys" class="permission-grid">
-          <el-checkbox v-for="permission in permissions" :key="String(permission.key)" :value="String(permission.key)">
+        <el-checkbox-group
+          v-if="canPermissions"
+          v-model="selectedPermissionKeys"
+          class="permission-grid"
+        >
+          <el-checkbox
+            v-for="permission in permissions"
+            :key="String(permission.key)"
+            :value="String(permission.key)"
+          >
             {{ permission.name }}（{{ permission.key }}）
           </el-checkbox>
         </el-checkbox-group>
-        <el-alert v-else type="info" :closable="false" :title="audience === 'tenant' ? '缺少 core.permission.read，权限目录不可见。' : '缺少 platform.permission.read，权限目录不可见。'" />
-        <el-button type="primary" :disabled="!canAssign || !canPermissions || !roleSelectionReady || selectedRoleId === ''" :loading="saving" @click="savePermissions">保存角色权限</el-button>
+        <el-alert
+          v-else
+          type="info"
+          :closable="false"
+          :title="audience === 'tenant' ? '缺少 core.permission.read，权限目录不可见。' : '缺少 platform.permission.read，权限目录不可见。'"
+        />
+        <el-button
+          type="primary"
+          :disabled="!canAssign || !canPermissions || !roleSelectionReady || selectedRoleId === ''"
+          :loading="saving"
+          @click="savePermissions"
+        >
+          保存角色权限
+        </el-button>
       </el-tab-pane>
 
-      <el-tab-pane v-if="audience === 'tenant'" label="数据策略">
+      <el-tab-pane
+        v-if="audience === 'tenant'"
+        label="数据策略"
+      >
         <el-form label-position="top">
-          <el-form-item label="资源标识"><el-input v-model="policyResource" /></el-form-item>
-          <el-form-item label="操作"><el-input v-model="policyOperation" /></el-form-item>
-          <el-form-item label="策略 JSON"><el-input v-model="policyJson" type="textarea" :rows="12" /></el-form-item>
+          <el-form-item label="资源标识">
+            <el-input v-model="policyResource" />
+          </el-form-item>
+          <el-form-item label="操作">
+            <el-input v-model="policyOperation" />
+          </el-form-item>
+          <el-form-item label="策略 JSON">
+            <el-input
+              v-model="policyJson"
+              type="textarea"
+              :rows="12"
+            />
+          </el-form-item>
         </el-form>
-        <el-button :disabled="!canReadPolicy || selectedRoleId === ''" @click="loadPolicy">读取策略</el-button>
-        <el-button type="primary" :disabled="!canManagePolicy || selectedRoleId === ''" :loading="saving" @click="savePolicy">保存策略</el-button>
+        <el-button
+          :disabled="!canReadPolicy || selectedRoleId === ''"
+          @click="loadPolicy"
+        >
+          读取策略
+        </el-button>
+        <el-button
+          type="primary"
+          :disabled="!canManagePolicy || selectedRoleId === ''"
+          :loading="saving"
+          @click="savePolicy"
+        >
+          保存策略
+        </el-button>
       </el-tab-pane>
 
       <el-tab-pane label="菜单诊断">
-        <el-table :data="flattenedMenus" table-layout="fixed">
-          <el-table-column prop="name" label="菜单" />
-          <el-table-column prop="route_name" label="受信路由" />
-          <el-table-column prop="component_key" label="组件" />
-          <el-table-column label="契约"><template #default="scope">{{ menuContract(scope.row) }}</template></el-table-column>
+        <el-table
+          :data="flattenedMenus"
+          table-layout="fixed"
+        >
+          <el-table-column
+            prop="name"
+            label="菜单"
+          />
+          <el-table-column
+            prop="route_name"
+            label="受信路由"
+          />
+          <el-table-column
+            prop="component_key"
+            label="组件"
+          />
+          <el-table-column label="契约">
+            <template #default="scope">
+              {{ menuContract(scope.row) }}
+            </template>
+          </el-table-column>
         </el-table>
       </el-tab-pane>
 
       <el-tab-pane label="审计日志">
         <el-form inline>
-          <el-form-item label="事件"><el-input v-model="filterEventType" /></el-form-item>
-          <el-form-item label="动作"><el-input v-model="filterAction" /></el-form-item>
-          <el-form-item label="结果"><el-select v-model="filterOutcome" clearable><el-option label="成功" value="success" /><el-option label="拒绝" value="denied" /><el-option label="错误" value="error" /></el-select></el-form-item>
-          <el-form-item label="请求编号"><el-input v-model="filterRequestId" /></el-form-item>
-          <el-form-item><el-button :disabled="!canAudit" @click="loadAudit">筛选</el-button></el-form-item>
+          <el-form-item label="事件">
+            <el-input v-model="filterEventType" />
+          </el-form-item>
+          <el-form-item label="动作">
+            <el-input v-model="filterAction" />
+          </el-form-item>
+          <el-form-item label="结果">
+            <el-select
+              v-model="filterOutcome"
+              clearable
+            >
+              <el-option
+                label="成功"
+                value="success"
+              /><el-option
+                label="拒绝"
+                value="denied"
+              /><el-option
+                label="错误"
+                value="error"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="请求编号">
+            <el-input v-model="filterRequestId" />
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              :disabled="!canAudit"
+              @click="loadAudit"
+            >
+              筛选
+            </el-button>
+          </el-form-item>
         </el-form>
-        <el-table :data="auditEvents" table-layout="fixed" @row-click="inspectAudit">
-          <el-table-column prop="created_at" label="时间" />
-          <el-table-column prop="event_type" label="事件" />
-          <el-table-column prop="action" label="动作" />
-          <el-table-column prop="request_id" label="请求编号" />
+        <el-table
+          :data="auditEvents"
+          table-layout="fixed"
+          @row-click="inspectAudit"
+        >
+          <el-table-column
+            prop="created_at"
+            label="时间"
+          />
+          <el-table-column
+            prop="event_type"
+            label="事件"
+          />
+          <el-table-column
+            prop="action"
+            label="动作"
+          />
+          <el-table-column
+            prop="request_id"
+            label="请求编号"
+          />
         </el-table>
-        <el-descriptions v-if="selectedAudit" :column="1" border class="audit-detail">
-          <el-descriptions-item label="事件">{{ selectedAudit.eventType }}</el-descriptions-item>
-          <el-descriptions-item label="动作">{{ selectedAudit.action }}</el-descriptions-item>
-          <el-descriptions-item label="结果">{{ selectedAudit.outcome }}</el-descriptions-item>
-          <el-descriptions-item label="请求编号">{{ selectedAudit.requestId }}</el-descriptions-item>
-          <el-descriptions-item label="安全元数据"><pre>{{ JSON.stringify(selectedAudit.metadata, null, 2) }}</pre></el-descriptions-item>
+        <el-descriptions
+          v-if="selectedAudit"
+          :column="1"
+          border
+          class="audit-detail"
+        >
+          <el-descriptions-item label="事件">
+            {{ selectedAudit.eventType }}
+          </el-descriptions-item>
+          <el-descriptions-item label="动作">
+            {{ selectedAudit.action }}
+          </el-descriptions-item>
+          <el-descriptions-item label="结果">
+            {{ selectedAudit.outcome }}
+          </el-descriptions-item>
+          <el-descriptions-item label="请求编号">
+            {{ selectedAudit.requestId }}
+          </el-descriptions-item>
+          <el-descriptions-item label="安全元数据">
+            <pre>{{ JSON.stringify(selectedAudit.metadata, null, 2) }}</pre>
+          </el-descriptions-item>
         </el-descriptions>
-        <el-alert v-if="!canAudit" type="info" :closable="false" :title="audience === 'tenant' ? '缺少 core.audit.read，审计数据不可见。' : '缺少 platform.audit.read，审计数据不可见。'" />
+        <el-alert
+          v-if="!canAudit"
+          type="info"
+          :closable="false"
+          :title="audience === 'tenant' ? '缺少 core.audit.read，审计数据不可见。' : '缺少 platform.audit.read，审计数据不可见。'"
+        />
       </el-tab-pane>
     </el-tabs>
   </PageContent>

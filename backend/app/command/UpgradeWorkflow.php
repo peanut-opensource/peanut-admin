@@ -15,6 +15,7 @@ use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\RepositoryUpgradeTargetVerifier;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
+use PeanutAdmin\DataPermission\Package as DataPermissionPackage;
 use PeanutAdmin\Kernel\Authorization\ModuleAuthorizationCatalogSynchronizer;
 use PeanutAdmin\Kernel\Authorization\Persistence\PdoAuthorizationCatalogRepository;
 use PeanutAdmin\Kernel\Menu\MenuCatalogSynchronizer;
@@ -70,11 +71,11 @@ final readonly class UpgradeWorkflow
                 );
             }
             $this->assertPackageMigrationCurrent(
-                $this->root . '/packages/php/kernel/database/migrations',
+                $this->kernelMigrationsPath(),
                 'pa_kernel_migration',
             );
             $this->assertPackageMigrationCurrent(
-                $this->root . '/packages/php/data-permission/database/migrations',
+                $this->dataPermissionMigrationsPath(),
                 'pa_data_permission_migration',
             );
             foreach ($registry->modules as $module) {
@@ -160,12 +161,12 @@ final readonly class UpgradeWorkflow
             }
         }
         $this->migratePackage(
-            $this->root . '/packages/php/kernel/database/migrations',
+            $this->kernelMigrationsPath(),
             'kernel',
             'pa_kernel_migration',
         );
         $this->migratePackage(
-            $this->root . '/packages/php/data-permission/database/migrations',
+            $this->dataPermissionMigrationsPath(),
             'data_permission',
             'pa_data_permission_migration',
         );
@@ -475,7 +476,6 @@ SQL);
 
     private function registry(): CompiledModuleRegistry
     {
-        /** @var array{kernel_version: string, roots: list<string>, frontend_components: list<string>} $config */
         $repositoryRoot = realpath($this->root);
         $configPath = $this->root . '/backend/config/modules.php';
         $physicalConfig = realpath($configPath);
@@ -486,16 +486,34 @@ SQL);
             throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration path is unsafe.');
         }
         $config = require $physicalConfig;
-        $roots = array_map(
-            fn(string $path): string => $this->root . '/' . ltrim($path, '/'),
-            $config['roots'],
-        );
+        $kernelVersion = is_array($config) ? ($config['kernel_version'] ?? null) : null;
+        $configuredRoots = is_array($config) ? ($config['roots'] ?? null) : null;
+        $frontendComponents = is_array($config) ? ($config['frontend_components'] ?? null) : null;
+        if (!is_string($kernelVersion)
+            || !is_array($configuredRoots)
+            || !is_array($frontendComponents)) {
+            throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration is invalid.');
+        }
+        $roots = [];
+        foreach ($configuredRoots as $path) {
+            if (!is_string($path) || $path === '') {
+                throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration is invalid.');
+            }
+            $roots[] = $this->root . '/' . ltrim($path, '/');
+        }
+        $components = [];
+        foreach ($frontendComponents as $component) {
+            if (!is_string($component) || $component === '') {
+                throw new ModuleException('MODULE_CONFIG_UNSAFE', 'Module configuration is invalid.');
+            }
+            $components[] = $component;
+        }
 
         return (new ModuleRegistryFactory(
             $roots,
-            $config['frontend_components'],
-            $config['kernel_version'],
-            $this->packagePath(KernelPackage::NAME) . '/resources/schemas/module-manifest.schema.json',
+            $components,
+            $kernelVersion,
+            $this->packagePath(KernelPackage::NAME) . '/kernel/resources/schemas/module-manifest.schema.json',
         ))->compileAndCheckBoundaries();
     }
 
@@ -710,7 +728,7 @@ SQL);
     private function executeMigration(MigrationInterface $migration): void
     {
         $manager = $this->manager(
-            $this->root . '/packages/php/kernel/database/migrations',
+            $this->kernelMigrationsPath(),
             'runtime',
             'pa_kernel_migration',
         );
@@ -865,6 +883,16 @@ SQL);
         }
 
         return rtrim($path, '/');
+    }
+
+    private function kernelMigrationsPath(): string
+    {
+        return $this->packagePath(KernelPackage::NAME) . '/kernel/database/migrations';
+    }
+
+    private function dataPermissionMigrationsPath(): string
+    {
+        return $this->packagePath(DataPermissionPackage::NAME) . '/data-permission/database/migrations';
     }
 
     private function now(): string

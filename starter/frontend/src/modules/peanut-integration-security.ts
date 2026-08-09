@@ -1,6 +1,6 @@
-import { createIntegrationSecurityModuleContribution, createIntegrationSecurityRuntime } from '@peanut-admin/integration-security'
-import type { IntegrationSecurityPermissions, IntegrationSecurityRuntime, IntegrationSecurityTransport, TransportResult } from '@peanut-admin/integration-security'
-import type { AdminModuleContribution } from '@peanut-admin/admin-core'
+import { createIntegrationSecurityModuleContribution, createIntegrationSecurityRuntime } from '@peanut-admin/admin/integration-security'
+import type { IntegrationSecurityPermissions, IntegrationSecurityRuntime, IntegrationSecurityTransport, TransportResult } from '@peanut-admin/admin/integration-security'
+import type { AdminModuleContribution } from '@peanut-admin/admin/core'
 
 export interface PeanutIntegrationSecurityHostOptions {
   baseUrl: string
@@ -9,7 +9,8 @@ export interface PeanutIntegrationSecurityHostOptions {
 }
 export interface PeanutIntegrationSecurityHost { module: AdminModuleContribution; runtime: IntegrationSecurityRuntime }
 
-const result = async (response: Response): Promise<TransportResult> => {
+const result = async (responsePromise: Promise<Response>): Promise<TransportResult> => {
+  const response = await responsePromise
   const text = await response.text(); let body: unknown = null
   if (text !== '') { try { body = JSON.parse(text) as unknown } catch { body = null } }
   return { body, headers: response.headers, status: response.status }

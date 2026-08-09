@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace PeanutAdmin\App\Tests\Contract;
 
 use DateTimeImmutable;
+use PDO;
 use PeanutAdmin\App\middleware\ModuleGuard;
 use PeanutAdmin\Kernel\Auth\TenantContext;
 use PeanutAdmin\Kernel\Auth\ValidatedTenantSession;
@@ -20,7 +21,7 @@ final class ModuleGuardMiddlewareTest extends TestCase
 {
     public function testEnabledModuleContinuesWithTrustedTenantContext(): void
     {
-        $middleware = new ModuleGuard($this->repository(
+        $middleware = new ModuleGuard($this->createStub(PDO::class), $this->repository(
             new ModuleInstallationRecord('example.work-item', '1.0.0', 'active', 1, 'digest'),
             new TenantModuleRecord(9, 'example.work-item', 'enabled', null, null, 1),
         ));
@@ -37,7 +38,7 @@ final class ModuleGuardMiddlewareTest extends TestCase
 
     public function testDisabledModuleStopsBeforeTheController(): void
     {
-        $middleware = new ModuleGuard($this->repository(
+        $middleware = new ModuleGuard($this->createStub(PDO::class), $this->repository(
             new ModuleInstallationRecord('example.work-item', '1.0.0', 'active', 1, 'digest'),
             null,
         ));
