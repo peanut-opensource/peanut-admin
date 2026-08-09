@@ -306,8 +306,7 @@ SQL);
         MigrationInventory $source,
         ?string $sourceRoot = null,
         ?string $sourceRevision = null,
-    ): UpgradePlan
-    {
+    ): UpgradePlan {
         $target = (new TargetMigrationInventory())->scan($root);
         $sourceRepository = $sourceRoot ?? $root;
         $sourceRevision ??= $sourceRoot === null ? 'HEAD^' : 'HEAD';
