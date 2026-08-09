@@ -258,7 +258,7 @@ final class UpgradeLifecycleTest extends TestCase
 
     public function testReleaseInspectionRejectsAPackageWithoutGitMetadata(): void
     {
-        $root = '/private/tmp/peanut-upgrade-no-git-' . bin2hex(random_bytes(8));
+        $root = sys_get_temp_dir() . '/peanut-upgrade-no-git-' . bin2hex(random_bytes(8));
         self::assertTrue(mkdir($root, 0700, true));
         try {
             $this->expectException(UpgradeFailure::class);
@@ -271,7 +271,7 @@ final class UpgradeLifecycleTest extends TestCase
 
     public function testTargetInventoryRejectsASymlinkedModuleConfig(): void
     {
-        $root = '/private/tmp/peanut-upgrade-config-' . bin2hex(random_bytes(8));
+        $root = sys_get_temp_dir() . '/peanut-upgrade-config-' . bin2hex(random_bytes(8));
         $external = $root . '-modules.php';
         try {
             self::assertTrue(mkdir($root . '/packages/php/kernel/database/migrations', 0700, true));

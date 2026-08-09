@@ -16,6 +16,8 @@ for required_port in MYSQL_PORT DB_PORT CACHE_PORT; do
   fi
 done
 
+export DB_HOST=127.0.0.1
+
 docker compose up -d mysql cache
 
 for attempt in $(seq 1 60); do

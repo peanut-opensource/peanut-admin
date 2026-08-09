@@ -22,16 +22,11 @@ if [[ -n "$performance_php_image" ]]; then
     echo 'ERROR: Compose MySQL container is unavailable for performance tests' >&2
     exit 1
   fi
-  performance_docker_network="$(docker inspect --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}}{{end}}' "$mysql_container")"
-  if [[ -z "$performance_docker_network" ]]; then
-    echo 'ERROR: Compose MySQL network is unavailable for performance tests' >&2
-    exit 1
-  fi
   php_command=(
-    docker run --rm --network "$performance_docker_network"
-    --env 'DB_HOST=mysql'
+    docker run --rm --network "container:${mysql_container}"
+    --env 'DB_HOST=127.0.0.1'
     --env 'DB_PORT=3306'
-    --env 'MYSQL_HOST=mysql'
+    --env 'MYSQL_HOST=127.0.0.1'
     --env 'MYSQL_PORT=3306'
     --env "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-peanut_admin_root_dev}"
     --volume "$ROOT:/workspace:ro"

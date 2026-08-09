@@ -374,7 +374,7 @@ SQL));
     private function databaseEnvironment(string $database): array
     {
         return [
-            'COMPOSE_PROJECT_NAME' => getenv('COMPOSE_PROJECT_NAME') ?: 'peanut-admin-p1-b03',
+            'COMPOSE_PROJECT_NAME' => getenv('COMPOSE_PROJECT_NAME') ?: 'peanut-admin',
             'DB_HOST' => '127.0.0.1',
             'DB_PORT' => $this->requiredEnvironment('DB_PORT'),
             'DB_DATABASE' => $database,

@@ -34,7 +34,7 @@ final class UpgradeWorkflowIntegrationTest extends TestCase
 
     public static function setUpBeforeClass(): void
     {
-        self::$repositoryRoot = '/private/tmp/peanut-upgrade-git-' . bin2hex(random_bytes(8));
+        self::$repositoryRoot = sys_get_temp_dir() . '/peanut-upgrade-git-' . bin2hex(random_bytes(8));
         self::runCommand([
             'git', 'clone', '--quiet', '--no-hardlinks', dirname(__DIR__, 3), self::$repositoryRoot,
         ]);
@@ -177,7 +177,7 @@ SQL));
     public function testEvidenceBoundOldReleaseUpgradesToCurrentAndRepeatsAsNoop(): void
     {
         $root = self::$repositoryRoot;
-        $oldRoot = '/private/tmp/peanut-upgrade-old-' . bin2hex(random_bytes(8));
+        $oldRoot = sys_get_temp_dir() . '/peanut-upgrade-old-' . bin2hex(random_bytes(8));
         try {
             self::runCommand(['git', 'clone', '--quiet', '--no-hardlinks', $root, $oldRoot]);
             self::runCommand(['git', '-C', $oldRoot, 'checkout', '--quiet', '--detach', self::OLD_RELEASE]);

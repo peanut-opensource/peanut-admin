@@ -4,6 +4,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+export PEANUT_BROWSER_BACKEND_PORT="${PEANUT_BROWSER_BACKEND_PORT:-4180}"
+export PEANUT_BROWSER_FRONTEND_PORT="${PEANUT_BROWSER_FRONTEND_PORT:-4173}"
+for required_port in PEANUT_BROWSER_BACKEND_PORT PEANUT_BROWSER_FRONTEND_PORT; do
+  value="${!required_port}"
+  if [[ ! "$value" =~ ^[0-9]+$ ]] || (( 10#$value < 1 || 10#$value > 65535 )); then
+    echo "ERROR: $required_port must be an integer between 1 and 65535" >&2
+    exit 1
+  fi
+done
+
 full_stack_test='frontend/tests/e2e/full-stack.e2e.ts'
 full_stack_fixture='frontend/tests/fixtures/full-stack.ts'
 if rg -n 'page\.route|context\.route|routeFromHAR|installApiFixture' "$full_stack_test" "$full_stack_fixture"; then
