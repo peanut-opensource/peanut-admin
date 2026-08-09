@@ -300,6 +300,12 @@ the generated license inventory platform-independent, connects the fixed PHP
 performance container to the Compose MySQL network, and fixes the malformed
 documentation placeholder without changing Runtime or release artifacts.
 
+The [P1-PKG09 CI Environment Wiring Contract](./p1-pkg09-ci-environment-wiring-contract.md)
+owns the separately authorized runner corrections exposed after P1-PKG08. It
+propagates browser ports, fixes portable integration fixture inputs, and lets
+the fixed performance PHP image reach only the Runner-local temporary MySQL;
+it does not change a downstream or production database connection.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
