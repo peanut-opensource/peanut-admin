@@ -30,7 +30,7 @@ if [[ -n "$performance_php_image" ]]; then
     --env 'MYSQL_PORT=3306'
     --env "MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-peanut_admin_root_dev}"
     --volume "$ROOT:/workspace:ro"
-    --volume "$phpunit_cache:/workspace/.cache/phpunit"
+    --volume "$phpunit_cache:/tmp/peanut-admin-phpunit-cache"
     --workdir /workspace
     "$performance_php_image"
     php
@@ -50,10 +50,12 @@ done
 
 if [[ -n "$performance_php_image" ]]; then
   report="$phpunit_cache/performance-report.json"
-  report_argument='/workspace/.cache/phpunit/performance-report.json'
+  report_argument='/tmp/peanut-admin-phpunit-cache/performance-report.json'
+  phpunit_cache_argument='/tmp/peanut-admin-phpunit-cache/phpunit'
 else
   report="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-performance.XXXXXX")"
   report_argument="$report"
+  phpunit_cache_argument='.cache/phpunit'
 fi
 cleanup() {
   rm -f "$report"
@@ -107,6 +109,6 @@ foreach (($baseline["scenarios"] ?? []) as $name => $expected) {
     }
 }
 ' "$report_argument"
-"${php_command[@]}" vendor/bin/phpunit tests/performance
+"${php_command[@]}" vendor/bin/phpunit --cache-directory "$phpunit_cache_argument" tests/performance
 
 echo 'Performance qualification: OK'

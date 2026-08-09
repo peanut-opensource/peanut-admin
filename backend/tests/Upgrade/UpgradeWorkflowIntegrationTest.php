@@ -9,6 +9,7 @@ use PeanutAdmin\App\command\UpgradeWorkflow;
 use PeanutAdmin\App\upgrade\BackupManifest;
 use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\ReleaseManifest;
+use PeanutAdmin\App\upgrade\RepositoryInspector;
 use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
@@ -133,10 +134,15 @@ SQL));
     public function testEvidenceBoundUpgradeRejectsTheWrongSourceDatabaseBeforeMutation(): void
     {
         $root = self::$repositoryRoot;
-        $source = (new TargetMigrationInventory())->scan($root);
+        $parentLine = self::runCommand(['git', '-C', $root, 'rev-list', '--parents', '-n', '1', 'HEAD']);
+        $sourceRevision = count(preg_split('/\s+/', $parentLine) ?: []) > 2 ? 'HEAD^2' : 'HEAD^';
+        $sourceCommit = self::runCommand(['git', '-C', $root, 'rev-parse', $sourceRevision]);
+        $source = (new RepositoryInspector())->inventoryAtCommit($root, $sourceCommit);
 
         try {
-            (new UpgradeWorkflow($root, $this->database))->run($this->plan($root, $source, $root));
+            (new UpgradeWorkflow($root, $this->database))->run(
+                $this->plan($root, $source, null, $sourceRevision),
+            );
         } catch (ModuleException $exception) {
             self::assertSame('UPGRADE_SOURCE_DATABASE_MISMATCH', $exception->errorCode);
             self::assertSame(0, $this->scalar(<<<'SQL'
@@ -295,11 +301,16 @@ SQL);
         self::fail('A definition required by the current registry must remain active.');
     }
 
-    private function plan(string $root, MigrationInventory $source, ?string $sourceRoot = null): UpgradePlan
+    private function plan(
+        string $root,
+        MigrationInventory $source,
+        ?string $sourceRoot = null,
+        ?string $sourceRevision = null,
+    ): UpgradePlan
     {
         $target = (new TargetMigrationInventory())->scan($root);
         $sourceRepository = $sourceRoot ?? $root;
-        $sourceRevision = $sourceRoot === null ? 'HEAD^' : 'HEAD';
+        $sourceRevision ??= $sourceRoot === null ? 'HEAD^' : 'HEAD';
         $sourceCommit = self::runCommand(['git', '-C', $sourceRepository, 'rev-parse', $sourceRevision]);
         $sourceTree = self::runCommand([
             'git', '-C', $sourceRepository, 'rev-parse', $sourceCommit . '^{tree}',

@@ -44,10 +44,10 @@ No other file may change.
 Security installs Chromium through the same pinned Playwright dependency and
 command already used by the CI quality job.
 
-The wrong-source-database test uses the current fixed repository as both source
-and target release evidence so its only mismatch is the intentionally empty
-database. It does not derive release meaning from the parent ordering of a PR
-merge commit.
+The wrong-source-database test uses the candidate parent for a linear checkout
+and the candidate-branch parent for a synthetic pull-request merge checkout.
+The source and target identities remain distinct, their migration inventories
+remain append-only, and the only intentional mismatch is the empty database.
 
 Performance waits for the Compose MySQL health contract, then runs the fixed
 PHP image once against the Runner-local temporary service. A failure exposes

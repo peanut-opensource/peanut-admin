@@ -61,7 +61,9 @@ final class PerformanceQualificationContractTest extends TestCase
         self::assertStringContainsString('docker run --rm --network "container:${mysql_container}"', $script);
         self::assertStringContainsString("--env 'DB_HOST=127.0.0.1'", $script);
         self::assertStringContainsString("--env 'DB_PORT=3306'", $script);
-        self::assertStringContainsString("report_argument='/workspace/.cache/phpunit/performance-report.json'", $script);
+        self::assertStringContainsString("--volume \"\$phpunit_cache:/tmp/peanut-admin-phpunit-cache\"", $script);
+        self::assertStringContainsString("report_argument='/tmp/peanut-admin-phpunit-cache/performance-report.json'", $script);
+        self::assertStringContainsString('--cache-directory "$phpunit_cache_argument"', $script);
         self::assertStringNotContainsString('docker run --rm --network host', $script);
         self::assertStringNotContainsString("catch (Throwable) {\n        exit(1);", $script);
 
