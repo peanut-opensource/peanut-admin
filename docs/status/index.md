@@ -306,6 +306,11 @@ propagates browser ports, fixes portable integration fixture inputs, and lets
 the fixed performance PHP image reach only the Runner-local temporary MySQL;
 it does not change a downstream or production database connection.
 
+The [P1-PKG10 Final Qualification Wiring Contract](./p1-pkg10-final-qualification-wiring-contract.md)
+owns the remaining Chromium installation, PR-merge-topology, and fixed-PHP
+performance diagnostics. It is restricted to GitHub Runner qualification and
+does not alter any downstream database or published Alpha.3 artifact.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does

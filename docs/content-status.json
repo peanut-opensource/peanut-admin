@@ -623,6 +623,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg10-final-qualification-wiring-contract.md",
+      "title": "P1-PKG10 Final Qualification Wiring Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
