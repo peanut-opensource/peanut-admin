@@ -38,9 +38,9 @@ artifacts, or release tags.
 - `.github/workflows/performance.yml` and `docker/php/Dockerfile` only if the
   fixed PHP image or Runner-local MySQL wiring requires a static correction;
 - `docs/decisions/dependencies/p1-pkg03-lock-evidence.json` only to refresh the
-  `pnpm-lock.yaml` SHA-256 after the already-reviewed cross-platform
-  `supportedArchitectures` metadata change, without changing any dependency
-  version or resolution;
+  root and starter pnpm lock SHA-256 values after the already-reviewed
+  cross-platform `supportedArchitectures` metadata change, without changing
+  any dependency version or resolution;
 - this contract, `docs/content-status.json`, and `docs/status/index.md`.
 
 No other file may change.
