@@ -16,12 +16,12 @@ if [[ -n "$performance_php_image" ]]; then
 fi
 
 docker compose up -d mysql
+mysql_container="$(docker compose ps -q mysql)"
+if [[ -z "$mysql_container" ]]; then
+  echo 'ERROR: Compose MySQL container is unavailable for performance tests' >&2
+  exit 1
+fi
 if [[ -n "$performance_php_image" ]]; then
-  mysql_container="$(docker compose ps -q mysql)"
-  if [[ -z "$mysql_container" ]]; then
-    echo 'ERROR: Compose MySQL container is unavailable for performance tests' >&2
-    exit 1
-  fi
   php_command=(
     docker run --rm --network "container:${mysql_container}"
     --env 'DB_HOST=127.0.0.1'
@@ -37,23 +37,12 @@ if [[ -n "$performance_php_image" ]]; then
   )
 fi
 for attempt in $(seq 1 60); do
-  if "${php_command[@]}" -r '
-    try {
-        new PDO(
-            "mysql:host=" . (getenv("MYSQL_HOST") ?: "127.0.0.1")
-                . ";port=" . (getenv("MYSQL_PORT") ?: "3306"),
-            "root",
-            getenv("MYSQL_ROOT_PASSWORD") ?: "peanut_admin_root_dev",
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
-        );
-    } catch (Throwable) {
-        exit(1);
-    }
-  ' 2>/dev/null; then
+  mysql_health="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}unavailable{{end}}' "$mysql_container")"
+  if [[ "$mysql_health" == 'healthy' ]]; then
     break
   fi
   if [[ "$attempt" -eq 60 ]]; then
-    echo 'ERROR: MySQL 8 did not become ready for performance tests' >&2
+    echo "ERROR: MySQL 8 health status is $mysql_health after performance readiness timeout" >&2
     exit 1
   fi
   sleep 2

@@ -9,7 +9,6 @@ use PeanutAdmin\App\command\UpgradeWorkflow;
 use PeanutAdmin\App\upgrade\BackupManifest;
 use PeanutAdmin\App\upgrade\MigrationInventory;
 use PeanutAdmin\App\upgrade\ReleaseManifest;
-use PeanutAdmin\App\upgrade\RepositoryInspector;
 use PeanutAdmin\App\upgrade\RepositoryState;
 use PeanutAdmin\App\upgrade\TargetMigrationInventory;
 use PeanutAdmin\App\upgrade\UpgradePlan;
@@ -134,10 +133,10 @@ SQL));
     public function testEvidenceBoundUpgradeRejectsTheWrongSourceDatabaseBeforeMutation(): void
     {
         $root = self::$repositoryRoot;
-        $source = $this->sourceInventory($root);
+        $source = (new TargetMigrationInventory())->scan($root);
 
         try {
-            (new UpgradeWorkflow($root, $this->database))->run($this->plan($root, $source));
+            (new UpgradeWorkflow($root, $this->database))->run($this->plan($root, $source, $root));
         } catch (ModuleException $exception) {
             self::assertSame('UPGRADE_SOURCE_DATABASE_MISMATCH', $exception->errorCode);
             self::assertSame(0, $this->scalar(<<<'SQL'
@@ -391,13 +390,6 @@ PHP;
 
         /** @var array{modules: list<string>, applied_module_migrations: int} $result */
         return $result;
-    }
-
-    private function sourceInventory(string $root): MigrationInventory
-    {
-        $sourceCommit = self::runCommand(['git', '-C', $root, 'rev-parse', 'HEAD^']);
-
-        return (new RepositoryInspector())->inventoryAtCommit($root, $sourceCommit);
     }
 
     /** @param list<string> $command */
