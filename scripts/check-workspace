@@ -28,11 +28,11 @@ for path in "${required[@]}"; do
   fi
 done
 
-if find packages/php -mindepth 2 -maxdepth 2 -name composer.json -print -quit | rg -q .; then
+if find packages/php -mindepth 2 -maxdepth 2 -name composer.json -print -quit | grep -q .; then
   echo 'ERROR: a child Composer package manifest remains below packages/php' >&2
   exit 1
 fi
-if find packages/web -mindepth 2 -maxdepth 2 -name package.json -print -quit | rg -q .; then
+if find packages/web -mindepth 2 -maxdepth 2 -name package.json -print -quit | grep -q .; then
   echo 'ERROR: a child npm package manifest remains below packages/web' >&2
   exit 1
 fi
@@ -201,8 +201,8 @@ $assertWebConsumer("frontend/package.json", "workspace:^");
 $assertWebConsumer("starter/frontend/package.json", "workspace:0.1.0-alpha.3");
 '
 
-if ! rg -q '^  - packages/web$' pnpm-workspace.yaml \
-  || ! rg -q '^  - packages/web$' starter/pnpm-workspace.yaml; then
+if ! grep -q '^  - packages/web$' pnpm-workspace.yaml \
+  || ! grep -q '^  - packages/web$' starter/pnpm-workspace.yaml; then
   echo 'ERROR: pnpm workspaces must expose only the packages/web root' >&2
   exit 1
 fi

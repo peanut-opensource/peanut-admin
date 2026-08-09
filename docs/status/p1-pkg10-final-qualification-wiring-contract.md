@@ -34,6 +34,9 @@ artifacts, or release tags.
   image already required by the dedicated Performance workflow;
 - `backend/tests/Upgrade/UpgradeWorkflowIntegrationTest.php`;
 - `scripts/test-performance`;
+- `scripts/check-workspace` and `scripts/verify-internal-starter` only to use
+  the system `grep` available in qualification environments for existing
+  workspace, private-data, and product-language assertions;
 - `tests/performance/PerformanceQualificationContractTest.php`;
 - `.github/workflows/performance.yml` and `docker/php/Dockerfile` only if the
   fixed PHP image or Runner-local MySQL wiring requires a static correction;

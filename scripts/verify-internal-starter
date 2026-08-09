@@ -115,12 +115,12 @@ cmp "$ROOT/packages/web/LICENSE" "$first/packages/web/LICENSE"
 
 php tests/starter/assert-generated-starter.php "$first"
 
-if rg -n '/Users/|/home/[^/]+/|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|password\s*=' "$first"; then
+if grep -R -n -E '/Users/|/home/[^/]+/|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|password[[:space:]]*=' "$first"; then
   echo 'ERROR: generated starter contains a private path or secret-like value' >&2
   exit 1
 fi
-if rg -ni '\bDCS\b|Finance Manager|门店|仓库|商品|库存|结算|\bwarehouse\b|\binventory\b|\btrade\b|\bsettlement\b' \
-  -g '!LICENSE' "$first"; then
+if grep -R -n -i -E --exclude=LICENSE '(^|[^[:alnum:]_])DCS([^[:alnum:]_]|$)|Finance Manager|门店|仓库|商品|库存|结算|(^|[^[:alnum:]_])warehouse([^[:alnum:]_]|$)|(^|[^[:alnum:]_])inventory([^[:alnum:]_]|$)|(^|[^[:alnum:]_])trade([^[:alnum:]_]|$)|(^|[^[:alnum:]_])settlement([^[:alnum:]_]|$)' \
+  "$first"; then
   echo 'ERROR: generated starter contains product-specific language' >&2
   exit 1
 fi
