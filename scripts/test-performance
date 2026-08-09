@@ -24,6 +24,7 @@ fi
 if [[ -n "$performance_php_image" ]]; then
   php_command=(
     docker run --rm --network "container:${mysql_container}"
+    --user "$(id -u):$(id -g)"
     --env 'DB_HOST=127.0.0.1'
     --env 'DB_PORT=3306'
     --env 'MYSQL_HOST=127.0.0.1'

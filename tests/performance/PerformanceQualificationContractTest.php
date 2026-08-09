@@ -59,6 +59,7 @@ final class PerformanceQualificationContractTest extends TestCase
         self::assertStringContainsString('docker compose ps -q mysql', $script);
         self::assertStringContainsString(".State.Health.Status", $script);
         self::assertStringContainsString('docker run --rm --network "container:${mysql_container}"', $script);
+        self::assertStringContainsString('--user "$(id -u):$(id -g)"', $script);
         self::assertStringContainsString("--env 'DB_HOST=127.0.0.1'", $script);
         self::assertStringContainsString("--env 'DB_PORT=3306'", $script);
         self::assertStringContainsString("--volume \"\$phpunit_cache:/tmp/peanut-admin-phpunit-cache\"", $script);
