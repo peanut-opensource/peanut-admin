@@ -282,7 +282,8 @@ deletion or non-fast-forward updates for the current `dev` default branch and
 any future `main`; `v*` release tags reject updates, deletion, and
 non-fast-forward changes. Alpha.3 publication is operationally complete.
 
-The current unpublished Admin Web source candidate advances
+Admin Web source commit
+`7fbd445d8fa547830b7782a7ac147d9ed414e0fd` advances
 `@peanut-admin/admin` to `0.1.0-alpha.4` and relaxes its Vue peer range from
 `^3.5.39` to `^3.4.21`. Element Plus and Pinia are host-supplied optional peers
 because only the Admin Web exports use them; the UI-neutral client subpaths do
@@ -291,8 +292,15 @@ test the accepted Vue 3.5.39, Element Plus 2.14.3, and Pinia 4.0.2 toolchain.
 Standard Vue 3.4.21 consumers may therefore install and use `./client/uniapp`
 without force or legacy peer-resolution flags. Vue Router remains a direct
 dependency of the reference Host and starter, but is removed from the public
-package because no package source imports it. This candidate does not publish
-npm, move a dist-tag, create a tag or Release, or change Composer Alpha.2.
+package because no package source imports it. The fixed CI groups, clean
+Vue 3.4.21/Pinia 2.1.7 npm installation, and TypeScript 4.9 ES2020 consumer
+passed without force or legacy peer flags. The immutable
+[`@peanut-admin/admin@0.1.0-alpha.4`](https://www.npmjs.com/package/@peanut-admin/admin/v/0.1.0-alpha.4)
+tarball is published with SHA-1
+`b237df40068bc8b6ecf8856a02c54c33e3f231af`; `alpha` points to Alpha.4 and
+`latest` remains on Alpha.2. The matching
+[`v0.1.0-alpha.4` GitHub prerelease](https://github.com/peanut-opensource/peanut-admin/releases/tag/v0.1.0-alpha.4)
+is published. Composer `peanut-admin/core` remains on Alpha.2.
 
 The [P1-PKG06 Release Merge Gate Remediation Contract](./p1-pkg06-release-merge-gate-remediation-contract.md)
 owns the bounded CI repair discovered by the Alpha.3 merge PR. It restores
