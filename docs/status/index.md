@@ -311,6 +311,28 @@ owns the remaining Chromium installation, PR-merge-topology, and fixed-PHP
 performance diagnostics. It is restricted to GitHub Runner qualification and
 does not alter any downstream database or published Alpha.3 artifact.
 
+## Documentation Workflow Post-Merge Correction
+
+```text
+state: accepted
+prerequisite_commit: f9b178fe1bcd42eff4859929d10d7d911cbfe9b9
+runtime_change: none
+package_publication: none
+```
+
+The Documentation workflow on the merged `dev` tree failed before repository
+documentation validation because `actions/configure-pages` requires a GitHub
+Pages site and this repository does not enable one. Product documentation is
+deployed independently through Cloudflare Pages. The core repository therefore
+retains documentation dependency setup and `./scripts/check-docs` as its build
+and validation gate, without configuring, uploading, or deploying GitHub Pages.
+
+The exact write set is `.github/workflows/docs.yml` and this status record. No
+Runtime code, dependency or package version, release artifact, publication
+configuration, or other workflow may change. Acceptance is one static workflow
+YAML parse together with exact write-set review and `git diff --check`; this
+correction does not deploy documentation or authorize a release.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
