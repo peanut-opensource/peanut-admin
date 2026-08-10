@@ -333,6 +333,27 @@ configuration, or other workflow may change. Acceptance is one static workflow
 YAML parse together with exact write-set review and `git diff --check`; this
 correction does not deploy documentation or authorize a release.
 
+## Documentation Workflow Runner Port Follow-Up
+
+```text
+state: accepted
+prerequisite_commit: c854fbbdfd1be72a7792493a2a64ff00990ee39f
+runtime_change: none
+package_publication: none
+```
+
+The first build-only Documentation run reached `./scripts/check-docs` and then
+failed because its internal Starter verification requires explicit Runner port
+inputs. The Documentation build job now reuses the existing core CI contract of
+`MYSQL_PORT=3306` and `DB_PORT=3306`; its existing Compose command continues to
+own MySQL startup and credentials. No service, script, Runtime, dependency,
+package, release artifact, or publication path changes.
+
+The exact write set remains `.github/workflows/docs.yml` and this status record.
+Acceptance is one static workflow YAML parse together with exact write-set
+review and `git diff --check`, followed by the normal pull-request gates and one
+successful post-merge Documentation run.
+
 Implemented P1 operations are candidates, not qualified downstream capabilities.
 The Reference Codes implementation is development-only and remains outside the
 qualified downstream lock. P1 work does
