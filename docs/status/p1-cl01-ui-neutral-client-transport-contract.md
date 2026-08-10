@@ -65,6 +65,11 @@ A request contains a relative path, method, optional data and headers, and an
    copying raw payloads, tokens, or transport exception messages into public
    error text.
 
+Header input is platform-neutral: plain records, entry tuples, and structural
+`forEach` sources are accepted and normalized into the package-owned
+case-insensitive header contract. Path and base-URL validation must not depend
+on browser `Headers` or `URL` globals.
+
 The session exposes only `accessToken()` and `clear()`. It does not persist data
 itself. The decoder returns `success`, `unauthorized`, or `business` and is the
 only authority for application-specific envelopes.
@@ -83,7 +88,8 @@ failure. It has no import from `@dcloudio`, Vue, Pinia, or a UniApp global.
 
 Both adapters compose URLs only through the core path validator. They do not
 own session storage, unauthorized navigation, user feedback, envelope parsing,
-or business rules.
+or business rules. The UniApp adapter and core remain executable when browser
+`Headers` and `URL` globals are absent.
 
 ## Security And Failure Semantics
 
