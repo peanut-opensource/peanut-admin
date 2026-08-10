@@ -45,6 +45,11 @@ client removes caller-provided `Authorization` headers and adds one Bearer
 header only when `auth` is enabled and the session returns a non-empty token.
 Set `auth: false` for a public request.
 
+The public header contract accepts plain records, entry tuples, or a structural
+`forEach` header source. Core request normalization and URL composition do not
+depend on browser `Headers` or `URL` globals, so the same state machine runs in
+UniApp mini-program runtimes as well as browsers and Node-based hosts.
+
 The decoder must return exactly one of `success`, `unauthorized`, or `business`.
 Success requests resolve to decoded data. Unauthorized responses clear the
 session before the unauthorized hook; concurrent unauthorized responses on one
