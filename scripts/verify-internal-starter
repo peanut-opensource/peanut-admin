@@ -187,7 +187,6 @@ free_port() {
 }
 
 backend_port="$(free_port)"
-frontend_port="$(free_port)"
 
 php -S "127.0.0.1:$backend_port" \
   -t "$first/backend/public" \
@@ -195,9 +194,10 @@ php -S "127.0.0.1:$backend_port" \
   >"$workdir/backend.log" 2>&1 &
 backend_pid="$!"
 
-pnpm --dir "$first" --filter @peanut-admin/internal-starter-admin preview \
+NO_COLOR=1 pnpm --dir "$first" --filter @peanut-admin/internal-starter-admin preview \
   --host 127.0.0.1 \
-  --port "$frontend_port" \
+  --port 0 \
+  --strictPort \
   >"$workdir/frontend.log" 2>&1 &
 frontend_pid="$!"
 
@@ -215,8 +215,30 @@ wait_for_url() {
   return 1
 }
 
+wait_for_frontend_url() {
+  local log="$1"
+  local url=''
+  for attempt in $(seq 1 60); do
+    if ! kill -0 "$frontend_pid" 2>/dev/null; then
+      echo 'ERROR: frontend preview exited before publishing its URL' >&2
+      sed -n '1,240p' "$log" >&2
+      return 1
+    fi
+    url="$(sed -nE 's/.*(http:\/\/127\.0\.0\.1:[0-9]+\/).*/\1/p' "$log" | head -n 1)"
+    if [[ -n "$url" ]]; then
+      printf '%s\n' "$url"
+      return 0
+    fi
+    sleep 1
+  done
+  echo 'ERROR: frontend preview did not publish a loopback URL' >&2
+  sed -n '1,240p' "$log" >&2
+  return 1
+}
+
 wait_for_url "http://127.0.0.1:$backend_port/health" "$workdir/backend.log"
-wait_for_url "http://127.0.0.1:$frontend_port" "$workdir/frontend.log"
+frontend_url="$(wait_for_frontend_url "$workdir/frontend.log")"
+wait_for_url "$frontend_url" "$workdir/frontend.log"
 
 health="$(curl --fail --silent --show-error "http://127.0.0.1:$backend_port/health")"
 greeting="$(curl --fail --silent --show-error "http://127.0.0.1:$backend_port/api/example/greeting")"
