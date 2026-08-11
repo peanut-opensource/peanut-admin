@@ -62,7 +62,7 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
     {
         [$tenantId] = $this->seedTenant(11, 101);
         $repository = new PdoArtifactRevisionRepository($this->pdo);
-        $repository->lockOrCreateArtifact($tenantId, 'document.article', 'article-1', 11, null, $this->now());
+        $repository->lockOrCreateArtifact($tenantId, 'document.record', 'record-1', 11, null, $this->now());
 
         foreach (Schema::createSql() as $statement) {
             $this->pdo->exec($statement);
@@ -80,8 +80,8 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
         $repository = new PdoArtifactRevisionRepository($this->pdo);
         $artifact = $repository->lockOrCreateArtifact(
             $tenantId,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             11,
             null,
             $this->now(),
@@ -105,9 +105,9 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
             2,
             1,
             11,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r1',
+            'payload/record-1/r1',
             str_repeat('b', 64),
             null,
             $this->now(),
@@ -117,8 +117,8 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
 
         $artifact = $repository->lockOrCreateArtifact(
             $tenantId,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             11,
             3,
             $this->now(),
@@ -139,9 +139,9 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
             4,
             1,
             11,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r2',
+            'payload/record-1/r2',
             str_repeat('d', 64),
             str_repeat('e', 64),
             $this->now(),
@@ -151,13 +151,13 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
         self::assertSame(2, $second->revisionNumber);
         self::assertNull($repository->revision(
             $otherTenantId,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             $second->revisionKey,
         ));
         self::assertSame(
             $second->id,
-            $repository->artifact($tenantId, 'document.article', 'article-1')?->latestFinalizedRevisionId,
+            $repository->artifact($tenantId, 'document.record', 'record-1')?->latestFinalizedRevisionId,
         );
     }
 
@@ -167,8 +167,8 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
         $repository = new PdoArtifactRevisionRepository($this->pdo);
         $artifact = $repository->lockOrCreateArtifact(
             $tenantId,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             11,
             null,
             $this->now(),
@@ -199,9 +199,9 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
             2,
             1,
             11,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r1',
+            'payload/record-1/r1',
             str_repeat('c', 64),
             null,
             $this->now(),
@@ -213,9 +213,9 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
             3,
             2,
             11,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r1',
+            'payload/record-1/r1',
             str_repeat('c', 64),
             null,
             $this->now(),
@@ -228,8 +228,8 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
         $repository = new PdoArtifactRevisionRepository($this->pdo);
         $artifact = $repository->lockOrCreateArtifact(
             $tenantId,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             11,
             null,
             $this->now(),
@@ -250,9 +250,9 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
             2,
             1,
             11,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r1',
+            'payload/record-1/r1',
             str_repeat('b', 64),
             null,
             $this->now(),
@@ -260,10 +260,10 @@ final class PdoArtifactRevisionRepositoryTest extends TestCase
         $this->pdo->exec("UPDATE pa_artifact_revision SET canonical_envelope_sha256 = REPEAT('0', 64)");
 
         try {
-            $repository->revision($tenantId, 'document.article', 'article-1', $pending->revisionKey);
+            $repository->revision($tenantId, 'document.record', 'record-1', $pending->revisionKey);
             self::fail('A tampered finalized envelope must fail closed.');
         } catch (UnexpectedValueException $exception) {
-            self::assertStringNotContainsString('payload/article-1/r1', $exception->getMessage());
+            self::assertStringNotContainsString('payload/record-1/r1', $exception->getMessage());
         }
     }
 

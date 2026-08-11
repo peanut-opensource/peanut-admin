@@ -33,9 +33,9 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
             'revision_key' => $revision->revisionKey,
             'sha256' => $revision->canonicalEnvelopeSha256,
         ], $resolver->resolve(
-            $this->context(1, 'document.article', 'article-1'),
-            'document.article',
-            'article-1',
+            $this->context(1, 'document.record', 'record-1'),
+            'document.record',
+            'record-1',
             $revision->revisionKey,
         ));
     }
@@ -46,9 +46,9 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
         $this->assertWorkflowError('WORKFLOW_SUBJECT_REVISION_CONFLICT', fn() => (
             new ArtifactWorkflowSubjectRevisionResolver($pending)
         )->resolve(
-            $this->context(1, 'document.article', 'article-1'),
-            'document.article',
-            'article-1',
+            $this->context(1, 'document.record', 'record-1'),
+            'document.record',
+            'record-1',
             'revision_' . str_repeat('a', 32),
         ));
 
@@ -56,9 +56,9 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
         $this->assertWorkflowError('WORKFLOW_SUBJECT_REVISION_CONFLICT', fn() => (
             new ArtifactWorkflowSubjectRevisionResolver($missing)
         )->resolve(
-            $this->context(2, 'document.article', 'article-1'),
-            'document.article',
-            'article-1',
+            $this->context(2, 'document.record', 'record-1'),
+            'document.record',
+            'record-1',
             'revision_' . str_repeat('a', 32),
         ));
 
@@ -66,17 +66,17 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
         $this->assertWorkflowError('WORKFLOW_SUBJECT_NOT_FOUND', fn() => (
             new ArtifactWorkflowSubjectRevisionResolver($finalized)
         )->resolve(
-            $this->context(1, 'document.article', 'article-2'),
-            'document.article',
-            'article-1',
+            $this->context(1, 'document.record', 'record-2'),
+            'document.record',
+            'record-1',
             'revision_' . str_repeat('a', 32),
         ));
         $this->assertWorkflowError('WORKFLOW_SUBJECT_REVISION_CONFLICT', fn() => (
             new ArtifactWorkflowSubjectRevisionResolver($finalized)
         )->resolve(
-            $this->context(1, 'document.article', 'article-1'),
-            'document.article',
-            'article-1',
+            $this->context(1, 'document.record', 'record-1'),
+            'document.record',
+            'record-1',
             'not-a-revision',
         ));
     }
@@ -87,9 +87,9 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
         $this->assertWorkflowError('INTERNAL_ERROR', fn() => (
             new ArtifactWorkflowSubjectRevisionResolver($repository)
         )->resolve(
-            $this->context(1, 'document.article', 'article-1'),
-            'document.article',
-            'article-1',
+            $this->context(1, 'document.record', 'record-1'),
+            'document.record',
+            'record-1',
             'revision_' . str_repeat('a', 32),
         ));
     }
@@ -98,14 +98,14 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
     {
         $revisionKey = 'revision_' . str_repeat('a', 32);
         $envelope = [
-            'artifact_type' => 'document.article',
-            'artifact_key' => 'article-1',
+            'artifact_type' => 'document.record',
+            'artifact_key' => 'record-1',
             'revision_key' => $revisionKey,
             'revision_number' => 1,
             'parent_revision_key' => null,
-            'payload_schema_key' => 'article.body',
+            'payload_schema_key' => 'record.body',
             'payload_schema_version' => '1',
-            'payload_ref' => 'payload/article-1/r1',
+            'payload_ref' => 'payload/record-1/r1',
             'payload_sha256' => str_repeat('b', 64),
             'attachment_manifest_sha256' => null,
         ];
@@ -116,17 +116,17 @@ final class ArtifactWorkflowSubjectRevisionResolverTest extends TestCase
             1,
             1,
             1,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             $revisionKey,
             1,
             null,
             null,
             $state,
             $finalized ? 2 : 1,
-            $finalized ? 'article.body' : null,
+            $finalized ? 'record.body' : null,
             $finalized ? '1' : null,
-            $finalized ? 'payload/article-1/r1' : null,
+            $finalized ? 'payload/record-1/r1' : null,
             $finalized ? str_repeat('b', 64) : null,
             null,
             $finalized ? $json : null,
