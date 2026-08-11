@@ -6,10 +6,12 @@
 task: P1-WF01
 state: implementation-ready
 prerequisite_commit: 7fbd445d8fa547830b7782a7ac147d9ed414e0fd
+contract_commit: abeb5afa32dee353b13debe08b23575173979d90
 public_boundary: peanut-admin/core
 target_candidate: 0.1.0-alpha.5
 dependency_change: none
-reference_host_operation: none
+http_api: none in core; the downstream Host owns routes and OpenAPI
+runtime_ledger: no core row; the downstream Host must register each real operation as p1
 test_owner: P1-WORKFLOW-RUNTIME-001
 qualification: required before publication or downstream consumption
 ```
@@ -44,8 +46,13 @@ P1-WF01 provides a product-neutral Tenant workflow Runtime that:
   existing owners.
 
 The Host owns its subject schema, business calculations, content, form rules,
-workflow templates, permission keys, typed-target providers, pages, routes,
-OpenAPI, notification copy, automation handlers, and subject-side projection.
+workflow templates, additional permission keys, typed-target providers, pages,
+routes, OpenAPI, Runtime coverage rows, notification copy, automation handlers,
+and subject-side projection. Like P1-R01, WF01 is a framework-neutral package
+Runtime and creates no core HTTP operation. Its PHP API is fixed below. A real
+downstream HTTP Host must declare every route, audience, request/response shape,
+RFC 9457 mapping and `p1` test owner before exposing it; the Peanut Admin Host
+slice may not treat this package contract as an implicit route authorization.
 
 P1-WF01 does not add:
 
@@ -84,9 +91,11 @@ scan `vendor/`, or copy an existing implementation under a Workflow name.
 ## Definition And Graph Contract
 
 A workflow is identified by `(tenant_id, module_key, workflow_key)`. The Host
-declares `module_key`; `workflow_key`, node keys, transition keys, task types,
-template keys, and permission keys are bounded ASCII identifiers. Display
-labels are data and are not identifiers.
+declares `module_key`; module/workflow/node/transition/task/template/resource
+and operation keys are 1..64 ASCII characters matching
+`^[a-z][a-z0-9]*(?:[.-][a-z0-9]+)*$`. Permission keys are 3..160 ASCII
+characters matching the same segmented lowercase form. Display labels are data
+and are not identifiers.
 
 Definitions are edited as drafts. Publishing creates an immutable monotonically
 increasing version with a canonical JSON graph digest. An active version is
@@ -94,7 +103,10 @@ never edited or deleted. Retiring a definition prevents new instances but does
 not alter existing instances. New versions affect only subsequently started
 instances.
 
-The graph contains:
+The graph root contains `contract_version=1`, `subject_resource_key`,
+`subject_read_operation`, `subject_start_operation`, non-empty
+`start_permission_keys`, and the node/transition collections. The graph
+contains:
 
 - exactly one `start` node;
 - one or more `review` or `action` nodes;
@@ -103,9 +115,11 @@ The graph contains:
   action kind, Permission requirement, optional assignment policy, optional
   notification intent, optional task intent, and whether a human decision is
   required;
-- no unreachable node, missing target, duplicate edge key, self-loop,
-  transition from a terminal node, or cycle without an explicitly declared
-  bounded return edge.
+- no unreachable node, missing target, duplicate edge key, self-loop or
+  transition from a terminal node. A back edge is valid only when it declares
+  `return_edge=true` and `max_traversals` from 1 through 100; the instance event
+  history is the authoritative traversal counter and exceeding the bound makes
+  the edge unavailable.
 
 A review node declares `completion_policy=any|all` and one or more assignment
 rules. WF01 supports member, Role, Department, initiator, and previous-actor
@@ -119,84 +133,287 @@ Return and withdrawal are ordinary declared edges. The engine does not infer
 “previous review”, author self-review, skip-level approval, or three-review
 semantics. A Host template may model those rules explicitly.
 
+Canonical graph JSON contains exactly the root keys named above plus `nodes`
+and `transitions`; unknown keys fail validation. Each node contains exactly
+`key`, `type`, `completion_policy` and `assignments`. `type` is
+`start|review|action|terminal`; the single start and every action/terminal node
+use null completion and an empty assignment list; a review uses `any|all` and
+one or more rules. Each rule is exactly `{kind,key}` where `kind` is
+`member|role|department|initiator|previous_actor`; key is a positive decimal
+member id or bounded Role/Department key for the first three and null for the
+last two. The start node has exactly one outgoing non-human edge. Terminal
+nodes have none.
+
+Each transition contains exactly `key`, `from`, `to`, `operation`,
+`action_kind`, `permission_keys`, `human_required`, `return_edge`,
+`max_traversals`, `notification_intent` and `task_intent`. Action kind is
+`advance|approve|reject|return|withdraw|automate`; human-required edges may
+leave only a review node, while `automate` may leave only an action node.
+`max_traversals` is null unless `return_edge=true`. A notification intent is
+null or exactly `{template_key,recipient_rule}` with recipient rule
+`next_assignees|initiator|actor`; a task intent is null or exactly
+`{task_type}`. The Runtime supplies only workflow/instance/event keys and the
+pinned subject revision to those adapters; graphs cannot embed arbitrary
+payload, template text, recipient addresses, expressions or code.
+
 ## Data And Ownership Contract
 
-Workflow owns only these product-neutral tables, all under the existing `pa_`
-prefix and all Tenant scoped:
+Workflow owns only the following product-neutral MySQL 8 tables. Every string
+identifier uses `CHARACTER SET ascii COLLATE ascii_bin`; every timestamp is
+UTC `DATETIME(3)` supplied by the Runtime; every JSON value is canonicalized
+before persistence. Unnamed columns, nullable shortcuts and alternative enum
+states are not permitted by WF01-A.
 
-| Table | Purpose and required constraints |
-| --- | --- |
-| `pa_workflow_definition` | Stable identity, status `draft|active|retired`, latest version and revision; unique `(tenant_id,module_key,workflow_key)`. |
-| `pa_workflow_definition_version` | Immutable canonical graph, digest, publisher and publication time; unique `(definition_id,version)` and `(definition_id,graph_sha256)`. |
-| `pa_workflow_instance` | Instance key, fixed definition version, Host subject type/key, current node, status `active|completed|cancelled`, pinned subject revision, initiator, revision and timestamps; unique `(tenant_id,instance_key)` and one active instance per declared subject/workflow scope. |
-| `pa_workflow_work_item` | Instance/node/round, assignee kind/key snapshot, status `pending|completed|cancelled`, actor, decision and revision; unique active assignee item within an instance node/round. |
-| `pa_workflow_event` | Append-only per-instance sequence, event/action, from/to node, actor, pinned subject revision, comment digest, attachment snapshots and redacted metadata; unique `(instance_id,sequence)`. |
+`pa_workflow_definition` has: `id BIGINT UNSIGNED AUTO_INCREMENT` primary key;
+`tenant_id BIGINT UNSIGNED NOT NULL`; `module_key VARCHAR(64) NOT NULL`;
+`workflow_key VARCHAR(64) NOT NULL`; `status VARCHAR(16) NOT NULL DEFAULT
+'draft'`; `draft_graph_json JSON NOT NULL`; `draft_graph_sha256 CHAR(64) NOT
+NULL`; `latest_version INT UNSIGNED NOT NULL DEFAULT 0`; `revision BIGINT
+UNSIGNED NOT NULL DEFAULT 1`; `created_by_member_id` and
+`updated_by_member_id BIGINT UNSIGNED NOT NULL`; `created_at` and `updated_at
+DATETIME(3) NOT NULL`; and `retired_at DATETIME(3) NULL`. It has unique keys on
+`(tenant_id,id)` and `(tenant_id,module_key,workflow_key)`, an index on
+`(tenant_id,status,id)`, a Tenant foreign key with `ON DELETE RESTRICT`, and
+checks for identifier syntax, the three states, 64-lowercase-hex digest,
+positive revision and `retired_at` being non-null exactly for `retired`.
+Saving a later draft replaces only the draft JSON/digest and increments the
+row revision; it never changes an existing version row.
 
-Foreign keys remain inside Workflow except actor/member/Role/Department/file
-references, which are logical references validated through their owners. The
-tables do not cascade into Host subject data. Definitions and events are never
-physically deleted by Runtime APIs. Retention and administrative purge are a
-later contract.
+`pa_workflow_definition_version` has: `id BIGINT UNSIGNED AUTO_INCREMENT`
+primary key; `tenant_id BIGINT UNSIGNED NOT NULL`; `definition_id BIGINT
+UNSIGNED NOT NULL`; `version INT UNSIGNED NOT NULL`; `graph_json JSON NOT
+NULL`; `graph_sha256 CHAR(64) NOT NULL`; `published_by_member_id BIGINT
+UNSIGNED NOT NULL`; and `published_at DATETIME(3) NOT NULL`. It has unique keys
+on `(tenant_id,id)`, `(tenant_id,definition_id,version)` and
+`(tenant_id,definition_id,graph_sha256)`, an index on
+`(tenant_id,published_at,id)`, and a composite `ON DELETE RESTRICT` foreign key
+to the definition. `version >= 1` and the digest must be lowercase SHA-256.
+Rows are insert-only; no Runtime update or delete method exists.
 
-The schema is shipped as a package-owned migration resource. A Host migration
-runner may execute that resource and record its digest; it must not transcribe
-or fork the schema into a second implementation. Clean install, upgrade from
-Alpha.2, and idempotent re-entry belong to qualification. Automatic down
-migration is not provided; rollback after adoption leaves inert additive
-tables and requires forward recovery.
+`pa_workflow_instance` has: `id BIGINT UNSIGNED AUTO_INCREMENT` primary key;
+`instance_key VARCHAR(64) NOT NULL`; `tenant_id BIGINT UNSIGNED NOT NULL`;
+`definition_id BIGINT UNSIGNED NOT NULL`; `definition_version INT UNSIGNED NOT
+NULL`; `subject_type VARCHAR(160) NOT NULL`; `subject_key VARCHAR(160) NOT
+NULL`; `subject_revision_key VARCHAR(160) NOT NULL`;
+`subject_revision_sha256 CHAR(64) NOT NULL`; `current_node_key VARCHAR(64) NOT
+NULL`; `status VARCHAR(16) NOT NULL DEFAULT 'active'`;
+`initiated_by_member_id BIGINT UNSIGNED NOT NULL`; `last_actor_member_id BIGINT
+UNSIGNED NULL`; `revision BIGINT UNSIGNED NOT NULL DEFAULT 1`; `created_at` and
+`updated_at DATETIME(3) NOT NULL`; `completed_at` and `cancelled_at DATETIME(3)
+NULL`; and `active_marker TINYINT GENERATED ALWAYS AS (CASE WHEN status =
+'active' THEN 1 ELSE NULL END) STORED`. It has unique keys on `instance_key`,
+`(tenant_id,id)`, and `(tenant_id,definition_id,subject_type,subject_key,
+active_marker)`; indexes on `(tenant_id,status,updated_at,id)` and
+`(tenant_id,subject_type,subject_key,id)`; a Tenant foreign key; and a composite
+foreign key to the fixed definition version. Checks require the
+`instance_[0-9a-f]{32}` key, positive revision/version, a valid digest, and
+exactly one terminal timestamp for `completed|cancelled` and none for `active`.
+MySQL's nullable generated marker permits historical terminal instances while
+enforcing one active instance for the same definition and subject.
 
-## Command Contract
+`pa_workflow_work_item` has: `id BIGINT UNSIGNED AUTO_INCREMENT` primary key;
+`work_item_key VARCHAR(64) NOT NULL`; `tenant_id BIGINT UNSIGNED NOT NULL`;
+`instance_id BIGINT UNSIGNED NOT NULL`; `node_key VARCHAR(64) NOT NULL`;
+`round_no INT UNSIGNED NOT NULL`; `assignment_source_kind VARCHAR(24) NOT NULL`;
+`assignment_source_key VARCHAR(160) NOT NULL`; `assignee_member_id BIGINT
+UNSIGNED NOT NULL`; `status VARCHAR(16) NOT NULL DEFAULT 'pending'`; `decision
+VARCHAR(64) NULL`; `completed_by_member_id BIGINT UNSIGNED NULL`; `revision
+BIGINT UNSIGNED NOT NULL DEFAULT 1`; `created_at` and `updated_at DATETIME(3)
+NOT NULL`; `completed_at` and `cancelled_at DATETIME(3) NULL`; and
+`pending_marker TINYINT GENERATED ALWAYS AS (CASE WHEN status = 'pending' THEN
+1 ELSE NULL END) STORED`. It has unique keys on `work_item_key`,
+`(tenant_id,id)`, and `(tenant_id,instance_id,node_key,round_no,
+assignee_member_id,pending_marker)`; indexes on `(tenant_id,assignee_member_id,
+status,created_at,id)` and `(tenant_id,instance_id,status,id)`; and a composite
+`ON DELETE RESTRICT` foreign key to the instance. Checks require the
+`work_[0-9a-f]{32}` key, `round_no/revision >= 1`, source kind in
+`member|role|department|initiator|previous_actor`, state in
+`pending|completed|cancelled`, and completion actor/decision/time only for
+`completed`, cancellation time only for `cancelled`. Member, Role and
+Department identifiers are immutable logical snapshots validated through their
+owners before insert; no cross-owner foreign key is added.
 
-The framework-neutral Runtime exposes four command families:
+`pa_workflow_event` has: `id BIGINT UNSIGNED AUTO_INCREMENT` primary key;
+`tenant_id BIGINT UNSIGNED NOT NULL`; `instance_id BIGINT UNSIGNED NOT NULL`;
+`sequence_no INT UNSIGNED NOT NULL`; `event_key VARCHAR(96) NOT NULL`;
+`transition_key VARCHAR(64) NULL`; `from_node_key VARCHAR(64) NULL`;
+`to_node_key VARCHAR(64) NOT NULL`; `actor_type VARCHAR(16) NOT NULL`;
+`actor_member_id BIGINT UNSIGNED NULL`; `subject_revision_key VARCHAR(160) NOT
+NULL`; `subject_revision_sha256 CHAR(64) NOT NULL`; `comment_text VARCHAR(2000)
+NULL`; `comment_sha256 CHAR(64) NULL`; `attachment_snapshots_json JSON NOT
+NULL`; `metadata_json JSON NOT NULL`; and `occurred_at DATETIME(3) NOT NULL`.
+It has unique `(tenant_id,instance_id,sequence_no)`, indexes on
+`(tenant_id,instance_id,occurred_at,id)` and `(tenant_id,event_key,occurred_at,
+id)`, and a composite `ON DELETE RESTRICT` foreign key to the instance. Checks
+require `sequence_no >= 1`, an event key matching
+`^tenant\\.workflow\\.[a-z_]+$`, valid digests, comment and comment digest both
+null or both present, and actor shape `member` with a member id or
+`tenant_system` without one. Rows are append-only.
 
-1. `saveDraft` validates owner, identifiers, graph shape and optimistic
-   definition revision without publishing it.
-2. `publishDefinition` freezes the draft as the next immutable version and
-   activates it atomically.
-3. `startInstance` verifies an active definition, Host subject visibility,
-   immutable subject revision, start Permission, assignment resolution and
-   attachment snapshots before creating the instance and first work items.
-4. `applyTransition` locks the instance and active work items, verifies
-   `expected_revision`, current subject revision, transition declaration,
-   actor assignment, Permission and typed target, then changes state, closes or
-   creates work items, appends the event/audit, emits declared side effects and
-   completes idempotency in one transaction.
+Definition state is `draft -> active -> retired`; an active definition may
+publish another version and remains active. Instance state is `active ->
+completed|cancelled`; a transition never reopens a terminal instance. Work-item
+state is `pending -> completed|cancelled`; it never returns to pending. The
+engine enforces these transitions under `SELECT ... FOR UPDATE` plus
+`expected_revision`; database checks protect stored shape.
 
-`startInstance` and `applyTransition` require an `Idempotency-Key`; draft save
-and definition publication use optimistic revision plus scoped idempotency.
-An exact replay returns the stored safe receipt and creates no second event,
-work item, notification, task or audit row. A key reused for another request
-hash fails with the existing idempotency code.
+The schema is shipped as `PeanutAdmin\\Workflow\\Database\\Schema`, the single
+package-owned source used by Host migrations and tests. A Host migration runner
+executes `Schema::createSql()` in declared table order and records its digest;
+it must not transcribe or fork the schema. Clean install, upgrade from Composer
+Alpha.2, idempotent re-entry and exact table/index/check comparison belong to
+qualification. `dropSql()` exists for isolated tests only. Production rollback
+does not invoke it: adoption leaves inert additive tables and uses forward
+recovery. Runtime exposes no physical delete or purge; retention is a later
+contract.
 
-All writes use one caller-owned PDO. A failure at definition/instance/work-item,
-event, audit, notification outbox, task publication, or idempotency completion
-rolls back every effect. No cross-connection atomicity is claimed.
+## PHP Command And Query Contract
 
-## Permission, Audit And Security
+The public Composer projection exposes
+`PeanutAdmin\\Workflow\\Application\\WorkflowRuntime`. Every method receives
+an existing caller-owned `PDO` through
+construction, and every actor-facing method receives a Kernel
+`AuthorizedOperationContext`; no scalar Tenant, member or account id is
+accepted from a Host request. The exact command surface is:
 
-WF01 introduces no super-user switch and no default allow. Package-level
-administration keys are:
+```text
+saveDraft(context, moduleKey, workflowKey, graph, expectedRevision, idempotencyKey): WorkflowReceipt
+publishDefinition(context, moduleKey, workflowKey, expectedRevision, idempotencyKey): WorkflowReceipt
+retireDefinition(context, moduleKey, workflowKey, expectedRevision, idempotencyKey): WorkflowReceipt
+startInstance(context, moduleKey, workflowKey, subjectType, subjectKey,
+              subjectRevisionKey, attachmentFileKeys, idempotencyKey): WorkflowReceipt
+applyTransition(context, instanceKey, transitionKey, expectedInstanceRevision,
+                expectedSubjectRevisionKey, comment, attachmentFileKeys,
+                idempotencyKey): WorkflowReceipt
+applyAutomation(context, instanceKey, transitionKey, expectedInstanceRevision,
+                expectedSubjectRevisionKey, parentJobKey): WorkflowReceipt
+```
 
-- `peanut.workflow.definition.read`;
-- `peanut.workflow.definition.write`;
-- `peanut.workflow.definition.publish`;
-- `peanut.workflow.instance.read`;
-- `peanut.workflow.instance.start`;
-- `peanut.workflow.instance.transition`.
+`saveDraft` creates or replaces only the mutable draft after graph validation;
+`expectedRevision` is null only when the definition does not yet exist.
+`publishDefinition` locks the definition, requires its expected revision,
+inserts `latest_version + 1`, and activates that immutable version.
+`retireDefinition` is idempotent only through the supplied key and changes
+`active` to `retired`; draft-only definitions cannot retire and retired ones
+cannot save or publish. `startInstance` resolves the active version and Host
+subject revision, snapshots ready Tenant files and first-node assignees, then
+creates the instance, sequence-one event and work items. `applyTransition`
+locks the instance and pending work-item set, revalidates both revisions and
+dynamic authorization, then closes/creates items and appends the next event.
+`applyAutomation` accepts only the Task/Job worker's revalidated
+`AuthorizedOperationContext`, a registered non-human edge and a
+`job_[0-9a-f]{32}` parent. The original submitting member remains in the
+authorization basis, while the workflow event and Tenant audit actor are
+`tenant_system`; the worker can never satisfy a review item.
 
-A Host transition may require additional Module-owned Permission keys. The
-Host registers them in the existing catalog and binds the workflow subject to
-an existing typed-target resource. Package and Host requirements are both
-required; neither substitutes for the other. Cross-Tenant subjects,
-attachments, assignees and targets are non-enumerating failures.
+Every command requires an idempotency key, acquires the existing scoped Kernel
+idempotency store inside the command transaction, and uses the operation id
+`workflow.save-draft`, `workflow.publish-definition`,
+`workflow.retire-definition`, `workflow.start-instance`,
+`workflow.apply-transition`, or `workflow.apply-automation`. The request hash
+is canonical JSON of all semantic inputs excluding request id and the raw key.
+The stored `WorkflowReceipt` contains exactly: `operation`, nullable
+`definition_id`, nullable `definition_version`, nullable `instance_key`,
+nullable `instance_status`, nullable `current_node_key`, nullable
+`instance_revision`, nullable `event_sequence`, and the sorted new
+`work_item_keys`. It contains no graph, subject key, comment, attachment,
+recipient or authorization data. Exact replay returns that receipt and creates
+no second version, event, work item, notification, task or audit row; a reused
+key with another request hash uses `IDEMPOTENCY_KEY_REUSED`.
 
-Successful commands append exactly one Tenant audit event with action,
-workflow/instance identifiers, definition version, from/to node, transition,
-subject type and a digest of subject key/revision. Audit metadata never includes
-raw content, comments, filenames, file keys, recipient addresses, target IDs,
-credentials, SQL, stack traces or private paths. The workflow event may retain
-the bounded human comment and approved attachment snapshots for business
-traceability, but API serializers must apply the caller's visibility policy.
+`WorkflowQueryService` exposes read-only `definition(context,moduleKey,
+workflowKey)`, `definitionDraft(writeContext,moduleKey,workflowKey)`,
+`definitions(context,status,page,pageSize)`,
+`instance(context,instanceKey)`, `workItems(context,instanceKey,status,page,
+pageSize)` and `events(context,instanceKey,afterSequence,pageSize)`. Page is
+positive, `pageSize` is 1..100, `afterSequence >= 0`; sort order is stable
+`id ASC` except definitions (`id DESC`). Definition reads return identity,
+status, draft revision/digest, latest version and version metadata but not raw
+graph; only `definitionDraft` returns raw draft graph after a separately
+authorized definition-write context. Instance reads
+return workflow/version, opaque subject type/key, pinned revision, state,
+current node and revision. Work-item and event reads expose comments and
+attachment snapshots only after the Host visibility adapter confirms the same
+subject target. Cross-Tenant and invisible rows are the same not-found result.
+Queries create no workflow or idempotency row; the Host owns any audit required
+for a sensitive read operation.
+
+All command effects use one caller-owned PDO and one R01 transaction. A failure
+at definition/instance/work-item, event, existing Tenant audit, notification
+outbox, task publication or idempotency completion rolls back every effect. A
+resolver or publisher on another PDO is rejected before the first write; no
+cross-connection atomicity is claimed.
+
+## Permission, Audit, Side Effects And Security
+
+WF01 introduces no super-user switch and no default allow. All requirements use
+Tenant audience and `match=all`. The package resource/operation mapping is:
+
+| Runtime call | Resource / operation | Required package key | Typed target |
+| --- | --- | --- | --- |
+| `definition(s)` | `peanut.workflow.definition/read` | `peanut.workflow.definition.read` | none |
+| `saveDraft` | `peanut.workflow.definition/write` | `peanut.workflow.definition.write` | none |
+| `publishDefinition` / `retireDefinition` | `peanut.workflow.definition/publish` | `peanut.workflow.definition.publish` | none |
+| `instance/workItems/events` | graph `subject_resource_key/read` | `peanut.workflow.instance.read` plus Host read keys | `one_required`, Host subject key |
+| `startInstance` | graph `subject_resource_key/start` | `peanut.workflow.instance.start` plus graph `start_permission_keys` | `one_required`, Host subject key |
+| `applyTransition` | graph `subject_resource_key/<transition.operation>` | `peanut.workflow.instance.transition` plus the edge permission keys | `one_required`, pinned Host subject key |
+| `applyAutomation` | graph subject resource and declared automation operation | edge permission keys and a registered task context; never a human package key | `one_required`, pinned Host subject key |
+
+The graph therefore declares `subject_resource_key`, a Host read operation,
+start operation and package-independent `start_permission_keys`; each edge
+declares its Host operation and additional keys. Empty Host operation,
+permission or typed-target declarations fail graph validation. The
+`WorkflowAuthorizationResolver` must evaluate Kernel functional RBAC first and
+Data Permission `decideTargets()` second for exactly the context Tenant and one
+subject key, returning an `AuthorizedOperationContext`. Runtime checks Tenant,
+resource, operation and target equality. The Host adapter is forbidden to call
+`AuthorizationDecision::allow()` directly; qualification inspects the adapter
+and requires real evaluator evidence. Runtime rejects an empty target set,
+query-only authorization or a context for another instance. Definition
+administration is target-free but still receives an authorized package
+context. Cross-Tenant subjects, attachments, assignees and targets are
+identical non-enumerating failures.
+
+Each successful command appends exactly one existing Tenant audit row:
+
+| Command | Event type | Action | Actor / target |
+| --- | --- | --- | --- |
+| `saveDraft` | `tenant.workflow.definition.draft_saved` | `peanut.workflow.definition.write` | `appendTenantMember`; target `workflow_definition`, numeric definition id |
+| `publishDefinition` | `tenant.workflow.definition.published` | `peanut.workflow.definition.publish` | `appendTenantMember`; target `workflow_definition`, numeric definition id |
+| `retireDefinition` | `tenant.workflow.definition.retired` | `peanut.workflow.definition.publish` | `appendTenantMember`; target `workflow_definition`, numeric definition id |
+| `startInstance` | `tenant.workflow.instance.started` | `peanut.workflow.instance.start` | `appendTenantMember`; target `workflow_instance`, instance key |
+| `applyTransition` | `tenant.workflow.instance.transitioned` | `peanut.workflow.instance.transition` | `appendTenantMember`; target `workflow_instance`, instance key |
+| `applyAutomation` | `tenant.workflow.instance.automated` | declared automation operation | `appendTenantSystem`; target identity is represented only by redacted metadata |
+
+Definition audit metadata contains revision, version and graph digest. Instance
+audit metadata contains definition id/version, from/to node, transition and a
+SHA-256 digest of `subject_type|subject_key|subject_revision_key`; automation
+also includes the parent job key digest. `before`/`after` values are absent and
+`target_count=1`. Audit metadata never includes raw content, comments,
+filenames, file keys, recipient addresses, raw subject/target ids,
+authorization inputs, credentials, SQL, stack traces or private paths. The
+workflow event may retain the bounded human comment and approved attachment
+snapshots for business traceability, but serializers apply the Host visibility
+decision above. Expected denial is appended only by the Host after the command
+transaction rolls back, using `AuditOutcome::Denied`; unexpected error uses a
+new explicit post-rollback transaction and `AuditOutcome::Error`. Neither may
+commit beside a partial workflow effect.
+
+`WorkflowSideEffectPublisher::publish(PDO, AuthorizedOperationContext,
+WorkflowTransitionEffects, parentIdempotencyKey)` receives the same PDO and the
+already authorized transition context. Effects are immutable and canonically
+ordered. Task child keys are exactly
+`wf:<instance_key>:<event_sequence>:task:<zero_based_index>` and notification
+child keys replace `task` with `notification`; the corresponding request hash
+is canonical JSON of the typed intent. A Task provider must bind to the same
+Host subject resource/operation before `TrustedJobPublisher::publish()` accepts
+the transition context. A Notification adapter additionally requires a real,
+separately evaluated `peanut.notification-sms/manage`
+`AuthorizedOperationContext` for the same trusted Tenant; it may not construct
+or forge that decision. Until such an adapter is contracted by a real Host, a
+definition containing a notification intent fails closed with provider
+unavailable. Missing provider, mismatched PDO/context or child-key collision
+rolls back the transition. Exact parent replay never calls the publisher.
 
 Human-required transitions accept only an active Tenant member resolved from
 trusted context. An AI, service credential, background worker or anonymous
@@ -204,13 +421,30 @@ actor cannot approve, reject or satisfy an `all` review item. Explicit
 non-approval automation edges may be executed by a registered task handler and
 are audited as system actions.
 
-Stable failures include `WORKFLOW_DEFINITION_INVALID`,
-`WORKFLOW_DEFINITION_CONFLICT`, `WORKFLOW_DEFINITION_RETIRED`,
-`WORKFLOW_INSTANCE_CONFLICT`, `WORKFLOW_TRANSITION_UNAVAILABLE`,
-`WORKFLOW_ASSIGNMENT_DENIED`, `WORKFLOW_SUBJECT_NOT_FOUND`,
-`WORKFLOW_SUBJECT_REVISION_CONFLICT`, `WORKFLOW_ATTACHMENT_UNAVAILABLE`, and
-the existing authorization, idempotency and internal error codes. Errors do not
-reveal cross-Tenant existence or adapter implementation details.
+Package exceptions fix a stable code and suggested HTTP mapping; the core
+package itself returns no HTTP response. A downstream Host maps them through
+the existing `ProblemDetailsAdapter` to RFC 9457
+`application/problem+json`, preserves `X-Request-Id`, sends
+`Cache-Control: no-store`, and never includes adapter details:
+
+| Code | Status / header rule |
+| --- | --- |
+| `WORKFLOW_DEFINITION_INVALID` | 422; no retry header |
+| `WORKFLOW_PRECONDITION_REQUIRED` | 428; missing expected revision |
+| `WORKFLOW_DEFINITION_CONFLICT` | 409; current revision may be returned only as a quoted `ETag` after same-Tenant authorization |
+| `WORKFLOW_DEFINITION_RETIRED` | 409; no retry header |
+| `WORKFLOW_INSTANCE_CONFLICT` | 409; same safe `ETag` rule |
+| `WORKFLOW_TRANSITION_UNAVAILABLE` | 409; no graph internals |
+| `WORKFLOW_ASSIGNMENT_DENIED` | 403 for a visible instance; otherwise the not-found shape |
+| `WORKFLOW_SUBJECT_NOT_FOUND` | 404; identical for unknown, invisible and cross-Tenant subjects |
+| `WORKFLOW_SUBJECT_REVISION_CONFLICT` | 409; no raw revision or document digest |
+| `WORKFLOW_ATTACHMENT_UNAVAILABLE` | 404; identical for archived, unknown and cross-Tenant files |
+| `WORKFLOW_PROVIDER_UNAVAILABLE` | 503; `Retry-After` only when the Host has a bounded provider retry policy |
+
+Existing authorization and idempotency codes remain unchanged. Unknown adapter,
+PDO, JSON or database exceptions become `INTERNAL_ERROR` 500 after rollback;
+they never reveal SQL, table names, graph JSON, target existence or stack
+traces.
 
 ## Realtime Collaboration Interface Freeze
 
@@ -246,31 +480,42 @@ sets:
 
 ### WF01-A — schema, definition and instance core
 
-- `packages/php/workflow/database/20260811-workflow-runtime.sql`;
+- `packages/php/workflow/src/Database/Schema.php`;
 - `packages/php/workflow/src/Package.php`;
 - `packages/php/workflow/src/Application/WorkflowException.php`;
+- `packages/php/workflow/src/Application/WorkflowQueryService.php`;
 - `packages/php/workflow/src/Application/WorkflowReceipt.php`;
 - `packages/php/workflow/src/Application/WorkflowRuntime.php`;
 - `packages/php/workflow/src/Definition/WorkflowDefinition.php`;
+- `packages/php/workflow/src/Definition/WorkflowDefinitionVersion.php`;
 - `packages/php/workflow/src/Definition/WorkflowGraph.php`;
 - `packages/php/workflow/src/Definition/WorkflowNode.php`;
 - `packages/php/workflow/src/Definition/WorkflowTransition.php`;
+- `packages/php/workflow/src/Instance/WorkflowEvent.php`;
 - `packages/php/workflow/src/Instance/WorkflowInstance.php`;
 - `packages/php/workflow/src/Instance/WorkflowWorkItem.php`;
 - `packages/php/workflow/src/Persistence/WorkflowRepository.php`;
 - `packages/php/workflow/src/Persistence/PdoWorkflowRepository.php`;
 - `packages/php/workflow/tests/Unit/Definition/WorkflowGraphTest.php`;
+- `packages/php/workflow/tests/Unit/Database/SchemaTest.php`;
 - `packages/php/workflow/tests/Integration/Persistence/PdoWorkflowRepositoryTest.php`;
 - `packages/php/workflow/tests/Integration/Application/WorkflowRuntimeTest.php`;
-- `packages/php/composer.json`, root `composer.json`, `deptrac.yaml` and
+- `packages/php/composer.json` to register the Workflow PSR-4 root and set the
+  source candidate to `0.1.0-alpha.5`; root `composer.json`, `deptrac.yaml` and
   `phpunit.xml` only to register the new namespace/source/test layer;
-- `scripts/check-alpha2-package-projections` and `scripts/check-workspace` only
-  to include the new internal directory in `peanut-admin/core`;
+- `scripts/check-alpha5-package-projection` and
+  `.github/workflows/alpha5-composer-projection-preflight.yml` for the exact
+  Composer-only candidate projection;
+- `scripts/check-workspace` only to include the new internal directory in
+  `peanut-admin/core`;
+- `docs/reference/third-party-licenses.generated.md` only through the existing
+  generator to reflect the candidate manifest; no dependency is added;
 - `docs/status/index.md` and this contract for precise candidate state.
 
 ### WF01-B — existing-capability ports and failure atomicity
 
 - `packages/php/workflow/src/Adapter/WorkflowAssignmentResolver.php`;
+- `packages/php/workflow/src/Adapter/WorkflowAuthorizationResolver.php`;
 - `packages/php/workflow/src/Adapter/WorkflowSubjectRevisionResolver.php`;
 - `packages/php/workflow/src/Adapter/WorkflowAttachment.php`;
 - `packages/php/workflow/src/Adapter/WorkflowAttachmentResolver.php`;
@@ -293,13 +538,26 @@ security behavior before any existing package changes.
 
 ### WF01-Q — fixed-candidate qualification and publication records
 
-- new Workflow qualification/release decision records under `docs/reviews/`
-  and `docs/decisions/releases/`;
-- current status files, package manifest/version, projection metadata,
-  publication workflow and generated license inventory only as required for
-  `peanut-admin/core@0.1.0-alpha.5`;
-- no npm package version or content change unless a separately contracted Web
-  Workflow surface is later approved.
+Qualification may change only:
+
+- `docs/reviews/p1-wf01-alpha5-publication-qualification.md`;
+- `docs/content-status.json`;
+- `docs/status/index.md`;
+- this contract and `README.md` for the exact fixed result.
+
+After that qualification commit, a separate publication-record task may change
+only:
+
+- `docs/decisions/releases/p1-wf01-alpha5-publication-approval.md`;
+- `docs/content-status.json` and `docs/status/index.md`;
+- this contract and `README.md` for the exact published result.
+
+The external publication action mutates Packagist, the generated Composer split
+repository, immutable tag and GitHub prerelease only after that record sets
+`publication_authorized: true`; it does not mutate the qualified source tree.
+
+No npm manifest, version, content, dist-tag or projection may change unless a
+separate Web Workflow contract is accepted.
 
 If implementation needs a file outside the selected set, it stops for an
 independent contract correction before that file changes.
