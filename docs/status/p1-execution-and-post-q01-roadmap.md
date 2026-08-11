@@ -23,12 +23,15 @@ not an instruction to repeat a qualification or publish an earlier alpha.
 
 P1-WF01 has an accepted product-neutral Workflow contract fixed by
 `abeb5afa32dee353b13debe08b23575173979d90`,
-`f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and
-`a2a13b633cfdfdaa14aca5f1d917e4f6865597c2`. Forty implementation candidate
-files exist locally but are not committed. WF01 qualification, its obsolete
-automatic-publication path and application consumption have not occurred. The
-Composer Alpha.5 number remains a valid unqualified core candidate independent
-of the Peanut Admin application v1.0.0 version.
+`f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d`,
+`a2a13b633cfdfdaa14aca5f1d917e4f6865597c2` and reconciliation commit
+`faa126ebcdb4169ef3f0b623ca959fa742808aa7`. Static source acceptance fixed the
+forty-path implementation at
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c` with tree
+`d6dbde37907d1dd43b00057fc16fbd1a8d6dd052`. WF01 qualification, downstream
+adoption and publication have not occurred. Composer Alpha.5 remains a valid
+unqualified core candidate independent of the Peanut Admin application v1.0.0
+version.
 
 The accepted Workflow design remains reusable: it owns versioned definitions,
 Tenant instances, human work items and append-only events while using existing
@@ -63,18 +66,18 @@ moves first through a separate planning correction.
 
 CAP01 contract reconciliation fixes the exact application v1.0.0 source and
 its Composer Alpha.2 plus npm Alpha.3/Alpha.4 locks while preserving the
-independent unpublished Composer Alpha.5 candidate. The next task is static
-CAP01 source acceptance of the existing forty-file candidate and one WF01-I
-commit from the reconciled contract result.
+independent unpublished Composer Alpha.5 candidate. Static source acceptance
+is complete at `3972c9aefcd55ac71d07a47739a99d23bb0ae30c`; the current task is
+documentation-only closure and integration into the latest `dev`. The next
+executable capability task is a separately contracted CAP02 ArtifactRevision
+stage whose fixed input must name the final CAP01 closure commit.
 
-Until that source-acceptance commit lands:
+Until CAP02 receives that independent contract:
 
-- do not run WF01 or aggregate tests;
-- do not discard, regenerate or widen the forty WF01 candidate files;
-- do not install a dependency;
+- do not run CAP05 aggregate qualification early;
+- do not install a dependency or widen the Workflow candidate;
 - do not publish a Composer/npm package, tag or Release;
-- do not start ArtifactRevision, EntitlementQuota, Collaboration or application
-  consumption.
+- do not start EntitlementQuota, Collaboration or application consumption.
 
 Qualification, private downstream adoption and public publication are separate
 decisions. A later candidate does not move the v1.0.0 compatibility baseline or

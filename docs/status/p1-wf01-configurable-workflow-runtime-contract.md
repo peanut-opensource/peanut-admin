@@ -4,10 +4,13 @@
 
 ```text
 task: P1-CAP01 / P1-WF01
-state: source-acceptance-ready
+state: source-candidate
 prerequisite_commit: e911406909710480b59d7332de9bc18a365794fa
 contract_history: abeb5afa32dee353b13debe08b23575173979d90, f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d, a2a13b633cfdfdaa14aca5f1d917e4f6865597c2
-implementation_stage: WF01-I combines the mutually dependent A and B write sets
+contract_reconciliation_commit: faa126ebcdb4169ef3f0b623ca959fa742808aa7
+result_commit: 3972c9aefcd55ac71d07a47739a99d23bb0ae30c
+result_tree: d6dbde37907d1dd43b00057fc16fbd1a8d6dd052
+implementation_stage: WF01-I combined source candidate complete
 public_boundary: peanut-admin/core
 target_candidate: peanut-admin/core@0.1.0-alpha.5, Composer-only and unpublished
 dependency_change: none
@@ -47,10 +50,10 @@ baseline consumed by that application release is:
 The core package line therefore remains pre-1.0. `0.1.0-alpha.5` is a valid
 next Composer candidate number, not a downgrade from the application version.
 It identifies only the current unqualified projection. CAP01 source acceptance
-does not publish it, move a registry tag, change npm, or move any application
-lock. CAP05 qualification and a later independent publication approval must
-bind the final source, projection digest and registry action before an external
-Alpha.5 publication can occur.
+at `3972c9a` did not publish it, move a registry tag, change npm, or move any
+application lock. CAP05 qualification and a later independent publication
+approval must bind the final source, projection digest and registry action
+before an external Alpha.5 publication can occur.
 
 ## Objective And Non-Goals
 
@@ -519,10 +522,10 @@ adapter interfaces, while the B value objects require the A exception and
 instance types, so neither set is an independently loadable projection. They
 remain separate review groups below but form one combined exact whitelist. The
 integration owner may narrow but must not silently widen the combined set.
-The existing candidate contains exactly forty paths and its non-document diff
-SHA-256 is
-`7e71e7ad5a1af626e0d17b5c055acdf2d7a855a5b2211865254b7af2b4e0c1cb`.
-No status, release, guide or generated-license document belongs to WF01-I.
+The accepted source candidate contains exactly forty paths and is fixed by
+commit `3972c9aefcd55ac71d07a47739a99d23bb0ae30c` and tree
+`d6dbde37907d1dd43b00057fc16fbd1a8d6dd052`. No status, release, guide or
+generated-license document belongs to WF01-I.
 
 ### WF01-A — schema, definition and instance core
 
@@ -640,15 +643,15 @@ Acceptance requires at least:
 
 ## Stop Line
 
-The contract commit authorized implementation from its exact resulting commit,
-with `f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and this correction supplying
-the precise contract used by the implementation candidate. The coupled former
-A/B groups must land as the single WF01-I commit. Development completion is not
-qualification. CAP05 qualification does not publish, and CAP06 private adoption
-does not publish. Publication of `peanut-admin/core@0.1.0-alpha.5` or another
-later approved candidate, its tag/Release and Packagist update occur only after
-an explicit publication record binds the exact source/projection commits and
-digests.
+Reconciliation commit `faa126ebcdb4169ef3f0b623ca959fa742808aa7` supplied the
+precise contract used by the implementation candidate. The coupled former A/B
+groups landed as the single WF01-I source commit
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`.
+Development completion is not qualification. CAP05 qualification does not
+publish, and CAP06 private adoption does not publish. Publication of
+`peanut-admin/core@0.1.0-alpha.5` or another later approved candidate, its
+tag/Release and Packagist update occur only after an explicit publication
+record binds the exact source/projection commits and digests.
 
 The Peanut Admin application may move from its fixed Alpha.2 lock only during
 CAP06, using the exact CAP05-qualified projection or a later immutable registry

@@ -14,14 +14,17 @@ automated_verification: deferred to the owning integration or qualification stag
 qualification: not started
 downstream_adoption: not started
 publication: not authorized
+cap01_source_result: 3972c9aefcd55ac71d07a47739a99d23bb0ae30c
+cap01_result_tree: d6dbde37907d1dd43b00057fc16fbd1a8d6dd052
 ```
 
 This document restores the missing cross-product plan after Q01. It is an
 ordering and ownership decision, not an executable Runtime task. PB09 and the
-Peanut Admin v1.0.0 publication are completed inputs. The forty local WF01
-candidate files based on the accepted `abeb5af`, `f2f4a21` and `a2a13b6`
-contracts remain uncommitted implementation evidence; they are not qualified,
-published or approved for application consumption.
+Peanut Admin v1.0.0 publication are completed inputs. The forty-path WF01
+candidate based on the accepted historical contracts and reconciliation commit
+`faa126ebcdb4169ef3f0b623ca959fa742808aa7` is fixed at
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`; it is not qualified, published or
+approved for application consumption.
 
 ## Boundary And Reuse Decision
 
@@ -96,10 +99,10 @@ must not be used as a reason to reverse the dependency.
 CAP01 contract reconciliation records that application and package releases
 have independent version lines. `peanut-admin/core@0.1.0-alpha.5` remains a
 valid unpublished Composer candidate number after the application v1.0.0
-release, but source acceptance, CAP05 qualification, CAP06 adoption and public
-publication are separate authorities. The next task is static acceptance of
-the unchanged forty-file candidate against the reconciled contract; it does
-not run tests or publish Alpha.5.
+release. Static source acceptance completed at `3972c9a`; CAP05 qualification,
+CAP06 adoption and public publication remain separate authorities. The current
+documentation closure does not run tests or publish Alpha.5; CAP02 begins only
+from the exact final CAP01 closure result.
 
 ## CAP01 To CAP06 Stage Contracts
 
@@ -112,7 +115,9 @@ until the stage's independent contract names the exact whitelist.
   application/package baseline in the reconciled WF01 contract and the
   frozen WF01 contract commits `abeb5afa32dee353b13debe08b23575173979d90`,
   `f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and
-  `a2a13b633cfdfdaa14aca5f1d917e4f6865597c2`.
+  `a2a13b633cfdfdaa14aca5f1d917e4f6865597c2`. Static source acceptance
+  produced `3972c9aefcd55ac71d07a47739a99d23bb0ae30c` with tree
+  `d6dbde37907d1dd43b00057fc16fbd1a8d6dd052`.
 - **Conceptual write set:** the existing `packages/php/workflow` source and
   tests, Workflow testing harness, Composer projection/wiring and narrowly
   required status or qualification records. Existing forty candidate files
@@ -130,10 +135,11 @@ until the stage's independent contract names the exact whitelist.
   invisible subject, assignee, attachment or Provider failures do not enumerate
   protected state.
 - **Test owner:** existing `P1-WORKFLOW-RUNTIME-001`.
-- **Stop line:** the version and fixed-base contract is reconciled before one
-  CAP01 integration owner statically accepts and commits the exact candidate.
-  Automated tests belong only to the fixed CAP05 qualification contract. No publication,
-  downstream adoption or product Host implementation follows automatically.
+- **Stop line:** the version and fixed-base contract was reconciled before the
+  CAP01 integration owner statically accepted and committed the exact
+  candidate. Automated tests belong only to the fixed CAP05 qualification
+  contract. No publication, downstream adoption or product Host implementation
+  follows automatically.
 
 ### CAP02 — ArtifactRevision
 
@@ -311,17 +317,16 @@ Publication does not imply production readiness or authorize an application
 migration. A public release action must not mutate the already qualified source
 tree and is outside CAP00-CAP06 until explicitly approved.
 
-## CAP00 Stop Line And Next Task
+## CAP01 Result And Next Task
 
-CAP00 changes documentation only. It does not test, stage, commit, alter or
-discard the existing forty WF01 candidate files and does not include
-`.playwright-cli/`. Runtime verification is deferred under
-`P1-WORKFLOW-RUNTIME-001` and the later CAP owners.
+CAP01 source acceptance changed only the contracted forty implementation paths
+and did not include `.playwright-cli/`. Static review confirmed the exact
+whitelist and the opaque subject-revision port, producing source commit
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Runtime verification remains
+deferred under `P1-WORKFLOW-RUNTIME-001` and the later CAP05 owner.
 
-CAP01 contract reconciliation resolves the application/package baseline,
-preserves the independent Alpha.5 candidate line and fixes the exact CAP00
-prerequisite. The next exact task is **CAP01 source acceptance**: statically
-review the unchanged forty-file WF01 candidate against this plan and the
-reconciled contract, verify the exact whitelist and subject-revision port, and
-create one WF01-I source commit. It must not run tests, install a dependency,
-publish a package or begin ArtifactRevision.
+The next exact capability task is **CAP02 ArtifactRevision**. Its independent
+contract must name the final CAP01 documentation-closure result as a 40-character
+prerequisite, define its exact whitelist, schema and test owner, and preserve
+the existing Workflow port. It must not run CAP05 qualification early, publish
+a package or start CAP03/CAP04 work.

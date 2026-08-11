@@ -119,13 +119,14 @@ is the accepted product-neutral workflow task. It owns versioned definitions,
 Tenant instances, human work items, immutable subject revisions and reuse
 adapters for existing authorization, File/Media, Task/Job, Notification/SMS and
 audit contracts. Media subjects and templates remain Host-owned; CRDT/OT and
-realtime transport are interface-only. WF01 implementation remains in static
-candidate review; its mutually dependent schema/state-machine and capability
-port groups must land as one WF01-I commit for
-the unpublished Composer candidate `peanut-admin/core@0.1.0-alpha.5`. The
-Peanut Admin application v1.0.0 remains locked to Composer Alpha.2, Admin
-Web/PC npm Alpha.3 and UniApp/H5 npm Alpha.4. CAP01 source acceptance runs no
-tests; fixed-tree qualification belongs to CAP05, private adoption to CAP06,
+realtime transport are interface-only. CAP01 source acceptance fixed the
+combined forty-path WF01-I candidate at commit
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c` and tree
+`d6dbde37907d1dd43b00057fc16fbd1a8d6dd052`. It is the unpublished Composer
+candidate `peanut-admin/core@0.1.0-alpha.5`; it is not a qualification,
+downstream adoption or publication. The Peanut Admin application v1.0.0
+remains locked to Composer Alpha.2, Admin Web/PC npm Alpha.3 and UniApp/H5 npm
+Alpha.4. Fixed-tree qualification belongs to CAP05, private adoption to CAP06,
 and public package publication to a later independent approval.
 
 The current backend administration candidate is fixed by the
