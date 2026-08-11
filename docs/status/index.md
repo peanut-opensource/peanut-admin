@@ -331,6 +331,19 @@ owns the remaining Chromium installation, PR-merge-topology, and fixed-PHP
 performance diagnostics. It is restricted to GitHub Runner qualification and
 does not alter any downstream database or published Alpha.3 artifact.
 
+The [P1-PKG11 Tenant Refresh Sampling Follow-up Contract](./p1-pkg11-tenant-refresh-sampling-follow-up-contract.md)
+fixes a product-neutral follow-up for a small-sample tenant-refresh p95
+misclassification. Its prerequisite is
+`7fbd445d8fa547830b7782a7ac147d9ed414e0fd`; independent runs against
+`a511ecb` reported `7.899 ms` in Performance and `264.661 ms` in Quality, while
+18 nearest-rank samples make p95 equal to the maximum observation. The later
+implementation is limited to 20 tenant-refresh samples using the existing 20
+login tokens, a static contract assertion for that count, and the baseline
+table's 18-to-20 correction. The percentile algorithm, threshold, Runtime, CI,
+and p99 diagnostic evidence remain unchanged. Implementation performs static
+review, exact-write-set review, and `git diff --check` only; the qualification
+owner runs `./scripts/test-performance` once, and a failure blocks qualification.
+
 ## Documentation Workflow Post-Merge Correction
 
 ```text
