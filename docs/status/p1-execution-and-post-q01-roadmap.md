@@ -64,22 +64,19 @@ moves first through a separate planning correction.
 
 ## Active Stop Line
 
-CAP01 contract reconciliation fixes the exact application v1.0.0 source and
-its Composer Alpha.2 plus npm Alpha.3/Alpha.4 locks while preserving the
-independent unpublished Composer Alpha.5 candidate. Static source acceptance
-began at `3972c9aefcd55ac71d07a47739a99d23bb0ae30c`; bounded R01-R04 remediation
-then closed all repository checks and fixed the final CAP01 result at merge
-commit `d6e636f10d7c539731963b394221e8eca0997816`. The next executable capability
-is the independently contracted
-[CAP02 ArtifactRevision](./p1-cap02-artifact-revision-contract.md) stage using
+CAP02 used the final CAP01 merge, preserved the opaque Workflow port, passed
+all six repository checks and merged through PR #9 as
+`ba707c1b3943ff76620770dbf72413de51f340f6`. The next executable capability is
+the independently contracted
+[CAP03 EntitlementQuota](./p1-cap03-entitlement-quota-contract.md) stage using
 that exact prerequisite.
 
-During CAP02 implementation:
+During CAP03 implementation:
 
 - do not run CAP05 aggregate qualification early;
-- do not install a dependency or widen the Workflow candidate;
+- do not install a dependency or widen the ArtifactRevision/Workflow candidates;
 - do not publish a Composer/npm package, tag or Release;
-- do not start EntitlementQuota, Collaboration or application consumption.
+- do not start Collaboration or application consumption.
 
 Qualification, private downstream adoption and public publication are separate
 decisions. A later candidate does not move the v1.0.0 compatibility baseline or

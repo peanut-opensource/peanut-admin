@@ -317,20 +317,16 @@ Publication does not imply production readiness or authorize an application
 migration. A public release action must not mutate the already qualified source
 tree and is outside CAP00-CAP06 until explicitly approved.
 
-## CAP01 Result And CAP02 Start
+## CAP02 Result And CAP03 Start
 
-CAP01 source acceptance changed only the contracted forty implementation paths
-and did not include `.playwright-cli/`. Static review confirmed the exact
-whitelist and the opaque subject-revision port, producing source commit
-`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Integration PR #7 was followed
-by bounded R01-R04 remediation for the hidden class fatal, tests,
-PHPStan/Starter gates and final mechanical formatter order. PR #8 passed all
-six repository checks and fixed the final CAP01 merge at
-`d6e636f10d7c539731963b394221e8eca0997816`.
+CAP02 preserved the Workflow subject-revision port and changed only its
+contracted ArtifactRevision and projection paths. PR #9 passed baseline,
+dependency review, qualification, quality, recovery and verify. The exact
+CAP02 merge is `ba707c1b3943ff76620770dbf72413de51f340f6` with tree
+`bcb3014a6af842927857ebdd4ec326c9a9a91a62`.
 
 The next exact capability task is the accepted
-[CAP02 ArtifactRevision contract](./p1-cap02-artifact-revision-contract.md).
-It preserves the Workflow port, uses test owner
-`P1-ARTIFACT-REVISION-001` and remains an unqualified unpublished source
-candidate. CAP05 qualification, publication and CAP03/CAP04 implementation
-remain outside CAP02.
+[CAP03 Entitlement Quota contract](./p1-cap03-entitlement-quota-contract.md).
+It uses test owner `P1-ENTITLEMENT-QUOTA-001`, adds no dependency and remains
+an unqualified unpublished source candidate. CAP05 qualification, CAP06
+adoption, publication and CAP04 implementation remain outside CAP03.
