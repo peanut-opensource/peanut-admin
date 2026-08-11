@@ -2,22 +2,6 @@ name: Recovery
 
 on:
   pull_request:
-    paths:
-      - 'backend/**'
-      - 'packages/php/**'
-      - 'packages/web/**'
-      - 'profiles/**'
-      - 'schemas/**'
-      - 'starter/**'
-      - 'scripts/backup-*'
-      - 'scripts/create-internal-starter'
-      - 'scripts/restore-*'
-      - 'scripts/verify-internal-starter'
-      - 'scripts/verify-recovery'
-      - 'scripts/verify-clean-install'
-      - 'scripts/test-recovery'
-      - 'tests/recovery/**'
-      - '.github/workflows/recovery.yml'
   push:
     branches:
       - dev
