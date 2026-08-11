@@ -35,6 +35,7 @@ $manifest = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_TH
 $expected = [
     "PeanutAdmin\\ArtifactRevision\\" => "artifact-revision/src/",
     "PeanutAdmin\\DataPermission\\" => "data-permission/src/",
+    "PeanutAdmin\\EntitlementQuota\\" => "entitlement-quota/src/",
     "PeanutAdmin\\FileMedia\\" => "file-media/src/",
     "PeanutAdmin\\ImportExport\\" => "import-export/src/",
     "PeanutAdmin\\IntegrationSecurity\\" => "integration-security/src/",
@@ -66,7 +67,7 @@ if find "$projection" -type f \( -name '.env' -o -name '.env.*' -o -iname '*.pem
   exit 1
 fi
 if rg -qi '(article|newsroom|audio|video|broadcast|transcoding|copyright|three[-_ ]review)' \
-  "$projection/artifact-revision" "$projection/workflow"; then
+  "$projection/artifact-revision" "$projection/entitlement-quota" "$projection/workflow"; then
   echo 'ERROR: Alpha.5 projection contains product-specific behavior' >&2
   exit 1
 fi
@@ -114,6 +115,8 @@ require $argv[1];
 foreach ([
     "PeanutAdmin\\ArtifactRevision\\Package",
     "PeanutAdmin\\ArtifactRevision\\Database\\Schema",
+    "PeanutAdmin\\EntitlementQuota\\Package",
+    "PeanutAdmin\\EntitlementQuota\\Database\\Schema",
     "PeanutAdmin\\Kernel\\Package",
     "PeanutAdmin\\Workflow\\Application\\WorkflowRuntime",
     "PeanutAdmin\\Workflow\\Database\\Schema",
@@ -125,5 +128,5 @@ foreach ([
 }
 ' "$consumer/vendor/autoload.php"
 
-printf 'Alpha.5 Composer projection: commit=%s; files=%s; psr4_roots=12; isolated_consumer=passed\n' \
+printf 'Alpha.5 Composer projection: commit=%s; files=%s; psr4_roots=13; isolated_consumer=passed\n' \
   "$(git rev-parse HEAD)" "$(find "$projection" -type f | wc -l | tr -d ' ')"
