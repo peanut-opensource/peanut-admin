@@ -183,6 +183,15 @@ final class CollaborationServiceTest extends TestCase
         self::assertSame($snapshotPayload, $state->snapshot?->opaqueSnapshot);
         self::assertSame([], $state->updates);
         self::assertSame(1, $state->nextAfterSequence);
+        $incrementalState = $service->state(
+            $this->context($tenant, 'article-1', 'read'),
+            $opened->sessionKey,
+            1,
+            50,
+        );
+        self::assertNull($incrementalState->snapshot);
+        self::assertSame([], $incrementalState->updates);
+        self::assertSame(1, $incrementalState->nextAfterSequence);
 
         $published = $service->publish(
             $this->context($tenant, 'article-1', 'publish'),

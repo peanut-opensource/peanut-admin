@@ -38,6 +38,8 @@ final class SchemaTest extends TestCase
         self::assertStringContainsString("`status` IN ('active', 'published', 'closed', 'expired')", $session);
         self::assertStringContainsString("`session_key` REGEXP '^session_[0-9a-f]{32}$'", $session);
         self::assertStringContainsString('`base_revision_key` VARCHAR(41)', $session);
+        self::assertStringContainsString('`engine_version` VARCHAR(64)', $session);
+        self::assertStringContainsString("`engine_version` REGEXP '^[a-z][a-z0-9]*([.-][a-z0-9]+)*$'", $session);
         self::assertStringContainsString('`published_revision_key` VARCHAR(41)', $session);
         self::assertStringNotContainsString('REFERENCES `pa_artifact', $session);
 
@@ -57,6 +59,7 @@ final class SchemaTest extends TestCase
             $update,
         );
         self::assertStringContainsString('`opaque_payload` MEDIUMBLOB NOT NULL', $update);
+        self::assertStringContainsString('`engine_version` VARCHAR(64)', $update);
         self::assertStringContainsString('`byte_length` = OCTET_LENGTH(`opaque_payload`)', $update);
 
         $snapshot = Schema::createTableSql('pa_collaboration_snapshot_envelope');
@@ -66,6 +69,7 @@ final class SchemaTest extends TestCase
         );
         self::assertStringContainsString('`opaque_snapshot` MEDIUMBLOB NOT NULL', $snapshot);
         self::assertStringContainsString('`opaque_state_vector` MEDIUMBLOB NOT NULL', $snapshot);
+        self::assertStringContainsString('`engine_version` VARCHAR(64)', $snapshot);
         self::assertStringContainsString('`retain_until` DATETIME(3) NOT NULL', $snapshot);
     }
 

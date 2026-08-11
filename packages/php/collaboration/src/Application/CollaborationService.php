@@ -74,7 +74,7 @@ final readonly class CollaborationService
         $this->assertContext($context, $artifactType, $artifactKey, 'write');
         $this->assertArtifactIdentity($artifactType, $artifactKey);
         $this->assertIdentifier($engineName, 64);
-        $this->assertAscii($engineVersion, 64);
+        $this->assertIdentifier($engineVersion, 64);
         $this->assertKey($baseRevisionKey, 'revision');
         $this->assertDigest($baseRevisionSha256);
 
@@ -536,9 +536,13 @@ final readonly class CollaborationService
                 }
                 $last = $updates === [] ? null : $updates[count($updates) - 1];
 
+                $visibleSnapshot = $snapshot !== null && $snapshot->coveredSequence >= $afterSequence
+                    ? $snapshot
+                    : null;
+
                 return new CollaborationState(
                     $session,
-                    $snapshot,
+                    $visibleSnapshot,
                     $updates,
                     $afterSequence,
                     $last?->sequenceNo ?? $effectiveAfter,
