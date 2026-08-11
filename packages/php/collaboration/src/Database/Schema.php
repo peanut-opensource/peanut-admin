@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `pa_collaboration_snapshot_envelope` (
   `snapshot_key` VARCHAR(41) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `covered_sequence` BIGINT UNSIGNED NOT NULL,
   `engine_name` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-  `engine_version` VARCHAR(32) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `engine_version` VARCHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `snapshot_byte_length` INT UNSIGNED NOT NULL,
   `snapshot_sha256` CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
   `opaque_snapshot` MEDIUMBLOB NOT NULL,
