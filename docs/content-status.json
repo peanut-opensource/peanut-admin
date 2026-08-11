@@ -149,6 +149,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-cap05-r01-product-neutral-fixtures-contract.md",
+      "title": "P1-CAP05-R01 Product-Neutral Projection Fixture Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-pkg01-public-package-boundary-contract.md",
       "title": "P1-PKG01 Public Package Boundary Contract",
       "status": "canonical",

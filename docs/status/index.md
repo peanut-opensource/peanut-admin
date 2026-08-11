@@ -182,6 +182,13 @@ envelopes, snapshots, backpressure, immutable ArtifactRevision publication and
 the UI-neutral npm client. Its exact prerequisite is Core PR #11 merge
 `7105800845e364da9a2fa731b7a1d8cdf6b5163b`.
 
+CAP04 passed all six PR checks and merged as
+`bcbf77d4a6cc112d22ca1a67611e98afc8fc804a`. CAP05 retained the passing npm
+Alpha.5 projection and stopped its Composer projection because six projected
+integration-test files used an `article` product fixture. The exact test-only
+repair and no-repeat continuation are bounded by
+[P1-CAP05-R01](./p1-cap05-r01-product-neutral-fixtures-contract.md).
+
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed
