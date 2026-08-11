@@ -8,6 +8,7 @@
     <testsuites>
         <testsuite name="Peanut Admin P0">
             <directory>backend/tests</directory>
+            <directory>packages/php/artifact-revision/tests</directory>
             <directory>packages/php/kernel/tests</directory>
             <directory>packages/php/data-permission/tests</directory>
             <directory>packages/php/reference-codes/tests</directory>
@@ -20,6 +21,7 @@
     <source>
         <include>
             <directory>backend/app</directory>
+            <directory>packages/php/artifact-revision/src</directory>
             <directory>packages/php/kernel/src</directory>
             <directory>packages/php/data-permission/src</directory>
             <directory>packages/php/reference-codes/src</directory>

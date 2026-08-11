@@ -33,6 +33,7 @@ tar -xf "$archive" --strip-components=2 -C "$projection"
 php -r '
 $manifest = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
 $expected = [
+    "PeanutAdmin\\ArtifactRevision\\" => "artifact-revision/src/",
     "PeanutAdmin\\DataPermission\\" => "data-permission/src/",
     "PeanutAdmin\\FileMedia\\" => "file-media/src/",
     "PeanutAdmin\\ImportExport\\" => "import-export/src/",
@@ -64,8 +65,9 @@ if find "$projection" -type f \( -name '.env' -o -name '.env.*' -o -iname '*.pem
   echo 'ERROR: Alpha.5 projection contains a forbidden credential file' >&2
   exit 1
 fi
-if rg -qi '(article|newsroom|audio|video|broadcast|transcoding|copyright|three[-_ ]review)' "$projection/workflow"; then
-  echo 'ERROR: Workflow projection contains product-specific behavior' >&2
+if rg -qi '(article|newsroom|audio|video|broadcast|transcoding|copyright|three[-_ ]review)' \
+  "$projection/artifact-revision" "$projection/workflow"; then
+  echo 'ERROR: Alpha.5 projection contains product-specific behavior' >&2
   exit 1
 fi
 
@@ -110,6 +112,8 @@ file_put_contents(
 php -r '
 require $argv[1];
 foreach ([
+    "PeanutAdmin\\ArtifactRevision\\Package",
+    "PeanutAdmin\\ArtifactRevision\\Database\\Schema",
     "PeanutAdmin\\Kernel\\Package",
     "PeanutAdmin\\Workflow\\Application\\WorkflowRuntime",
     "PeanutAdmin\\Workflow\\Database\\Schema",
@@ -121,5 +125,5 @@ foreach ([
 }
 ' "$consumer/vendor/autoload.php"
 
-printf 'Alpha.5 Composer projection: commit=%s; files=%s; psr4_roots=11; isolated_consumer=passed\n' \
+printf 'Alpha.5 Composer projection: commit=%s; files=%s; psr4_roots=12; isolated_consumer=passed\n' \
   "$(git rev-parse HEAD)" "$(find "$projection" -type f | wc -l | tr -d ' ')"
