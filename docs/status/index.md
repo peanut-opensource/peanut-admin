@@ -134,9 +134,10 @@ a PHP process termination in the final `check-workspace` aggregate. The bounded
 [P1-CAP01-R01 remediation contract](./p1-cap01-r01-quality-process-termination-contract.md)
 identified and removed the duplicate private/public method-name fatal. Its one
 PHP aggregate completed all 622 tests and exposed one Schema expectation
-failure plus one risky Harness test; those findings remain blocking and require
-a separate exact contract. Already passing qualification groups remain sealed;
-CAP02 has not started.
+failure plus one risky Harness test. The exact test-only repairs and single
+aggregate allowance are owned by
+[P1-CAP01-R02](./p1-cap01-r02-hidden-phpunit-findings-contract.md). Already
+passing qualification groups remain sealed; CAP02 has not started.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).

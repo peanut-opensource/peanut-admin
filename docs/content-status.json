@@ -107,6 +107,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-cap01-r02-hidden-phpunit-findings-contract.md",
+      "title": "P1-CAP01-R02 Hidden PHPUnit Findings Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-pkg01-public-package-boundary-contract.md",
       "title": "P1-PKG01 Public Package Boundary Contract",
       "status": "canonical",
