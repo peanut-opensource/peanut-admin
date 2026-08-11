@@ -51,6 +51,15 @@ the first-party storage provider contract. Its machine-readable
 first-party PHP and Web workspaces; production object-storage selection,
 security audit, clean starter installs, and qualification remain deferred.
 
+P1-CAP04 accepts exact `yjs@13.6.32` and `y-websocket@3.1.0` versions for the
+`@peanut-admin/admin` collaboration boundary. PHP continues to persist opaque
+bounded envelopes through existing PDO contracts. The separately deployed
+Host may use the reviewed Hocuspocus server reference, but Core neither ships a
+WebSocket server nor creates a third public package. See the
+[CAP04 collaboration decision](./p1-cap04-collaboration.md) and its
+[machine-readable record](./p1-cap04-collaboration.json). Installation remains
+blocked until the independent CAP04 Runtime contract is accepted.
+
 ## Explicitly Deferred
 
 P0 does not install or create speculative abstractions for filesystem storage, queue management UI, spreadsheet import/export, notifications, Plugin runtime or marketplace, MFA, or OIDC. Each requires an approved use path and a new dependency decision before installation.
