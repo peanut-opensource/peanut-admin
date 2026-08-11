@@ -298,7 +298,7 @@ SQL, implode(', ', $workItemValues)))->execute($workItemParameters);
                 'perf-refresh-' . $refreshIndex,
             );
         },
-        18,
+        20,
         0,
     );
     $accessToken = $refreshed[0]->tokens->access->expose();

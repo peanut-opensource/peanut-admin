@@ -644,6 +644,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-pkg11-tenant-refresh-sampling-follow-up-contract.md",
+      "title": "P1-PKG11 Tenant Refresh Sampling Follow-up Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
