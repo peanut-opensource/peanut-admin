@@ -317,19 +317,20 @@ Publication does not imply production readiness or authorize an application
 migration. A public release action must not mutate the already qualified source
 tree and is outside CAP00-CAP06 until explicitly approved.
 
-## CAP01 Result And Next Task
+## CAP01 Result And CAP02 Start
 
 CAP01 source acceptance changed only the contracted forty implementation paths
 and did not include `.playwright-cli/`. Static review confirmed the exact
 whitelist and the opaque subject-revision port, producing source commit
-`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Integration PR #7 is currently
-blocked by the final PHP aggregate process termination; only the bounded
-[P1-CAP01-R01 remediation](./p1-cap01-r01-quality-process-termination-contract.md)
-may diagnose and repair that group. Runtime verification otherwise remains
-deferred under `P1-WORKFLOW-RUNTIME-001` and the later CAP05 owner.
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Integration PR #7 was followed
+by bounded R01-R04 remediation for the hidden class fatal, tests,
+PHPStan/Starter gates and final mechanical formatter order. PR #8 passed all
+six repository checks and fixed the final CAP01 merge at
+`d6e636f10d7c539731963b394221e8eca0997816`.
 
-After CAP01 remediation and merge, the next exact capability task is **CAP02
-ArtifactRevision**. Its independent contract must name the final CAP01 merge
-result as a 40-character prerequisite, define its exact whitelist, schema and
-test owner, and preserve the existing Workflow port. It must not run CAP05
-qualification early, publish a package or start CAP03/CAP04 work.
+The next exact capability task is the accepted
+[CAP02 ArtifactRevision contract](./p1-cap02-artifact-revision-contract.md).
+It preserves the Workflow port, uses test owner
+`P1-ARTIFACT-REVISION-001` and remains an unqualified unpublished source
+candidate. CAP05 qualification, publication and CAP03/CAP04 implementation
+remain outside CAP02.
