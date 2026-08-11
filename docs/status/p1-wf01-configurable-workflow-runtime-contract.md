@@ -7,6 +7,8 @@ task: P1-WF01
 state: implementation-ready
 prerequisite_commit: 7fbd445d8fa547830b7782a7ac147d9ed414e0fd
 contract_commit: abeb5afa32dee353b13debe08b23575173979d90
+implementation_base: f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d
+implementation_stage: WF01-I combines the mutually dependent A and B write sets
 public_boundary: peanut-admin/core
 target_candidate: 0.1.0-alpha.5
 dependency_change: none
@@ -128,6 +130,13 @@ instance or transition commits. `all` snapshots the resolved member set and
 requires every member; `any` closes sibling pending items after one completion.
 Role or Department membership changes do not silently rewrite an existing
 work-item snapshot.
+
+The assignment adapter output must correspond to one of the target node's
+declared assignment rules. Member source keys are canonical positive decimal
+strings; Role and Department keys use the bounded segmented lowercase key
+syntax; initiator and previous-actor sources use their declared rule kind and
+an internal canonical snapshot key. Non-ASCII, undeclared or mismatched source
+output fails before any write.
 
 Return and withdrawal are ordinary declared edges. The engine does not infer
 “previous review”, author self-review, skip-level approval, or three-review
@@ -388,8 +397,12 @@ Each successful command appends exactly one existing Tenant audit row:
 Definition audit metadata contains revision, version and graph digest. Instance
 audit metadata contains definition id/version, from/to node, transition and a
 SHA-256 digest of `subject_type|subject_key|subject_revision_key`; automation
-also includes the parent job key digest. `before`/`after` values are absent and
-`target_count=1`. Audit metadata never includes raw content, comments,
+also includes the parent job key digest. `before`/`after` values are absent.
+Member commands use `target_count=1`. `applyAutomation` reuses the existing
+`appendTenantSystem` authority, which has no target fields and therefore
+persists its schema default `target_count=0`; its redacted subject digest
+remains in metadata and WF01 does not widen the Kernel audit API. Audit
+metadata never includes raw content, comments,
 filenames, file keys, recipient addresses, raw subject/target ids,
 authorization inputs, credentials, SQL, stack traces or private paths. The
 workflow event may retain the bounded human comment and approved attachment
@@ -444,7 +457,9 @@ the existing `ProblemDetailsAdapter` to RFC 9457
 Existing authorization and idempotency codes remain unchanged. Unknown adapter,
 PDO, JSON or database exceptions become `INTERNAL_ERROR` 500 after rollback;
 they never reveal SQL, table names, graph JSON, target existence or stack
-traces.
+traces. Every public command and query entry point enforces this mapping;
+persisted graph corruption is an internal error rather than a caller's 422
+definition error.
 
 ## Realtime Collaboration Interface Freeze
 
@@ -474,9 +489,12 @@ The independent contract commit may change only:
 - `docs/status/index.md`;
 - `README.md`.
 
-After the contract commit, development is split into independently reviewable
-commits. The integration owner may narrow but must not silently widen these
-sets:
+After the contract commit, development uses one independently reviewable
+`WF01-I` implementation commit. The former A Runtime classes require the B
+adapter interfaces, while the B value objects require the A exception and
+instance types, so neither set is an independently loadable projection. They
+remain separate review groups below but form one combined exact whitelist. The
+integration owner may narrow but must not silently widen the combined set.
 
 ### WF01-A — schema, definition and instance core
 
@@ -507,7 +525,8 @@ sets:
   `.github/workflows/alpha5-composer-projection-preflight.yml` for the exact
   Composer-only candidate projection;
 - `scripts/check-workspace` only to include the new internal directory in
-  `peanut-admin/core`;
+  `peanut-admin/core` and align its exact public Composer candidate assertion
+  from `0.1.0-alpha.2` to `0.1.0-alpha.5`;
 - `docs/reference/third-party-licenses.generated.md` only through the existing
   generator to reflect the candidate manifest; no dependency is added;
 - `docs/status/index.md` and this contract for precise candidate state.
@@ -564,9 +583,11 @@ independent contract correction before that file changes.
 
 ## Test Ownership And Qualification
 
-`P1-WORKFLOW-RUNTIME-001` owns all executable evidence. Development commits add
-tests but, under the repository policy, run only static review, exact write-set
-inspection and `git diff --check`. One fixed-candidate qualification owner then
+`P1-WORKFLOW-RUNTIME-001` owns all executable evidence. WF01-I must add the
+complete focused test corpus named by the acceptance list; WF01-Q records and
+runs that fixed corpus but is not authorized to add missing behavior tests.
+Under the repository policy, development runs only static review, exact
+write-set inspection and `git diff --check`. One fixed-candidate qualification owner then
 runs each group once:
 
 1. Workflow definition/graph and state-machine unit tests;
@@ -600,9 +621,12 @@ Acceptance requires at least:
 
 ## Stop Line
 
-The contract commit authorizes implementation only from its exact resulting
-commit. Development completion is not qualification. Qualification does not by
-itself publish. Publication of `peanut-admin/core@0.1.0-alpha.5`, tag/Release,
+The contract commit authorized implementation from its exact resulting commit,
+with `f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and this correction supplying
+the precise contract used by the implementation candidate. The coupled former
+A/B groups must land as the single WF01-I commit. Development completion is not
+qualification. Qualification does not by itself publish. Publication of
+`peanut-admin/core@0.1.0-alpha.5`, tag/Release,
 Packagist update and downstream adoption occur only after the fixed tree passes
 WF01-Q and an explicit publication record binds the exact source/projection
 commits and digests.
