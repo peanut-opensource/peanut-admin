@@ -14,6 +14,7 @@
             <directory>packages/php/file-media/tests</directory>
             <directory>packages/php/settings/tests</directory>
             <directory>packages/php/testing/tests</directory>
+            <directory>packages/php/workflow/tests</directory>
         </testsuite>
     </testsuites>
     <source>
@@ -25,6 +26,7 @@
             <directory>packages/php/file-media/src</directory>
             <directory>packages/php/settings/src</directory>
             <directory>packages/php/testing/src</directory>
+            <directory>packages/php/workflow/src</directory>
         </include>
     </source>
 </phpunit>

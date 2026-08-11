@@ -40,7 +40,9 @@
       "PeanutAdmin\\ReferenceCodes\\Tests\\": "packages/php/reference-codes/tests/",
       "PeanutAdmin\\Settings\\Tests\\": "packages/php/settings/tests/",
       "PeanutAdmin\\Testing\\": "packages/php/testing/src/",
-      "PeanutAdmin\\Testing\\Tests\\": "packages/php/testing/tests/"
+      "PeanutAdmin\\Testing\\Tests\\": "packages/php/testing/tests/",
+      "PeanutAdmin\\Workflow\\": "packages/php/workflow/src/",
+      "PeanutAdmin\\Workflow\\Tests\\": "packages/php/workflow/tests/"
     }
   },
   "config": {

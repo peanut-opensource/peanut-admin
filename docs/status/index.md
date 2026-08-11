@@ -114,6 +114,35 @@ the candidate-only stop line.
 The execution reality and the next reusable capability waves are summarized in
 [P1 Execution Reality And Post-Q01 Roadmap](./p1-execution-and-post-q01-roadmap.md).
 
+The [P1-WF01 Configurable Workflow Runtime Contract](./p1-wf01-configurable-workflow-runtime-contract.md)
+is the accepted product-neutral workflow task. It owns versioned definitions,
+Tenant instances, human work items, immutable subject revisions and reuse
+adapters for existing authorization, File/Media, Task/Job, Notification/SMS and
+audit contracts. Media subjects and templates remain Host-owned; CRDT/OT and
+realtime transport are interface-only. CAP01 source acceptance fixed the
+combined forty-path WF01-I candidate at commit
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c` and tree
+`d6dbde37907d1dd43b00057fc16fbd1a8d6dd052`. It is the unpublished Composer
+candidate `peanut-admin/core@0.1.0-alpha.5`; it is not a qualification,
+downstream adoption or publication. The Peanut Admin application v1.0.0
+remains locked to Composer Alpha.2, Admin Web/PC npm Alpha.3 and UniApp/H5 npm
+Alpha.4. Fixed-tree qualification belongs to CAP05, private adoption to CAP06,
+and public package publication to a later independent approval.
+
+The first PR qualification attempt for the integrated CAP01 tree was blocked by
+a PHP process termination in the final `check-workspace` aggregate. The bounded
+[P1-CAP01-R01 remediation contract](./p1-cap01-r01-quality-process-termination-contract.md)
+identified and removed the duplicate private/public method-name fatal. Its one
+PHP aggregate completed all 622 tests and exposed one Schema expectation
+failure plus one risky Harness test. The exact test-only repairs and single
+aggregate allowance are owned by
+[P1-CAP01-R02](./p1-cap01-r02-hidden-phpunit-findings-contract.md). Already
+passing qualification groups remain sealed. R02 completed all 622 tests with
+3599 assertions, no failure and no risky test. The remaining PHPStan type
+declarations and Starter preview-port race are bounded by
+[P1-CAP01-R03](./p1-cap01-r03-final-pr-gates-remediation-contract.md); CAP02 has
+not started and the downstream adoption candidate remains unknown.
+
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed

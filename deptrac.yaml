@@ -12,6 +12,7 @@ deptrac:
     - packages/php/import-export/src
     - packages/php/ops-console/src
     - packages/php/integration-security/src
+    - packages/php/workflow/src
   exclude_files:
     - '#.*tests.*#'
   layers:
@@ -67,6 +68,10 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^PeanutAdmin\\IntegrationSecurity\\#'
+    - name: Workflow
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\Workflow\\#'
     - name: Backend
       collectors:
         - type: classNameRegex
@@ -111,6 +116,8 @@ deptrac:
       - Kernel
       - TaskJob
     IntegrationSecurity:
+      - Kernel
+    Workflow:
       - Kernel
     Backend:
       - Framework

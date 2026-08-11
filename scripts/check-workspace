@@ -123,9 +123,10 @@ $expectedAutoload = [
     "PeanutAdmin\\ReferenceCodes\\" => "reference-codes/src/",
     "PeanutAdmin\\Settings\\" => "settings/src/",
     "PeanutAdmin\\TaskJob\\" => "task-job/src/",
+    "PeanutAdmin\\Workflow\\" => "workflow/src/",
 ];
 if (($php["name"] ?? null) !== "peanut-admin/core"
-    || ($php["version"] ?? null) !== "0.1.0-alpha.2"
+    || ($php["version"] ?? null) !== "0.1.0-alpha.5"
     || ($php["license"] ?? null) !== "Apache-2.0"
     || ($php["autoload"]["psr-4"] ?? null) !== $expectedAutoload
     || ($php["autoload-dev"]["psr-4"]["PeanutAdmin\\Testing\\"] ?? null) !== "testing/src/") {

@@ -1,131 +1,85 @@
-# P1 Execution Reality And Starter v1 Roadmap
+# P1 Execution Reality And Post-Q01 Roadmap
 
 ## Status
 
 ```text
 state: active
-scope: current P1 execution and the Starter v1 reusable capability waves
+scope: completed P1/Starter v1 history and the post-Q01 cross-product sequence
 source_basis:
   - docs/status/p1-execution-baseline.md
-  - docs/status/p1-downstream-module-readiness-plan.md
   - docs/status/runtime-operation-coverage.json
+  - docs/status/p1-post-q01-cross-product-capability-plan.md
   - git history and current tree state
 ```
 
-This document is a planning synthesis. It does not replace the execution
-baseline or any task contract.
+This document is a navigation summary. It does not replace an executable task
+contract or the fixed-commit rules in the cross-product plan.
 
-## What Has Already Landed
+## Execution Reality
 
-The current repository history already contains these executed P1 slices:
+PB09 and Peanut Admin v1.0.0 are complete. Earlier P1, Starter v1 and package
+publication records remain historical evidence; their old candidate order is
+not an instruction to repeat a qualification or publish an earlier alpha.
 
-- `P1-B01` account self-service
-- `P1-B02` effective access preview
-- `P1-R01` operation atomicity primitives
-- `P1-R02` external operation host kit
-- `P1-W01` protected transport origin
-- `P1-W03` workspace shell
+P1-WF01 has an accepted product-neutral Workflow contract fixed by
+`abeb5afa32dee353b13debe08b23575173979d90`,
+`f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d`,
+`a2a13b633cfdfdaa14aca5f1d917e4f6865597c2` and reconciliation commit
+`faa126ebcdb4169ef3f0b623ca959fa742808aa7`. Static source acceptance fixed the
+forty-path implementation at
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c` with tree
+`d6dbde37907d1dd43b00057fc16fbd1a8d6dd052`. WF01 qualification, downstream
+adoption and publication have not occurred. Composer Alpha.5 remains a valid
+unqualified core candidate independent of the Peanut Admin application v1.0.0
+version.
 
-These are real commits, not just written plans.
+The accepted Workflow design remains reusable: it owns versioned definitions,
+Tenant instances, human work items and append-only events while using existing
+identity, Tenant, authorization, File/Media, Task/Job, Notification/SMS and
+audit authorities. It contains no product workflow or editor implementation.
 
-## What Is Still Open In The Current P1 Critical Path
+## Post-Q01 Cross-Product Critical Path
 
-The current tree does not yet contain the reusable settings or reference-code
-packages, and the corresponding host modules are still missing:
-
-- `packages/php/settings`
-- `packages/php/reference-code`
-- `backend/app/Modules/Peanut/Settings`
-- `backend/app/Modules/Peanut/ReferenceCode`
-
-So the remaining immediate integration path is:
-
-1. `P1-B03` minimal settings module.
-2. `P1-B04` minimal reference-code module.
-3. Integrate the accepted slices into one current Starter v1 candidate line.
-
-Q01 is not a prerequisite for continuing unrelated reusable capabilities. It
-is the concentrated qualification task after the complete Starter v1 candidate
-commit has been fixed.
-
-## Concurrency Rule
-
-`P1-B03` and `P1-B04` can be prepared in parallel at the planning level, but
-their implementation and generated artifacts must be integrated serially.
-
-Reason:
-
-- they both touch module manifests, runtime coverage, docs, and starter
-  evidence;
-- the downstream lock does not move until a single fixed-commit qualification
-  finishes;
-- a later `P1-Q01` run is exclusive.
-
-## Recommended Critical Path
+The canonical ordering, ownership, API/security boundaries, dependency gates,
+test owners and stop lines are now fixed by the
+[P1 Post-Q01 Cross-Product Capability Plan](./p1-post-q01-cross-product-capability-plan.md).
 
 ```text
-current implemented slices
-  -> B03 settings
-  -> B04 reference-code
-  -> selected Starter v1 capabilities
-  -> Q01 fixed-commit qualification of the complete Starter v1 candidate
-  -> downstream lock remains pinned until re-qualified
+CAP00 planning repair
+  -> CAP01 HumanWorkflow
+  -> CAP02 ArtifactRevision
+  -> CAP03 EntitlementQuota
+  -> CAP04 Collaboration
+  -> CAP05 fixed-commit qualification
+  -> CAP06 exact-commit private downstream adoption
+  -> separate publication approval, if any
 ```
 
-## Reusable Capability Waves
+HumanWorkflow may precede ArtifactRevision because it depends only on an opaque
+subject-revision port and stores an immutable key/digest pin. ArtifactRevision
+later implements that authority; Collaboration depends on ArtifactRevision and
+must publish a finalized immutable revision before HumanWorkflow can approve
+it. If the port boundary cannot be preserved, work stops and ArtifactRevision
+moves first through a separate planning correction.
 
-These waves are planning inputs, not a declaration that every listed capability
-belongs in Starter v1. The project plan selects the Starter v1 subset and may
-develop those slices before the final Q01 qualification. Each slice uses
-focused verification; the complete fixed candidate receives the aggregate gate.
+## Active Stop Line
 
-### Wave A: Identity And Access Expansion
+CAP01 contract reconciliation fixes the exact application v1.0.0 source and
+its Composer Alpha.2 plus npm Alpha.3/Alpha.4 locks while preserving the
+independent unpublished Composer Alpha.5 candidate. Static source acceptance
+is complete at `3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Integration PR #7 is
+blocked by the final PHP aggregate process termination and is owned by the
+[P1-CAP01-R01 remediation contract](./p1-cap01-r01-quality-process-termination-contract.md).
+The next executable capability task remains a separately contracted CAP02
+ArtifactRevision stage whose fixed input must name the final CAP01 merge commit.
 
-- phone credentials
-- multiple credentials per account
-- password recovery
-- member invitations
-- MFA
-- OIDC / SSO
+Until CAP02 receives that independent contract:
 
-### Wave B: Tenant Administration Ergonomics
+- do not run CAP05 aggregate qualification early;
+- do not install a dependency or widen the Workflow candidate;
+- do not publish a Composer/npm package, tag or Release;
+- do not start EntitlementQuota, Collaboration or application consumption.
 
-- tenant domain resolution
-- support sessions
-- tenant plans and quotas
-- positions
-- temporary authorization
-- visual menu preferences
-
-### Wave C: Operational Infrastructure
-
-- file and media management
-- notifications and message center
-- application error views
-- scheduler and queue management
-- import and export
-- backup administration
-
-### Wave D: Extension And Ecosystem
-
-- extension lifecycle and signing
-- code generator
-- public packages
-- full documentation site
-
-### Wave E: Commercial Platform
-
-- marketplace
-- fleet control
-- commercial licensing
-
-Wave E remains outside Starter v1 and requires a separate product decision.
-
-## Planning Checkpoint
-
-After `B03` and `B04` are integrated, the project should issue one bounded
-contract per Starter v1 capability slice, with exact file whitelists and
-risk-proportionate acceptance checks. When the selected Starter v1 capabilities
-are integrated, fix one candidate commit and run Q01. Until Q01 and separate
-approval pass, the downstream lock remains
-`0ab02a9b735ba9f4c23509cb366b9bf04039ebf8`.
+Qualification, private downstream adoption and public publication are separate
+decisions. A later candidate does not move the v1.0.0 compatibility baseline or
+any downstream lock without its own fixed-commit evidence and approval.

@@ -93,6 +93,34 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-wf01-configurable-workflow-runtime-contract.md",
+      "title": "P1-WF01 Configurable Workflow Runtime Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/status/p1-cap01-r01-quality-process-termination-contract.md",
+      "title": "P1-CAP01-R01 Quality Process Termination Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/status/p1-cap01-r02-hidden-phpunit-findings-contract.md",
+      "title": "P1-CAP01-R02 Hidden PHPUnit Findings Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/status/p1-cap01-r03-final-pr-gates-remediation-contract.md",
+      "title": "P1-CAP01-R03 Final PR Gates Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-pkg01-public-package-boundary-contract.md",
       "title": "P1-PKG01 Public Package Boundary Contract",
       "status": "canonical",
@@ -158,6 +186,13 @@
     {
       "path": "docs/status/p1-execution-and-post-q01-roadmap.md",
       "title": "P1 Execution Reality And Post-Q01 Roadmap",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/status/p1-post-q01-cross-product-capability-plan.md",
+      "title": "P1 Post-Q01 Cross-Product Capability Plan",
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
