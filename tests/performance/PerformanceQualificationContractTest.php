@@ -114,7 +114,7 @@ final class PerformanceQualificationContractTest extends TestCase
         );
 
         self::assertSame(1, $matched);
-        self::assertSame('20', $refreshBenchmark[1] ?? null);
+        self::assertSame('20', $refreshBenchmark[1]);
         self::assertStringContainsString('$authentication = $loginTokens[$refreshIndex++];', $runner);
     }
 }
