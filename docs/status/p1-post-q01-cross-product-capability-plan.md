@@ -330,3 +330,8 @@ The exact Yjs client and Host transport boundary is fixed by the accepted
 That decision installs nothing. CAP04 Runtime starts only after its independent
 exact contract is accepted from the resulting merge commit. CAP05
 qualification, CAP06 adoption and publication remain separate authorities.
+
+The accepted [CAP04 Collaboration contract](./p1-cap04-collaboration-contract.md)
+starts from Core PR #11 merge `7105800845e364da9a2fa731b7a1d8cdf6b5163b`
+and its exact tree. CAP04 installation and Runtime remain limited to that
+contract's explicit write groups and stop line.

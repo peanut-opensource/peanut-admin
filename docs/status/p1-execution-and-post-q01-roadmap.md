@@ -78,6 +78,10 @@ During CAP03 implementation:
 - do not publish a Composer/npm package, tag or Release;
 - do not start Collaboration or application consumption.
 
+CAP03 passed all six PR checks and merged as `c27e03006135adce56627b438a2ac82a4fef5d95`.
+CAP04 now waits only for the accepted collaboration dependency-decision merge;
+its Runtime remains blocked until the independent exact contract is accepted.
+
 Qualification, private downstream adoption and public publication are separate
 decisions. A later candidate does not move the v1.0.0 compatibility baseline or
 any downstream lock without its own fixed-commit evidence and approval.
