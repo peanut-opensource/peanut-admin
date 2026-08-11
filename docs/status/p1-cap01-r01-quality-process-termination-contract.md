@@ -4,14 +4,15 @@
 
 ```text
 task: P1-CAP01-R01
-state: accepted remediation
+state: resolved; aggregate advanced to separate contract failures
 prerequisite_commit: bbea6b5838de6c4e771b6d1523a0034fbdfa8b9a
 source_candidate_commit: 3972c9aefcd55ac71d07a47739a99d23bb0ae30c
 source_candidate_tree: d6dbde37907d1dd43b00057fc16fbd1a8d6dd052
 pull_request: peanut-opensource/peanut-admin#7
 failed_group: check-workspace PHP aggregate
 test_owner: P1-WORKFLOW-RUNTIME-001
-runtime_change: none unless the focused diagnostic proves a WorkflowGraph defect
+runtime_semantics_change: none
+result: private parser method names no longer collide with public lookup methods
 dependency_change: none
 package_publication: none
 ```
@@ -132,3 +133,19 @@ CAP01 closes only after PR #7 is merged into `dev`. CAP02 starts from the exact
 40-character merge commit, not from this contract, a branch name or the
 unmerged source candidate. This remediation does not qualify CAP01 under CAP05,
 adopt it under CAP06, publish Alpha.5, or move an application dependency lock.
+
+## Result
+
+The isolated PHP 8.3.24 diagnostic exposed the direct fatal that CI had hidden:
+`WorkflowGraph` declared public instance lookup methods and private static
+parser methods with the same `node` and `transition` names. PHP terminated on
+the first class load with `Cannot redeclare`.
+
+The repair renamed only the private parsers to `parseNode` and
+`parseTransition` and updated their two internal call sites. No graph behavior,
+public method, schema or test was changed. The authorized PHP aggregate then
+executed all 622 tests, proving that the premature process termination was
+removed. It exited with one Schema expectation failure and one risky Harness
+test that had previously been hidden by the fatal. Those two findings are not
+waived or repaired under R01; CAP01 remains blocked pending a separate exact
+contract.
