@@ -47,7 +47,7 @@ describe('collaboration runtime', () => {
       admit: vi.fn(async () => admission),
       state: vi.fn(async () => ({
         snapshot: null, latestSequence: 1, nextAfterSequence: null,
-        updates: [{ updateKey: `update_${'e'.repeat(32)}`, sequence: 1, engineName: 'yjs', engineVersion: '13.6.32', digest: 'f'.repeat(64), payload: new Uint8Array([3]) }],
+        updates: [{ updateKey: `update_${'e'.repeat(32)}`, sequence: 1, engineName: 'yjs' as const, engineVersion: '13.6.32' as const, digest: 'f'.repeat(64), payload: new Uint8Array([3]) }],
       })),
     }
     const runtime = createCollaborationRuntime({ host, engine: document, transport: socket })
