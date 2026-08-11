@@ -26,7 +26,9 @@ P1-WF01 has an accepted product-neutral Workflow contract fixed by
 `f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and
 `a2a13b633cfdfdaa14aca5f1d917e4f6865597c2`. Forty implementation candidate
 files exist locally but are not committed. WF01 qualification, its obsolete
-Alpha.5 publication path and application consumption have not occurred.
+automatic-publication path and application consumption have not occurred. The
+Composer Alpha.5 number remains a valid unqualified core candidate independent
+of the Peanut Admin application v1.0.0 version.
 
 The accepted Workflow design remains reusable: it owns versioned definitions,
 Tenant instances, human work items and append-only events while using existing
@@ -59,16 +61,16 @@ moves first through a separate planning correction.
 
 ## Active Stop Line
 
-The frozen WF01 target `peanut-admin/core@0.1.0-alpha.5` predates the completed
-v1.0.0 baseline and is no longer a valid publication target. The next task is a
-documentation-only CAP01 contract reconciliation that fixes the exact v1.0.0
-source/artifact baseline, candidate prerequisite, package versioning rule,
-whitelist and deferred verification while preserving the existing candidate.
+CAP01 contract reconciliation fixes the exact application v1.0.0 source and
+its Composer Alpha.2 plus npm Alpha.3/Alpha.4 locks while preserving the
+independent unpublished Composer Alpha.5 candidate. The next task is static
+CAP01 source acceptance of the existing forty-file candidate and one WF01-I
+commit from the reconciled contract result.
 
-Until that correction lands:
+Until that source-acceptance commit lands:
 
 - do not run WF01 or aggregate tests;
-- do not commit, discard or rewrite the forty WF01 candidate files;
+- do not discard, regenerate or widen the forty WF01 candidate files;
 - do not install a dependency;
 - do not publish a Composer/npm package, tag or Release;
 - do not start ArtifactRevision, EntitlementQuota, Collaboration or application

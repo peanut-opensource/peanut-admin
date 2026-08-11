@@ -46,8 +46,10 @@ Workflow Runtime. It fixes versioned definitions, Tenant instances, human work
 items, immutable subject revisions and adapters to the existing authorization,
 File/Media, Task/Job, Notification/SMS and audit authorities. It contains no
 media product model or realtime editing implementation; Runtime work and an
-Alpha.5 Composer candidate remain subject to the contract's qualification and
-publication stop lines.
+unpublished Alpha.5 Composer candidate remain subject to CAP01 source
+acceptance, CAP05 fixed-tree qualification, CAP06 private adoption and a
+separate publication approval. The core package version line is independent of
+the Peanut Admin application v1.0.0 release.
 
 Starter v1 C02 adds an unqualified first-party File And Media candidate with a
 provider-neutral PHP boundary, a local private development adapter,

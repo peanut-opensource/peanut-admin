@@ -3,19 +3,20 @@
 ## Status
 
 ```text
-task: P1-WF01
-state: implementation-ready
-prerequisite_commit: 7fbd445d8fa547830b7782a7ac147d9ed414e0fd
-contract_commit: abeb5afa32dee353b13debe08b23575173979d90
-implementation_base: f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d
+task: P1-CAP01 / P1-WF01
+state: source-acceptance-ready
+prerequisite_commit: e911406909710480b59d7332de9bc18a365794fa
+contract_history: abeb5afa32dee353b13debe08b23575173979d90, f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d, a2a13b633cfdfdaa14aca5f1d917e4f6865597c2
 implementation_stage: WF01-I combines the mutually dependent A and B write sets
 public_boundary: peanut-admin/core
-target_candidate: 0.1.0-alpha.5
+target_candidate: peanut-admin/core@0.1.0-alpha.5, Composer-only and unpublished
 dependency_change: none
 http_api: none in core; the downstream Host owns routes and OpenAPI
 runtime_ledger: no core row; the downstream Host must register each real operation as p1
 test_owner: P1-WORKFLOW-RUNTIME-001
-qualification: required before publication or downstream consumption
+qualification: deferred to P1-CROSS-PRODUCT-QUALIFICATION-001 / CAP05
+downstream_adoption: deferred to CAP06
+publication_authorized: false
 ```
 
 This contract is the first executable decision derived from the read-only
@@ -28,6 +29,28 @@ checks, serialized history payloads, media product names, or customer data.
 The existing `peanut-admin/core` package remains the only public PHP boundary.
 Workflow is an internal source directory and PSR-4 root inside that package,
 not a third Composer package.
+
+## CAP01 Release-Line Reconciliation
+
+Peanut Admin application releases and reusable core package releases have
+independent version lines. The application `v1.0.0` tag is not a
+`peanut-admin/core@1.0.0` or `@peanut-admin/admin@1.0.0` publication. The exact
+baseline consumed by that application release is:
+
+| Boundary | Immutable identity used by Peanut Admin v1.0.0 |
+| --- | --- |
+| Application source | repository `peanut-business/peanut-admin`; annotated tag object `00e57b09ded1720995cd37398b8e86d7ebbd7e62`; peeled commit `0d3c848b8e2bb622a868924145ce810a8946f173`; tree `dc67489a7bb62b67be7d1702dbb5ace9648c4e83` |
+| Composer Runtime | `peanut-admin/core@0.1.0-alpha.2`; monorepo source `b0dc376c2147b98522764486342c9525fe5678ce`; generated split commit and Packagist dist reference `330e76787ba754e1c7c11c2204c1c7f1e9560bb1` |
+| Admin Web and PC | `@peanut-admin/admin@0.1.0-alpha.3`; source tag commit `4b197fce32432cd195a63a8dcd4d2b0bc3f11a04`; npm SHA-1 `c80aeccb32aa542f55f01e9d58a61dba8a4b67f5` |
+| UniApp/H5 | `@peanut-admin/admin@0.1.0-alpha.4`; source tag commit `7fbd445d8fa547830b7782a7ac147d9ed414e0fd`; npm SHA-1 `b237df40068bc8b6ecf8856a02c54c33e3f231af` |
+
+The core package line therefore remains pre-1.0. `0.1.0-alpha.5` is a valid
+next Composer candidate number, not a downgrade from the application version.
+It identifies only the current unqualified projection. CAP01 source acceptance
+does not publish it, move a registry tag, change npm, or move any application
+lock. CAP05 qualification and a later independent publication approval must
+bind the final source, projection digest and registry action before an external
+Alpha.5 publication can occur.
 
 ## Objective And Non-Goals
 
@@ -482,10 +505,11 @@ immutable submitted revision before approval.
 
 ## Exact Write Sets
 
-The independent contract commit may change only:
+This CAP01 reconciliation commit may change only:
 
 - this file;
-- `docs/content-status.json`;
+- `docs/status/p1-post-q01-cross-product-capability-plan.md`;
+- `docs/status/p1-execution-and-post-q01-roadmap.md`;
 - `docs/status/index.md`;
 - `README.md`.
 
@@ -495,6 +519,10 @@ adapter interfaces, while the B value objects require the A exception and
 instance types, so neither set is an independently loadable projection. They
 remain separate review groups below but form one combined exact whitelist. The
 integration owner may narrow but must not silently widen the combined set.
+The existing candidate contains exactly forty paths and its non-document diff
+SHA-256 is
+`7e71e7ad5a1af626e0d17b5c055acdf2d7a855a5b2211865254b7af2b4e0c1cb`.
+No status, release, guide or generated-license document belongs to WF01-I.
 
 ### WF01-A — schema, definition and instance core
 
@@ -527,9 +555,6 @@ integration owner may narrow but must not silently widen the combined set.
 - `scripts/check-workspace` only to include the new internal directory in
   `peanut-admin/core` and align its exact public Composer candidate assertion
   from `0.1.0-alpha.2` to `0.1.0-alpha.5`;
-- `docs/reference/third-party-licenses.generated.md` only through the existing
-  generator to reflect the candidate manifest; no dependency is added;
-- `docs/status/index.md` and this contract for precise candidate state.
 
 ### WF01-B — existing-capability ports and failure atomicity
 
@@ -548,32 +573,26 @@ integration owner may narrow but must not silently widen the combined set.
 - `packages/php/testing/tests/Unit/Workflow/WorkflowAtomicityContractHarnessTest.php`;
 - root `composer.json`, `packages/php/composer.json` and `phpunit.xml` only if
   required to autoload the exact new files above;
-- this contract and `docs/status/index.md` only for precise candidate state.
 
 WF01-B does not change Kernel, File/Media, Task/Job or Notification/SMS source.
 If a real Host cannot implement a safe adapter using their public contracts, a
 separate integration contract must name the exact missing source files and
 security behavior before any existing package changes.
 
-### WF01-Q — fixed-candidate qualification and publication records
+### CAP05 qualification and separate publication
 
-Qualification may change only:
+WF01-I creates only a source candidate. Its executable evidence remains owned
+by `P1-WORKFLOW-RUNTIME-001`, but the run is deferred to the fixed aggregate
+CAP05 contract and record owned by `P1-CROSS-PRODUCT-QUALIFICATION-001`.
+Qualification must not add missing Runtime behavior or silently widen the
+candidate.
 
-- `docs/reviews/p1-wf01-alpha5-publication-qualification.md`;
-- `docs/content-status.json`;
-- `docs/status/index.md`;
-- this contract and `README.md` for the exact fixed result.
-
-After that qualification commit, a separate publication-record task may change
-only:
-
-- `docs/decisions/releases/p1-wf01-alpha5-publication-approval.md`;
-- `docs/content-status.json` and `docs/status/index.md`;
-- this contract and `README.md` for the exact published result.
-
-The external publication action mutates Packagist, the generated Composer split
-repository, immutable tag and GitHub prerelease only after that record sets
-`publication_authorized: true`; it does not mutate the qualified source tree.
+After CAP05 and CAP06, a separate publication contract may select Alpha.5 or a
+later valid version, bind the exact source/projection commits and digests, and
+set `publication_authorized: true`. Only then may an external action mutate
+Packagist, the generated Composer split repository, an immutable tag and a
+GitHub prerelease. Qualification and private adoption do not authorize that
+action.
 
 No npm manifest, version, content, dist-tag or projection may change unless a
 separate Web Workflow contract is accepted.
@@ -584,7 +603,7 @@ independent contract correction before that file changes.
 ## Test Ownership And Qualification
 
 `P1-WORKFLOW-RUNTIME-001` owns all executable evidence. WF01-I must add the
-complete focused test corpus named by the acceptance list; WF01-Q records and
+complete focused test corpus named by the acceptance list; CAP05 records and
 runs that fixed corpus but is not authorized to add missing behavior tests.
 Under the repository policy, development runs only static review, exact
 write-set inspection and `git diff --check`. One fixed-candidate qualification owner then
@@ -616,8 +635,8 @@ Acceptance requires at least:
   checkpoint;
 - no product-specific term, table, permission, page, route or example in the
   package projection;
-- a clean Composer consumer installing the immutable published candidate from
-  the registry.
+- a clean Composer consumer installing the immutable candidate projection;
+  registry installation is a later publication probe only.
 
 ## Stop Line
 
@@ -625,13 +644,15 @@ The contract commit authorized implementation from its exact resulting commit,
 with `f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and this correction supplying
 the precise contract used by the implementation candidate. The coupled former
 A/B groups must land as the single WF01-I commit. Development completion is not
-qualification. Qualification does not by itself publish. Publication of
-`peanut-admin/core@0.1.0-alpha.5`, tag/Release,
-Packagist update and downstream adoption occur only after the fixed tree passes
-WF01-Q and an explicit publication record binds the exact source/projection
-commits and digests.
+qualification. CAP05 qualification does not publish, and CAP06 private adoption
+does not publish. Publication of `peanut-admin/core@0.1.0-alpha.5` or another
+later approved candidate, its tag/Release and Packagist update occur only after
+an explicit publication record binds the exact source/projection commits and
+digests.
 
-The Peanut Admin application may consume only that immutable registry version.
+The Peanut Admin application may move from its fixed Alpha.2 lock only during
+CAP06, using the exact CAP05-qualified projection or a later immutable registry
+artifact bound to the same qualified tree.
 It must provide a real ThinkPHP Host, one product-owned example definition,
 documentation and one minimum business acceptance while deleting any duplicate
 Workflow Runtime. The media project source snapshots remain read-only, its

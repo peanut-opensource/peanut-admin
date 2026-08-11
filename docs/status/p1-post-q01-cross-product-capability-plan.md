@@ -6,6 +6,7 @@
 task: P1-CAP00
 state: accepted planning repair
 prerequisite_commit: a2a13b633cfdfdaa14aca5f1d917e4f6865597c2
+result_commit: e911406909710480b59d7332de9bc18a365794fa
 scope: ArtifactRevision, HumanWorkflow, EntitlementQuota, Collaboration
 runtime_change: none
 dependency_change: none
@@ -42,7 +43,7 @@ All stages reuse the existing authorities instead of rebuilding them:
 ## Dependency And Stage Order
 
 ```text
-CAP00 planning repair at a2a13b633cfdfdaa14aca5f1d917e4f6865597c2
+CAP00 planning repair at e911406909710480b59d7332de9bc18a365794fa
   -> CAP01 HumanWorkflow contract reconciliation and candidate integration
   -> CAP02 ArtifactRevision
   -> CAP03 EntitlementQuota
@@ -58,11 +59,12 @@ the CAP01 contract must replace that label with the reported exact hash. Every
 later stage contract does the same for its predecessor. A branch, tag name,
 working tree or commit subject is not a fixed input.
 
-The published v1.0.0 source and both published package artifacts are the
-compatibility baseline. Before CAP01 changes any candidate manifest, its
-planning correction must resolve the immutable v1.0.0 source commit and
-artifact identities and record them alongside `CAP00_RESULT`. A missing or
-ambiguous baseline stops CAP01.
+The Peanut Admin application `v1.0.0` source and the exact core package
+artifacts locked by that release are the downstream compatibility baseline;
+they do not share one version number. CAP01 resolves them in the Workflow
+contract: application commit `0d3c848b8e2bb622a868924145ce810a8946f173`,
+Composer `peanut-admin/core@0.1.0-alpha.2`, Admin Web/PC npm Alpha.3 and
+UniApp/H5 npm Alpha.4. A missing or ambiguous identity stops source acceptance.
 
 ## WF01 And ArtifactRevision Arbitration
 
@@ -91,12 +93,13 @@ revision state outside the port, CAP01 stops. The candidate is then frozen and
 CAP02 moves ahead of CAP01 through a separate CAP00 correction. Existing code
 must not be used as a reason to reverse the dependency.
 
-CAP01 is nevertheless blocked from immediate implementation commit or tests by
-one separate issue: its frozen contract targets the pre-v1
-`peanut-admin/core@0.1.0-alpha.5` candidate, while v1.0.0 is now published.
-The next task is therefore a documentation-only CAP01 contract reconciliation,
-followed by static acceptance of the unchanged candidate against that corrected
-contract. No Alpha.5 publication may occur after the stable baseline.
+CAP01 contract reconciliation records that application and package releases
+have independent version lines. `peanut-admin/core@0.1.0-alpha.5` remains a
+valid unpublished Composer candidate number after the application v1.0.0
+release, but source acceptance, CAP05 qualification, CAP06 adoption and public
+publication are separate authorities. The next task is static acceptance of
+the unchanged forty-file candidate against the reconciled contract; it does
+not run tests or publish Alpha.5.
 
 ## CAP01 To CAP06 Stage Contracts
 
@@ -105,7 +108,8 @@ until the stage's independent contract names the exact whitelist.
 
 ### CAP01 — HumanWorkflow
 
-- **Fixed input:** `CAP00_RESULT`, the resolved v1.0.0 source commit and the
+- **Fixed input:** `e911406909710480b59d7332de9bc18a365794fa`, the resolved
+  application/package baseline in the reconciled WF01 contract and the
   frozen WF01 contract commits `abeb5afa32dee353b13debe08b23575173979d90`,
   `f2f4a21d942f6a24e1ed673c67dfb6a72c531c3d` and
   `a2a13b633cfdfdaa14aca5f1d917e4f6865597c2`.
@@ -126,10 +130,9 @@ until the stage's independent contract names the exact whitelist.
   invisible subject, assignee, attachment or Provider failures do not enumerate
   protected state.
 - **Test owner:** existing `P1-WORKFLOW-RUNTIME-001`.
-- **Stop line:** first reconcile the stale Alpha.5/version and fixed-base
-  contract in an independent documentation commit. Then one CAP01 integration
-  owner may statically accept and commit the exact candidate. Automated tests
-  belong only to the fixed CAP01 qualification contract. No publication,
+- **Stop line:** the version and fixed-base contract is reconciled before one
+  CAP01 integration owner statically accepts and commits the exact candidate.
+  Automated tests belong only to the fixed CAP05 qualification contract. No publication,
   downstream adoption or product Host implementation follows automatically.
 
 ### CAP02 — ArtifactRevision
@@ -276,9 +279,11 @@ Exactly two public installable boundaries remain:
 - npm `@peanut-admin/admin` for UI-neutral clients and Admin Web integration.
 
 Internal capability directories are ownership boundaries, not new public
-packages. v1.0.0 is the compatibility baseline: no stage may lower the version
-to `0.1.0-alpha.5`, replace a stable export, remove a public subpath, weaken a
-peer range, or require an application to deep-import an internal namespace.
+packages. Peanut Admin application v1.0.0 and its exact Alpha.2/Alpha.3/Alpha.4
+dependency locks are the downstream compatibility baseline. The independent
+core package line may advance to Alpha.5, but no stage may replace an existing
+public export, remove a public subpath, weaken a peer range, or require an
+application to deep-import an internal namespace.
 Additive PHP namespaces and npm subpaths must preserve supported Runtime and
 type-resolution behavior. Candidate version numbers and publication channels
 are selected only by a later release contract.
@@ -313,10 +318,10 @@ discard the existing forty WF01 candidate files and does not include
 `.playwright-cli/`. Runtime verification is deferred under
 `P1-WORKFLOW-RUNTIME-001` and the later CAP owners.
 
-The next exact task is **CAP01 contract reconciliation**: from the reported
-CAP00 commit, resolve and record the v1.0.0 source/artifact baseline; amend the
-WF01 contract and current status only where necessary to replace the obsolete
-Alpha.5 target, fix the exact prerequisite, preserve the subject-revision port,
-and name the exact candidate whitelist and deferred verification. It is a
-documentation-only commit. It must not test or commit the forty candidate
-files, install a dependency, publish a package or begin ArtifactRevision.
+CAP01 contract reconciliation resolves the application/package baseline,
+preserves the independent Alpha.5 candidate line and fixes the exact CAP00
+prerequisite. The next exact task is **CAP01 source acceptance**: statically
+review the unchanged forty-file WF01 candidate against this plan and the
+reconciled contract, verify the exact whitelist and subject-revision port, and
+create one WF01-I source commit. It must not run tests, install a dependency,
+publish a package or begin ArtifactRevision.

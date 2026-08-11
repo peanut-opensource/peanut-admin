@@ -122,9 +122,11 @@ audit contracts. Media subjects and templates remain Host-owned; CRDT/OT and
 realtime transport are interface-only. WF01 implementation remains in static
 candidate review; its mutually dependent schema/state-machine and capability
 port groups must land as one WF01-I commit for
-`peanut-admin/core@0.1.0-alpha.5`. No package publication, Host route,
-downstream adoption or production claim is authorized until WF01-Q and the
-separate publication record pass.
+the unpublished Composer candidate `peanut-admin/core@0.1.0-alpha.5`. The
+Peanut Admin application v1.0.0 remains locked to Composer Alpha.2, Admin
+Web/PC npm Alpha.3 and UniApp/H5 npm Alpha.4. CAP01 source acceptance runs no
+tests; fixed-tree qualification belongs to CAP05, private adoption to CAP06,
+and public package publication to a later independent approval.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
