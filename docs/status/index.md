@@ -143,6 +143,13 @@ declarations and Starter preview-port race are bounded by
 [P1-CAP01-R03](./p1-cap01-r03-final-pr-gates-remediation-contract.md); CAP02 has
 not started and the downstream adoption candidate remains unknown.
 
+R03 then passed the full PHP aggregate, PHPStan, Recovery, Security,
+Performance and Internal Starter checks. The final Quality formatter found
+only two stale Workflow test import orders after every executable check had
+passed. The exact mechanical follow-up is bounded by
+[P1-CAP01-R04](./p1-cap01-r04-quality-formatting-contract.md). CAP02 remains
+stopped until that follow-up fixes the final `dev` prerequisite commit.
+
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed
