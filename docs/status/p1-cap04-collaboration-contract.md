@@ -239,6 +239,9 @@ After it merges, one CAP04 candidate may change only the following groups.
 - `packages/php/composer.json` and `packages/web/package.json`;
 - `starter/frontend/package.json` and `starter/pnpm-lock.yaml`;
 - `scripts/check-workspace` and `scripts/check-alpha5-package-projection`;
+- `docs/decisions/dependencies/p1-pkg03-lock-evidence.json` only to refresh
+  the four recorded lock digests, exact Alpha.5 public package versions,
+  accepted CAP04 dependency delta and deferred-qualification status;
 - `docs/reference/third-party-licenses.generated.md` only through its existing generator.
 
 No Kernel, Workflow, ArtifactRevision implementation, EntitlementQuota,
