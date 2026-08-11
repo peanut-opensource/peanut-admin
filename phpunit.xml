@@ -9,6 +9,7 @@
         <testsuite name="Peanut Admin P0">
             <directory>backend/tests</directory>
             <directory>packages/php/artifact-revision/tests</directory>
+            <directory>packages/php/collaboration/tests</directory>
             <directory>packages/php/entitlement-quota/tests</directory>
             <directory>packages/php/kernel/tests</directory>
             <directory>packages/php/data-permission/tests</directory>
@@ -23,6 +24,7 @@
         <include>
             <directory>backend/app</directory>
             <directory>packages/php/artifact-revision/src</directory>
+            <directory>packages/php/collaboration/src</directory>
             <directory>packages/php/entitlement-quota/src</directory>
             <directory>packages/php/kernel/src</directory>
             <directory>packages/php/data-permission/src</directory>

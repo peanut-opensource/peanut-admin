@@ -238,6 +238,8 @@ After it merges, one CAP04 candidate may change only the following groups.
   `phpunit.xml`;
 - `packages/php/composer.json` and `packages/web/package.json`;
 - `starter/frontend/package.json` and `starter/pnpm-lock.yaml`;
+- `tests/starter/assert-generated-starter.php` only to align the generated
+  starter's exact npm workspace lock assertion with Alpha.5;
 - `scripts/check-workspace` and `scripts/check-alpha5-package-projection`;
 - `docs/decisions/dependencies/p1-pkg03-lock-evidence.json` only to refresh
   the four recorded lock digests, exact Alpha.5 public package versions,

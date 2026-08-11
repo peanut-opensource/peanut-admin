@@ -2,6 +2,7 @@ deptrac:
   paths:
     - backend/app
     - packages/php/artifact-revision/src
+    - packages/php/collaboration/src
     - packages/php/entitlement-quota/src
     - packages/php/kernel/src
     - packages/php/data-permission/src
@@ -38,6 +39,10 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '#^PeanutAdmin\\EntitlementQuota\\#'
+    - name: Collaboration
+      collectors:
+        - type: classNameRegex
+          value: '#^PeanutAdmin\\Collaboration\\#'
     - name: DataPermission
       collectors:
         - type: classNameRegex
@@ -105,6 +110,9 @@ deptrac:
       - Workflow
     EntitlementQuota:
       - Kernel
+    Collaboration:
+      - Kernel
+      - ArtifactRevision
     DataPermission:
       - Kernel
     Settings:

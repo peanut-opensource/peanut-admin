@@ -19,6 +19,7 @@
   "autoload": {
     "psr-4": {
       "PeanutAdmin\\ArtifactRevision\\": "artifact-revision/src/",
+      "PeanutAdmin\\Collaboration\\": "collaboration/src/",
       "PeanutAdmin\\DataPermission\\": "data-permission/src/",
       "PeanutAdmin\\EntitlementQuota\\": "entitlement-quota/src/",
       "PeanutAdmin\\FileMedia\\": "file-media/src/",
@@ -36,6 +37,7 @@
   "autoload-dev": {
     "psr-4": {
       "PeanutAdmin\\ArtifactRevision\\Tests\\": "artifact-revision/tests/",
+      "PeanutAdmin\\Collaboration\\Tests\\": "collaboration/tests/",
       "PeanutAdmin\\DataPermission\\Tests\\": "data-permission/tests/",
       "PeanutAdmin\\EntitlementQuota\\Tests\\": "entitlement-quota/tests/",
       "PeanutAdmin\\FileMedia\\Tests\\": "file-media/tests/",
