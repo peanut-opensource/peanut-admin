@@ -113,6 +113,7 @@ foreach (["root" => $rootPackages, "starter" => $starterPackages] as $label => $
 
 $php = $decode("packages/php/composer.json");
 $expectedAutoload = [
+    "PeanutAdmin\\ArtifactRevision\\" => "artifact-revision/src/",
     "PeanutAdmin\\DataPermission\\" => "data-permission/src/",
     "PeanutAdmin\\FileMedia\\" => "file-media/src/",
     "PeanutAdmin\\ImportExport\\" => "import-export/src/",
