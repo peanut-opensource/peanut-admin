@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-10T19:50:00+08:00",
-  "task": "ADMIN-WEB-ALPHA4-UNIAPP-PEER-CANDIDATE",
-  "prerequisite_commit": "2f07186a70b3351605cb87c0f5c3f0d7013aa6be",
+  "generated_at": "2026-08-12T05:56:29+08:00",
+  "task": "P1-CAP04",
+  "prerequisite_commit": "39e8e845417c5cd450ca1810687f9e0ecf246532",
   "candidate_commit": "the commit containing this evidence",
-  "slice_status": "admin-web-alpha4-uniapp-peer-candidate",
-  "third_party_dependency_change": false,
+  "slice_status": "collaboration-candidate",
+  "third_party_dependency_change": true,
   "public_runtime_packages": [
-    "peanut-admin/core@0.1.0-alpha.2",
-    "@peanut-admin/admin@0.1.0-alpha.4"
+    "peanut-admin/core@0.1.0-alpha.5",
+    "@peanut-admin/admin@0.1.0-alpha.5"
   ],
   "toolchain": {
     "php": "8.3.24",
@@ -19,19 +19,19 @@
   "locks": {
     "composer.lock": {
       "sha256": "65efd044c5277b09c3cb73048d14494e126dc33d3fdd3ddc8ff88444ba6d65f0",
-      "delta": "peanut-admin/core first-party version and path reference only"
+      "delta": "unchanged application consumer lock at peanut-admin/core@0.1.0-alpha.2"
     },
     "pnpm-lock.yaml": {
-      "sha256": "2e294819044a7d3ceccf33445a32919c07522cdad66da871a7ff1592857b158c",
-      "delta": "@peanut-admin/admin workspace specifier only"
+      "sha256": "17a005c51db70c33dbd80ba43849f05c5cddf7a9f50cd5e6a494fd82eb8e08bb",
+      "delta": "@peanut-admin/admin Alpha.5 workspace specifier plus accepted yjs@13.6.32 and y-websocket@3.1.0 dependency graph"
     },
     "starter/backend/composer.lock": {
       "sha256": "9667edf7b9a6a0b5d151f5697919cee34fc198cf17697860089fe423af63a923",
-      "delta": "peanut-admin/core first-party version and path reference only"
+      "delta": "unchanged starter consumer lock at peanut-admin/core@0.1.0-alpha.2"
     },
     "starter/pnpm-lock.yaml": {
-      "sha256": "7d70dd25a469c3d3ea1d6cf3a012d9e22a9999acf0695538c080b28408dea68e",
-      "delta": "@peanut-admin/admin workspace specifier only"
+      "sha256": "a4e9d2561788f61edbe9ef686265951af88042f49a7bcff0639b9d63023a763d",
+      "delta": "@peanut-admin/admin Alpha.5 workspace specifier plus accepted yjs@13.6.32 and y-websocket@3.1.0 dependency graph"
     }
   },
   "verification": {
@@ -40,8 +40,8 @@
     "publication": "not authorized"
   },
   "notes": [
-    "No third-party version or resolution changed in this candidate; the Admin Web Vue peer range is relaxed from ^3.5.39 to ^3.4.21, Element Plus and Pinia become optional host peers, and the unused Vue Router dependency leaves the public package while remaining in the reference Host and starter.",
-    "Historical P1-PKG01 and P1-PKG02 lock evidence remains unchanged.",
-    "This evidence does not publish a package, create a tag or Release, or approve downstream consumption."
+    "CAP04 adds only the accepted UI-neutral Yjs engine and y-websocket client transport to @peanut-admin/admin; PHP adds no third-party dependency and treats collaboration payloads as opaque bounded envelopes.",
+    "The root and starter Composer consumer locks intentionally remain on the existing Alpha.2 application compatibility baseline while the unpublished projection manifest advances to Alpha.5.",
+    "This evidence does not run CAP05, publish a package, create a tag or Release, or approve downstream consumption."
   ]
 }

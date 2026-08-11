@@ -4,7 +4,7 @@
 
 This inventory is generated from `composer.lock` and `pnpm-lock.yaml`. It is release evidence, not legal advice.
 
-Packages recorded: **561**.
+Packages recorded: **566**.
 
 | Ecosystem | Package | Version | SPDX license |
 | --- | --- | --- | --- |
@@ -404,6 +404,7 @@ Packages recorded: **561**.
 | pnpm | `is-glob` | `4.0.3` | `MIT` |
 | pnpm | `is-what` | `5.5.0` | `MIT` |
 | pnpm | `isexe` | `2.0.0` | `ISC` |
+| pnpm | `isomorphic.js` | `0.2.5` | `MIT` |
 | pnpm | `jackspeak` | `3.4.3` | `BlueOak-1.0.0` |
 | pnpm | `js-beautify` | `1.15.4` | `MIT` |
 | pnpm | `js-cookie` | `3.0.8` | `MIT` |
@@ -418,6 +419,7 @@ Packages recorded: **561**.
 | pnpm | `json5` | `2.2.3` | `MIT` |
 | pnpm | `keyv` | `4.5.4` | `MIT` |
 | pnpm | `levn` | `0.4.1` | `MIT` |
+| pnpm | `lib0` | `0.2.117` | `MIT` |
 | pnpm | `lightningcss` | `1.32.0` | `MPL-2.0` |
 | pnpm | `lightningcss-android-arm64` | `1.32.0` | `MPL-2.0` |
 | pnpm | `lightningcss-darwin-arm64` | `1.32.0` | `MPL-2.0` |
@@ -564,8 +566,11 @@ Packages recorded: **561**.
 | pnpm | `wrap-ansi` | `7.0.0` | `MIT` |
 | pnpm | `ws` | `8.21.1` | `MIT` |
 | pnpm | `xml-name-validator` | `4.0.0` | `Apache-2.0` |
+| pnpm | `y-protocols` | `1.0.7` | `MIT` |
+| pnpm | `y-websocket` | `3.1.0` | `MIT` |
 | pnpm | `yaml` | `2.9.0` | `ISC` |
 | pnpm | `yaml-ast-parser` | `0.0.43` | `Apache-2.0` |
 | pnpm | `yargs-parser` | `21.1.1` | `ISC` |
+| pnpm | `yjs` | `13.6.32` | `MIT` |
 | pnpm | `yocto-queue` | `0.1.0` | `MIT` |
 | pnpm | `zwitch` | `2.0.4` | `MIT` |
