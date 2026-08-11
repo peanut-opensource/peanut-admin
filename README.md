@@ -41,6 +41,14 @@ storage, six platform/Tenant operations, and a Tenant settings page. It remains
 outside the fixed downstream-consumption lock until a later fixed-commit
 qualification and separate consumption decision.
 
+P1-WF01 is the accepted planning contract for a product-neutral configurable
+Workflow Runtime. It fixes versioned definitions, Tenant instances, human work
+items, immutable subject revisions and adapters to the existing authorization,
+File/Media, Task/Job, Notification/SMS and audit authorities. It contains no
+media product model or realtime editing implementation; Runtime work and an
+Alpha.5 Composer candidate remain subject to the contract's qualification and
+publication stop lines.
+
 Starter v1 C02 adds an unqualified first-party File And Media candidate with a
 provider-neutral PHP boundary, a local private development adapter,
 Tenant-scoped metadata, guarded upload/download/archive operations, and the

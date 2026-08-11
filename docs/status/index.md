@@ -114,6 +114,14 @@ the candidate-only stop line.
 The execution reality and the next reusable capability waves are summarized in
 [P1 Execution Reality And Post-Q01 Roadmap](./p1-execution-and-post-q01-roadmap.md).
 
+The [P1-WF01 Configurable Workflow Runtime Contract](./p1-wf01-configurable-workflow-runtime-contract.md)
+is the accepted product-neutral workflow task. It owns versioned definitions,
+Tenant instances, human work items, immutable subject revisions and reuse
+adapters for existing authorization, File/Media, Task/Job, Notification/SMS and
+audit contracts. Media subjects and templates remain Host-owned; CRDT/OT and
+realtime transport are interface-only. No Runtime, package publication or
+downstream adoption is implied by the contract commit.
+
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed

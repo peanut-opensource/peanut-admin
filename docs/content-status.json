@@ -93,6 +93,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-wf01-configurable-workflow-runtime-contract.md",
+      "title": "P1-WF01 Configurable Workflow Runtime Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-pkg01-public-package-boundary-contract.md",
       "title": "P1-PKG01 Public Package Boundary Contract",
       "status": "canonical",
