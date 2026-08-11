@@ -714,6 +714,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/reviews/p1-cross-product-alpha5-qualification.md",
+      "title": "P1-CAP05 Cross-Product Alpha.5 Qualification Review",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
