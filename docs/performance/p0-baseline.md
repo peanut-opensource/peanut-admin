@@ -19,7 +19,7 @@ The versioned machine-readable values are in `tests/performance/p0-baseline.json
 | Scenario | Dataset | Baseline p95 | Query bound |
 | --- | ---: | ---: | ---: |
 | Tenant login | 20 independent sessions | 314.405 ms | Password hashing and transaction |
-| Tenant refresh | 18 one-time rotations | 27.282 ms | One rotation transaction |
+| Tenant refresh | 20 one-time rotations | 27.282 ms | One rotation transaction |
 | Tenant context | 30 samples x 20 validations | 110.394 ms | Session and state validation |
 | Typed targets | 30 operations x 10 IDs | 558.467 ms | 11 parameters per authorized query; 20-row page |
 | Typed targets | 10 operations x 500 IDs | 323.058 ms | 501 parameters per authorized query; 20-row page |
