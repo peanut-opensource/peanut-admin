@@ -85,8 +85,8 @@ final class ArtifactRevisionServiceTest extends TestCase
         );
         $receipt = new ArtifactRevisionReceipt(
             'artifact-revision.create',
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             2,
             'revision_' . str_repeat('a', 32),
             1,
@@ -107,17 +107,17 @@ final class ArtifactRevisionServiceTest extends TestCase
         $service = new ArtifactRevisionService(new PdoArtifactRevisionRepository($this->pdo));
 
         $firstCreate = $service->createRevision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'write'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'write'),
+            'document.record',
+            'record-1',
             null,
             null,
             'artifact-create-first-0001',
         );
         $firstReplay = $service->createRevision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'write'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'write'),
+            'document.record',
+            'record-1',
             null,
             null,
             'artifact-create-first-0001',
@@ -125,29 +125,29 @@ final class ArtifactRevisionServiceTest extends TestCase
         self::assertSame($firstCreate->toArray(), $firstReplay->toArray());
 
         $firstFinalize = $service->finalizeRevision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'write'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'write'),
+            'document.record',
+            'record-1',
             $firstCreate->revisionKey,
             $firstCreate->artifactRevision,
             $firstCreate->revision,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r1',
+            'payload/record-1/r1',
             str_repeat('a', 64),
             null,
             'artifact-finalize-first-01',
         );
         $firstFinalizeReplay = $service->finalizeRevision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'write'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'write'),
+            'document.record',
+            'record-1',
             $firstCreate->revisionKey,
             $firstCreate->artifactRevision,
             $firstCreate->revision,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-1/r1',
+            'payload/record-1/r1',
             str_repeat('a', 64),
             null,
             'artifact-finalize-first-01',
@@ -157,7 +157,7 @@ final class ArtifactRevisionServiceTest extends TestCase
         $second = $this->createAndFinalize(
             $service,
             $context,
-            'article-1',
+            'record-1',
             $firstFinalize->revisionKey,
             $firstFinalize->artifactRevision,
             'second',
@@ -165,43 +165,43 @@ final class ArtifactRevisionServiceTest extends TestCase
         $third = $this->createAndFinalize(
             $service,
             $context,
-            'article-1',
+            'record-1',
             $firstFinalize->revisionKey,
             $second->artifactRevision,
             'third',
         );
 
         self::assertSame('finalized', $service->revision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'read'),
+            'document.record',
+            'record-1',
             $second->revisionKey,
         )->state);
         self::assertSame('ancestor', $service->compare(
-            $this->artifactContext($context, 'document.article', 'article-1', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'read'),
+            'document.record',
+            'record-1',
             $firstFinalize->revisionKey,
             $second->revisionKey,
         )->relationship);
         self::assertSame('descendant', $service->compare(
-            $this->artifactContext($context, 'document.article', 'article-1', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'read'),
+            'document.record',
+            'record-1',
             $second->revisionKey,
             $firstFinalize->revisionKey,
         )->relationship);
         self::assertSame('diverged', $service->compare(
-            $this->artifactContext($context, 'document.article', 'article-1', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'read'),
+            'document.record',
+            'record-1',
             $second->revisionKey,
             $third->revisionKey,
         )->relationship);
         self::assertSame('same', $service->compare(
-            $this->artifactContext($context, 'document.article', 'article-1', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'read'),
+            'document.record',
+            'record-1',
             $third->revisionKey,
             $third->revisionKey,
         )->relationship);
@@ -215,7 +215,7 @@ final class ArtifactRevisionServiceTest extends TestCase
         $auditJson = (string) $this->pdo->query(
             'SELECT JSON_ARRAYAGG(metadata_json) FROM pa_tenant_audit_event',
         )->fetchColumn();
-        self::assertStringNotContainsString('payload/article-1', $auditJson);
+        self::assertStringNotContainsString('payload/record-1', $auditJson);
         self::assertStringNotContainsString('canonical_envelope_json', $auditJson);
     }
 
@@ -225,38 +225,38 @@ final class ArtifactRevisionServiceTest extends TestCase
         [, $otherContext] = $this->seedContext('req_artifact_other', 21, 201);
         $service = new ArtifactRevisionService(new PdoArtifactRevisionRepository($this->pdo));
         $created = $service->createRevision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'write'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'write'),
+            'document.record',
+            'record-1',
             null,
             null,
             'artifact-isolation-create',
         );
 
         $this->assertArtifactError('ARTIFACT_REVISION_NOT_FOUND', fn() => $service->revision(
-            $this->artifactContext($otherContext, 'document.article', 'article-1', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($otherContext, 'document.record', 'record-1', 'read'),
+            'document.record',
+            'record-1',
             $created->revisionKey,
         ));
         $this->assertArtifactError('ARTIFACT_REVISION_NOT_FOUND', fn() => $service->revision(
-            $this->artifactContext($context, 'document.article', 'article-2', 'read'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-2', 'read'),
+            'document.record',
+            'record-1',
             $created->revisionKey,
         ));
         $this->assertArtifactError('ARTIFACT_REVISION_CONFLICT', fn() => $service->createRevision(
-            $this->artifactContext($context, 'document.article', 'article-1', 'write'),
-            'document.article',
-            'article-1',
+            $this->artifactContext($context, 'document.record', 'record-1', 'write'),
+            'document.record',
+            'record-1',
             null,
             1,
             'artifact-stale-create-001',
         ));
         $this->assertArtifactError('ARTIFACT_REVISION_INVALID', fn() => $service->createRevision(
-            $this->artifactContext($context, 'Document Article', 'article-1', 'write'),
-            'Document Article',
-            'article-1',
+            $this->artifactContext($context, 'Document Record', 'record-1', 'write'),
+            'Document Record',
+            'record-1',
             null,
             null,
             'artifact-invalid-create',
@@ -274,9 +274,9 @@ SQL);
 
         try {
             $this->assertArtifactError('ARTIFACT_REVISION_INTERNAL_ERROR', fn() => $service->createRevision(
-                $this->artifactContext($context, 'document.article', 'article-rollback', 'write'),
-                'document.article',
-                'article-rollback',
+                $this->artifactContext($context, 'document.record', 'record-rollback', 'write'),
+                'document.record',
+                'record-rollback',
                 null,
                 null,
                 'artifact-rollback-create',
@@ -299,8 +299,8 @@ SQL);
         string $suffix,
     ): ArtifactRevisionReceipt {
         $created = $service->createRevision(
-            $this->artifactContext($context, 'document.article', $artifactKey, 'write'),
-            'document.article',
+            $this->artifactContext($context, 'document.record', $artifactKey, 'write'),
+            'document.record',
             $artifactKey,
             $parentRevisionKey,
             $expectedArtifactRevision,
@@ -308,13 +308,13 @@ SQL);
         );
 
         return $service->finalizeRevision(
-            $this->artifactContext($context, 'document.article', $artifactKey, 'write'),
-            'document.article',
+            $this->artifactContext($context, 'document.record', $artifactKey, 'write'),
+            'document.record',
             $artifactKey,
             $created->revisionKey,
             $created->artifactRevision,
             $created->revision,
-            'article.body',
+            'record.body',
             '1',
             "payload/{$artifactKey}/{$suffix}",
             hash('sha256', $suffix),

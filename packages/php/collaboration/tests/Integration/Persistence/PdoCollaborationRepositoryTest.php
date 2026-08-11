@@ -65,8 +65,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         $repository->createSession(
             $tenantId,
             $this->sessionKey('a'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('b'),
@@ -99,8 +99,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         $session = $repository->createSession(
             $tenantId,
             $this->sessionKey('a'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('b'),
@@ -114,8 +114,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         self::assertSame(0, $session->latestSequence);
         self::assertSame($session->id, $repository->activeSession(
             $tenantId,
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
         )?->id);
 
         $lease = $repository->createLease(
@@ -244,8 +244,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         $session = $repository->createSession(
             $tenantId,
             $this->sessionKey('a'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('b'),
@@ -257,12 +257,12 @@ final class PdoCollaborationRepositoryTest extends TestCase
         );
 
         self::assertNull($repository->session($otherTenantId, $session->sessionKey));
-        self::assertNull($repository->activeSession($otherTenantId, 'document.article', 'article-1'));
+        self::assertNull($repository->activeSession($otherTenantId, 'document.record', 'record-1'));
         $this->assertRuntimeFailure(fn() => $repository->createSession(
             $tenantId,
             $this->sessionKey('d'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('b'),
@@ -288,8 +288,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         $replacement = $repository->createSession(
             $tenantId,
             $this->sessionKey('d'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('e'),
@@ -309,8 +309,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         $session = $repository->createSession(
             $tenantId,
             $this->sessionKey('a'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('b'),
@@ -400,8 +400,8 @@ final class PdoCollaborationRepositoryTest extends TestCase
         $session = $repository->createSession(
             $tenantId,
             $this->sessionKey('a'),
-            'document.article',
-            'article-1',
+            'document.record',
+            'record-1',
             'yjs',
             '13.6.32',
             $this->revisionKey('b'),

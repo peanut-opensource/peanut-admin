@@ -35,7 +35,7 @@ use RuntimeException;
 final class CollaborationServiceTest extends TestCase
 {
     private const DATABASE = 'peanut_admin_p1_collaboration_service_test';
-    private const ARTIFACT_TYPE = 'document.article';
+    private const ARTIFACT_TYPE = 'document.record';
 
     private PDO $admin;
     private PDO $pdo;
@@ -107,13 +107,13 @@ final class CollaborationServiceTest extends TestCase
     public function testEightOperationsAreTenantScopedReplaySafeAndPublishOneRevision(): void
     {
         [$tenantId, $tenant] = $this->seedContext('req_collaboration_eight');
-        $base = $this->baseRevision($tenant, 'article-1');
+        $base = $this->baseRevision($tenant, 'record-1');
         $service = $this->service();
 
         $opened = $service->openSession(
-            $this->context($tenant, 'article-1', 'write'),
+            $this->context($tenant, 'record-1', 'write'),
             self::ARTIFACT_TYPE,
-            'article-1',
+            'record-1',
             'yjs',
             '13.6.32',
             $base->revisionKey,
@@ -121,9 +121,9 @@ final class CollaborationServiceTest extends TestCase
             'collaboration-open-0001',
         );
         $openReplay = $service->openSession(
-            $this->context($tenant, 'article-1', 'write'),
+            $this->context($tenant, 'record-1', 'write'),
             self::ARTIFACT_TYPE,
-            'article-1',
+            'record-1',
             'yjs',
             '13.6.32',
             $base->revisionKey,
@@ -133,14 +133,14 @@ final class CollaborationServiceTest extends TestCase
         self::assertSame($opened->toArray(), $openReplay->toArray());
 
         $joined = $service->joinSession(
-            $this->context($tenant, 'article-1', 'write'),
+            $this->context($tenant, 'record-1', 'write'),
             $opened->sessionKey,
             'browser-client-1',
             'write',
             'collaboration-join-0001',
         );
         $heartbeat = $service->heartbeat(
-            $this->context($tenant, 'article-1', 'write'),
+            $this->context($tenant, 'record-1', 'write'),
             $opened->sessionKey,
             (string) $joined->leaseKey,
             'collaboration-heartbeat-01',
@@ -149,7 +149,7 @@ final class CollaborationServiceTest extends TestCase
 
         $updatePayload = "opaque-yjs-update\0bytes";
         $update = $service->appendUpdate(
-            $this->context($tenant, 'article-1', 'write'),
+            $this->context($tenant, 'record-1', 'write'),
             $opened->sessionKey,
             (string) $joined->leaseKey,
             'browser-client-1',
@@ -161,7 +161,7 @@ final class CollaborationServiceTest extends TestCase
         $snapshotPayload = "opaque-yjs-snapshot\0bytes";
         $stateVector = "opaque-state-vector\0bytes";
         $snapshot = $service->saveSnapshot(
-            $this->context($tenant, 'article-1', 'write'),
+            $this->context($tenant, 'record-1', 'write'),
             $opened->sessionKey,
             (string) $joined->leaseKey,
             1,
@@ -175,7 +175,7 @@ final class CollaborationServiceTest extends TestCase
         self::assertSame(1, $snapshot->coveredSequence);
 
         $state = $service->state(
-            $this->context($tenant, 'article-1', 'read'),
+            $this->context($tenant, 'record-1', 'read'),
             $opened->sessionKey,
             0,
             50,
@@ -184,7 +184,7 @@ final class CollaborationServiceTest extends TestCase
         self::assertSame([], $state->updates);
         self::assertSame(1, $state->nextAfterSequence);
         $incrementalState = $service->state(
-            $this->context($tenant, 'article-1', 'read'),
+            $this->context($tenant, 'record-1', 'read'),
             $opened->sessionKey,
             1,
             50,
@@ -194,12 +194,12 @@ final class CollaborationServiceTest extends TestCase
         self::assertSame(1, $incrementalState->nextAfterSequence);
 
         $published = $service->publish(
-            $this->context($tenant, 'article-1', 'publish'),
+            $this->context($tenant, 'record-1', 'publish'),
             $opened->sessionKey,
             'collaboration-publish-001',
         );
         $publishReplay = $service->publish(
-            $this->context($tenant, 'article-1', 'publish'),
+            $this->context($tenant, 'record-1', 'publish'),
             $opened->sessionKey,
             'collaboration-publish-001',
         );
@@ -214,11 +214,11 @@ final class CollaborationServiceTest extends TestCase
             'SELECT tenant_id FROM pa_collaboration_session LIMIT 1',
         )->fetchColumn());
 
-        $otherBase = $this->baseRevision($tenant, 'article-2');
+        $otherBase = $this->baseRevision($tenant, 'record-2');
         $other = $service->openSession(
-            $this->context($tenant, 'article-2', 'write'),
+            $this->context($tenant, 'record-2', 'write'),
             self::ARTIFACT_TYPE,
-            'article-2',
+            'record-2',
             'yjs',
             '13.6.32',
             $otherBase->revisionKey,
@@ -226,7 +226,7 @@ final class CollaborationServiceTest extends TestCase
             'collaboration-open-0002',
         );
         $closed = $service->closeSession(
-            $this->context($tenant, 'article-2', 'write'),
+            $this->context($tenant, 'record-2', 'write'),
             $other->sessionKey,
             'collaboration-close-0001',
         );
@@ -238,19 +238,19 @@ final class CollaborationServiceTest extends TestCase
         self::assertStringNotContainsString($updatePayload, $auditJson);
         self::assertStringNotContainsString($snapshotPayload, $auditJson);
         self::assertStringNotContainsString($stateVector, $auditJson);
-        self::assertStringNotContainsString('payload/article-1/published', $auditJson);
+        self::assertStringNotContainsString('payload/record-1/published', $auditJson);
     }
 
     public function testPolicyBackpressureAndProviderFailuresFailClosed(): void
     {
         [, $tenant] = $this->seedContext('req_collaboration_policy');
-        $base = $this->baseRevision($tenant, 'article-policy');
+        $base = $this->baseRevision($tenant, 'record-policy');
         $policy = new CollaborationPolicy(3_600, 60, 32, 64, 1, 3_600);
         $service = $this->service($policy);
         $opened = $service->openSession(
-            $this->context($tenant, 'article-policy', 'write'),
+            $this->context($tenant, 'record-policy', 'write'),
             self::ARTIFACT_TYPE,
-            'article-policy',
+            'record-policy',
             'yjs',
             '13.6.32',
             $base->revisionKey,
@@ -258,7 +258,7 @@ final class CollaborationServiceTest extends TestCase
             'collaboration-policy-open',
         );
         $joined = $service->joinSession(
-            $this->context($tenant, 'article-policy', 'write'),
+            $this->context($tenant, 'record-policy', 'write'),
             $opened->sessionKey,
             'client-policy',
             'write',
@@ -266,7 +266,7 @@ final class CollaborationServiceTest extends TestCase
         );
         $first = 'first';
         $service->appendUpdate(
-            $this->context($tenant, 'article-policy', 'write'),
+            $this->context($tenant, 'record-policy', 'write'),
             $opened->sessionKey,
             (string) $joined->leaseKey,
             'client-policy',
@@ -277,7 +277,7 @@ final class CollaborationServiceTest extends TestCase
         );
         $second = 'second';
         $this->assertCollaborationError('COLLABORATION_BACKPRESSURE', fn() => $service->appendUpdate(
-            $this->context($tenant, 'article-policy', 'write'),
+            $this->context($tenant, 'record-policy', 'write'),
             $opened->sessionKey,
             (string) $joined->leaseKey,
             'client-policy',
@@ -289,13 +289,13 @@ final class CollaborationServiceTest extends TestCase
 
         $denying = $this->service($policy, policyMode: 'deny');
         $this->assertCollaborationError('COLLABORATION_DENIED', fn() => $denying->state(
-            $this->context($tenant, 'article-policy', 'read'),
+            $this->context($tenant, 'record-policy', 'read'),
             $opened->sessionKey,
             0,
         ));
         $failing = $this->service($policy, policyMode: 'fail');
         $this->assertCollaborationError('COLLABORATION_PROVIDER_UNAVAILABLE', fn() => $failing->state(
-            $this->context($tenant, 'article-policy', 'read'),
+            $this->context($tenant, 'record-policy', 'read'),
             $opened->sessionKey,
             0,
         ));
@@ -304,13 +304,13 @@ final class CollaborationServiceTest extends TestCase
     public function testPublishFailureRollsBackProviderEffectsAndSessionTransition(): void
     {
         [, $tenant] = $this->seedContext('req_collaboration_rollback');
-        $base = $this->baseRevision($tenant, 'article-rollback');
+        $base = $this->baseRevision($tenant, 'record-rollback');
         $publisher = new FailingCollaborationPublisher($this->pdo);
         $service = $this->service(publisher: $publisher);
         $opened = $service->openSession(
-            $this->context($tenant, 'article-rollback', 'write'),
+            $this->context($tenant, 'record-rollback', 'write'),
             self::ARTIFACT_TYPE,
-            'article-rollback',
+            'record-rollback',
             'yjs',
             '13.6.32',
             $base->revisionKey,
@@ -318,7 +318,7 @@ final class CollaborationServiceTest extends TestCase
             'collaboration-rollback-open',
         );
         $joined = $service->joinSession(
-            $this->context($tenant, 'article-rollback', 'write'),
+            $this->context($tenant, 'record-rollback', 'write'),
             $opened->sessionKey,
             'client-rollback',
             'write',
@@ -327,7 +327,7 @@ final class CollaborationServiceTest extends TestCase
         $snapshot = 'empty-but-valid-snapshot';
         $vector = 'empty-but-valid-vector';
         $service->saveSnapshot(
-            $this->context($tenant, 'article-rollback', 'write'),
+            $this->context($tenant, 'record-rollback', 'write'),
             $opened->sessionKey,
             (string) $joined->leaseKey,
             0,
@@ -339,7 +339,7 @@ final class CollaborationServiceTest extends TestCase
         );
 
         $this->assertCollaborationError('COLLABORATION_PROVIDER_UNAVAILABLE', fn() => $service->publish(
-            $this->context($tenant, 'article-rollback', 'publish'),
+            $this->context($tenant, 'record-rollback', 'publish'),
             $opened->sessionKey,
             'collaboration-rollback-pub',
         ));
@@ -388,7 +388,7 @@ final class CollaborationServiceTest extends TestCase
             $created->revisionKey,
             $created->artifactRevision,
             $created->revision,
-            'article.body',
+            'record.body',
             '1',
             'payload/' . $artifactKey . '/base',
             hash('sha256', 'base:' . $artifactKey),
@@ -504,7 +504,7 @@ final readonly class TestCollaborationSubmissionProvider implements Collaboratio
         DateTimeImmutable $evaluatedAt,
     ): ?CollaborationSubmission {
         return new CollaborationSubmission(
-            'article.body',
+            'record.body',
             '1',
             'payload/' . $artifactKey . '/published',
             hash('sha256', $snapshotSha256 . ':' . $latestSequence),

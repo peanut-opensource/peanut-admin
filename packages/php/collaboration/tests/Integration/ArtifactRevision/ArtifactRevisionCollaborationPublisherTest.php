@@ -27,8 +27,8 @@ use RuntimeException;
 final class ArtifactRevisionCollaborationPublisherTest extends TestCase
 {
     private const DATABASE = 'peanut_admin_p1_collaboration_artifact_test';
-    private const ARTIFACT_TYPE = 'document.article';
-    private const ARTIFACT_KEY = 'article-publisher';
+    private const ARTIFACT_TYPE = 'document.record';
+    private const ARTIFACT_KEY = 'record-publisher';
 
     private PDO $admin;
     private PDO $pdo;
@@ -96,9 +96,9 @@ final class ArtifactRevisionCollaborationPublisherTest extends TestCase
         ));
 
         $submission = new CollaborationSubmission(
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-publisher/collaboration',
+            'payload/record-publisher/collaboration',
             hash('sha256', 'published-collaboration-body'),
         );
         $result = $publisher->publish(
@@ -141,9 +141,9 @@ final class ArtifactRevisionCollaborationPublisherTest extends TestCase
                     self::ARTIFACT_KEY,
                     $base->revisionKey,
                     new CollaborationSubmission(
-                        'article.body',
+                        'record.body',
                         '1',
-                        'payload/article-publisher/rollback',
+                        'payload/record-publisher/rollback',
                         hash('sha256', 'rollback-body'),
                     ),
                     'collaboration-artifact-rollback',
@@ -182,9 +182,9 @@ final class ArtifactRevisionCollaborationPublisherTest extends TestCase
             $created->revisionKey,
             $created->artifactRevision,
             $created->revision,
-            'article.body',
+            'record.body',
             '1',
-            'payload/article-publisher/base',
+            'payload/record-publisher/base',
             hash('sha256', 'artifact-base'),
             null,
             'collaboration-artifact-base-finalize',
