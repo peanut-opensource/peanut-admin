@@ -103,4 +103,18 @@ final class PerformanceQualificationContractTest extends TestCase
         self::assertStringContainsString('EffectivePolicySet', $catalog);
         self::assertStringNotContainsString('allowedTargetIds', $catalog);
     }
+
+    public function testTenantRefreshUsesTwentyExistingLoginTokens(): void
+    {
+        $runner = (string) file_get_contents($this->root . '/tests/performance/run.php');
+        $matched = preg_match(
+            '/\$results\[\'tenant-refresh\'\]\s*=\s*benchmark\(.*?\n\s*(\d+),\s*0,\s*\n\s*\);/s',
+            $runner,
+            $refreshBenchmark,
+        );
+
+        self::assertSame(1, $matched);
+        self::assertSame('20', $refreshBenchmark[1] ?? null);
+        self::assertStringContainsString('$authentication = $loginTokens[$refreshIndex++];', $runner);
+    }
 }
