@@ -176,6 +176,12 @@ public boundary. It preserves PHP authority and the two-package boundary;
 Hocuspocus is only a separately deployed Host reference. No dependency is
 installed until an independent CAP04 Runtime contract is accepted.
 
+The accepted [P1-CAP04 Collaboration contract](./p1-cap04-collaboration-contract.md)
+freezes Tenant-scoped sessions, short participant leases, ordered opaque Yjs
+envelopes, snapshots, backpressure, immutable ArtifactRevision publication and
+the UI-neutral npm client. Its exact prerequisite is Core PR #11 merge
+`7105800845e364da9a2fa731b7a1d8cdf6b5163b`.
+
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
 It defines reusable first-party settings packages, trusted Module-owned typed
