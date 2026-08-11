@@ -160,12 +160,21 @@ UI, collaboration and media models remain outside Core. PR #9 passed all six
 repository checks and merged as
 `ba707c1b3943ff76620770dbf72413de51f340f6`.
 
-The next accepted source task is
+The accepted
 [P1-CAP03 Entitlement Quota](./p1-cap03-entitlement-quota-contract.md). It adds
 declared integer meters, immutable grant snapshots, atomic UTC-window
 reservations, idempotent settlement and safe usage summaries. Billing, plan
 presentation, product meters, HTTP/UI, application locks and silent unlimited
-fallbacks remain outside Core. Qualification and adoption stay in CAP05/CAP06.
+fallbacks remain outside Core. PR #10 passed all six repository checks and
+merged as `c27e03006135adce56627b438a2ac82a4fef5d95`. Qualification and
+adoption stay in CAP05/CAP06.
+
+The accepted
+[P1-CAP04 collaboration dependency decision](../decisions/dependencies/p1-cap04-collaboration.md)
+selects exact Yjs and y-websocket client dependencies inside the existing npm
+public boundary. It preserves PHP authority and the two-package boundary;
+Hocuspocus is only a separately deployed Host reference. No dependency is
+installed until an independent CAP04 Runtime contract is accepted.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).

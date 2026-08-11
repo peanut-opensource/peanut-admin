@@ -317,16 +317,16 @@ Publication does not imply production readiness or authorize an application
 migration. A public release action must not mutate the already qualified source
 tree and is outside CAP00-CAP06 until explicitly approved.
 
-## CAP02 Result And CAP03 Start
+## CAP03 Result And CAP04 Dependency Gate
 
-CAP02 preserved the Workflow subject-revision port and changed only its
-contracted ArtifactRevision and projection paths. PR #9 passed baseline,
-dependency review, qualification, quality, recovery and verify. The exact
-CAP02 merge is `ba707c1b3943ff76620770dbf72413de51f340f6` with tree
-`bcb3014a6af842927857ebdd4ec326c9a9a91a62`.
+CAP03 changed only its contracted EntitlementQuota and projection paths. PR #10
+passed baseline, dependency review, qualification, quality, recovery and
+verify. The exact CAP03 merge is
+`c27e03006135adce56627b438a2ac82a4fef5d95` with tree
+`f253b76ca09f056b60e2abd49a43251ba38383ef`.
 
-The next exact capability task is the accepted
-[CAP03 Entitlement Quota contract](./p1-cap03-entitlement-quota-contract.md).
-It uses test owner `P1-ENTITLEMENT-QUOTA-001`, adds no dependency and remains
-an unqualified unpublished source candidate. CAP05 qualification, CAP06
-adoption, publication and CAP04 implementation remain outside CAP03.
+The exact Yjs client and Host transport boundary is fixed by the accepted
+[CAP04 dependency decision](../decisions/dependencies/p1-cap04-collaboration.md).
+That decision installs nothing. CAP04 Runtime starts only after its independent
+exact contract is accepted from the resulting merge commit. CAP05
+qualification, CAP06 adoption and publication remain separate authorities.

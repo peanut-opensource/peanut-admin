@@ -261,6 +261,13 @@
       "replacement": null
     },
     {
+      "path": "docs/decisions/dependencies/p1-cap04-collaboration.md",
+      "title": "P1-CAP04 Collaboration Dependency Decision",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/standards/dependency-policy.md",
       "title": "Dependency Policy",
       "status": "canonical",
