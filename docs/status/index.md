@@ -183,11 +183,14 @@ the UI-neutral npm client. Its exact prerequisite is Core PR #11 merge
 `7105800845e364da9a2fa731b7a1d8cdf6b5163b`.
 
 CAP04 passed all six PR checks and merged as
-`bcbf77d4a6cc112d22ca1a67611e98afc8fc804a`. CAP05 retained the passing npm
-Alpha.5 projection and stopped its Composer projection because six projected
-integration-test files used an `article` product fixture. The exact test-only
-repair and no-repeat continuation are bounded by
-[P1-CAP05-R01](./p1-cap05-r01-product-neutral-fixtures-contract.md).
+`bcbf77d4a6cc112d22ca1a67611e98afc8fc804a`. The CAP05-R01 product-neutral
+fixture repair then enabled the one authorized Composer continuation. PR #16
+passed all six repository checks and merged at source commit
+`14010993e47f5e3082ab8f0b53456f282b71f086`; the resulting tree and both
+projection results are recorded in the
+[P1-CAP05 Cross-Product Alpha.5 Qualification Review](../reviews/p1-cross-product-alpha5-qualification.md).
+CAP05 is qualified for this fixed-tree evidence. CAP06 private downstream
+adoption and public Composer/npm publication remain unauthorized.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
