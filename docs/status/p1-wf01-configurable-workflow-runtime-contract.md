@@ -22,6 +22,12 @@ downstream_adoption: deferred to CAP06
 publication_authorized: false
 ```
 
+Integration PR #7 is currently blocked by the final PHP aggregate process
+termination. The focused diagnosis, exact repair boundary and single repaired
+group allowance are owned by
+[P1-CAP01-R01](./p1-cap01-r01-quality-process-termination-contract.md). This
+does not change the fixed source candidate or advance CAP05 qualification.
+
 This contract is the first executable decision derived from the read-only
 media-resource-management evidence. That evidence establishes a need for
 versioned approval graphs, immutable submitted subject revisions, human work

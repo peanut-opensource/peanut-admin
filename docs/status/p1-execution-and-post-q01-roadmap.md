@@ -67,10 +67,11 @@ moves first through a separate planning correction.
 CAP01 contract reconciliation fixes the exact application v1.0.0 source and
 its Composer Alpha.2 plus npm Alpha.3/Alpha.4 locks while preserving the
 independent unpublished Composer Alpha.5 candidate. Static source acceptance
-is complete at `3972c9aefcd55ac71d07a47739a99d23bb0ae30c`; the current task is
-documentation-only closure and integration into the latest `dev`. The next
-executable capability task is a separately contracted CAP02 ArtifactRevision
-stage whose fixed input must name the final CAP01 closure commit.
+is complete at `3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Integration PR #7 is
+blocked by the final PHP aggregate process termination and is owned by the
+[P1-CAP01-R01 remediation contract](./p1-cap01-r01-quality-process-termination-contract.md).
+The next executable capability task remains a separately contracted CAP02
+ArtifactRevision stage whose fixed input must name the final CAP01 merge commit.
 
 Until CAP02 receives that independent contract:
 

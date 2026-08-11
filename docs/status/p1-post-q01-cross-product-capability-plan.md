@@ -322,11 +322,14 @@ tree and is outside CAP00-CAP06 until explicitly approved.
 CAP01 source acceptance changed only the contracted forty implementation paths
 and did not include `.playwright-cli/`. Static review confirmed the exact
 whitelist and the opaque subject-revision port, producing source commit
-`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Runtime verification remains
+`3972c9aefcd55ac71d07a47739a99d23bb0ae30c`. Integration PR #7 is currently
+blocked by the final PHP aggregate process termination; only the bounded
+[P1-CAP01-R01 remediation](./p1-cap01-r01-quality-process-termination-contract.md)
+may diagnose and repair that group. Runtime verification otherwise remains
 deferred under `P1-WORKFLOW-RUNTIME-001` and the later CAP05 owner.
 
-The next exact capability task is **CAP02 ArtifactRevision**. Its independent
-contract must name the final CAP01 documentation-closure result as a 40-character
-prerequisite, define its exact whitelist, schema and test owner, and preserve
-the existing Workflow port. It must not run CAP05 qualification early, publish
-a package or start CAP03/CAP04 work.
+After CAP01 remediation and merge, the next exact capability task is **CAP02
+ArtifactRevision**. Its independent contract must name the final CAP01 merge
+result as a 40-character prerequisite, define its exact whitelist, schema and
+test owner, and preserve the existing Workflow port. It must not run CAP05
+qualification early, publish a package or start CAP03/CAP04 work.
