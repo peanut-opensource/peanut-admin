@@ -140,8 +140,8 @@ aggregate allowance are owned by
 passing qualification groups remain sealed. R02 completed all 622 tests with
 3599 assertions, no failure and no risky test. The remaining PHPStan type
 declarations and Starter preview-port race are bounded by
-[P1-CAP01-R03](./p1-cap01-r03-final-pr-gates-remediation-contract.md); CAP02 has
-not started and the downstream adoption candidate remains unknown.
+[P1-CAP01-R03](./p1-cap01-r03-final-pr-gates-remediation-contract.md); the
+downstream adoption candidate remains unknown.
 
 R03 then passed the full PHP aggregate, PHPStan, Recovery, Security,
 Performance and Internal Starter checks. The final Quality formatter found
@@ -151,14 +151,21 @@ passed. The exact mechanical follow-up is bounded by
 all six repository checks and merged as
 `d6e636f10d7c539731963b394221e8eca0997816`.
 
-The next accepted source task is
-[P1-CAP02 Artifact Revision](./p1-cap02-artifact-revision-contract.md). It adds
+The accepted
+[P1-CAP02 Artifact Revision](./p1-cap02-artifact-revision-contract.md) adds
 a product-neutral artifact identity, pending reservation, one-time immutable
 envelope, parent lineage, comparison and the existing Workflow resolver
 adapter inside `peanut-admin/core`. Host payloads, product validation, HTTP,
-UI, collaboration and media models remain outside Core. The target remains the
-unpublished Composer Alpha.5 candidate; qualification and adoption stay in
-CAP05/CAP06.
+UI, collaboration and media models remain outside Core. PR #9 passed all six
+repository checks and merged as
+`ba707c1b3943ff76620770dbf72413de51f340f6`.
+
+The next accepted source task is
+[P1-CAP03 Entitlement Quota](./p1-cap03-entitlement-quota-contract.md). It adds
+declared integer meters, immutable grant snapshots, atomic UTC-window
+reservations, idempotent settlement and safe usage summaries. Billing, plan
+presentation, product meters, HTTP/UI, application locks and silent unlimited
+fallbacks remain outside Core. Qualification and adoption stay in CAP05/CAP06.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).

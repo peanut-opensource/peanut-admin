@@ -37,6 +37,8 @@
       "PeanutAdmin\\ArtifactRevision\\": "packages/php/artifact-revision/src/",
       "PeanutAdmin\\ArtifactRevision\\Tests\\": "packages/php/artifact-revision/tests/",
       "PeanutAdmin\\DataPermission\\Tests\\": "packages/php/data-permission/tests/",
+      "PeanutAdmin\\EntitlementQuota\\": "packages/php/entitlement-quota/src/",
+      "PeanutAdmin\\EntitlementQuota\\Tests\\": "packages/php/entitlement-quota/tests/",
       "PeanutAdmin\\FileMedia\\Tests\\": "packages/php/file-media/tests/",
       "PeanutAdmin\\Kernel\\Tests\\": "packages/php/kernel/tests/",
       "PeanutAdmin\\ReferenceCodes\\Tests\\": "packages/php/reference-codes/tests/",
