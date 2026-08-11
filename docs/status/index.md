@@ -137,7 +137,11 @@ PHP aggregate completed all 622 tests and exposed one Schema expectation
 failure plus one risky Harness test. The exact test-only repairs and single
 aggregate allowance are owned by
 [P1-CAP01-R02](./p1-cap01-r02-hidden-phpunit-findings-contract.md). Already
-passing qualification groups remain sealed; CAP02 has not started.
+passing qualification groups remain sealed. R02 completed all 622 tests with
+3599 assertions, no failure and no risky test. The remaining PHPStan type
+declarations and Starter preview-port race are bounded by
+[P1-CAP01-R03](./p1-cap01-r03-final-pr-gates-remediation-contract.md); CAP02 has
+not started and the downstream adoption candidate remains unknown.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).

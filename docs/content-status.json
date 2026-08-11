@@ -114,6 +114,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-cap01-r03-final-pr-gates-remediation-contract.md",
+      "title": "P1-CAP01-R03 Final PR Gates Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-pkg01-public-package-boundary-contract.md",
       "title": "P1-PKG01 Public Package Boundary Contract",
       "status": "canonical",
