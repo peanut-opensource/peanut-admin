@@ -445,7 +445,7 @@ try {
     mkdir($missingControlledSource, 0700);
     $missingControlledExtract = runFixtureCommand(['tar', '-xf', $archive, '-C', $missingControlledSource], $root);
     assertTrue($missingControlledExtract['code'] === 0, 'Could not extract missing controlled entry fixture.');
-    unlink($missingControlledSource . '/scripts/create-project');
+    unlink($missingControlledSource . '/packages/php/composer.json');
     $missingControlledTarget = $temporaryRoot . '/missing-controlled-output';
     $missingControlledResult = runGenerator($missingControlledSource, validArguments($missingControlledTarget));
     assertTrue($missingControlledResult['code'] !== 0, 'Missing controlled source entry must fail.');
