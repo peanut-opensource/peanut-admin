@@ -230,6 +230,12 @@ for trusted provenance. It permits only a metadata candidate requalification
 and a later exact-commit OIDC publication workflow. The old npm tarball digest
 is not the publishable provenance digest; all external Alpha.5 writes remain
 frozen until both follow-up PRs merge with every declared check successful.
+The npm provenance artifact is now fixed by the
+[qualification record](./p1-alpha5-npm-provenance-qualification.md) at commit
+`aeeff105df4960db6a70da7ee5597da9a85abdaa`, package tree
+`562043a0a294392a66ea0a305de6554d02646bc8` and tarball SHA-256
+`0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3`.
+No Registry publication has occurred.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
