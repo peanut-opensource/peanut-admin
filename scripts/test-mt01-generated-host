@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+RUN_ID="$(php -r 'echo bin2hex(random_bytes(8));')"
+DATABASE="peanut_admin_mt01_generated_host_${RUN_ID}"
+TEMP_ROOT="$(mktemp -d)"
+
+if [[ ! "$DATABASE" =~ ^peanut_admin_mt01_generated_host_[a-f0-9]{16}$ ]]; then
+  echo 'ERROR: generated Host database identity is invalid' >&2
+  exit 1
+fi
+
+cleanup() {
+  DB_DATABASE="$DATABASE" php "$ROOT/tests/mt01/generated-host/run.php" cleanup >/dev/null 2>&1 || true
+  find "$TEMP_ROOT" -depth -delete 2>/dev/null || true
+}
+trap cleanup EXIT
+
+export MT01_RUN_ID="$RUN_ID"
+export MT01_DATABASE="$DATABASE"
+export MT01_TEMP_ROOT="$TEMP_ROOT"
+php "$ROOT/tests/mt01/generated-host/run.php"
