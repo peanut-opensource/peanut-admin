@@ -40,6 +40,14 @@ columns distinct named placeholders with the same trusted member value. This
 is a SQL binding correction only and does not change identity or audit
 semantics.
 
+After native binding was corrected, the retained integration assertion exposed
+another fixture error: it hashes MySQL's textual rendering of a JSON column.
+MySQL may add whitespace or reorder object keys, while the stored digest is
+defined over `ArtifactRevision::encodeEnvelope(expectedEnvelope())`. R01 owns
+only that assertion correction so the test verifies the public canonical
+encoder rather than storage formatting. Production integrity validation already
+reconstructs the canonical envelope from typed columns and remains unchanged.
+
 This remediation does not change APIs, models, migrations, dependencies,
 authorization, Tenant scoping, immutable envelopes, package versions or
 publication status. It does not adopt the unrelated local `f7b4dd5` draft.
