@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+[[ $# -eq 1 ]] || { echo 'ERROR: usage: scripts/check-alpha5-npm-package-projection OUTPUT_DIR' >&2; exit 2; }
+output="$1"
+[[ ! -e "$output" || -d "$output" ]] || { echo 'ERROR: output path is not a directory' >&2; exit 1; }
+mkdir -p "$output"
+[[ -z "$(find "$output" -mindepth 1 -print -quit)" ]] || { echo 'ERROR: output directory must be empty' >&2; exit 1; }
+
+candidate="$(git rev-parse HEAD^{commit})"
+[[ "$candidate" =~ ^[0-9a-f]{40}$ ]] || { echo 'ERROR: candidate identity is invalid' >&2; exit 1; }
+[[ -z "$(git status --porcelain=v1 --untracked-files=all)" ]] || { echo 'ERROR: candidate checkout must be clean' >&2; exit 1; }
+
+projection="$output/npm"
+mkdir -p "$projection"
+git archive --format=tar "$candidate" packages/web >"$output/npm-subtree.tar"
+tar -xf "$output/npm-subtree.tar" --strip-components=2 -C "$projection"
+
+php -r '
+$manifest = json_decode((string) file_get_contents($argv[1]), true, 512, JSON_THROW_ON_ERROR);
+$exports = ["./core", "./shell", "./settings", "./reference-codes", "./file-media", "./task-job", "./notification-sms", "./import-export", "./ops-console", "./integration-security", "./collaboration", "./testing", "./client", "./client/nuxt", "./client/uniapp"];
+$actual = array_keys($manifest["exports"] ?? []); sort($exports); sort($actual);
+$types = array_keys($manifest["typesVersions"]["*"] ?? []); sort($types);
+$typed = array_map(static fn(string $value): string => ltrim($value, "./"), $exports); sort($typed);
+$repository = $manifest["repository"] ?? null;
+if (($manifest["name"] ?? null) !== "@peanut-admin/admin"
+    || ($manifest["version"] ?? null) !== "0.1.0-alpha.5"
+    || ($manifest["license"] ?? null) !== "Apache-2.0"
+    || $actual !== $exports || $types !== $typed
+    || ($repository["type"] ?? null) !== "git"
+    || ($repository["url"] ?? null) !== "git+https://github.com/peanut-opensource/peanut-admin.git"
+    || ($repository["directory"] ?? null) !== "packages/web") { exit(1); }
+' "$projection/package.json"
+
+if find "$projection" -type f \( -name '.env' -o -name '.env.*' -o -iname '*.pem' -o -iname '*.key' \) -print -quit | grep -q .; then
+  echo 'ERROR: npm projection contains a forbidden credential file' >&2; exit 1
+fi
+if grep -RIEq 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|npm_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}' "$projection"; then
+  echo 'ERROR: npm projection contains a credential payload' >&2; exit 1
+fi
+license_hash="$(php -r 'echo hash_file("sha256", $argv[1]);' "$projection/LICENSE")"
+[[ "$license_hash" == 'cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30' ]] \
+  || { echo 'ERROR: npm projection license identity drifted' >&2; exit 1; }
+
+(cd "$projection" && corepack pnpm@11.13.0 pack --dry-run --json >"$output/npm-dry-run.json")
+(cd "$projection" && corepack pnpm@11.13.0 pack --json >"$output/npm-pack.json")
+tarball="$(php -r '$j=json_decode(file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR);$i=array_is_list($j)?$j[0]:$j;echo basename($i["filename"]);' "$output/npm-pack.json")"
+php -r '$j=json_decode(file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR);$i=array_is_list($j)?$j[0]:$j;foreach($i["files"] as $f){echo preg_replace("#^package/#","",is_string($f)?$f:$f["path"]),"\n";}' "$output/npm-dry-run.json" | LC_ALL=C sort >"$output/dry-files"
+tar -tzf "$projection/$tarball" | sed -E 's#^package/##; /^$/d; /\/$/d' | LC_ALL=C sort >"$output/tar-files"
+cmp "$output/dry-files" "$output/tar-files"
+[[ "$(wc -l <"$output/tar-files" | tr -d ' ')" == 72 ]] || { echo 'ERROR: npm file count drifted' >&2; exit 1; }
+digest="$(php -r 'echo hash_file("sha256", $argv[1]);' "$projection/$tarball")"
+printf 'Alpha.5 npm provenance qualification: commit=%s; tree=%s; files=72; exports=15; sha256=%s; tarball=%s\n' \
+  "$candidate" "$(git rev-parse HEAD:packages/web)" "$digest" "$projection/$tarball"
