@@ -777,6 +777,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-alpha5-npm-provenance-qualification.md",
+      "title": "P1 Alpha.5 npm Provenance Qualification",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

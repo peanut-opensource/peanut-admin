@@ -4,6 +4,11 @@
   "description": "Reusable Peanut Admin Web services and module contributions",
   "type": "module",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/peanut-opensource/peanut-admin.git",
+    "directory": "packages/web"
+  },
   "sideEffects": ["*.vue"],
   "files": [
     "admin-core/src",
