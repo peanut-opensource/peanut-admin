@@ -104,6 +104,12 @@ function validArguments(string $target): array
     ];
 }
 
+/** @return list<string> */
+function withoutExampleArguments(string $target): array
+{
+    return [...validArguments($target), '--example-module', 'remove'];
+}
+
 function assertTrue(bool $condition, string $message): void
 {
     if (!$condition) {
@@ -200,6 +206,16 @@ try {
     assertTrue($result['code'] !== 0, 'Unknown feature must fail.');
     assertTrue(str_contains($result['stderr'], 'PROJECT_FEATURE_UNKNOWN'), 'Feature error is unstable.');
     assertTrue(!file_exists($temporaryRoot . '/unknown-feature'), 'Unknown feature created a target.');
+
+    $invalidExampleArgs = validArguments($temporaryRoot . '/invalid-example-mode');
+    array_push($invalidExampleArgs, '--example-module', 'omit');
+    $result = runGenerator($root, $invalidExampleArgs);
+    assertTrue($result['code'] !== 0, 'Unknown example Module mode must fail.');
+    assertTrue(
+        str_contains($result['stderr'], 'PROJECT_EXAMPLE_MODULE_INVALID'),
+        'Example Module mode error is unstable.',
+    );
+    assertTrue(!file_exists($temporaryRoot . '/invalid-example-mode'), 'Invalid example mode created a target.');
 
     $dependencyArgs = validArguments($temporaryRoot . '/missing-feature-dependency');
     array_push($dependencyArgs, '--feature', 'notification-sms');
@@ -322,6 +338,37 @@ try {
     assertTrue($secondResult['code'] === 0, 'Second generation failed: ' . $secondResult['stderr']);
     assertTrue(contentInventory($first) === contentInventory($second), 'Same inputs are not byte deterministic.');
 
+    $withoutExampleFirst = $temporaryRoot . '/without-example-first';
+    $withoutExampleSecond = $temporaryRoot . '/without-example-second';
+    $withoutExampleFirstResult = runGenerator($root, withoutExampleArguments($withoutExampleFirst));
+    $withoutExampleSecondResult = runGenerator($root, withoutExampleArguments($withoutExampleSecond));
+    assertTrue($withoutExampleFirstResult['code'] === 0, 'Example-free generation failed.');
+    assertTrue($withoutExampleSecondResult['code'] === 0, 'Second example-free generation failed.');
+    assertTrue(
+        contentInventory($withoutExampleFirst) === contentInventory($withoutExampleSecond),
+        'Example-free generation is not byte deterministic.',
+    );
+    $withoutExampleInventory = contentInventory($withoutExampleFirst);
+    foreach ($withoutExampleInventory as $relative => $digest) {
+        assertTrue(!str_contains(strtolower($relative), 'example-greeting'), 'Example frontend path was retained.');
+        assertTrue(!str_contains($relative, 'Modules/Example/Greeting'), 'Example backend path was retained.');
+        assertTrue($digest !== '', 'Example-free output contains an unreadable file.');
+        $contents = (string) file_get_contents($withoutExampleFirst . '/' . $relative);
+        assertTrue(!str_contains($contents, 'example.greeting'), 'Example Module key was retained.');
+        assertTrue(!str_contains($contents, 'ExampleGreeting'), 'Example provider or import was retained.');
+        assertTrue(!str_contains($contents, 'api/example/greeting'), 'Example route was retained.');
+    }
+    $withoutExampleMetadata = json_decode(
+        (string) file_get_contents($withoutExampleFirst . '/peanut-project.json'),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
+    assertTrue(
+        ($withoutExampleMetadata['project']['example_module'] ?? null) === 'removed',
+        'Example-free metadata did not record removal.',
+    );
+
     $collisionTarget = $temporaryRoot . '/legacy-key-collision';
     $collisionArguments = validArguments($collisionTarget);
     foreach ($collisionArguments as $index => $argument) {
@@ -346,7 +393,16 @@ try {
     assertTrue(preg_match('/^[0-9a-f]{40}$/D', $headTree) === 1, 'Git HEAD tree identity is unavailable.');
     assertTrue(($metadata['peanut_admin']['input_commit'] ?? null) === $headCommit, 'Input commit drifted.');
     assertTrue(($metadata['peanut_admin']['input_tree'] ?? null) === $headTree, 'Input tree drifted.');
+    assertTrue(
+        ($metadata['peanut_admin']['generator_digest_algorithm'] ?? null) === 'sha256-git-blob-manifest-v1',
+        'Generator digest algorithm drifted.',
+    );
+    assertTrue(
+        preg_match('/^[0-9a-f]{64}$/D', (string) ($metadata['peanut_admin']['generator_digest'] ?? '')) === 1,
+        'Generator digest is missing.',
+    );
     assertTrue(($metadata['project']['features'] ?? null) === ['settings', 'file-media'], 'Features are not canonical.');
+    assertTrue(($metadata['project']['example_module'] ?? null) === 'retained', 'Default example mode changed.');
     assertTrue(($metadata['secrets']['embedded'] ?? null) === false, 'Metadata claims embedded secrets.');
     assertTrue(!file_exists($first . '/.peanut-project-generation'), 'Ownership marker leaked into output.');
 

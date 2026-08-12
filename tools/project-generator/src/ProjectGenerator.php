@@ -36,6 +36,7 @@ final class GenerationRequest
         public readonly array $tenantClients,
         public readonly string $adminClientKey,
         public readonly array $features,
+        public readonly string $exampleModule = 'retain',
     ) {
         if (preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/D', $slug) !== 1 || strlen($slug) > 63) {
             throw new ProjectGeneratorException('PROJECT_SLUG_INVALID', 'Use a lowercase hyphenated slug up to 63 characters.');
@@ -106,6 +107,12 @@ final class GenerationRequest
         }
         if ($target === '' || str_contains($target, "\0")) {
             throw new ProjectGeneratorException('PROJECT_TARGET_UNSAFE', 'Target path is empty or invalid.');
+        }
+        if (!in_array($exampleModule, ['retain', 'remove'], true)) {
+            throw new ProjectGeneratorException(
+                'PROJECT_EXAMPLE_MODULE_INVALID',
+                'Use retain or remove for the fictional example Module.',
+            );
         }
     }
 
@@ -259,6 +266,7 @@ final class ProjectGenerator
             $this->copyPackageSnapshots($target);
             $this->selectFeatures($target, $request->features);
             $this->replaceNamespaces($target, $request->phpNamespace);
+            $this->selectExampleModule($target, $request->exampleModule);
             $this->writeProjectFiles($target, $request, $sourceIdentity);
             $this->assertGeneratedBoundary($target);
             if (!@unlink($marker)) {
@@ -275,7 +283,7 @@ final class ProjectGenerator
         }
     }
 
-    /** @return array{input_commit: string, input_tree: string} */
+    /** @return array{input_commit: string, input_tree: string, generator_digest_algorithm: string, generator_digest: string} */
     private function validateSource(): array
     {
         $baselinePath = $this->sourceRoot . '/tools/project-generator/source-baseline.json';
@@ -358,9 +366,15 @@ final class ProjectGenerator
             throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Generator controlled source differs from the fixed baseline.');
         }
 
-        return $isGitCheckout
+        $identity = $isGitCheckout
             ? ['input_commit' => $head, 'input_tree' => $headTree]
             : ['input_commit' => $packageCommit, 'input_tree' => $packageTree];
+
+        return [
+            ...$identity,
+            'generator_digest_algorithm' => $content['algorithm'],
+            'generator_digest' => $content['digest'],
+        ];
     }
 
     /** @return list<string> */
@@ -703,7 +717,44 @@ final class ProjectGenerator
         }
     }
 
-    /** @param array{input_commit: string, input_tree: string} $sourceIdentity */
+    private function selectExampleModule(string $target, string $mode): void
+    {
+        if ($mode === 'retain') {
+            return;
+        }
+
+        foreach ([
+            'backend/src/Modules/Example/Greeting',
+            'frontend/src/modules/example-greeting',
+            'frontend/verification/module.spec.ts',
+        ] as $relative) {
+            $this->removePath($target . '/' . $relative);
+        }
+
+        foreach ([
+            'backend/route/app.php',
+            'frontend/src/App.vue',
+        ] as $relative) {
+            $path = $target . '/' . $relative;
+            $contents = file_get_contents($path);
+            if (!is_string($contents)) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example Module fixture is incomplete.');
+            }
+            $updated = preg_replace(
+                $relative === 'backend/route/app.php'
+                    ? '/^use .*ExampleGreetingModuleProvider;\R|^\$module = new ExampleGreetingModuleProvider\(\);\R|^Route::get\(\'api\/example\/greeting\$\',[\s\S]*?^\]\)\);\R?/m'
+                    : '/^import \{ exampleGreetingModule \} from .*\R|^\s*<p data-testid="module-key">[\s\S]*?<\/p>\R?/m',
+                '',
+                $contents,
+            );
+            if (!is_string($updated) || $updated === $contents || str_contains($updated, 'exampleGreeting')) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example Module fixture contract drifted.');
+            }
+            $this->write($path, $updated);
+        }
+    }
+
+    /** @param array{input_commit: string, input_tree: string, generator_digest_algorithm: string, generator_digest: string} $sourceIdentity */
     private function writeProjectFiles(string $target, GenerationRequest $request, array $sourceIdentity): void
     {
         $this->writeJson($target . '/peanut-project.json', $this->metadata($request, $sourceIdentity));
@@ -711,8 +762,10 @@ final class ProjectGenerator
             'admin_client_key' => $request->adminClientKey,
             'tenant_clients' => $request->tenantClients,
         ]);
-        $moduleRoots = ['backend/src/Modules/Example/Greeting'];
-        $frontendComponents = ['example.greeting.page', 'peanut.ops-console.page'];
+        $moduleRoots = $request->exampleModule === 'retain' ? ['backend/src/Modules/Example/Greeting'] : [];
+        $frontendComponents = $request->exampleModule === 'retain'
+            ? ['example.greeting.page', 'peanut.ops-console.page']
+            : ['peanut.ops-console.page'];
         foreach ($request->features as $feature) {
             $moduleRoots[] = self::FEATURES[$feature]['backend_root'];
             $frontendComponents[] = self::FEATURES[$feature]['frontend_component'];
@@ -731,19 +784,28 @@ final class ProjectGenerator
         $this->adaptModuleMenus($target, $request->features, $request->adminClientKey);
         $this->writeClients($target . '/frontend/src/clients.ts', $request->tenantClients);
         $this->writeClientVerification($target . '/frontend/verification/clients.spec.ts', $request->tenantClients);
-        $this->writeFrontendModules($target . '/frontend/src/app/modules.ts', $request->features);
+        $this->writeFrontendModules(
+            $target . '/frontend/src/app/modules.ts',
+            $request->features,
+            $request->exampleModule,
+        );
         $this->writeFrontendApp($target . '/frontend/src/App.vue', $request);
         $this->writeFrontendIndex($target . '/frontend/index.html', $request->displayName);
         $this->writeEnvironment($target . '/.env.example', $request);
         $this->writeReadme($target . '/README.md', $request);
-        $this->writeBackendSmoke($target . '/backend/tests/smoke.php', $request->features, $request->phpNamespace);
+        $this->writeBackendSmoke(
+            $target . '/backend/tests/smoke.php',
+            $request->features,
+            $request->phpNamespace,
+            $request->exampleModule,
+        );
         $this->adaptAuthFixture($target, $request->tenantClients, $request->adminClientKey);
-        $this->adaptFeatureFixtures($target, $request->features);
+        $this->adaptFeatureFixtures($target, $request->features, $request->exampleModule);
         $this->adaptPackageManifests($target, $request);
     }
 
     /**
-     * @param array{input_commit: string, input_tree: string} $sourceIdentity
+     * @param array{input_commit: string, input_tree: string, generator_digest_algorithm: string, generator_digest: string} $sourceIdentity
      * @return array<string, mixed>
      */
     private function metadata(GenerationRequest $request, array $sourceIdentity): array
@@ -754,6 +816,8 @@ final class ProjectGenerator
             'peanut_admin' => [
                 'input_commit' => $sourceIdentity['input_commit'],
                 'input_tree' => $sourceIdentity['input_tree'],
+                'generator_digest_algorithm' => $sourceIdentity['generator_digest_algorithm'],
+                'generator_digest' => $sourceIdentity['generator_digest'],
             ],
             'project' => [
                 'slug' => $request->slug,
@@ -764,6 +828,7 @@ final class ProjectGenerator
                 'tenant_clients' => $request->tenantClients,
                 'admin_client_key' => $request->adminClientKey,
                 'features' => $request->features,
+                'example_module' => $request->exampleModule === 'retain' ? 'retained' : 'removed',
             ],
             'secrets' => [
                 'embedded' => false,
@@ -893,12 +958,14 @@ TS;
     }
 
     /** @param list<string> $features */
-    private function writeFrontendModules(string $path, array $features): void
+    private function writeFrontendModules(string $path, array $features, string $exampleModule): void
     {
-        $imports = ["import { exampleGreetingModule } from '../modules/example-greeting'"];
+        $imports = $exampleModule === 'retain'
+            ? ["import { exampleGreetingModule } from '../modules/example-greeting'"]
+            : [];
         $types = [];
         $setup = [];
-        $modules = ['exampleGreetingModule'];
+        $modules = $exampleModule === 'retain' ? ['exampleGreetingModule'] : [];
         $returns = [];
         $map = [
             'settings' => ['PeanutSettingsHostOptions', 'createPeanutSettingsHost', 'settings'],
@@ -1017,7 +1084,7 @@ Generated from Peanut Admin's `standard-admin` profile.
 - Brand: `{$brand}`
 - Tenant Clients: {$clients}
 - Enabled first-party Modules: {$features}
-- Removable fictional Module: `example.greeting`
+{$this->exampleModuleReadme($request->exampleModule)}
 
 `peanut-project.json` records the exact Peanut Admin input commit and tree. The
 generator never writes credentials. Fill the blank values in `.env.example`
@@ -1043,6 +1110,13 @@ MD;
         $this->write($path, $contents . "\n");
     }
 
+    private function exampleModuleReadme(string $mode): string
+    {
+        return $mode === 'retain'
+            ? '- Removable fictional Module: `example.greeting`'
+            : '- Fictional example Module: removed';
+    }
+
     private static function markdownText(string $value): string
     {
         return strtr($value, [
@@ -1054,9 +1128,9 @@ MD;
     }
 
     /** @param list<string> $features */
-    private function writeBackendSmoke(string $path, array $features, string $namespace): void
+    private function writeBackendSmoke(string $path, array $features, string $namespace, string $exampleModule): void
     {
-        $keys = self::orderedModuleKeys($features);
+        $keys = self::orderedModuleKeys($features, $exampleModule);
         $tables = [];
         $owned = [
             'settings' => [
@@ -1221,10 +1295,14 @@ TS;
     }
 
     /** @param list<string> $features */
-    private function adaptFeatureFixtures(string $target, array $features): void
+    private function adaptFeatureFixtures(string $target, array $features, string $exampleModule): void
     {
-        $keys = ['example.greeting', ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features), 'peanut.ops-console'];
-        $phpExpected = var_export(self::orderedModuleKeys($features), true);
+        $keys = [
+            ...($exampleModule === 'retain' ? ['example.greeting'] : []),
+            ...array_map(static fn(string $feature): string => 'peanut.' . $feature, $features),
+            'peanut.ops-console',
+        ];
+        $phpExpected = var_export(self::orderedModuleKeys($features, $exampleModule), true);
         $canonicalKeys = self::orderedModuleKeys(array_keys(self::FEATURES));
         $phpPattern = '~\\[\\s*' . implode(
             ',\\s*',
@@ -1278,14 +1356,14 @@ TS;
     }
 
     /** @param list<string> $features @return list<string> */
-    private static function orderedModuleKeys(array $features): array
+    private static function orderedModuleKeys(array $features, string $exampleModule = 'retain'): array
     {
         $selected = array_fill_keys($features, true);
         $pending = $features;
         sort($pending, SORT_STRING);
         $visiting = [];
         $visited = [];
-        $keys = ['example.greeting'];
+        $keys = $exampleModule === 'retain' ? ['example.greeting'] : [];
         $visit = function (string $feature) use (&$visit, &$visiting, &$visited, &$keys, $selected): void {
             if (isset($visited[$feature])) {
                 return;
@@ -1485,7 +1563,7 @@ final class ProjectGeneratorCli
             $option = $arguments[$index];
             if (!in_array($option, [
                 '--target', '--slug', '--display-name', '--php-namespace', '--brand',
-                '--profile', '--tenant-client', '--admin-client', '--feature',
+                '--profile', '--tenant-client', '--admin-client', '--feature', '--example-module',
             ], true)) {
                 throw new ProjectGeneratorException('PROJECT_OPTION_UNKNOWN', "Unknown option: {$option}.");
             }
@@ -1551,6 +1629,7 @@ final class ProjectGeneratorCli
             $clients,
             $adminClientKey,
             $canonicalFeatures,
+            $single['--example-module'] ?? 'retain',
         );
     }
 }
