@@ -165,6 +165,52 @@ try {
         throw new RuntimeException('Generated standard-admin Host is missing the always-on Ops Console.');
     }
 
+    $fixtureRoot = $target . '/backend/tests/fixture-record';
+    if (!mkdir($fixtureRoot, 0700, true) && !is_dir($fixtureRoot)) {
+        throw new RuntimeException('Could not create the product-neutral Module fixture.');
+    }
+    $fixtureMigration = <<<'PHP'
+<?php
+
+declare(strict_types=1);
+
+namespace StaticProject\Admin\Modules\Fixture\Record\Database\Migrations;
+
+use PeanutAdmin\Kernel\Migration\OwnedMigration;
+
+final class CreateFixtureRecord implements OwnedMigration
+{
+    public static function moduleKey(): string { return 'fixture.record'; }
+    public static function ownedTables(): array { return ['fixture_record']; }
+    public static function reversible(): bool { return true; }
+}
+PHP;
+    file_put_contents($fixtureRoot . '/CreateFixtureRecord.php', $fixtureMigration . "\n");
+    runStaticCommand([$lintPhp, '-l', $fixtureRoot . '/CreateFixtureRecord.php'], $target);
+    require_once $fixtureRoot . '/CreateFixtureRecord.php';
+    $fixtureMigrationClass = 'StaticProject\\Admin\\Modules\\Fixture\\Record\\Database\\Migrations\\CreateFixtureRecord';
+    if (!is_subclass_of($fixtureMigrationClass, \PeanutAdmin\Kernel\Migration\OwnedMigration::class)
+        || $fixtureMigrationClass::moduleKey() !== 'fixture.record'
+        || $fixtureMigrationClass::ownedTables() !== ['fixture_record']
+        || ($metadata['project']['tenant_clients'][0]['api_prefix'] ?? null) !== '/api/field/v1/') {
+        throw new RuntimeException('Product-neutral Module migration ownership fixture is invalid.');
+    }
+    $fixtureManifest = [
+        'schema_version' => 1,
+        'key' => 'fixture.record',
+        'backend_namespace' => 'StaticProject\\Admin\\Modules\\Fixture\\Record',
+        'api_prefix' => '/api/field/v1/',
+        'database' => ['owned_tables' => ['fixture_record'], 'migration_owner' => 'fixture.record'],
+    ];
+    file_put_contents(
+        $fixtureRoot . '/module-fixture.json',
+        json_encode($fixtureManifest, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
+    );
+    if ($fixtureManifest['key'] !== $fixtureManifest['database']['migration_owner']
+        || $fixtureManifest['backend_namespace'] !== 'StaticProject\\Admin\\Modules\\Fixture\\Record') {
+        throw new RuntimeException('Product-neutral Module manifest ownership fixture is invalid.');
+    }
+
     $autoload = getenv('PEANUT_PROJECT_GENERATOR_AUTOLOAD') ?: $root . '/vendor/autoload.php';
     if (!is_file($autoload)) {
         throw new RuntimeException('Set PEANUT_PROJECT_GENERATOR_AUTOLOAD to an existing repository vendor/autoload.php.');
