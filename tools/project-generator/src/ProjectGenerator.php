@@ -380,7 +380,13 @@ final class ProjectGenerator
     /** @return list<string> */
     private static function controlledSourcePaths(): array
     {
-        $paths = ['starter'];
+        $paths = [
+            'scripts/create-project',
+            'tools/project-generator/create-project.php',
+            'tools/project-generator/package-identity.json',
+            'tools/project-generator/src',
+            'starter',
+        ];
         foreach (self::PACKAGE_SNAPSHOTS as [$relative, $manifest]) {
             foreach ([$manifest, 'LICENSE'] as $entry) {
                 $paths[] = $relative . '/' . $entry;
