@@ -749,6 +749,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-cap06-private-downstream-adoption.md",
+      "title": "P1-CAP06 Private Downstream Adoption Record",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

@@ -212,6 +212,12 @@ CAP06 later exposed the Collaboration ArtifactRevision adapter's missing
 existing-artifact optimistic precondition; the bounded
 [P1-CAP04-R01 remediation](./p1-cap04-r01-artifact-revision-guard-contract.md)
 retains the same-PDO transaction and fail-closed revision guard.
+The resulting [CAP06 private adoption record](./p1-cap06-private-downstream-adoption.md)
+fixes the repaired Core source, generated Composer split, retained npm input and
+Peanut Admin application tree. Its focused MySQL gate and final five-group
+application CI passed. The proof is limited to one default Tenant and does not
+claim Article cross-Tenant isolation, a four-Runtime global transaction,
+publication or production authority.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
