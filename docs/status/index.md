@@ -578,3 +578,10 @@ installation because the Generator serialized the empty Composer
 assigns only the Generator manifest adapter and its existing static contract;
 it does not absorb the five-file Host fixture and does not rerun the already
 passing Generator groups.
+
+Core PR #42 merged the two-file repair at
+`57f1237d3e03ddbcda41a3103f1cbcc5a935f1ad`. The next clean Generated Host
+attempt then correctly failed closed with `PROJECT_SOURCE_DRIFT` because the
+controlled source baseline still described the pre-repair Generator. The same
+repair contract now assigns a separate one-file baseline rollover before the
+Generated Host group is attempted again.
