@@ -9,7 +9,7 @@ prerequisite_merge: 0c894a8c6b3dc4873ccffc066011d80e3b4227ee
 artifact_commit: aeeff105df4960db6a70da7ee5597da9a85abdaa
 packages_web_tree: 562043a0a294392a66ea0a305de6554d02646bc8
 package: @peanut-admin/admin@0.1.0-alpha.5
-tarball_sha256: 0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3
+tar_payload_sha256: 5850166ab965aa7ccb8d85058dd68a025c4741e9bc7b7af5c51536a8977b6eb6
 workflow: .github/workflows/alpha5-npm-publish.yml
 environment: npm-release
 publication: not performed
@@ -29,11 +29,12 @@ action, Node, pnpm and npm tool version is fixed.
 
 Before the external write, the workflow rejects an existing Alpha.5, confirms
 that `latest` remains Alpha.2, runs the qualified projection checker, and
-matches the exact source tree and tarball SHA-256. It publishes that tarball
-through npm trusted publishing with provenance and the `alpha` dist-tag.
+matches the exact source tree and decompressed tar payload SHA-256. It publishes
+that tarball through npm trusted publishing with provenance and the `alpha`
+dist-tag.
 
 After publication it verifies the immutable version, unchanged `latest`, the
-registry tarball SHA-256, package signatures and all 15 exports in one clean npm
+Registry tar payload SHA-256, package signatures and all 15 exports in one clean npm
 consumer. A failure after npm accepts the immutable version must not be repaired
 by unpublish, overwrite or retag; the publication completion record reports the
 partial state and follows the existing newer-version recovery rule.

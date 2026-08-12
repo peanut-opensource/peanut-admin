@@ -10,7 +10,8 @@ packages_web_tree: 562043a0a294392a66ea0a305de6554d02646bc8
 package: @peanut-admin/admin@0.1.0-alpha.5
 files: 72
 exports: 15
-tarball_sha256: 0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3
+qualification_tarball_sha256: 0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3
+tar_payload_sha256: 5850166ab965aa7ccb8d85058dd68a025c4741e9bc7b7af5c51536a8977b6eb6
 publication: not performed
 ```
 
@@ -27,7 +28,9 @@ The qualification owner ran once:
 ```
 
 It passed against the artifact commit and reported the fixed tree, file/export
-counts and digest above. JSON parse, Bash syntax, exact two-file artifact write
+counts, local qualification wrapper digest and stable tar payload digest above.
+The gzip wrapper digest is historical local evidence, not the cross-platform
+publication identity. JSON parse, Bash syntax, exact two-file artifact write
 set and `git diff --check` also passed. No CAP01-CAP06, Composer projection,
 database, browser, Registry consumer or repository aggregate Gate was repeated.
 

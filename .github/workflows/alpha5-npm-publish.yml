@@ -57,7 +57,7 @@ jobs:
           ./scripts/check-alpha5-npm-package-projection "$output"
           tarball="$output/npm/peanut-admin-admin-0.1.0-alpha.5.tgz"
           test -f "$tarball"
-          test "$(sha256sum "$tarball" | cut -d ' ' -f 1)" = '0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3'
+          test "$(gzip -cd "$tarball" | sha256sum | cut -d ' ' -f 1)" = '5850166ab965aa7ccb8d85058dd68a025c4741e9bc7b7af5c51536a8977b6eb6'
           printf 'ALPHA5_TARBALL=%s\n' "$tarball" >> "$GITHUB_ENV"
 
       - name: Publish qualified tarball with provenance
@@ -72,7 +72,7 @@ jobs:
           curl --fail --silent --show-error --location \
             --output "$registry_tarball" \
             "$(npm view '@peanut-admin/admin@0.1.0-alpha.5' dist.tarball)"
-          test "$(sha256sum "$registry_tarball" | cut -d ' ' -f 1)" = '0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3'
+          test "$(gzip -cd "$registry_tarball" | sha256sum | cut -d ' ' -f 1)" = '5850166ab965aa7ccb8d85058dd68a025c4741e9bc7b7af5c51536a8977b6eb6'
           consumer="$RUNNER_TEMP/alpha5-npm-consumer"
           mkdir -p "$consumer"
           cd "$consumer"
