@@ -16,16 +16,13 @@ use PeanutAdmin\Kernel\Host\ExternalOperationResult;
 use PeanutAdmin\Kernel\Module\ModuleProvider;
 use RuntimeException;
 
-final class FixtureRecordModuleProvider implements ModuleProvider
+final class FixtureRecordHost implements ModuleProvider
 {
     public function moduleKey(): string
     {
         return 'fixture.record';
     }
-}
 
-final class FixtureRecordHost
-{
     public static function operation(): ExternalOperationDefinition
     {
         return new ExternalOperationDefinition(
@@ -45,7 +42,7 @@ final class FixtureRecordHost
 
     /** @param list<array<string, mixed>> $targets */
     public static function request(
-        TenantContext $context,
+        mixed $context,
         string $requestId,
         array $body,
         array $targets,
@@ -66,13 +63,13 @@ final class FixtureRecordHost
         );
     }
 
-    public static function handler(int &$calls): callable
+    public static function handler(int &$calls, ?string $failure = null): callable
     {
         return static function (
             AuthorizedExternalOperation $authorized,
             ExternalOperationRequest $request,
             PDO $pdo,
-        ) use (&$calls): ExternalOperationResult {
+        ) use (&$calls, $failure): ExternalOperationResult {
             ++$calls;
             if (!$authorized->context instanceof TenantContext) {
                 throw new RuntimeException('Trusted Tenant context is required.');
@@ -86,6 +83,12 @@ final class FixtureRecordHost
                 'name' => (string) ($request->body['name'] ?? ''),
             ]);
             $id = (string) $pdo->lastInsertId();
+            if ($failure === 'domain') {
+                throw new RuntimeException('Injected fixture domain failure.');
+            }
+            if ($failure === 'completion') {
+                $pdo->exec("UPDATE pa_tenant_idempotency_record SET status = 'completed' WHERE status = 'processing'");
+            }
 
             return new ExternalOperationResult(
                 201,
@@ -99,18 +102,21 @@ final class FixtureRecordHost
         };
     }
 
-    public static function outbox(int &$calls): callable
+    public static function outbox(int &$calls, int $tenantId, bool $fail = false): callable
     {
-        return static function (PDO $pdo, ExternalOperationResult $result) use (&$calls): void {
+        return static function (PDO $pdo, ExternalOperationResult $result) use (&$calls, $tenantId, $fail): void {
             ++$calls;
             $statement = $pdo->prepare(
                 'INSERT INTO fixture_outbox (tenant_id, event_key, resource_id) VALUES (:tenant, :event, :resource)',
             );
             $statement->execute([
-                'tenant' => 1,
+                'tenant' => $tenantId,
                 'event' => $result->auditEventType,
                 'resource' => $result->resourceId,
             ]);
+            if ($fail) {
+                throw new RuntimeException('Injected fixture outbox failure.');
+            }
         };
     }
 }

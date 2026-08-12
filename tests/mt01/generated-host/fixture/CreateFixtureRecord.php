@@ -30,7 +30,9 @@ CREATE TABLE fixture_scope (
     tenant_id BIGINT UNSIGNED NOT NULL,
     name VARCHAR(80) NOT NULL,
     UNIQUE KEY uk_fixture_scope_tenant_id (tenant_id, id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+SQL);
+        $this->execute(<<<'SQL'
 CREATE TABLE fixture_record (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     tenant_id BIGINT UNSIGNED NOT NULL,
@@ -39,7 +41,9 @@ CREATE TABLE fixture_record (
     revision BIGINT UNSIGNED NOT NULL,
     KEY idx_fixture_record_tenant_id (tenant_id, id),
     KEY idx_fixture_record_tenant_scope (tenant_id, scope_id)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB
+SQL);
+        $this->execute(<<<'SQL'
 CREATE TABLE fixture_outbox (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     tenant_id BIGINT UNSIGNED NOT NULL,

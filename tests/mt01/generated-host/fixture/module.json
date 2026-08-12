@@ -6,12 +6,15 @@
   "version": "1.0.0",
   "kernel_constraint": "^1.0",
   "license": "Apache-2.0",
+  "dependencies": [],
   "backend": {
-    "provider": "GeneratedHost\\Admin\\Modules\\Fixture\\Record\\FixtureRecordModuleProvider"
+    "provider": "GeneratedHost\\Admin\\Modules\\Fixture\\Record\\FixtureRecordHost",
+    "migrations": "Database/Migrations"
   },
+  "frontend": {},
   "database": {
     "owned_tables": ["fixture_scope", "fixture_record", "fixture_outbox"]
   },
-  "contracts": {"exports": [], "events": ["fixture.record.created"]},
-  "tenant": {"enableable": true, "requires": []}
+  "contracts": {"exports": [], "events": ["fixture.record.created.v1"]},
+  "tenant": {"enableable": true, "disable_behavior": "reject_new_operations", "requires": []}
 }
