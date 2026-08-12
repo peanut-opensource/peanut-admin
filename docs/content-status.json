@@ -798,6 +798,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-alpha5-npm-reproducible-identity-repair.md",
+      "title": "P1 Alpha.5 npm Reproducible Identity Repair",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }

@@ -233,14 +233,21 @@ frozen until both follow-up PRs merge with every declared check successful.
 The npm provenance artifact is now fixed by the
 [qualification record](./p1-alpha5-npm-provenance-qualification.md) at commit
 `aeeff105df4960db6a70da7ee5597da9a85abdaa`, package tree
-`562043a0a294392a66ea0a305de6554d02646bc8` and tarball SHA-256
-`0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3`.
+`562043a0a294392a66ea0a305de6554d02646bc8` and tar payload SHA-256
+`5850166ab965aa7ccb8d85058dd68a025c4741e9bc7b7af5c51536a8977b6eb6`.
 No Registry publication has occurred.
 The [npm trusted publication path](./p1-alpha5-npm-publication-path.md) fixes the
 exact-commit OIDC workflow, protected environment and one clean npm Registry
 consumer for that artifact. Publication remains an ordered external action
 after the workflow PR merges green and the exact npm binding and release tags
 exist.
+The first dispatch, run `31589966713`, stopped before publication because its
+gzip-wrapped tarball digest was not reproducible between macOS qualification
+and Ubuntu publication. The bounded
+[reproducible identity repair](./p1-alpha5-npm-reproducible-identity-repair.md)
+retains every source, file, export, provenance and Registry assertion while
+using the decompressed package tar payload as the cross-platform content
+identity. npm Alpha.5 remains unpublished.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).

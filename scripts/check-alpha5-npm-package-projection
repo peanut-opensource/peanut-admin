@@ -53,5 +53,6 @@ tar -tzf "$projection/$tarball" | sed -E 's#^package/##; /^$/d; /\/$/d' | LC_ALL
 cmp "$output/dry-files" "$output/tar-files"
 [[ "$(wc -l <"$output/tar-files" | tr -d ' ')" == 72 ]] || { echo 'ERROR: npm file count drifted' >&2; exit 1; }
 digest="$(php -r 'echo hash_file("sha256", $argv[1]);' "$projection/$tarball")"
-printf 'Alpha.5 npm provenance qualification: commit=%s; tree=%s; files=72; exports=15; sha256=%s; tarball=%s\n' \
-  "$candidate" "$(git rev-parse HEAD:packages/web)" "$digest" "$projection/$tarball"
+payload_digest="$(gzip -cd "$projection/$tarball" | php -r 'echo hash("sha256", stream_get_contents(STDIN));')"
+printf 'Alpha.5 npm provenance qualification: commit=%s; tree=%s; files=72; exports=15; sha256=%s; payload_sha256=%s; tarball=%s\n' \
+  "$candidate" "$(git rev-parse HEAD:packages/web)" "$digest" "$payload_digest" "$projection/$tarball"
