@@ -57,6 +57,29 @@ Before changing files, read in order:
 
 ## Verification Policy
 
+### Gate Classification And Isolation
+
+- Classify a failure by impact before deciding what stops. Security, Tenant
+  isolation, authorization, data-corruption and core behavior failures block
+  the affected implementation and merge. Schema/API contracts and immutable
+  dependency identity block affected adoption, merge and release. Formatting,
+  documentation, dependency metadata and mechanical CI failures block only the
+  current PR merge or release closure.
+- Continuing independent work is not acceptance. Keep a failing candidate on
+  its feature or stacked-fix branch; never merge red checks into `dev` or
+  `main`, and do not claim a stage complete until its required gates close.
+- Work that does not consume the failing artifact and has disjoint file
+  ownership may continue in parallel. During a bounded CI wait, keep the
+  critical path plus at most two useful read-only or preparation lines; state
+  the concrete dependency when no parallel work is possible.
+- Run the smallest local gate that matches the change before opening the PR.
+  Manifest or dependency-lock changes include the CI-equivalent strict
+  validator and an exact lock identity check. Deduplicate by failure cause and
+  rerun only the failed group under the existing retry budget.
+- Report only gate start, state change, failure, timeout or completion, naming
+  the repository and PR. Subtasks return compact conclusions and evidence and
+  are closed immediately; do not spend context on unchanged polling output.
+
 - Automated verification runs only when the controlling stage contract assigns
   it to that stage's integration owner or to a fixed-candidate qualification
   owner.
