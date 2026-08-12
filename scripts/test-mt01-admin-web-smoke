@@ -56,8 +56,13 @@ if ! composer install --working-dir "$GENERATED_HOST/backend" \
   exit 1
 fi
 
+if ! pnpm --dir "$GENERATED_HOST" install --frozen-lockfile >/dev/null 2>&1; then
+  echo 'ERROR: MT01 Admin Web generated Host Web dependency preparation failed.' >&2
+  exit 1
+fi
+
 php "$ROOT/tests/mt01/admin-web/fixture/setup.php" prepare >/dev/null
 
 pnpm exec playwright test \
   --config tests/mt01/admin-web/playwright.config.ts \
-  tests/mt01/admin-web/full-stack.e2e.ts
+  full-stack.e2e.ts
