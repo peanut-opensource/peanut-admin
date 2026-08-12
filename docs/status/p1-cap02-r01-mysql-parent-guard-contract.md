@@ -32,6 +32,14 @@ prove a valid earlier parent succeeds while a non-earlier/self candidate is
 rejected without inserting a revision or advancing the artifact counters. The
 unit schema test must reject reintroduction of the unsupported constraint.
 
+That focused integration run also exposed the pre-existing create SQL reusing
+one named `:member_id` placeholder twice. Native MySQL PDO prepares reject the
+statement with `HY093`; emulated prepares had hidden the defect. R01 therefore
+also assigns the ArtifactRevision Repository to give the creator and updater
+columns distinct named placeholders with the same trusted member value. This
+is a SQL binding correction only and does not change identity or audit
+semantics.
+
 This remediation does not change APIs, models, migrations, dependencies,
 authorization, Tenant scoping, immutable envelopes, package versions or
 publication status. It does not adopt the unrelated local `f7b4dd5` draft.
@@ -47,6 +55,7 @@ The contract commit may change only:
 The implementation commit may change only:
 
 - `packages/php/artifact-revision/src/Database/Schema.php`;
+- `packages/php/artifact-revision/src/Persistence/PdoArtifactRevisionRepository.php`;
 - `packages/php/artifact-revision/tests/Unit/Database/SchemaTest.php`;
 - `packages/php/artifact-revision/tests/Integration/Persistence/PdoArtifactRevisionRepositoryTest.php`.
 
@@ -59,7 +68,8 @@ than expanding this write set.
    `git diff --check` passes.
 2. PHP lint and the ArtifactRevision unit group pass once on PHP 8.3.
 3. The ArtifactRevision repository integration group passes once on isolated
-   MySQL 8.4, including schema installation and the non-earlier parent guard.
+   MySQL 8.4 with native prepares, including schema installation, artifact
+   creation and the non-earlier parent guard.
 4. Existing PR checks run once. Passed CAP01-CAP05 qualification groups are not
    repeated.
 5. After merge, CAP05 produces new immutable Composer/npm projection identities
