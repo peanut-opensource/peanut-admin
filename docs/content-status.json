@@ -735,6 +735,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/reviews/p1-cross-product-alpha5-cap06-rollover.md",
+      "title": "P1 Alpha.5 CAP06 Remediation Rollover",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
