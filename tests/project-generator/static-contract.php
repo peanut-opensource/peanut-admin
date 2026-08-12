@@ -165,6 +165,12 @@ try {
         throw new RuntimeException('Generated standard-admin Host is missing the always-on Ops Console.');
     }
 
+    $autoload = getenv('PEANUT_PROJECT_GENERATOR_AUTOLOAD') ?: $root . '/vendor/autoload.php';
+    if (!is_file($autoload)) {
+        throw new RuntimeException('Set PEANUT_PROJECT_GENERATOR_AUTOLOAD to an existing repository vendor/autoload.php.');
+    }
+    require_once $autoload;
+
     $fixtureRoot = $target . '/backend/tests/fixture-record';
     if (!mkdir($fixtureRoot, 0700, true) && !is_dir($fixtureRoot)) {
         throw new RuntimeException('Could not create the product-neutral Module fixture.');
@@ -211,10 +217,6 @@ PHP;
         throw new RuntimeException('Product-neutral Module manifest ownership fixture is invalid.');
     }
 
-    $autoload = getenv('PEANUT_PROJECT_GENERATOR_AUTOLOAD') ?: $root . '/vendor/autoload.php';
-    if (!is_file($autoload)) {
-        throw new RuntimeException('Set PEANUT_PROJECT_GENERATOR_AUTOLOAD to an existing repository vendor/autoload.php.');
-    }
     $autoloadDirectory = $target . '/backend/vendor';
     if (!mkdir($autoloadDirectory, 0700, true) && !is_dir($autoloadDirectory)) {
         throw new RuntimeException('Could not create the generated Host smoke autoload directory.');
