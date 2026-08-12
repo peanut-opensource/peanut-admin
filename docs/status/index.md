@@ -562,3 +562,11 @@ accepted: the direct shell entry-point spawn failed, and the generated
 [fixture repair contract](./mt01-generator-integration-repair-contract.md)
 owns only those two test files. The failed integration commit `0aae10e` remains
 unmerged and is not passing evidence.
+
+The next non-Registry-dependent slice is frozen by the
+[Generated Host fixture contract](./mt01-generated-host-fixture-contract.md).
+After Generator integration completes, its eight-path owner will generate with
+the fictional example removed, mount and fully unmount one external
+`fixture.record` Module, and run one isolated MySQL 8.4 group for fail-closed
+context/authorization and same-PDO domain/audit/outbox/idempotency atomicity.
+It does not complete MT01 or authorize MT02.

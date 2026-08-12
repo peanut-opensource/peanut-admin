@@ -793,6 +793,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/mt01-generated-host-fixture-contract.md",
+      "title": "MT01 Generated Host Fixture Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-alpha5-npm-provenance-qualification.md",
       "title": "P1 Alpha.5 npm Provenance Qualification",
       "status": "canonical",
