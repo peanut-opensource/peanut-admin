@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+RUN_ID="$(php -r 'echo bin2hex(random_bytes(8));')"
+DATABASE="peanut_admin_mt01_admin_web_${RUN_ID}"
+TEMP_ROOT="$(mktemp -d)"
+GENERATED_HOST="$TEMP_ROOT/generated-host"
+
+if [[ ! "$DATABASE" =~ ^peanut_admin_mt01_admin_web_[a-f0-9]{16}$ ]]; then
+  echo 'ERROR: MT01 Admin Web database identity is invalid.' >&2
+  exit 1
+fi
+
+free_port() {
+  php -r '$socket = stream_socket_server("tcp://127.0.0.1:0", $code, $message); if ($socket === false) { exit(1); } $name = stream_socket_get_name($socket, false); fclose($socket); if (!is_string($name) || preg_match("/:(\\d+)$/D", $name, $matches) !== 1) { exit(1); } echo $matches[1];'
+}
+
+cleanup() {
+  MT01_DATABASE="$DATABASE" php "$ROOT/tests/mt01/admin-web/fixture/setup.php" cleanup >/dev/null 2>&1 || true
+  find "$TEMP_ROOT" -depth -delete 2>/dev/null || true
+}
+trap cleanup EXIT
+
+export MT01_DATABASE="$DATABASE"
+export MT01_GENERATED_HOST_ROOT="$GENERATED_HOST"
+export MT01_REPOSITORY_ROOT="$ROOT"
+export MT01_BACKEND_PORT="$(free_port)"
+export MT01_FRONTEND_PORT="$(free_port)"
+export MT01_FIXTURE_EMAIL="mt01-admin-web-${RUN_ID}@example.test"
+export MT01_FIXTURE_PASSWORD="$(php -r 'echo bin2hex(random_bytes(24));')"
+export MT01_AUTH_HMAC_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+export MT01_CONTROL_KEY="$(php -r 'echo bin2hex(random_bytes(32));')"
+
+if [[ "$MT01_BACKEND_PORT" == "$MT01_FRONTEND_PORT" ]]; then
+  export MT01_FRONTEND_PORT="$(free_port)"
+fi
+
+if ! "$ROOT/scripts/create-project" \
+  --target "$GENERATED_HOST" \
+  --slug mt01-admin-web \
+  --display-name 'MT01 Admin Web Fixture' \
+  --php-namespace 'Mt01\AdminWeb' \
+  --brand 'MT01 Fixture' \
+  --profile standard-admin \
+  --tenant-client 'fixture-web=/api/fixture/v1/' \
+  --admin-client fixture-web \
+  --example-module remove >/dev/null 2>&1; then
+  echo 'ERROR: MT01 Admin Web generated Host preparation failed.' >&2
+  exit 1
+fi
+
+if ! composer install --working-dir "$GENERATED_HOST/backend" \
+  --no-interaction --prefer-dist --no-progress >/dev/null 2>&1; then
+  echo 'ERROR: MT01 Admin Web generated Host dependency preparation failed.' >&2
+  exit 1
+fi
+
+if ! pnpm --dir "$GENERATED_HOST" install --frozen-lockfile >/dev/null 2>&1; then
+  echo 'ERROR: MT01 Admin Web generated Host Web dependency preparation failed.' >&2
+  exit 1
+fi
+
+php "$ROOT/tests/mt01/admin-web/fixture/setup.php" prepare >/dev/null
+
+pnpm exec playwright test \
+  --config tests/mt01/admin-web/playwright.config.ts \
+  full-stack.e2e.ts
