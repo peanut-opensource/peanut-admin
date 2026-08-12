@@ -49,7 +49,7 @@ final class PerformanceQualificationContractTest extends TestCase
         );
     }
 
-    public function testCiUsesTheFixedPhpPerformanceImage(): void
+    public function testPerformanceWorkflowExclusivelyUsesTheFixedPhpPerformanceImage(): void
     {
         $dockerfile = (string) file_get_contents($this->root . '/docker/php/Dockerfile');
         self::assertStringStartsWith("FROM php:8.3.24-cli-bookworm\n", $dockerfile);
@@ -73,8 +73,8 @@ final class PerformanceQualificationContractTest extends TestCase
         self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE: peanut-admin-performance-php:8.3.24', $workflow);
 
         $qualityWorkflow = (string) file_get_contents($this->root . '/.github/workflows/ci.yml');
-        self::assertStringContainsString('docker build --tag peanut-admin-performance-php:8.3.24', $qualityWorkflow);
-        self::assertStringContainsString('PEANUT_PERFORMANCE_PHP_IMAGE: peanut-admin-performance-php:8.3.24', $qualityWorkflow);
+        self::assertStringNotContainsString('docker build --tag peanut-admin-performance-php:8.3.24', $qualityWorkflow);
+        self::assertStringNotContainsString('PEANUT_PERFORMANCE_PHP_IMAGE', $qualityWorkflow);
     }
 
     public function testTypedTargetBenchmarkUsesTheRealResolverAndPaginatedQuery(): void
