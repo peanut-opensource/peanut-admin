@@ -86,6 +86,72 @@ function gitValue(string $root, string $revision): string
     return trim($stdout);
 }
 
+/** @return array{file_count: int, digest: string} */
+function generatorManifest(string $root, string $revision): array
+{
+    $paths = [
+        'scripts/create-project',
+        'tools/project-generator/create-project.php',
+        'tools/project-generator/src',
+        'starter',
+        'packages/php/composer.json',
+        'packages/php/LICENSE',
+        'packages/web/package.json',
+        'packages/web/LICENSE',
+    ];
+    foreach ([
+        'packages/php' => [
+            'kernel', 'data-permission', 'testing', 'settings', 'reference-codes', 'file-media',
+            'task-job', 'notification-sms', 'import-export', 'ops-console', 'integration-security',
+        ],
+        'packages/web' => [
+            'admin-core', 'admin-shell', 'testing', 'settings', 'reference-codes', 'file-media',
+            'task-job', 'notification-sms', 'import-export', 'ops-console', 'integration-security',
+        ],
+    ] as $package => $modules) {
+        foreach ($modules as $module) {
+            $paths[] = "{$package}/{$module}/src";
+            if ($package === 'packages/php' && $module === 'kernel') {
+                $paths[] = "{$package}/{$module}/database";
+                $paths[] = "{$package}/{$module}/resources";
+            } elseif ($package === 'packages/php' && $module === 'data-permission') {
+                $paths[] = "{$package}/{$module}/database";
+            }
+        }
+    }
+    $command = ['git', '-C', $root, 'ls-tree', '-r', '-z', '--full-tree', $revision, '--', ...$paths];
+    $pipes = [];
+    $process = proc_open($command, [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes, $root);
+    if (!is_resource($process)) {
+        throw new RuntimeException('Could not compute the independent Generator manifest.');
+    }
+    fclose($pipes[0]);
+    $stdout = stream_get_contents($pipes[1]);
+    $stderr = stream_get_contents($pipes[2]);
+    fclose($pipes[1]);
+    fclose($pipes[2]);
+    if (proc_close($process) !== 0 || !is_string($stdout)) {
+        throw new RuntimeException('Could not compute the independent Generator manifest: ' . $stderr);
+    }
+    $entries = [];
+    foreach (explode("\0", $stdout) as $record) {
+        if ($record === '') {
+            continue;
+        }
+        if (preg_match('/^(100644|100755) blob ([0-9a-f]{40})\t(.+)$/D', $record, $matches) !== 1) {
+            throw new RuntimeException('Independent Generator manifest contains an unsupported Git entry.');
+        }
+        $entries[$matches[3]] = $matches[1] . ' ' . $matches[2];
+    }
+    ksort($entries, SORT_STRING);
+    $manifest = '';
+    foreach ($entries as $path => $identity) {
+        $manifest .= $identity . "\t" . $path . "\n";
+    }
+
+    return ['file_count' => count($entries), 'digest' => hash('sha256', $manifest)];
+}
+
 /** @return list<string> */
 function validArguments(string $target): array
 {
@@ -102,6 +168,12 @@ function validArguments(string $target): array
         '--feature', 'file-media',
         '--feature', 'settings',
     ];
+}
+
+/** @return list<string> */
+function withoutExampleArguments(string $target): array
+{
+    return [...validArguments($target), '--example-module', 'remove'];
 }
 
 function assertTrue(bool $condition, string $message): void
@@ -201,6 +273,40 @@ try {
     assertTrue(str_contains($result['stderr'], 'PROJECT_FEATURE_UNKNOWN'), 'Feature error is unstable.');
     assertTrue(!file_exists($temporaryRoot . '/unknown-feature'), 'Unknown feature created a target.');
 
+    $invalidExampleArgs = validArguments($temporaryRoot . '/invalid-example-mode');
+    array_push($invalidExampleArgs, '--example-module', 'omit');
+    $result = runGenerator($root, $invalidExampleArgs);
+    assertTrue($result['code'] !== 0, 'Unknown example Module mode must fail.');
+    assertTrue(
+        str_contains($result['stderr'], 'PROJECT_EXAMPLE_MODULE_INVALID'),
+        'Example Module mode error is unstable.',
+    );
+    assertTrue(!file_exists($temporaryRoot . '/invalid-example-mode'), 'Invalid example mode created a target.');
+
+    $reservedNamespaceArgs = validArguments($temporaryRoot . '/reserved-namespace');
+    $namespaceIndex = array_search('--php-namespace', $reservedNamespaceArgs, true);
+    assertTrue(is_int($namespaceIndex), 'Namespace argument fixture is invalid.');
+    $reservedNamespaceArgs[$namespaceIndex + 1] = 'PeanutAdmin\\Product';
+    $result = runGenerator($root, $reservedNamespaceArgs);
+    assertTrue($result['code'] !== 0, 'Reserved package namespace must fail.');
+    assertTrue(str_contains($result['stderr'], 'PROJECT_NAMESPACE_INVALID'), 'Namespace error is unstable.');
+    assertTrue(!file_exists($temporaryRoot . '/reserved-namespace'), 'Reserved namespace created a target.');
+
+    foreach ([
+        'invalid-namespace' => ['--php-namespace', 'single'],
+        'invalid-client-key' => ['--tenant-client', 'Invalid=/api/field/v1/'],
+        'invalid-client-prefix' => ['--tenant-client', 'field-console=api/field/v1/'],
+        'invalid-admin-client' => ['--admin-client', 'missing-console'],
+    ] as $fixture => [$option, $value]) {
+        $arguments = validArguments($temporaryRoot . '/' . $fixture);
+        $optionIndex = array_search($option, $arguments, true);
+        assertTrue(is_int($optionIndex), "{$fixture} argument fixture is invalid.");
+        $arguments[$optionIndex + 1] = $value;
+        $result = runGenerator($root, $arguments);
+        assertTrue($result['code'] !== 0, "{$fixture} must fail.");
+        assertTrue(!file_exists($temporaryRoot . '/' . $fixture), "{$fixture} created a target.");
+    }
+
     $dependencyArgs = validArguments($temporaryRoot . '/missing-feature-dependency');
     array_push($dependencyArgs, '--feature', 'notification-sms');
     $result = runGenerator($root, $dependencyArgs);
@@ -269,6 +375,20 @@ try {
     assertTrue(is_dir($emptyTarget), 'Pre-existing empty target was removed on failure.');
     assertTrue(scandir($emptyTarget) === ['.', '..'], 'Failed generation left partial output.');
 
+    $partialExampleTarget = $temporaryRoot . '/partial-example-output';
+    mkdir($partialExampleTarget, 0700);
+    file_put_contents($partialExampleTarget . '/README.md', "Greeting fixture remained.\n");
+    $removeGuard = new ReflectionMethod(ProjectGenerator::class, 'assertExampleRemoved');
+    try {
+        $removeGuard->invoke(new ProjectGenerator($root), $partialExampleTarget);
+        throw new RuntimeException('Partial example removal must fail.');
+    } catch (Throwable $exception) {
+        assertTrue(
+            str_contains($exception->getMessage(), 'PROJECT_TEMPLATE_INVALID'),
+            'Partial example removal error is unstable.',
+        );
+    }
+
     $packageSource = $temporaryRoot . '/package-source';
     $archive = $temporaryRoot . '/candidate.tar';
     $archiveResult = runFixtureCommand(
@@ -288,6 +408,48 @@ try {
     );
     assertTrue(($packageIdentity['commit'] ?? null) === gitValue($root, 'HEAD^{commit}'), 'Archive commit identity was not expanded.');
     assertTrue(($packageIdentity['tree'] ?? null) === gitValue($root, 'HEAD^{tree}'), 'Archive tree identity was not expanded.');
+
+    $invalidArchiveSource = $temporaryRoot . '/invalid-archive-source';
+    mkdir($invalidArchiveSource, 0700);
+    $invalidArchiveExtract = runFixtureCommand(['tar', '-xf', $archive, '-C', $invalidArchiveSource], $root);
+    assertTrue($invalidArchiveExtract['code'] === 0, 'Could not extract invalid archive fixture.');
+    $invalidArchiveIdentityPath = $invalidArchiveSource . '/tools/project-generator/package-identity.json';
+    $invalidArchiveIdentity = json_decode((string) file_get_contents($invalidArchiveIdentityPath), true, 512, JSON_THROW_ON_ERROR);
+    $invalidArchiveIdentity['tree'] = str_repeat('0', 40);
+    file_put_contents(
+        $invalidArchiveIdentityPath,
+        json_encode($invalidArchiveIdentity, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
+    );
+    $invalidArchiveTarget = $temporaryRoot . '/invalid-archive-output';
+    $invalidArchiveResult = runGenerator($invalidArchiveSource, validArguments($invalidArchiveTarget));
+    assertTrue($invalidArchiveResult['code'] !== 0, 'Edited archive identity must fail.');
+    assertTrue(!file_exists($invalidArchiveTarget), 'Edited archive identity claimed a target.');
+
+    $invalidDigestSource = $temporaryRoot . '/invalid-digest-source';
+    mkdir($invalidDigestSource, 0700);
+    $invalidDigestExtract = runFixtureCommand(['tar', '-xf', $archive, '-C', $invalidDigestSource], $root);
+    assertTrue($invalidDigestExtract['code'] === 0, 'Could not extract invalid digest fixture.');
+    $invalidDigestBaselinePath = $invalidDigestSource . '/tools/project-generator/source-baseline.json';
+    $invalidDigestBaseline = json_decode((string) file_get_contents($invalidDigestBaselinePath), true, 512, JSON_THROW_ON_ERROR);
+    $invalidDigestBaseline['controlled_content']['digest'] = str_repeat('0', 64);
+    file_put_contents(
+        $invalidDigestBaselinePath,
+        json_encode($invalidDigestBaseline, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n",
+    );
+    $invalidDigestTarget = $temporaryRoot . '/invalid-digest-output';
+    $invalidDigestResult = runGenerator($invalidDigestSource, validArguments($invalidDigestTarget));
+    assertTrue($invalidDigestResult['code'] !== 0, 'Edited Generator digest must fail.');
+    assertTrue(!file_exists($invalidDigestTarget), 'Edited Generator digest claimed a target.');
+
+    $missingControlledSource = $temporaryRoot . '/missing-controlled-source';
+    mkdir($missingControlledSource, 0700);
+    $missingControlledExtract = runFixtureCommand(['tar', '-xf', $archive, '-C', $missingControlledSource], $root);
+    assertTrue($missingControlledExtract['code'] === 0, 'Could not extract missing controlled entry fixture.');
+    unlink($missingControlledSource . '/scripts/create-project');
+    $missingControlledTarget = $temporaryRoot . '/missing-controlled-output';
+    $missingControlledResult = runGenerator($missingControlledSource, validArguments($missingControlledTarget));
+    assertTrue($missingControlledResult['code'] !== 0, 'Missing controlled source entry must fail.');
+    assertTrue(!file_exists($missingControlledTarget), 'Missing controlled source entry claimed a target.');
     $packageTarget = $temporaryRoot . '/package-output';
     $packageResult = runGenerator($packageSource, validArguments($packageTarget));
     assertTrue($packageResult['code'] === 0, 'Archived generator failed: ' . $packageResult['stderr']);
@@ -321,6 +483,65 @@ try {
     assertTrue($firstResult['code'] === 0, 'First generation failed: ' . $firstResult['stderr']);
     assertTrue($secondResult['code'] === 0, 'Second generation failed: ' . $secondResult['stderr']);
     assertTrue(contentInventory($first) === contentInventory($second), 'Same inputs are not byte deterministic.');
+    $metadata = json_decode((string) file_get_contents($first . '/peanut-project.json'), true, 512, JSON_THROW_ON_ERROR);
+    assertTrue(is_file($first . '/backend/src/Modules/Example/Greeting/module.json'), 'Default example manifest is absent.');
+    assertTrue(is_file($first . '/frontend/src/modules/example-greeting/index.ts'), 'Default example frontend Module is absent.');
+
+    $withoutExampleFirst = $temporaryRoot . '/without-example-first';
+    $withoutExampleSecond = $temporaryRoot . '/without-example-second';
+    $withoutExampleFirstResult = runGenerator($root, withoutExampleArguments($withoutExampleFirst));
+    $withoutExampleSecondResult = runGenerator($root, withoutExampleArguments($withoutExampleSecond));
+    assertTrue($withoutExampleFirstResult['code'] === 0, 'Example-free generation failed.');
+    assertTrue($withoutExampleSecondResult['code'] === 0, 'Second example-free generation failed.');
+    assertTrue(
+        contentInventory($withoutExampleFirst) === contentInventory($withoutExampleSecond),
+        'Example-free generation is not byte deterministic.',
+    );
+    $withoutExampleInventory = contentInventory($withoutExampleFirst);
+    foreach ($withoutExampleInventory as $relative => $digest) {
+        assertTrue(!str_contains(strtolower($relative), 'example-greeting'), 'Example frontend path was retained.');
+        assertTrue(!str_contains($relative, 'Modules/Example/Greeting'), 'Example backend path was retained.');
+        assertTrue($digest !== '', 'Example-free output contains an unreadable file.');
+        $contents = (string) file_get_contents($withoutExampleFirst . '/' . $relative);
+        assertTrue(!str_contains($contents, 'example.greeting'), 'Example Module key was retained.');
+        assertTrue(!str_contains($contents, 'ExampleGreeting'), 'Example provider or import was retained.');
+        assertTrue(!str_contains($contents, 'api/example/greeting'), 'Example route was retained.');
+    }
+    $withoutExampleMetadata = json_decode(
+        (string) file_get_contents($withoutExampleFirst . '/peanut-project.json'),
+        true,
+        512,
+        JSON_THROW_ON_ERROR,
+    );
+    assertTrue(
+        ($withoutExampleMetadata['project']['example_module'] ?? null) === 'removed',
+        'Example-free metadata did not record removal.',
+    );
+    foreach (['input_commit', 'input_tree', 'generator_digest_algorithm', 'generator_digest'] as $identityKey) {
+        assertTrue(
+            ($withoutExampleMetadata['peanut_admin'][$identityKey] ?? null)
+                === ($metadata['peanut_admin'][$identityKey] ?? null),
+            "Example modes disagree on {$identityKey}.",
+        );
+    }
+    $canonicalProject = [
+        'slug' => 'north-star-admin',
+        'display_name' => 'North {{ 7 * 7 }} <script>alert(1)</script>',
+        'php_namespace' => 'NorthStar\\Admin',
+        'brand' => 'Brand {{ ADMIN_CORE_PACKAGE }} <img src=x onerror=alert(1)>',
+        'profile' => 'standard-admin',
+        'tenant_clients' => [
+            ['key' => 'field-console', 'api_prefix' => '/api/field/v1/'],
+            ['key' => 'audit-console', 'api_prefix' => '/api/audit/v1/'],
+        ],
+        'admin_client_key' => 'field-console',
+        'features' => ['settings', 'file-media'],
+    ];
+    assertTrue(
+        array_intersect_key($withoutExampleMetadata['project'] ?? [], $canonicalProject) === $canonicalProject,
+        'Example-free canonical parameters drifted.',
+    );
+    assertTrue(($withoutExampleMetadata['secrets']['embedded'] ?? null) === false, 'Example-free metadata claims embedded secrets.');
 
     $collisionTarget = $temporaryRoot . '/legacy-key-collision';
     $collisionArguments = validArguments($collisionTarget);
@@ -338,15 +559,34 @@ try {
     assertTrue(str_contains($collisionFixture, "create('reporting-web')"), 'Admin legacy Client key collided.');
     assertTrue(str_contains($collisionFixture, "create('operations-web')"), 'Secondary legacy Client key collided.');
 
-    $metadata = json_decode((string) file_get_contents($first . '/peanut-project.json'), true, 512, JSON_THROW_ON_ERROR);
     assertTrue(($metadata['schema_version'] ?? null) === 1, 'Generator schema is missing.');
     $headCommit = gitValue($root, 'HEAD^{commit}');
     $headTree = gitValue($root, 'HEAD^{tree}');
+    $independentManifest = generatorManifest($root, 'HEAD^{commit}');
     assertTrue(preg_match('/^[0-9a-f]{40}$/D', $headCommit) === 1, 'Git HEAD commit identity is unavailable.');
     assertTrue(preg_match('/^[0-9a-f]{40}$/D', $headTree) === 1, 'Git HEAD tree identity is unavailable.');
     assertTrue(($metadata['peanut_admin']['input_commit'] ?? null) === $headCommit, 'Input commit drifted.');
     assertTrue(($metadata['peanut_admin']['input_tree'] ?? null) === $headTree, 'Input tree drifted.');
+    assertTrue(
+        ($metadata['peanut_admin']['generator_digest_algorithm'] ?? null) === 'sha256-git-blob-manifest-v1',
+        'Generator digest algorithm drifted.',
+    );
+    assertTrue(
+        ($metadata['peanut_admin']['generator_digest'] ?? null) === $independentManifest['digest'],
+        'Generator digest does not match the independent Git blob manifest.',
+    );
+    $baseline = json_decode((string) file_get_contents($root . '/tools/project-generator/source-baseline.json'), true, 512, JSON_THROW_ON_ERROR);
+    assertTrue(
+        ($baseline['controlled_content']['file_count'] ?? null) === $independentManifest['file_count']
+            && ($baseline['controlled_content']['digest'] ?? null) === $independentManifest['digest'],
+        'Generator source baseline does not match the independent Git blob manifest.',
+    );
+    assertTrue(
+        preg_match('/^[0-9a-f]{40}$/D', (string) ($baseline['archive_tree_without_baseline'] ?? '')) === 1,
+        'Generator archive tree seal is missing.',
+    );
     assertTrue(($metadata['project']['features'] ?? null) === ['settings', 'file-media'], 'Features are not canonical.');
+    assertTrue(($metadata['project']['example_module'] ?? null) === 'retained', 'Default example mode changed.');
     assertTrue(($metadata['secrets']['embedded'] ?? null) === false, 'Metadata claims embedded secrets.');
     assertTrue(!file_exists($first . '/.peanut-project-generation'), 'Ownership marker leaked into output.');
 
