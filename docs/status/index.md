@@ -542,3 +542,10 @@ The separate
 assigns exactly one consolidated parameterization fixture round after the
 implementation PR merges green. It does not absorb empty-database, Runtime,
 browser, Registry or final downstream-nomination ownership.
+
+The first integration round found two test-fixture defects before it could be
+accepted: the direct shell entry-point spawn failed, and the generated
+`OwnedMigration` fixture was loaded before Composer autoload. The bounded
+[fixture repair contract](./mt01-generator-integration-repair-contract.md)
+owns only those two test files. The failed integration commit `0aae10e` remains
+unmerged and is not passing evidence.
