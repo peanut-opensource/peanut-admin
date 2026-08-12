@@ -208,6 +208,10 @@ CAP06's MySQL 8.4 schema and native-PDO findings were repaired by PRs #18–#21;
 the exact repaired source and Composer projection are fixed in the
 [Alpha.5 CAP06 remediation rollover](../reviews/p1-cross-product-alpha5-cap06-rollover.md).
 Public Alpha.5 publication remains unauthorized.
+CAP06 later exposed the Collaboration ArtifactRevision adapter's missing
+existing-artifact optimistic precondition; the bounded
+[P1-CAP04-R01 remediation](./p1-cap04-r01-artifact-revision-guard-contract.md)
+retains the same-PDO transaction and fail-closed revision guard.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).

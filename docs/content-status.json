@@ -742,6 +742,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-cap04-r01-artifact-revision-guard-contract.md",
+      "title": "P1-CAP04-R01 Artifact Revision Guard Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
