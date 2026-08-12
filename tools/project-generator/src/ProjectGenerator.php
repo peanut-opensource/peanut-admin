@@ -392,8 +392,12 @@ final class ProjectGenerator
                 $paths[] = $relative . '/' . $entry;
             }
             foreach (self::PACKAGE_MODULES[$relative] as $module) {
-                foreach (['src', 'database', 'resources'] as $entry) {
-                    $paths[] = $relative . '/' . $module . '/' . $entry;
+                $paths[] = $relative . '/' . $module . '/src';
+                if ($relative === 'packages/php' && $module === 'kernel') {
+                    $paths[] = $relative . '/' . $module . '/database';
+                    $paths[] = $relative . '/' . $module . '/resources';
+                } elseif ($relative === 'packages/php' && $module === 'data-permission') {
+                    $paths[] = $relative . '/' . $module . '/database';
                 }
             }
         }
