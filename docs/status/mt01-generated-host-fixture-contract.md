@@ -4,8 +4,8 @@
 
 ```text
 task: MT01-GENERATED-HOST-01
-state: waits for MT01 Generator integration completion
-prerequisite: PENDING_GENERATOR_INTEGRATION
+state: implementation-ready
+prerequisite: 9fa0301df7e6015945bfdcbab6eb9b421a069ac0
 registry_identity: PENDING_ALPHA5
 owner: MT01 Generated Host fixture owner
 integration_owner: MT01-GENERATED-HOST-INTEGRATION-001
