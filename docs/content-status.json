@@ -763,6 +763,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/status/p1-alpha5-npm-provenance-contract.md",
+      "title": "P1 Alpha.5 npm Provenance Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
