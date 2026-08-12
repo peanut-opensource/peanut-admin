@@ -585,3 +585,9 @@ attempt then correctly failed closed with `PROJECT_SOURCE_DRIFT` because the
 controlled source baseline still described the pre-repair Generator. The same
 repair contract now assigns a separate one-file baseline rollover before the
 Generated Host group is attempted again.
+
+The first rollover value was rejected before target creation because its
+shell-computed digest did not match the Generator's own controlled Git
+manifest. The fixed 683-file digest is
+`d30b740be7160864ac8128a43e7b160f45e46dffad3cd120c05e74bc3428afc6`;
+only that baseline field is eligible for the correction owner.

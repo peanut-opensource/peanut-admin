@@ -27,9 +27,15 @@ may change only `tools/project-generator/source-baseline.json`. It binds the
 controlled Generator content to implementation commit
 `2f8b3c027ef4f6066aa417dc10ebd56823fac047`, tree
 `67b3d68e2061ec6f7f066b50cee0fe1400ff5ed2`, 683-file digest
-`62f5f1c8ed3fdb4393e43b21170809011b07dfc732b659b750286ceb123ae734`,
+`d30b740be7160864ac8128a43e7b160f45e46dffad3cd120c05e74bc3428afc6`,
 and archive tree `efa83712117e3d53bb690730543444ccf9bc1462`.
 This owner does not change Generator source/tests or Generated Host fixtures.
+
+The digest is computed by `ProjectGenerator::controlledGitManifest()` against
+the fixed anchor. A prior shell transcription produced `62f5f1c8…ae734`; the
+Generator correctly rejected that value before target creation. The one-file
+rollover owner may correct only this digest in
+`tools/project-generator/source-baseline.json`.
 
 No package manifest, lock, Runtime, starter source, Generated Host fixture,
 release workflow, application file, schema, migration or prior Generator Gate
