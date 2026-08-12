@@ -570,3 +570,11 @@ the fictional example removed, mount and fully unmount one external
 `fixture.record` Module, and run one isolated MySQL 8.4 group for fail-closed
 context/authorization and same-PDO domain/audit/outbox/idempotency atomicity.
 It does not complete MT01 or authorize MT02.
+
+The first clean Generated Host run stopped at generated-project dependency
+installation because the Generator serialized the empty Composer
+`config.allow-plugins` object as an array. The bounded
+[Composer shape repair contract](./mt01-generator-composer-shape-contract.md)
+assigns only the Generator manifest adapter and its existing static contract;
+it does not absorb the five-file Host fixture and does not rerun the already
+passing Generator groups.
