@@ -758,6 +758,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-alpha5-publication-contract.md",
+      "title": "P1 Alpha.5 Public Publication Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/mt01-generator-parameterization-contract.md",
       "title": "MT01 Generator Parameterization And Fixture Preparation Contract",
       "status": "canonical",
