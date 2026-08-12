@@ -135,6 +135,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-cap02-r01-mysql-parent-guard-contract.md",
+      "title": "P1-CAP02-R01 MySQL Parent Guard Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/p1-cap03-entitlement-quota-contract.md",
       "title": "P1-CAP03 Entitlement Quota Contract",
       "status": "canonical",

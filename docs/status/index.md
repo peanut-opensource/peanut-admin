@@ -160,6 +160,14 @@ UI, collaboration and media models remain outside Core. PR #9 passed all six
 repository checks and merged as
 `ba707c1b3943ff76620770dbf72413de51f340f6`.
 
+CAP06 later exposed that MySQL 8.4 rejects CAP02's parent `CHECK` because it
+references the auto-increment revision ID. The bounded
+[P1-CAP02-R01 remediation](./p1-cap02-r01-mysql-parent-guard-contract.md)
+removes only that unsupported database constraint while retaining the
+Tenant/artifact foreign key and the Repository-owned strictly-earlier finalized
+parent guard. Alpha.5 remains unpublished until the repaired source is focused
+tested, reprojected and adopted downstream.
+
 The accepted
 [P1-CAP03 Entitlement Quota](./p1-cap03-entitlement-quota-contract.md). It adds
 declared integer meters, immutable grant snapshots, atomic UTC-window
