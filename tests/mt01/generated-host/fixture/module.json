@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "key": "fixture.record",
+  "name": "Fixture Record",
+  "description": "Product-neutral generated Host integration fixture",
+  "version": "1.0.0",
+  "kernel_constraint": "^1.0",
+  "license": "Apache-2.0",
+  "backend": {
+    "provider": "GeneratedHost\\Admin\\Modules\\Fixture\\Record\\FixtureRecordModuleProvider"
+  },
+  "database": {
+    "owned_tables": ["fixture_scope", "fixture_record", "fixture_outbox"]
+  },
+  "contracts": {"exports": [], "events": ["fixture.record.created"]},
+  "tenant": {"enableable": true, "requires": []}
+}
