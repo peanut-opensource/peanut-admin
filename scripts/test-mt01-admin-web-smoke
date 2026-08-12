@@ -60,4 +60,4 @@ php "$ROOT/tests/mt01/admin-web/fixture/setup.php" prepare >/dev/null
 
 pnpm exec playwright test \
   --config tests/mt01/admin-web/playwright.config.ts \
-  tests/mt01/admin-web/full-stack.e2e.ts
+  full-stack.e2e.ts
