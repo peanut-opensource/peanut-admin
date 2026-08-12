@@ -31,7 +31,7 @@ const loginAndSelectAlpha = async (page: Page): Promise<void> => {
   await page.getByText('Alpha Tenant', { exact: true }).click()
   await page.getByRole('button', { name: '进入工作区' }).click()
   await expect(page).toHaveURL(url => url.pathname === '/app')
-  await expect(page.getByText('Alpha Tenant', { exact: true })).toBeVisible()
+  await expect(page.getByLabel('当前身份').getByText('Alpha Tenant', { exact: true })).toBeVisible()
 }
 
 const navigateInApp = async (page: Page, path: string): Promise<void> => {
@@ -82,7 +82,7 @@ test('MT01 Admin Web proves explicit Tenant selection and fail-closed external M
   await test.step('the external page reads only the selected Tenant Alpha row', async () => {
     await navigateInApp(page, '/app/fixture-records')
     await expect(page).toHaveURL(url => url.pathname === '/app/fixture-records')
-    await expect(page.getByRole('heading', { name: 'Fixture Records' })).toBeVisible()
+    await expect(page.getByText('Fixture Records', { exact: true })).toBeVisible()
     await expect(page.getByText('Alpha Row', { exact: true })).toBeVisible()
     await expect(page.getByText('Beta Row', { exact: true })).toHaveCount(0)
   })

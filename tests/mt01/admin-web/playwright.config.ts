@@ -17,6 +17,7 @@ if (generatedHostRoot === undefined || generatedHostRoot === '') throw new Error
 
 export default defineConfig({
   testDir: '.',
+  testMatch: 'full-stack.e2e.ts',
   fullyParallel: false,
   forbidOnly: true,
   retries: 0,
