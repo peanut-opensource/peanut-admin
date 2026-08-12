@@ -23,7 +23,8 @@ application.
   --feature task-job \
   --feature notification-sms \
   --feature import-export \
-  --feature integration-security
+  --feature integration-security \
+  --example-module remove
 ```
 
 When more than one Tenant Client is declared, `--admin-client` is required and
@@ -31,6 +32,11 @@ selects the Client used by the generated administration Modules and menus. A
 single declared Client is selected implicitly. Client definitions remain
 structured as key/API-prefix pairs in the generated Host; the generator does
 not infer an administration Client from argument order.
+
+`--example-module retain|remove` controls the fictional fixture. The default is
+`retain` for existing callers. `remove` fails closed unless every example path,
+Module key, route, provider, setting, test and documentation reference is gone.
+Product namespaces must not use the reserved `PeanutAdmin` root.
 
 The target must not exist or must be an empty, non-symlink directory outside
 the Peanut Admin source tree. Parent traversal, a symlink target, a non-empty
@@ -54,9 +60,11 @@ The generated `peanut-project.json` is deterministic and records:
 
 - generator schema version;
 - the exact Peanut Admin input commit and tree;
+- the `sha256-git-blob-manifest-v1` Generator digest;
 - project slug, display name, PHP namespace, brand, and profile;
 - Tenant Client keys and protected API prefixes;
 - enabled first-party Modules;
+- the retained or removed example-fixture disposition;
 - the fact that no secret value is embedded.
 
 `standard-admin` is the only current profile. `settings`, `reference-codes`,

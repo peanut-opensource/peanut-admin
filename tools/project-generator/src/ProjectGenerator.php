@@ -44,7 +44,8 @@ final class GenerationRequest
         self::assertLabel($displayName, 'PROJECT_DISPLAY_NAME_INVALID', 120);
         self::assertLabel($brand, 'PROJECT_BRAND_INVALID', 80);
         if (preg_match('/^[A-Z][A-Za-z0-9]*(?:\\\\[A-Z][A-Za-z0-9]*)+$/D', $phpNamespace) !== 1
-            || strlen($phpNamespace) > 160) {
+            || strlen($phpNamespace) > 160
+            || strcasecmp(strtok($phpNamespace, '\\'), 'PeanutAdmin') === 0) {
             throw new ProjectGeneratorException('PROJECT_NAMESPACE_INVALID', 'Use a multi-segment PSR-4 namespace.');
         }
         if ($profile !== 'standard-admin') {
@@ -383,7 +384,6 @@ final class ProjectGenerator
         $paths = [
             'scripts/create-project',
             'tools/project-generator/create-project.php',
-            'tools/project-generator/package-identity.json',
             'tools/project-generator/src',
             'starter',
         ];
@@ -415,7 +415,7 @@ final class ProjectGenerator
                 continue;
             }
             if (!is_dir($path)) {
-                continue;
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', "Controlled source entry is missing: {$relative}.");
             }
             $iterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
@@ -462,6 +462,14 @@ final class ProjectGenerator
                 throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline controlled source contains an unsupported Git entry.');
             }
             $entries[$matches[3]] = $matches[1] . ' ' . $matches[2];
+        }
+        foreach (self::controlledSourcePaths() as $relative) {
+            if (!isset($entries[$relative]) && !array_filter(
+                array_keys($entries),
+                static fn(string $entry): bool => str_starts_with($entry, $relative . '/'),
+            )) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', "Controlled Git entry is missing: {$relative}.");
+            }
         }
         ksort($entries, SORT_STRING);
 
@@ -760,6 +768,26 @@ final class ProjectGenerator
         }
     }
 
+    private function assertExampleRemoved(string $target): void
+    {
+        $iterator = new RecursiveIteratorIterator(
+            new RecursiveDirectoryIterator($target, FilesystemIterator::SKIP_DOTS),
+        );
+        foreach ($iterator as $file) {
+            $relative = substr($file->getPathname(), strlen($target) + 1);
+            if ($file->isLink() || !$file->isFile()) {
+                continue;
+            }
+            $contents = file_get_contents($file->getPathname());
+            $haystack = strtolower($relative . "\n" . (is_string($contents) ? $contents : ''));
+            foreach (['example.greeting', 'examplegreeting', 'example-greeting', 'api/example/greeting', 'fictional example'] as $token) {
+                if (str_contains($haystack, $token)) {
+                    throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example Module fixture was not removed exhaustively.');
+                }
+            }
+        }
+    }
+
     /** @param array{input_commit: string, input_tree: string, generator_digest_algorithm: string, generator_digest: string} $sourceIdentity */
     private function writeProjectFiles(string $target, GenerationRequest $request, array $sourceIdentity): void
     {
@@ -808,6 +836,9 @@ final class ProjectGenerator
         $this->adaptAuthFixture($target, $request->tenantClients, $request->adminClientKey);
         $this->adaptFeatureFixtures($target, $request->features, $request->exampleModule);
         $this->adaptExampleDependentFixtures($target, $request->exampleModule);
+        if ($request->exampleModule === 'remove') {
+            $this->assertExampleRemoved($target);
+        }
         $this->adaptPackageManifests($target, $request);
     }
 
@@ -1121,7 +1152,7 @@ MD;
     {
         return $mode === 'retain'
             ? '- Removable fictional Module: `example.greeting`'
-            : '- Fictional example Module: removed';
+            : '';
     }
 
     private static function markdownText(string $value): string

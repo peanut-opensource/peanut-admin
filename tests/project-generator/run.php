@@ -217,6 +217,17 @@ try {
     );
     assertTrue(!file_exists($temporaryRoot . '/invalid-example-mode'), 'Invalid example mode created a target.');
 
+    $reservedNamespaceArgs = validArguments($temporaryRoot . '/reserved-namespace');
+    foreach ($reservedNamespaceArgs as $index => $argument) {
+        if ($argument === 'Fixture\\Admin') {
+            $reservedNamespaceArgs[$index] = 'PeanutAdmin\\Product';
+        }
+    }
+    $result = runGenerator($root, $reservedNamespaceArgs);
+    assertTrue($result['code'] !== 0, 'Reserved package namespace must fail.');
+    assertTrue(str_contains($result['stderr'], 'PROJECT_NAMESPACE_INVALID'), 'Namespace error is unstable.');
+    assertTrue(!file_exists($temporaryRoot . '/reserved-namespace'), 'Reserved namespace created a target.');
+
     $dependencyArgs = validArguments($temporaryRoot . '/missing-feature-dependency');
     array_push($dependencyArgs, '--feature', 'notification-sms');
     $result = runGenerator($root, $dependencyArgs);
@@ -337,6 +348,7 @@ try {
     assertTrue($firstResult['code'] === 0, 'First generation failed: ' . $firstResult['stderr']);
     assertTrue($secondResult['code'] === 0, 'Second generation failed: ' . $secondResult['stderr']);
     assertTrue(contentInventory($first) === contentInventory($second), 'Same inputs are not byte deterministic.');
+    $metadata = json_decode((string) file_get_contents($first . '/peanut-project.json'), true, 512, JSON_THROW_ON_ERROR);
 
     $withoutExampleFirst = $temporaryRoot . '/without-example-first';
     $withoutExampleSecond = $temporaryRoot . '/without-example-second';
@@ -368,6 +380,14 @@ try {
         ($withoutExampleMetadata['project']['example_module'] ?? null) === 'removed',
         'Example-free metadata did not record removal.',
     );
+    foreach (['input_commit', 'input_tree', 'generator_digest_algorithm', 'generator_digest'] as $identityKey) {
+        assertTrue(
+            ($withoutExampleMetadata['peanut_admin'][$identityKey] ?? null)
+                === ($metadata['peanut_admin'][$identityKey] ?? null),
+            "Example modes disagree on {$identityKey}.",
+        );
+    }
+    assertTrue(($withoutExampleMetadata['secrets']['embedded'] ?? null) === false, 'Example-free metadata claims embedded secrets.');
 
     $collisionTarget = $temporaryRoot . '/legacy-key-collision';
     $collisionArguments = validArguments($collisionTarget);
@@ -385,7 +405,6 @@ try {
     assertTrue(str_contains($collisionFixture, "create('reporting-web')"), 'Admin legacy Client key collided.');
     assertTrue(str_contains($collisionFixture, "create('operations-web')"), 'Secondary legacy Client key collided.');
 
-    $metadata = json_decode((string) file_get_contents($first . '/peanut-project.json'), true, 512, JSON_THROW_ON_ERROR);
     assertTrue(($metadata['schema_version'] ?? null) === 1, 'Generator schema is missing.');
     $headCommit = gitValue($root, 'HEAD^{commit}');
     $headTree = gitValue($root, 'HEAD^{tree}');
