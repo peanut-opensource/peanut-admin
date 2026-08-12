@@ -236,6 +236,11 @@ The npm provenance artifact is now fixed by the
 `562043a0a294392a66ea0a305de6554d02646bc8` and tarball SHA-256
 `0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3`.
 No Registry publication has occurred.
+The [npm trusted publication path](./p1-alpha5-npm-publication-path.md) fixes the
+exact-commit OIDC workflow, protected environment and one clean npm Registry
+consumer for that artifact. Publication remains an ordered external action
+after the workflow PR merges green and the exact npm binding and release tags
+exist.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
