@@ -518,3 +518,9 @@ digest, and generation parameters remain `PENDING_ALPHA5`. The complete MT01
 Gate, `PA-DCS-ADOPT-01` nomination, application MT02, package publication,
 release, deployment, and production claims remain forbidden until their
 separate fixed contracts and evidence are complete.
+
+The separate
+[Generator integration contract](./mt01-generator-integration-contract.md)
+assigns exactly one consolidated parameterization fixture round after the
+implementation PR merges green. It does not absorb empty-database, Runtime,
+browser, Registry or final downstream-nomination ownership.
