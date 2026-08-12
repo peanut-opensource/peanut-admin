@@ -521,3 +521,18 @@ qualified downstream lock. P1 work does
 not change the external-host consumption lock above. A later P1 commit remains
 unqualified for downstream consumption until a new fixed-commit aggregate check
 and review approve it.
+
+## MT01 Generator Preparation
+
+The [MT01 Generator Parameterization And Fixture Preparation Contract](./mt01-generator-parameterization-contract.md)
+fixes the first post-CAP06 subtask at Core commit
+`98d97aa11617a5178e3ed804d33df1d05e4543fe`. It freezes canonical project,
+namespace, Tenant Client/API-prefix, first-party Module, and removable-example
+parameters plus Generator identity and ownership rules. The implementation is
+not yet a qualified company template.
+
+Final Composer/npm Alpha.5 Registry sources, Core source/tree, Generator
+digest, and generation parameters remain `PENDING_ALPHA5`. The complete MT01
+Gate, `PA-DCS-ADOPT-01` nomination, application MT02, package publication,
+release, deployment, and production claims remain forbidden until their
+separate fixed contracts and evidence are complete.
