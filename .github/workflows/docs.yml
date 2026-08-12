@@ -1,6 +1,19 @@
 name: Documentation
 
 on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.npmrc'
+      - 'scripts/bootstrap-worktree-dependencies'
+      - 'scripts/warm-worktree-dependencies'
+      - 'scripts/check-doc-content-status'
+      - 'scripts/check-docs'
+      - 'scripts/verify-doc-examples'
+      - '.github/workflows/docs.yml'
   push:
     branches:
       - dev
