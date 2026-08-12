@@ -223,6 +223,13 @@ now fixes the adopted source/split identities, Registry targets, provenance,
 immutable tags, ordered external writes, clean Registry consumers and rollback
 policy. Publication remains incomplete until that contract's execution and
 completion record finish; MT01 implementation does not start before then.
+The subsequent
+[npm provenance remediation contract](./p1-alpha5-npm-provenance-contract.md)
+records that the adopted npm manifest lacks the repository identity required
+for trusted provenance. It permits only a metadata candidate requalification
+and a later exact-commit OIDC publication workflow. The old npm tarball digest
+is not the publishable provenance digest; all external Alpha.5 writes remain
+frozen until both follow-up PRs merge with every declared check successful.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
