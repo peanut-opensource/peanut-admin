@@ -204,8 +204,10 @@ passed all six repository checks and merged at source commit
 `14010993e47f5e3082ab8f0b53456f282b71f086`; the resulting tree and both
 projection results are recorded in the
 [P1-CAP05 Cross-Product Alpha.5 Qualification Review](../reviews/p1-cross-product-alpha5-qualification.md).
-CAP05 is qualified for this fixed-tree evidence. CAP06 private downstream
-adoption and public Composer/npm publication remain unauthorized.
+CAP06's MySQL 8.4 schema and native-PDO findings were repaired by PRs #18–#21;
+the exact repaired source and Composer projection are fixed in the
+[Alpha.5 CAP06 remediation rollover](../reviews/p1-cross-product-alpha5-cap06-rollover.md).
+Public Alpha.5 publication remains unauthorized.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
