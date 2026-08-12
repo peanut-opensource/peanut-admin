@@ -801,6 +801,7 @@ final class ProjectGenerator
         );
         $this->adaptAuthFixture($target, $request->tenantClients, $request->adminClientKey);
         $this->adaptFeatureFixtures($target, $request->features, $request->exampleModule);
+        $this->adaptExampleDependentFixtures($target, $request->exampleModule);
         $this->adaptPackageManifests($target, $request);
     }
 
@@ -1353,6 +1354,48 @@ TS;
             }
             $this->write($path, $updated);
         }
+    }
+
+    private function adaptExampleDependentFixtures(string $target, string $exampleModule): void
+    {
+        if ($exampleModule === 'retain') {
+            return;
+        }
+
+        $path = $target . '/backend/tests/settings.php';
+        if (!is_file($path)) {
+            return;
+        }
+        $contents = file_get_contents($path);
+        if (!is_string($contents)
+            || substr_count($contents, 'backend/src/Modules/Example/Greeting/Resources/setting-definitions.json') !== 1
+            || substr_count($contents, "['inserted' => 1, 'updated' => 0, 'retired' => 0]") !== 1
+            || substr_count($contents, "require('example.greeting', 'display-style')") !== 1) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example-dependent Settings fixture drifted.');
+        }
+        $contents = str_replace(
+            "    'backend/src/Modules/Example/Greeting/Resources/setting-definitions.json',\n",
+            '',
+            $contents,
+        );
+        $contents = str_replace(
+            "['inserted' => 1, 'updated' => 0, 'retired' => 0]",
+            "['inserted' => 0, 'updated' => 0, 'retired' => 0]",
+            $contents,
+        );
+        $updated = preg_replace(
+            '/^    \$protector = new class implements SecretProtector \{[\s\S]*?^    \$assertSame\(null, \$resolved->etag,[^\n]*\);\R/m',
+            '',
+            $contents,
+            1,
+            $count,
+        );
+        if (!is_string($updated) || $count !== 1
+            || str_contains($updated, 'example.greeting')
+            || str_contains($updated, 'Example/Greeting')) {
+            throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example-dependent Settings fixture could not be removed.');
+        }
+        $this->write($path, $updated);
     }
 
     /** @param list<string> $features @return list<string> */
