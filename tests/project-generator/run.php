@@ -15,7 +15,7 @@ if (!mkdir($temporaryRoot, 0700, true) && !is_dir($temporaryRoot)) {
 /** @param list<string> $arguments @return array{code: int, stdout: string, stderr: string} */
 function runGenerator(string $root, array $arguments): array
 {
-    $command = array_merge([$root . '/scripts/create-project'], $arguments);
+    $command = array_merge(['/bin/bash', $root . '/scripts/create-project'], $arguments);
     $pipes = [];
     $process = proc_open($command, [
         0 => ['pipe', 'r'],
@@ -445,7 +445,7 @@ try {
     mkdir($missingControlledSource, 0700);
     $missingControlledExtract = runFixtureCommand(['tar', '-xf', $archive, '-C', $missingControlledSource], $root);
     assertTrue($missingControlledExtract['code'] === 0, 'Could not extract missing controlled entry fixture.');
-    unlink($missingControlledSource . '/scripts/create-project');
+    unlink($missingControlledSource . '/packages/php/composer.json');
     $missingControlledTarget = $temporaryRoot . '/missing-controlled-output';
     $missingControlledResult = runGenerator($missingControlledSource, validArguments($missingControlledTarget));
     assertTrue($missingControlledResult['code'] !== 0, 'Missing controlled source entry must fail.');
