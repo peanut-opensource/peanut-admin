@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+source_commit="${PEANUT_MT01_SOURCE_COMMIT:-}"
+if [[ -z "$source_commit" ]]; then
+  source_commit="$(git rev-parse 'HEAD^{commit}')"
+fi
+if [[ ! "$source_commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo 'ERROR: PEANUT_MT01_SOURCE_COMMIT must be one exact 40-character commit.' >&2
+  exit 1
+fi
+if [[ "$(git rev-parse "${source_commit}^{commit}" 2>/dev/null)" != "$source_commit" ]]; then
+  echo 'ERROR: PEANUT_MT01_SOURCE_COMMIT is not available in this repository.' >&2
+  exit 1
+fi
+if ! git merge-base --is-ancestor "$source_commit" HEAD; then
+  echo 'ERROR: PEANUT_MT01_SOURCE_COMMIT must be an ancestor of the current candidate.' >&2
+  exit 1
+fi
+
+generated_host_root="${PEANUT_MT01_GENERATED_HOST_ROOT:-}"
+if [[ -n "$generated_host_root" ]]; then
+  if [[ "$generated_host_root" != /* ]] || [[ ! -d "$generated_host_root" ]] || [[ -L "$generated_host_root" ]]; then
+    echo 'ERROR: PEANUT_MT01_GENERATED_HOST_ROOT must name an existing absolute non-symlink directory.' >&2
+    exit 1
+  fi
+fi
+
+for required in MYSQL_PORT DB_PORT; do
+  value="${!required-}"
+  if [[ -z "$value" ]] || [[ ! "$value" =~ ^[0-9]+$ ]] \
+    || (( 10#$value < 1 || 10#$value > 65535 )); then
+    echo "ERROR: $required must be an integer between 1 and 65535." >&2
+    exit 1
+  fi
+done
+
+arguments=(
+  --repository-root "$ROOT"
+  --source-commit "$source_commit"
+)
+if [[ -n "$generated_host_root" ]]; then
+  arguments+=(--generated-host-root "$generated_host_root")
+fi
+
+exec php tests/mt01/empty-install-start/run.php "${arguments[@]}"
