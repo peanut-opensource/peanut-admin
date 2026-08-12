@@ -218,6 +218,11 @@ Peanut Admin application tree. Its focused MySQL gate and final five-group
 application CI passed. The proof is limited to one default Tenant and does not
 claim Article cross-Tenant isolation, a four-Runtime global transaction,
 publication or production authority.
+The independent [Alpha.5 publication contract](./p1-alpha5-publication-contract.md)
+now fixes the adopted source/split identities, Registry targets, provenance,
+immutable tags, ordered external writes, clean Registry consumers and rollback
+policy. Publication remains incomplete until that contract's execution and
+completion record finish; MT01 implementation does not start before then.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
