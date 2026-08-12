@@ -532,11 +532,17 @@ and review approve it.
 ## MT01 Generator Preparation
 
 The [MT01 Generator Parameterization And Fixture Preparation Contract](./mt01-generator-parameterization-contract.md)
-fixes the first post-CAP06 subtask at Core commit
-`98d97aa11617a5178e3ed804d33df1d05e4543fe`. It freezes canonical project,
-namespace, Tenant Client/API-prefix, first-party Module, and removable-example
-parameters plus Generator identity and ownership rules. The implementation is
-not yet a qualified company template.
+now records the integrated first MT01 slice. Core PR #29 merged the exact head
+`880fb0147252b8441f703c120cd5d00ee4678483` at
+`6f24e7ab42e37b56066a3b3be8833a54f087eb3b`; Core PR #36 repaired the two
+integration fixtures at `f259bd6227b5c418f78a44c82e58fc5ea5a77bdb` and
+merged at `aa4e5bd17bb5ffb17753ec97121c967a80ee00cb`. The Generator content anchor
+is `30202d73f46c6ab83bf57bd5ce64c24bba9569ec` / tree
+`d9ca2c39a3b1c3ffa69c26915e5b75732d2f7c35`; its 683-file
+`sha256-git-blob-manifest-v1` digest is
+`b994a19ee66118c9eb812342de271047cfe788aca2929c170ff6c4c3460c6a96`.
+The two dedicated integration groups passed once on PHP 8.3.24. This is not yet
+a qualified company template.
 
 Final Composer/npm Alpha.5 Registry sources, Core source/tree, Generator
 digest, and generation parameters remain `PENDING_ALPHA5`. The complete MT01
