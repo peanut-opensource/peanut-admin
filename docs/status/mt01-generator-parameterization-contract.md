@@ -4,7 +4,7 @@
 
 ```text
 task: MT01-GENERATOR-01
-state: implementation-ready contract
+state: integrated parameterization slice
 contract_owner: MT01 Core Generator owner
 implementation_owner: MT01 Core Generator implementation owner
 test_owner: MT01-GENERATOR-PARAMETERS-001
@@ -16,6 +16,36 @@ dependency_change: none
 registry_write: forbidden
 qualification: preparation only
 ```
+
+## Integration Result
+
+```text
+implementation_pr: Core PR #29
+implementation_head: 880fb0147252b8441f703c120cd5d00ee4678483
+implementation_merge: 6f24e7ab42e37b56066a3b3be8833a54f087eb3b
+fixture_repair_pr: Core PR #36
+fixture_repair_head: f259bd6227b5c418f78a44c82e58fc5ea5a77bdb
+fixture_repair_merge: aa4e5bd17bb5ffb17753ec97121c967a80ee00cb
+content_anchor_commit: 30202d73f46c6ab83bf57bd5ce64c24bba9569ec
+content_anchor_tree: d9ca2c39a3b1c3ffa69c26915e5b75732d2f7c35
+generator_digest_algorithm: sha256-git-blob-manifest-v1
+generator_file_count: 683
+generator_digest: b994a19ee66118c9eb812342de271047cfe788aca2929c170ff6c4c3460c6a96
+registry_identity: PENDING_ALPHA5
+pa_dcs_adopt_01: UNKNOWN
+```
+
+Core PR #29 completed all six declared repository checks at the exact head
+above before merge. Core PR #36 then repaired the two integration fixtures and
+completed the same six declared checks before merge. The integration owner
+resealed the archive identity from that repaired `dev` tree and ran only the two
+groups assigned by `MT01-GENERATOR-INTEGRATION-R01` once on PHP 8.3.24. Both
+passed: the Generator fixture proved parameter validation, deterministic
+retained/removed outputs, archive/source identity and fail-closed cleanup; the
+PHP 8.3 static group proved the generated boundary and migration-owner fixture.
+
+This result integrates only the parameterization and removable-example slice.
+It does not complete the full MT01 Gate, nominate DCS, or start MT02.
 
 The prerequisite is the latest accepted Core `dev` input when this contract was
 fixed. It contains the passed CAP06 private adoption record. The application
