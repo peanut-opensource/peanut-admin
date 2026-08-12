@@ -132,9 +132,14 @@ try {
         }
     }
 
-    $composer = json_decode((string) file_get_contents($target . '/backend/composer.json'), true, 512, JSON_THROW_ON_ERROR);
+    $composerJson = (string) file_get_contents($target . '/backend/composer.json');
+    $composer = json_decode($composerJson, true, 512, JSON_THROW_ON_ERROR);
     if (($composer['autoload']['psr-4']['StaticProject\\Admin\\'] ?? null) !== 'src/') {
         throw new RuntimeException('Generated PHP namespace is not wired.');
+    }
+    $composerDocument = json_decode($composerJson, false, 512, JSON_THROW_ON_ERROR);
+    if (!is_object($composerDocument->config->{'allow-plugins'} ?? null)) {
+        throw new RuntimeException('Generated Composer allow-plugins config must remain an object.');
     }
     $metadata = json_decode((string) file_get_contents($target . '/peanut-project.json'), true, 512, JSON_THROW_ON_ERROR);
     if (($metadata['project']['profile'] ?? null) !== 'standard-admin') {

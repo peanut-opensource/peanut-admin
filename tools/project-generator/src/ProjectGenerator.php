@@ -1590,6 +1590,9 @@ TS;
         $composer['name'] = $request->slug . '/backend';
         $composer['description'] = $request->displayName . ' ThinkPHP host';
         $composer['autoload']['psr-4'] = [$request->phpNamespace . '\\' => 'src/'];
+        if (($composer['config']['allow-plugins'] ?? null) === []) {
+            $composer['config']['allow-plugins'] = new \stdClass();
+        }
         $this->writeJson($composerPath, $composer);
         $lockPath = $target . '/backend/composer.lock';
         $lock = json_decode((string) file_get_contents($lockPath), true, 512, JSON_THROW_ON_ERROR);
