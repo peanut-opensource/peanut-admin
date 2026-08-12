@@ -14,13 +14,16 @@ publication_authorized: false
 
 CAP06 reached `WorkflowRuntime::saveDraft()` on real MySQL 8.4 with native PDO
 prepares and received the safe internal error before the definition was
-created. Static diagnosis found the definition INSERT reusing `:member_id` for
-both creator and updater. Native MySQL PDO permits each named placeholder only
-once and reports `HY093` for the statement.
+created. Static diagnosis found three statements on the contracted positive
+Workflow path that reuse one named placeholder: definition creation reuses
+`:member_id` for creator and updater, instance creation reuses it for initiator
+and last actor, and human work-item completion reuses it for completion actor
+and assignee matching. Native MySQL PDO permits each named placeholder only
+once and reports `HY093` for these statements.
 
 ## Decision And Write Sets
 
-Give the creator and updater columns distinct placeholder names bound to the
+Give each repeated use a distinct role-specific placeholder name bound to the
 same trusted member ID. No identity, authorization, graph, audit, schema,
 transaction, idempotency or public API behavior changes.
 
@@ -33,9 +36,10 @@ The implementation commit may change only:
 - `packages/php/workflow/tests/Integration/Application/WorkflowRuntimeTest.php`.
 
 The existing integration path must use native prepares and prove definition
-save/publish succeeds. If a broader duplicate-placeholder scan identifies
-another statement in the four CAP06 Runtime packages, it requires an explicit
-contract update before implementation.
+save/publish, instance start and human transition succeed. A duplicate in
+Collaboration heartbeat is outside the contracted CAP06 open/join/save/publish
+path and is not changed here. Any other statement requires an explicit contract
+update before implementation.
 
 ## Acceptance
 
