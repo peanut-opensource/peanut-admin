@@ -8,6 +8,6 @@
   "controlled_content": {
     "algorithm": "sha256-git-blob-manifest-v1",
     "file_count": 683,
-    "digest": "62f5f1c8ed3fdb4393e43b21170809011b07dfc732b659b750286ceb123ae734"
+    "digest": "d30b740be7160864ac8128a43e7b160f45e46dffad3cd120c05e74bc3428afc6"
   }
 }
