@@ -81,6 +81,45 @@ and redacted fixture metadata exported by that owner. If the merged Generated
 Host exposes neither, implementation stops for a separate interface contract;
 it must not edit the eight paths or duplicate their backend fixture.
 
+### Preparation Interface Remediation
+
+Core `dev` commits `b69837fa65546f62bc916660b6875ae6441113a6` and
+`db5d810b4a1aa323b6085843e684d524c1747f2a` prove the Generated Host safety
+fixture and the independent empty-install/start harness, respectively. Neither
+exports a persistent generated-project directory plus redacted two-Tenant
+fixture metadata for this browser owner. The historical local `aa1672a...`
+draft assumes such a directory but does not create it and remains non-evidence.
+
+Before the browser implementation resumes, one preparation-interface owner may
+change only:
+
+- `tests/mt01/admin-web/fixture/setup.php`;
+- `tests/mt01/admin-web/fixture/main.ts`;
+- `tests/mt01/admin-web/fixture/vite.config.ts`;
+- `tests/mt01/admin-web/playwright.config.ts`;
+- `tests/mt01/admin-web/full-stack.e2e.ts`;
+- `scripts/test-mt01-admin-web-smoke`;
+- this contract, only to bind the resulting implementation commit and result.
+
+That owner must consume the merged Generated Host and empty-install public
+artifacts without modifying or copying their five- and two-file fixtures. It
+owns the disposable generated-project lifetime and may export only loopback
+ports, public Tenant labels/IDs, record IDs and process-local credential inputs.
+No access/refresh token, password, key material, private path or permission set
+may be printed or persisted. This remediation does not authorize another
+Generated Host, Generator, install, schema, Runtime, manifest or lock change.
+
+The already prepared Web contribution remains exclusively owned by PR #47 at:
+
+- `tests/mt01/admin-web/fixture/modules/fixture-record/index.ts`;
+- `tests/mt01/admin-web/fixture/modules/fixture-record/FixtureRecordPage.vue`.
+
+The preparation-interface owner must not edit those two paths. PR #47 remains
+Draft until the six-path interface commit and its single focused smoke pass on
+the same rebased candidate. Any write-set insufficiency stops for a new explicit
+correction; an unavailable interface must not be replaced by copied backend
+fixture code or API interception.
+
 The Web fixture mounts only test-owned files into the disposable generated
 project. It composes the existing Admin Web authentication, Tenant selector,
 route guard, protected transport, and Shell code with one test-only
