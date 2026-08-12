@@ -765,6 +765,13 @@
       "replacement": null
     },
     {
+      "path": "docs/status/p1-alpha5-npm-provenance-contract.md",
+      "title": "P1 Alpha.5 npm Provenance Remediation Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
       "path": "docs/status/mt01-generator-parameterization-contract.md",
       "title": "MT01 Generator Parameterization And Fixture Preparation Contract",
       "status": "canonical",
@@ -774,6 +781,13 @@
     {
       "path": "docs/status/mt01-generator-integration-contract.md",
       "title": "MT01 Generator Parameterization Integration Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
+    },
+    {
+      "path": "docs/status/p1-alpha5-npm-provenance-qualification.md",
+      "title": "P1 Alpha.5 npm Provenance Qualification",
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
