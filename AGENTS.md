@@ -6,7 +6,7 @@ This repository is the clean implementation home for Peanut Admin.
 
 Before changing files, read in order:
 
-1. `company-rules/core.md` and `company-rules/code-repository.md` when the local company-only directory exists.
+1. `AGENT_EXECUTION_RULES.md`
 2. `README.md`
 3. `docs/README.md`
 4. `docs/content-status.json`
@@ -14,8 +14,6 @@ Before changing files, read in order:
 6. `docs/status/runtime-operation-coverage.json`
 7. `docs/status/p1-execution-baseline.md` for P1 work.
 8. The task-specific files named by the controlling prompt.
-
-`company-rules/` is synchronized by CompanyOS for internal work and is intentionally Git-ignored in this public repository. External clones remain governed by this public `AGENTS.md` when that local directory is absent.
 
 ## Current Boundary
 
@@ -56,29 +54,6 @@ Before changing files, read in order:
 - Do not skip, weaken, or remove checks to make a task pass.
 
 ## Verification Policy
-
-### Gate Classification And Isolation
-
-- Classify a failure by impact before deciding what stops. Security, Tenant
-  isolation, authorization, data-corruption and core behavior failures block
-  the affected implementation and merge. Schema/API contracts and immutable
-  dependency identity block affected adoption, merge and release. Formatting,
-  documentation, dependency metadata and mechanical CI failures block only the
-  current PR merge or release closure.
-- Continuing independent work is not acceptance. Keep a failing candidate on
-  its feature or stacked-fix branch; never merge red checks into `dev` or
-  `main`, and do not claim a stage complete until its required gates close.
-- Work that does not consume the failing artifact and has disjoint file
-  ownership may continue in parallel. During a bounded CI wait, keep the
-  critical path plus at most two useful read-only or preparation lines; state
-  the concrete dependency when no parallel work is possible.
-- Run the smallest local gate that matches the change before opening the PR.
-  Manifest or dependency-lock changes include the CI-equivalent strict
-  validator and an exact lock identity check. Deduplicate by failure cause and
-  rerun only the failed group under the existing retry budget.
-- Report only gate start, state change, failure, timeout or completion, naming
-  the repository and PR. Subtasks return compact conclusions and evidence and
-  are closed immediately; do not spend context on unchanged polling output.
 
 - Automated verification runs only when the controlling stage contract assigns
   it to that stage's integration owner or to a fixed-candidate qualification

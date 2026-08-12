@@ -218,6 +218,24 @@ Peanut Admin application tree. Its focused MySQL gate and final five-group
 application CI passed. The proof is limited to one default Tenant and does not
 claim Article cross-Tenant isolation, a four-Runtime global transaction,
 publication or production authority.
+The independent [Alpha.5 publication contract](./p1-alpha5-publication-contract.md)
+now fixes the adopted source/split identities, Registry targets, provenance,
+immutable tags, ordered external writes, clean Registry consumers and rollback
+policy. Publication remains incomplete until that contract's execution and
+completion record finish; MT01 implementation does not start before then.
+The subsequent
+[npm provenance remediation contract](./p1-alpha5-npm-provenance-contract.md)
+records that the adopted npm manifest lacks the repository identity required
+for trusted provenance. It permits only a metadata candidate requalification
+and a later exact-commit OIDC publication workflow. The old npm tarball digest
+is not the publishable provenance digest; all external Alpha.5 writes remain
+frozen until both follow-up PRs merge with every declared check successful.
+The npm provenance artifact is now fixed by the
+[qualification record](./p1-alpha5-npm-provenance-qualification.md) at commit
+`aeeff105df4960db6a70da7ee5597da9a85abdaa`, package tree
+`562043a0a294392a66ea0a305de6554d02646bc8` and tarball SHA-256
+`0397260512cb167f3705ddc89d6c03553420339d342ad2f7348ecb52eb7b86a3`.
+No Registry publication has occurred.
 
 The current backend administration candidate is fixed by the
 [P1-B03 Minimal Settings Module Contract](./p1-b03-minimal-settings-contract.md).
