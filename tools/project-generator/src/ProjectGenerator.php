@@ -166,6 +166,14 @@ final class ProjectGenerator
         ],
     ];
 
+    /** @var array<string, array<string, list<string>>> */
+    private const PACKAGE_MODULE_OPTIONAL_ENTRIES = [
+        'packages/php' => [
+            'kernel' => ['database', 'resources'],
+            'data-permission' => ['database'],
+        ],
+    ];
+
     /** @var array<string, array{backend_root: string, frontend_component: string, frontend_host: string, backend_test: string, frontend_test: string}> */
     private const FEATURES = [
         'settings' => [
@@ -357,9 +365,16 @@ final class ProjectGenerator
             if ($committed !== $expected) {
                 throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Baseline controlled-content digest does not match its commit.');
             }
-        } elseif (preg_match('/^[0-9a-f]{40}$/D', $packageCommit) !== 1
-            || preg_match('/^[0-9a-f]{40}$/D', $packageTree) !== 1) {
-            throw new ProjectGeneratorException('PROJECT_SOURCE_INVALID', 'Package archive identity was not expanded by git archive.');
+        } else {
+            if (preg_match('/^[0-9a-f]{40}$/D', $packageCommit) !== 1
+                || preg_match('/^[0-9a-f]{40}$/D', $packageTree) !== 1) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_INVALID', 'Package archive identity was not expanded by git archive.');
+            }
+            $archiveTree = is_array($baseline) ? ($baseline['archive_tree_without_baseline'] ?? null) : null;
+            if (!is_string($archiveTree) || preg_match('/^[0-9a-f]{40}$/D', $archiveTree) !== 1
+                || !hash_equals($archiveTree, $this->archiveTreeIdentity($packageCommit, $packageTree))) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package archive tree identity does not match its files.');
+            }
         }
 
         $checkout = $this->controlledFilesystemManifest();
@@ -392,17 +407,19 @@ final class ProjectGenerator
                 $paths[] = $relative . '/' . $entry;
             }
             foreach (self::PACKAGE_MODULES[$relative] as $module) {
-                $paths[] = $relative . '/' . $module . '/src';
-                if ($relative === 'packages/php' && $module === 'kernel') {
-                    $paths[] = $relative . '/' . $module . '/database';
-                    $paths[] = $relative . '/' . $module . '/resources';
-                } elseif ($relative === 'packages/php' && $module === 'data-permission') {
-                    $paths[] = $relative . '/' . $module . '/database';
+                foreach (self::packageModuleEntries($relative, $module) as $entry) {
+                    $paths[] = $relative . '/' . $module . '/' . $entry;
                 }
             }
         }
 
         return $paths;
+    }
+
+    /** @return list<string> */
+    private static function packageModuleEntries(string $relative, string $module): array
+    {
+        return ['src', ...(self::PACKAGE_MODULE_OPTIONAL_ENTRIES[$relative][$module] ?? [])];
     }
 
     /** @return array{file_count: int, digest: string} */
@@ -492,6 +509,83 @@ final class ProjectGenerator
         }
 
         return ['file_count' => count($entries), 'digest' => hash('sha256', $lines)];
+    }
+
+    private function archiveTreeIdentity(string $packageCommit, string $packageTree): string
+    {
+        return $this->archiveDirectoryIdentity($this->sourceRoot, '', $packageCommit, $packageTree);
+    }
+
+    private function archiveDirectoryIdentity(
+        string $directory,
+        string $relativeDirectory,
+        string $packageCommit,
+        string $packageTree,
+    ): string
+    {
+        $names = scandir($directory);
+        if (!is_array($names)) {
+            throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package archive directory is unreadable.');
+        }
+        $entries = [];
+        foreach ($names as $name) {
+            if ($name === '.' || $name === '..' || $name === '.git') {
+                continue;
+            }
+            $path = $directory . '/' . $name;
+            $relative = $relativeDirectory === '' ? $name : $relativeDirectory . '/' . $name;
+            if ($relative === 'tools/project-generator/source-baseline.json') {
+                continue;
+            }
+            if (is_link($path)) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package archive contains a symbolic link.');
+            }
+            if (is_dir($path)) {
+                $entries[] = [
+                    'sort_name' => $name . '/',
+                    'record' => '40000 ' . $name . "\0"
+                        . hex2bin($this->archiveDirectoryIdentity(
+                            $path,
+                            $relative,
+                            $packageCommit,
+                            $packageTree,
+                        )),
+                ];
+                continue;
+            }
+            if (!is_file($path)) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package archive contains an unsupported entry.');
+            }
+            $contents = file_get_contents($path);
+            $mode = fileperms($path);
+            if (!is_string($contents) || !is_int($mode)) {
+                throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package archive file is unreadable.');
+            }
+            if ($relative === 'tools/project-generator/package-identity.json') {
+                $contents = str_replace(
+                    ['"commit": "' . $packageCommit . '"', '"tree": "' . $packageTree . '"'],
+                    ['"commit": "$Format:%H$"', '"tree": "$Format:%T$"'],
+                    $contents,
+                    $count,
+                );
+                if ($count !== 2) {
+                    throw new ProjectGeneratorException('PROJECT_SOURCE_DRIFT', 'Package archive identity cannot be normalized.');
+                }
+            }
+            $gitMode = ($mode & 0111) !== 0 ? '100755' : '100644';
+            $blob = sha1('blob ' . strlen($contents) . "\0" . $contents);
+            $entries[] = [
+                'sort_name' => $name,
+                'record' => $gitMode . ' ' . $name . "\0" . hex2bin($blob),
+            ];
+        }
+        usort(
+            $entries,
+            static fn(array $left, array $right): int => strcmp($left['sort_name'], $right['sort_name']),
+        );
+        $tree = implode('', array_column($entries, 'record'));
+
+        return sha1('tree ' . strlen($tree) . "\0" . $tree);
     }
 
     /** @param list<string> $arguments */
@@ -621,14 +715,11 @@ final class ProjectGenerator
                         "Package module snapshot is incomplete: {$relative}/{$module}.",
                     );
                 }
-                $this->copyTree($moduleSource . '/src', $moduleDestination . '/src');
-                foreach (['database', 'resources'] as $optional) {
-                    if (is_dir($moduleSource . '/' . $optional)) {
-                        $this->copyTree(
-                            $moduleSource . '/' . $optional,
-                            $moduleDestination . '/' . $optional,
-                        );
-                    }
+                foreach (self::packageModuleEntries($relative, $module) as $entry) {
+                    $this->copyTree(
+                        $moduleSource . '/' . $entry,
+                        $moduleDestination . '/' . $entry,
+                    );
                 }
             }
         }
@@ -780,11 +871,26 @@ final class ProjectGenerator
         foreach ($iterator as $file) {
             $relative = substr($file->getPathname(), strlen($target) + 1);
             if ($file->isLink() || !$file->isFile()) {
-                continue;
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example-free output contains an unsafe entry.');
             }
             $contents = file_get_contents($file->getPathname());
-            $haystack = strtolower($relative . "\n" . (is_string($contents) ? $contents : ''));
-            foreach (['example.greeting', 'examplegreeting', 'example-greeting', 'api/example/greeting', 'fictional example'] as $token) {
+            if (!is_string($contents)) {
+                throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example-free output contains an unreadable file.');
+            }
+            $haystack = strtolower($relative . "\n" . $contents);
+            foreach ([
+                'example.greeting',
+                'examplegreeting',
+                'example-greeting',
+                'example/greeting',
+                'api/example/greeting',
+                'display-style',
+                'fictional example',
+                'fictional definition',
+                'fictional setting',
+                'fictional default',
+                'greeting',
+            ] as $token) {
                 if (str_contains($haystack, $token)) {
                     throw new ProjectGeneratorException('PROJECT_TEMPLATE_INVALID', 'Example Module fixture was not removed exhaustively.');
                 }
@@ -1422,6 +1528,11 @@ TS;
         $contents = str_replace(
             "['inserted' => 1, 'updated' => 0, 'retired' => 0]",
             "['inserted' => 0, 'updated' => 0, 'retired' => 0]",
+            $contents,
+        );
+        $contents = str_replace(
+            'Starter definition synchronization did not insert the fictional definition.',
+            'Generated definition synchronization was not empty.',
             $contents,
         );
         $updated = preg_replace(

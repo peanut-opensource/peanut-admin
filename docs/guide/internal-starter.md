@@ -54,7 +54,10 @@ future identity. In a Git checkout, ancestry, clean HEAD, the export contract,
 and the controlled source digest are verified, and generated metadata records
 the actual HEAD commit/tree. An archive without `.git` accepts only an expanded
 40-character package identity and verifies the same controlled digest; editing
-the copied starter or package snapshot invalidates it.
+the Generator, copied starter or package snapshot invalidates it. The expanded
+archive identity file is checked separately and is deliberately excluded from
+the content digest, so commit/tree substitution cannot make the digest
+self-referential.
 
 The generated `peanut-project.json` is deterministic and records:
 
