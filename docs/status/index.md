@@ -129,6 +129,13 @@ remains locked to Composer Alpha.2, Admin Web/PC npm Alpha.3 and UniApp/H5 npm
 Alpha.4. Fixed-tree qualification belongs to CAP05, private adoption to CAP06,
 and public package publication to a later independent approval.
 
+CAP06 later exposed one native-MySQL-PDO compatibility defect in Workflow
+definition creation. The bounded
+[P1-WF01-R01 remediation](./p1-wf01-r01-native-pdo-binding-contract.md)
+assigns distinct creator/updater placeholders without changing Workflow
+semantics; Alpha.5 remains unpublished until the repaired Composer projection
+passes private downstream adoption.
+
 The first PR qualification attempt for the integrated CAP01 tree was blocked by
 a PHP process termination in the final `check-workspace` aggregate. The bounded
 [P1-CAP01-R01 remediation contract](./p1-cap01-r01-quality-process-termination-contract.md)
