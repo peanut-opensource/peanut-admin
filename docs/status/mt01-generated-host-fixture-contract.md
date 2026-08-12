@@ -4,8 +4,8 @@
 
 ```text
 task: MT01-GENERATED-HOST-01
-state: implementation-ready
-prerequisite: 9fa0301df7e6015945bfdcbab6eb9b421a069ac0
+state: fixed-candidate remediation
+prerequisite: 05d4c64106c60d14e4510a1c95e77334bbffdc40
 registry_identity: PENDING_ALPHA5
 owner: MT01 Generated Host fixture owner
 integration_owner: MT01-GENERATED-HOST-INTEGRATION-001
@@ -80,3 +80,21 @@ The result does not claim a production installer, Admin Web login/Tenant
 selector, package publication, final immutable Generator identity, complete
 MT01, `PA-DCS-ADOPT-01` nomination or MT02 authorization. Those remain separate
 contracts and Gates.
+
+## Fixed-Candidate Remediation
+
+The first candidate was blocked before completing the integration assertions:
+the initial invocation had no MySQL listener, the configured MySQL 8.4 retry
+exposed direct construction of Phinx migrations, and the repaired clean-tree
+retry exposed denial requests whose request IDs differed from their trusted
+contexts. The latter correctly returned `REQUEST_CONTEXT_MISMATCH` before data
+authorization. These are fixture defects, not authorization or isolation
+failures.
+
+One fixed candidate based on the prerequisite above may change only the five
+fixture implementation paths already listed by this contract. It must use the
+public Phinx manager path and bind each denial request to its trusted context's
+request ID without changing the expected stable denial codes or weakening any
+pre-write assertion. After static review and a clean commit, the integration
+owner runs `MT01-GENERATED-HOST-INTEGRATION-001` once. Any failure blocks this
+fixed candidate; no further retry is authorized by this remediation.
