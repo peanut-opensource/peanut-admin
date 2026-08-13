@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+mode="${1:-}"
+if [[ "$mode" != '--php' && "$mode" != '--web' ]]; then
+  echo 'ERROR: check-pr-fast requires --php or --web' >&2
+  exit 2
+fi
+
+base="${CI_BASE_REF:-}"
+if [[ -z "$base" ]]; then
+  echo 'ERROR: CI_BASE_REF is required' >&2
+  exit 2
+fi
+
+changed_file="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-fast-changed.XXXXXX")"
+trap 'rm -f -- "$changed_file"' EXIT
+git diff --name-only "$base...HEAD" > "$changed_file"
+git diff --check "$base...HEAD"
+
+if [[ "$mode" == '--web' ]]; then
+  pnpm lint
+  pnpm typecheck
+  pnpm test:unit
+  echo "Fast Web gates: $(wc -l < "$changed_file" | tr -d ' ') changed file(s)"
+  exit 0
+fi
+
+composer validate --strict --no-check-publish
+
+changed_php_file="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-fast-php.XXXXXX")"
+suite_file="$(mktemp "${TMPDIR:-/tmp}/peanut-admin-fast-php-suites.XXXXXX")"
+trap 'rm -f -- "$changed_file" "$changed_php_file" "$suite_file"' EXIT
+architecture_changed=0
+
+add_suite() {
+  local path="$1"
+  [[ -e "$path" ]] && printf '%s\n' "$path" >> "$suite_file"
+}
+
+while IFS= read -r path; do
+  [[ -z "$path" ]] && continue
+  [[ "$path" == *.php ]] && printf '%s\n' "$path" >> "$changed_php_file"
+
+  case "$path" in
+    packages/php/*)
+      package="${path#packages/php/}"
+      package="${package%%/*}"
+      add_suite "packages/php/${package}/tests"
+      ;;
+    backend/app/*)
+      add_suite backend/tests/Unit
+      add_suite backend/tests/Contract
+      add_suite backend/tests/Http
+      ;;
+    scripts/check-architecture|scripts/check-module-manifests|backend/app/Modules/*|backend/tests/Architecture/*)
+      architecture_changed=1
+      ;;
+    .github/workflows/*|scripts/check-pr-*|scripts/check|tests/performance/*|tests/supply-chain/*)
+      add_suite tests/performance/PerformanceQualificationContractTest.php
+      add_suite tests/supply-chain/SupplyChainQualificationContractTest.php
+      ;;
+  esac
+
+  case "$path" in
+    backend/app/authorization/*|backend/app/middleware/*|packages/php/kernel/src/Auth/*|packages/php/kernel/src/Authorization/*|packages/php/kernel/src/Context/*|packages/php/kernel/src/Tenancy/*|packages/php/kernel/src/Membership/*|packages/php/kernel/src/Module/*|packages/php/data-permission/src/*|schemas/*)
+      add_suite backend/tests/Security
+      add_suite packages/php/kernel/tests/Unit/Authorization
+      add_suite packages/php/kernel/tests/Unit/Context
+      add_suite packages/php/kernel/tests/Unit/Module
+      add_suite packages/php/data-permission/tests/Unit
+      ;;
+  esac
+done < "$changed_file"
+
+while IFS= read -r path; do
+  [[ -n "$path" ]] && php -l "$path"
+done < "$changed_php_file"
+
+if [[ -s "$changed_php_file" ]]; then
+  php_files=()
+  while IFS= read -r path; do
+    php_files+=("$path")
+  done < "$changed_php_file"
+  php vendor/bin/phpstan analyse --no-progress --memory-limit=512M "${php_files[@]}"
+fi
+
+if [[ "$architecture_changed" -eq 1 ]]; then
+  PEANUT_RUNTIME_STAGE=runtime ./scripts/check-architecture
+fi
+
+if [[ -s "$suite_file" ]]; then
+  while IFS= read -r suite; do
+    [[ -n "$suite" ]] && php vendor/bin/phpunit "$suite"
+  done < <(sort -u "$suite_file")
+fi
+
+echo "Fast PHP gates: $(wc -l < "$changed_file" | tr -d ' ') changed file(s)"
