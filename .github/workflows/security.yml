@@ -2,33 +2,40 @@ name: Security
 
 on:
   pull_request:
-    paths:
-      - 'backend/app/authorization/**'
-      - 'backend/app/middleware/**'
-      - 'backend/tests/Security/**'
-      - 'packages/php/kernel/src/Auth/**'
-      - 'packages/php/kernel/src/Authorization/**'
-      - 'packages/php/kernel/src/Context/**'
-      - 'packages/php/kernel/src/Tenancy/**'
-      - 'packages/php/kernel/src/Membership/**'
-      - 'packages/php/kernel/src/Module/**'
-      - 'packages/php/kernel/src/Persistence/Schema/**'
-      - 'packages/php/kernel/tests/Integration/Auth/**'
-      - 'packages/php/kernel/tests/Integration/Authorization/**'
-      - 'packages/php/kernel/tests/Integration/Module/**'
-      - 'packages/php/data-permission/**'
-      - 'packages/php/settings/tests/Security/**'
-      - 'schemas/**'
-      - 'tests/security/**'
-      - 'scripts/test-security'
-      - '.github/workflows/security.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Security paths
+    runs-on: ubuntu-latest
+    outputs:
+      security: ${{ steps.paths.outputs.security }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+      - name: Classify security impact
+        id: paths
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo 'security=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          changed="$(git diff --name-only "${{ github.event.pull_request.base.sha }}...HEAD")"
+          if grep -Eq '^(backend/app/authorization/|backend/app/middleware/|backend/tests/Security/|packages/php/kernel/src/(Auth|Authorization|Context|Tenancy|Membership|Module|Persistence/Schema)/|packages/php/kernel/tests/Integration/(Auth|Authorization|Module)/|packages/php/data-permission/|packages/php/settings/tests/Security/|schemas/|tests/security/|scripts/test-security$|\.github/workflows/security\.yml$)' <<< "$changed"; then
+            echo 'security=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'security=false' >> "$GITHUB_OUTPUT"
+          fi
+
   qualification:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.security == 'true'
     runs-on: ubuntu-24.04
     env:
       MYSQL_PORT: '3306'

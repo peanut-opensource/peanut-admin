@@ -2,22 +2,6 @@ name: CI
 
 on:
   pull_request:
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - 'packages/**'
-      - 'schemas/**'
-      - 'composer.json'
-      - 'composer.lock'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'phpstan.neon'
-      - 'phpunit.xml'
-      - 'deptrac.yaml'
-      - 'scripts/**'
-      - 'tests/**'
-      - '.github/workflows/ci.yml'
   workflow_dispatch:
 
 permissions:
