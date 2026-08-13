@@ -1,18 +1,6 @@
 name: Internal Starter
 
 on:
-  pull_request:
-  push:
-    branches:
-      - dev
-    paths:
-      - 'starter/**'
-      - 'packages/php/**'
-      - 'packages/web/**'
-      - 'scripts/create-internal-starter'
-      - 'scripts/verify-internal-starter'
-      - 'tests/starter/**'
-      - '.github/workflows/starter.yml'
   workflow_dispatch:
 
 permissions:

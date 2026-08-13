@@ -4,6 +4,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+mode="${1:---all}"
+if [[ "$#" -gt 1 ]] || [[ "$mode" != '--all' && "$mode" != '--pr-quality' ]]; then
+  echo 'ERROR: check-workspace accepts only --all or --pr-quality' >&2
+  exit 2
+fi
+
 required=(
   composer.json
   composer.lock
@@ -259,7 +265,11 @@ php vendor/bin/php-cs-fixer check --diff --config=scripts/php-cs-fixer.php
 pnpm lint
 pnpm typecheck
 pnpm test:unit
-pnpm build
+if [[ "$mode" == '--pr-quality' ]]; then
+  pnpm --filter @peanut-admin/reference-admin build
+else
+  pnpm build
+fi
 
 docker compose config --quiet
 
