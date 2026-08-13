@@ -603,6 +603,31 @@ SQL,
         return $sql;
     }
 
+    /** @return list<string> */
+    public static function installSql(): array
+    {
+        $sql = array_map(self::createSql(...), self::tableNames());
+        $sql[] = self::addTenantMemberDepartmentForeignKeySql();
+        $sql[] = <<<'SQL'
+ALTER TABLE `pa_login_challenge`
+ADD COLUMN `client_key` VARCHAR(64) NOT NULL DEFAULT 'admin-web' AFTER `purpose`,
+ADD CONSTRAINT `chk_login_challenge_client`
+CHECK (REGEXP_LIKE(`client_key`, '^[a-z][a-z0-9-]{0,63}$', 'c'))
+SQL;
+        $sql[] = <<<'SQL'
+ALTER TABLE `pa_login_challenge`
+ALTER COLUMN `client_key` DROP DEFAULT
+SQL;
+        $sql[] = <<<'SQL'
+ALTER TABLE `pa_tenant_session`
+DROP CHECK `chk_tenant_session_client`,
+ADD CONSTRAINT `chk_tenant_session_client`
+CHECK (REGEXP_LIKE(`client_key`, '^[a-z][a-z0-9-]{0,63}$', 'c'))
+SQL;
+
+        return $sql;
+    }
+
     public static function dropSql(string $table): string
     {
         if (!isset(self::CREATE_SQL[$table])) {
