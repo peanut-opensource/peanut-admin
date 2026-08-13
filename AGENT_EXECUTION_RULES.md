@@ -115,3 +115,13 @@ and the status documents that it names.
   Passed slices and PR counts never imply stage completion. If the authority
   plan trails remote facts, rebuild the matrix once before continuing instead
   of repeatedly editing pointers while implementation proceeds.
+- Business development now defaults to the fast path: an ordinary PR runs only
+  changed-file syntax/static checks, its focused behavior tests, and any directly
+  affected Tenant, authorization, Schema, or data-integrity gate. It does not run
+  browser matrices, performance, Recovery, Starter, publication qualification,
+  or unrelated package suites.
+- Performance, full browser, aggregate integration, clean-install/upgrade,
+  Recovery, Starter, supply-chain, and release qualification are deferred to one
+  fixed stage candidate and run through their manual workflows at MT05/MT06.
+  They block an ordinary PR only when that PR changes the corresponding mechanism.
+  A successful PR group is not repeated after merge to `dev`.
