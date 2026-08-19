@@ -182,10 +182,10 @@ SQL, [
         if ($currentPassword === '' || strlen($currentPassword) > 1_024) {
             throw AdminAccessException::invalid('CURRENT_PASSWORD_INVALID', 'The current password is invalid.');
         }
-        if (strlen($newPassword) < 12 || strlen($newPassword) > 128) {
+        if (strlen($newPassword) < 6 || strlen($newPassword) > 128) {
             throw AdminAccessException::invalid(
                 'NEW_PASSWORD_INVALID',
-                'The new password must contain between 12 and 128 bytes.',
+                'The new password must contain between 6 and 128 bytes.',
             );
         }
 

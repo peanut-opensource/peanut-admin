@@ -150,8 +150,8 @@ const passwordValidationMessage = (): string | null => {
     return '两次输入的新密码不一致。'
   }
   const passwordBytes = new TextEncoder().encode(passwordForm.newPassword).byteLength
-  if (passwordBytes < 12 || passwordBytes > 128) {
-    return '新密码长度必须为 12 到 128 字节。'
+  if (passwordBytes < 6 || passwordBytes > 128) {
+    return '新密码长度必须为 6 到 128 字节。'
   }
   return null
 }

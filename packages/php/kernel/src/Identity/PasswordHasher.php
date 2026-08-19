@@ -17,7 +17,7 @@ final class PasswordHasher
 
     public function hash(string $plainPassword): string
     {
-        if (strlen($plainPassword) < 12) {
+        if (strlen($plainPassword) < 6) {
             throw new RuntimeException('Password does not meet the minimum length.');
         }
 
