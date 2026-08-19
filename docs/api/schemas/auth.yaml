@@ -196,4 +196,4 @@ ChangePasswordRequest:
     new_password:
       type: string
       writeOnly: true
-      description: New password containing between 12 and 128 UTF-8 bytes.
+      description: New password containing between 6 and 128 UTF-8 bytes.

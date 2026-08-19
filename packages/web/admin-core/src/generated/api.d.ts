@@ -2568,7 +2568,7 @@ export interface components {
         };
         ChangePasswordRequest: {
             current_password: string;
-            /** @description New password containing between 12 and 128 UTF-8 bytes. */
+            /** @description New password containing between 6 and 128 UTF-8 bytes. */
             new_password: string;
         };
         JsonValue: null | string | number | boolean | components["schemas"]["JsonValue"][] | {
