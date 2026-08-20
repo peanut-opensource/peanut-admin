@@ -1,19 +1,19 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-08-12T05:56:29+08:00",
-  "task": "P1-CAP04",
-  "prerequisite_commit": "39e8e845417c5cd450ca1810687f9e0ecf246532",
+  "generated_at": "2026-08-21T04:39:00+08:00",
+  "task": "Core 0.1.0 supply-chain remediation",
+  "prerequisite_commit": "a781ab9bc7909a5e2acaef12248a3a5f08e7612b",
   "candidate_commit": "the commit containing this evidence",
-  "slice_status": "collaboration-candidate",
+  "slice_status": "stable-release-security-candidate",
   "third_party_dependency_change": true,
   "public_runtime_packages": [
-    "peanut-admin/core@0.1.0-alpha.5",
-    "@peanut-admin/admin@0.1.0-alpha.5"
+    "peanut-admin/core@0.1.0",
+    "@peanut-admin/admin@0.1.0"
   ],
   "toolchain": {
     "php": "8.3.24",
     "composer": "2.10.2",
-    "node": "24.13.0",
+    "node": "24.18.0",
     "pnpm": "11.13.0"
   },
   "locks": {
@@ -22,26 +22,26 @@
       "delta": "unchanged application consumer lock at peanut-admin/core@0.1.0-alpha.2"
     },
     "pnpm-lock.yaml": {
-      "sha256": "17a005c51db70c33dbd80ba43849f05c5cddf7a9f50cd5e6a494fd82eb8e08bb",
-      "delta": "@peanut-admin/admin Alpha.5 workspace specifier plus accepted yjs@13.6.32 and y-websocket@3.1.0 dependency graph"
+      "sha256": "bcba79f454510797e07dcf1b2deaf2e56f32ca41ab4e6cecbc540ae6121a6055",
+      "delta": "stable @peanut-admin/admin workspace identity and nanoid 3.3.18 security override"
     },
     "starter/backend/composer.lock": {
       "sha256": "9667edf7b9a6a0b5d151f5697919cee34fc198cf17697860089fe423af63a923",
       "delta": "unchanged starter consumer lock at peanut-admin/core@0.1.0-alpha.2"
     },
     "starter/pnpm-lock.yaml": {
-      "sha256": "a4e9d2561788f61edbe9ef686265951af88042f49a7bcff0639b9d63023a763d",
-      "delta": "@peanut-admin/admin Alpha.5 workspace specifier plus accepted yjs@13.6.32 and y-websocket@3.1.0 dependency graph"
+      "sha256": "ddde7a4e64ffaf4add31421497aea463320ca0e3ad38b99cfed5877a81aa1d25",
+      "delta": "stable @peanut-admin/admin workspace identity and nanoid 3.3.18 security override"
     }
   },
   "verification": {
-    "manifest_lock_consistency": "passed: ./scripts/check-workspace",
-    "fixed_candidate_qualification": "pending separate fixed-commit plan",
-    "publication": "not authorized"
+    "manifest_lock_consistency": "passed: exact lock hashes plus generated Starter frozen-lock comparison",
+    "fixed_candidate_qualification": "pending replacement fixed-candidate qualification after advisory 1139427 invalidated b5452f454a8bdd1250f51feefeed6f00eeafecb8",
+    "publication": "not authorized before replacement fixed-candidate qualification and annotated tag"
   },
   "notes": [
-    "CAP04 adds only the accepted UI-neutral Yjs engine and y-websocket client transport to @peanut-admin/admin; PHP adds no third-party dependency and treats collaboration payloads as opaque bounded envelopes.",
-    "The root and starter Composer consumer locks intentionally remain on the existing Alpha.2 application compatibility baseline while the unpublished projection manifest advances to Alpha.5.",
-    "This evidence does not run CAP05, publish a package, create a tag or Release, or approve downstream consumption."
+    "The only dependency graph change is the exact nanoid 3.3.18 override required to resolve high-severity advisory 1139427 in both the workspace and generated internal starter.",
+    "The root and starter Composer consumer locks intentionally remain on the existing Alpha.2 application compatibility baseline while the public package projection advances independently to stable 0.1.0.",
+    "This evidence does not publish a package, create a tag or Release, or approve downstream consumption before the replacement fixed candidate passes."
   ]
 }
