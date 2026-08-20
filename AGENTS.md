@@ -7,13 +7,21 @@ This repository is the clean implementation home for Peanut Admin.
 Before changing files, read in order:
 
 1. `AGENT_EXECUTION_RULES.md`
-2. `README.md`
-3. `docs/README.md`
-4. `docs/content-status.json`
-5. `docs/status/index.md`
-6. `docs/status/runtime-operation-coverage.json`
-7. `docs/status/p1-execution-baseline.md` for P1 work.
-8. The task-specific files named by the controlling prompt.
+2. `resources/project-resources.json` before connecting, starting, testing, or
+   publishing with any database, cache, container, external service, or local
+   listener.
+3. `README.md`
+4. `docs/README.md`
+5. `docs/content-status.json`
+6. `docs/status/index.md`
+7. `docs/status/runtime-operation-coverage.json`
+8. `docs/status/p1-execution-baseline.md` for P1 work.
+9. The task-specific files named by the controlling prompt.
+
+The resource registry is the versioned fact source for Core environments.
+Qualification must use the exact registered resource ID, Compose project,
+ports, database namespace, versions and cleanup command; it must never reuse
+Peanut Admin application resources or an unregistered fallback.
 
 ## Current Boundary
 
