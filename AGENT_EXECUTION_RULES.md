@@ -125,3 +125,18 @@ and the status documents that it names.
   fixed stage candidate and run through their manual workflows at MT05/MT06.
   They block an ordinary PR only when that PR changes the corresponding mechanism.
   A successful PR group is not repeated after merge to `dev`.
+
+## 8. Stable Release Branch And Tag Model
+
+- `dev` is the integration branch and `main` is the stable release branch.
+  Release preparation first merges to `dev`, then `dev` merges to `main` by
+  pull request. A feature branch or moving `dev` tip is never tagged directly.
+- Final qualification runs once against the exact clean `origin/main` commit
+  and tree. A later `main` change invalidates that qualification.
+- Publication starts only from an annotated stable SemVer tag whose target is
+  the qualified `origin/main` tip. The tag workflow publishes the already
+  qualified immutable identity; it is not a qualification gate.
+- Composer and npm publication, generated split identity and clean Registry
+  consumers belong to the same release attempt. A partial immutable publish is
+  recorded and completed safely or superseded by a newer version; it is never
+  overwritten, deleted or retagged.

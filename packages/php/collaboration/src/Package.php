@@ -7,7 +7,7 @@ namespace PeanutAdmin\Collaboration;
 final class Package
 {
     public const MODULE_KEY = 'peanut.collaboration';
-    public const VERSION = '0.1.0-alpha.5';
+    public const VERSION = '0.1.0';
 
     public const OPEN_OPERATION = 'collaboration.open-session';
     public const JOIN_OPERATION = 'collaboration.join-session';

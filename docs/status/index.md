@@ -1,5 +1,20 @@
 # P0 Status
 
+## Core 0.1.0 Release Preparation
+
+The first stable two-package release is now a development candidate under the
+[Core 0.1.0 publication contract](../decisions/releases/core-0.1.0-publication.md).
+It starts from `dev@53a872d00d932e2cd2985c17115df4fbd5ecff8a`, includes the
+P1-PKG12 application-neutral extraction, and changes only release identity,
+projection validation and tag publication automation. It is not qualified or
+published until the exact `main` commit passes the fixed-candidate aggregate
+and both isolated package projections.
+
+The already published Alpha.5 source, Composer and npm identities remain
+immutable historical releases. Older chronological sections below retain the
+state that applied while those tasks were running; they are not the current
+release pointer.
+
 P0 produces an internal alpha foundation that is safe to extend. It does not claim the breadth or release maturity of a finished commercial admin framework.
 
 ## Available
@@ -544,11 +559,9 @@ is `30202d73f46c6ab83bf57bd5ce64c24bba9569ec` / tree
 The two dedicated integration groups passed once on PHP 8.3.24. This is not yet
 a qualified company template.
 
-Final Composer/npm Alpha.5 Registry sources, Core source/tree, Generator
-digest, and generation parameters remain `PENDING_ALPHA5`. The complete MT01
-Gate, `PA-DCS-ADOPT-01` nomination, application MT02, package publication,
-release, deployment, and production claims remain forbidden until their
-separate fixed contracts and evidence are complete.
+The Generator preparation remains independent from public package publication.
+Core `0.1.0` does not qualify the complete MT01 Gate, nominate
+`PA-DCS-ADOPT-01`, or turn the internal Generator into a public Starter.
 
 The separate
 [Generator integration contract](./mt01-generator-integration-contract.md)
