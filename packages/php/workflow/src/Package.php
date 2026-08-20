@@ -14,7 +14,7 @@ final class Package
     public const INSTANCE_READ_PERMISSION = 'peanut.workflow.instance.read';
     public const INSTANCE_START_PERMISSION = 'peanut.workflow.instance.start';
     public const INSTANCE_TRANSITION_PERMISSION = 'peanut.workflow.instance.transition';
-    public const VERSION = '0.1.0-alpha.5';
+    public const VERSION = '0.1.0';
 
     private function __construct() {}
 }

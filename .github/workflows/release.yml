@@ -1,0 +1,271 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: core-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    if: github.repository == 'peanut-opensource/peanut-admin'
+    runs-on: ubuntu-24.04
+    environment: npm-release
+    steps:
+      - name: Checkout tagged source
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify main tag and package identity
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          version="$(printf '%s' "$tag" | sed 's/^v//')"
+          [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          test "$(git cat-file -t "$tag")" = tag
+          test "$(git rev-parse "$tag^{commit}")" = "$(git rev-parse HEAD)"
+          git fetch --no-tags origin main
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          test "$(php -r '$m=json_decode((string)file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR);echo $m["version"]??"";' packages/php/composer.json)" = "$version"
+          test "$(node -p "require('./packages/web/package.json').version")" = "$version"
+          printf 'tag=%s\nversion=%s\nsource_commit=%s\nsource_tree=%s\n' \
+            "$tag" "$version" "$(git rev-parse HEAD)" "$(git rev-parse HEAD^{tree})" >> "$GITHUB_OUTPUT"
+          test -z "$(git status --porcelain=v1 --untracked-files=all)"
+
+      - name: Set up PHP and Composer
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
+        with:
+          php-version: '8.3'
+          tools: composer:2.10.2
+          coverage: none
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6.0.9
+        with:
+          version: 11.13.0
+          run_install: false
+
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.18.0
+          registry-url: https://registry.npmjs.org
+
+      - name: Set up trusted-publishing npm CLI
+        run: npm install --global npm@11.6.2
+
+      - name: Materialize and verify package projections
+        id: projections
+        env:
+          VERSION: ${{ steps.identity.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/projections"
+          mkdir -p "$output"
+          ./scripts/check-composer-package-projection "$output/composer-check" "$VERSION"
+          ./scripts/check-npm-package-projection "$output/npm-check" "$VERSION"
+          composer_projection="$output/composer-check/composer"
+          npm_tarball="$(find "$output/npm-check/npm" -maxdepth 1 -type f -name '*.tgz' -print -quit)"
+          test -d "$composer_projection"
+          test -f "$npm_tarball"
+          printf 'composer_projection=%s\nnpm_tarball=%s\nnpm_payload_sha256=%s\n' \
+            "$composer_projection" "$npm_tarball" \
+            "$(gzip -cd "$npm_tarball" | sha256sum | cut -d ' ' -f 1)" >> "$GITHUB_OUTPUT"
+
+      - name: Configure Composer split deploy key
+        env:
+          CORE_SPLIT_DEPLOY_KEY: ${{ secrets.CORE_SPLIT_DEPLOY_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CORE_SPLIT_DEPLOY_KEY"
+          install -m 0700 -d "$HOME/.ssh"
+          printf '%s\n' "$CORE_SPLIT_DEPLOY_KEY" > "$HOME/.ssh/core-split"
+          chmod 0600 "$HOME/.ssh/core-split"
+          ssh-keyscan -t ed25519 github.com > "$HOME/.ssh/known_hosts"
+
+      - name: Verify external publication access
+        env:
+          PACKAGIST_API_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PACKAGIST_USERNAME"
+          test -n "$PACKAGIST_API_TOKEN"
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/core-split -o IdentitiesOnly=yes"
+          git ls-remote git@github.com:peanut-opensource/peanut-admin-core.git refs/heads/main >/dev/null
+          git push --dry-run git@github.com:peanut-opensource/peanut-admin-core.git \
+            HEAD:refs/heads/peanut-admin-release-access-preflight >/dev/null
+          update_url="$(php -r 'echo "https://packagist.org/api/update-package?" . http_build_query(["username"=>$argv[1],"apiToken"=>$argv[2]]);' "$PACKAGIST_USERNAME" "$PACKAGIST_API_TOKEN")"
+          curl --fail --silent --show-error --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{"repository":{"url":"https://github.com/peanut-opensource/peanut-admin-core"}}' \
+            "$update_url" >/dev/null
+
+      - name: Publish immutable Composer split
+        id: composer_split
+        env:
+          COMPOSER_PROJECTION: ${{ steps.projections.outputs.composer_projection }}
+          RELEASE_TAG: ${{ steps.identity.outputs.tag }}
+          SOURCE_COMMIT: ${{ steps.identity.outputs.source_commit }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GIT_SSH_COMMAND="ssh -i $HOME/.ssh/core-split -o IdentitiesOnly=yes"
+          split="$RUNNER_TEMP/peanut-admin-core-split"
+          git clone --branch main git@github.com:peanut-opensource/peanut-admin-core.git "$split"
+          git -C "$split" rm -r --ignore-unmatch .
+          tar -C "$COMPOSER_PROJECTION" -cf - . | tar -C "$split" -xf -
+          git -C "$split" add -A -- .
+          projection_tree="$(git -C "$split" write-tree)"
+          if git -C "$split" fetch --quiet origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG" 2>/dev/null; then
+            split_commit="$(git -C "$split" rev-parse "$RELEASE_TAG^{commit}")"
+            test "$(git -C "$split" rev-parse "$RELEASE_TAG^{tree}")" = "$projection_tree"
+            test "$(git -C "$split" rev-parse origin/main)" = "$split_commit"
+          else
+            source_date="$(git show -s --format=%cI "$SOURCE_COMMIT")"
+            split_commit="$(
+              printf 'release: peanut-admin/core %s from %s\n' "$VERSION" "$SOURCE_COMMIT" |
+                GIT_AUTHOR_NAME='Peanut Admin Release Bot' \
+                GIT_AUTHOR_EMAIL='release@peanut-admin.org' \
+                GIT_AUTHOR_DATE="$source_date" \
+                GIT_COMMITTER_NAME='Peanut Admin Release Bot' \
+                GIT_COMMITTER_EMAIL='release@peanut-admin.org' \
+                GIT_COMMITTER_DATE="$source_date" \
+                git -C "$split" commit-tree "$projection_tree" -p origin/main
+            )"
+            GIT_COMMITTER_NAME='Peanut Admin Release Bot' \
+              GIT_COMMITTER_EMAIL='release@peanut-admin.org' \
+              GIT_COMMITTER_DATE="$source_date" \
+              git -C "$split" tag -a "$RELEASE_TAG" "$split_commit" \
+                -m "Peanut Admin Core $VERSION"
+            git -C "$split" push --atomic origin \
+              "$split_commit:refs/heads/main" "refs/tags/$RELEASE_TAG"
+          fi
+          printf 'commit=%s\ntree=%s\n' \
+            "$split_commit" "$projection_tree" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh and verify Packagist
+        env:
+          PACKAGIST_API_TOKEN: ${{ secrets.PACKAGIST_API_TOKEN }}
+          PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+          SPLIT_COMMIT: ${{ steps.composer_split.outputs.commit }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$PACKAGIST_USERNAME"
+          test -n "$PACKAGIST_API_TOKEN"
+          update_url="$(php -r 'echo "https://packagist.org/api/update-package?" . http_build_query(["username"=>$argv[1],"apiToken"=>$argv[2]]);' "$PACKAGIST_USERNAME" "$PACKAGIST_API_TOKEN")"
+          curl --fail --silent --show-error --request POST \
+            --header 'Content-Type: application/json' \
+            --data '{"repository":{"url":"https://github.com/peanut-opensource/peanut-admin-core"}}' \
+            "$update_url" >/dev/null
+          unset update_url
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error \
+              https://repo.packagist.org/p2/peanut-admin/core.json |
+              jq -e --arg version "$VERSION" --arg reference "$SPLIT_COMMIT" \
+                '.packages["peanut-admin/core"][] |
+                 select(.version == $version and .source.reference == $reference)' >/dev/null; then
+              break
+            fi
+            if [[ "$attempt" -eq 12 ]]; then
+              echo 'ERROR: Packagist did not expose the immutable split identity' >&2
+              exit 1
+            fi
+            sleep 10
+          done
+          consumer="$RUNNER_TEMP/composer-registry-consumer"
+          mkdir -p "$consumer"
+          php -r '$m=["name"=>"peanut-admin/core-registry-consumer","type"=>"project","require"=>["peanut-admin/core"=>$argv[1]],"config"=>["allow-plugins"=>new stdClass()]];file_put_contents($argv[2],json_encode($m,JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR)."\n");' \
+            "$VERSION" "$consumer/composer.json"
+          composer install --working-dir "$consumer" --no-dev --no-interaction --no-progress --prefer-dist
+
+      - name: Publish and verify npm package
+        id: npm
+        env:
+          EXPECTED_PAYLOAD_SHA256: ${{ steps.projections.outputs.npm_payload_sha256 }}
+          NPM_TARBALL: ${{ steps.projections.outputs.npm_tarball }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if npm view "@peanut-admin/admin@$VERSION" version >/dev/null 2>&1; then
+            registry_tarball="$RUNNER_TEMP/peanut-admin-admin-$VERSION.tgz"
+            curl --fail --silent --show-error --location \
+              --output "$registry_tarball" \
+              "$(npm view "@peanut-admin/admin@$VERSION" dist.tarball)"
+            test "$(gzip -cd "$registry_tarball" | sha256sum | cut -d ' ' -f 1)" = \
+              "$EXPECTED_PAYLOAD_SHA256"
+          else
+            npm publish "$NPM_TARBALL" --access public --tag latest --provenance
+          fi
+          test "$(npm view "@peanut-admin/admin@$VERSION" version)" = "$VERSION"
+          test "$(npm view '@peanut-admin/admin' dist-tags.latest)" = "$VERSION"
+          integrity="$(npm view "@peanut-admin/admin@$VERSION" dist.integrity)"
+          test -n "$integrity"
+          consumer="$RUNNER_TEMP/npm-registry-consumer"
+          mkdir -p "$consumer"
+          cd "$consumer"
+          npm init --yes >/dev/null
+          npm install --ignore-scripts "@peanut-admin/admin@$VERSION"
+          npm audit signatures
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises'
+          const manifest = JSON.parse(await readFile('node_modules/@peanut-admin/admin/package.json', 'utf8'))
+          const expected = ['./core', './shell', './settings', './reference-codes', './file-media', './task-job', './notification-sms', './import-export', './ops-console', './integration-security', './collaboration', './testing', './client', './client/nuxt', './client/uniapp'].sort()
+          const actual = Object.keys(manifest.exports ?? {}).sort()
+          if (JSON.stringify(actual) !== JSON.stringify(expected)) process.exit(1)
+          NODE
+          printf 'integrity=%s\n' "$integrity" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NPM_INTEGRITY: ${{ steps.npm.outputs.integrity }}
+          NPM_PAYLOAD_SHA256: ${{ steps.projections.outputs.npm_payload_sha256 }}
+          RELEASE_TAG: ${{ steps.identity.outputs.tag }}
+          SOURCE_COMMIT: ${{ steps.identity.outputs.source_commit }}
+          SOURCE_TREE: ${{ steps.identity.outputs.source_tree }}
+          SPLIT_COMMIT: ${{ steps.composer_split.outputs.commit }}
+          SPLIT_TREE: ${{ steps.composer_split.outputs.tree }}
+          VERSION: ${{ steps.identity.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo peanut-opensource/peanut-admin >/dev/null 2>&1; then
+            test "$(gh release view "$RELEASE_TAG" --repo peanut-opensource/peanut-admin --json tagName --jq .tagName)" = "$RELEASE_TAG"
+            exit 0
+          fi
+          notes="$RUNNER_TEMP/release-notes.md"
+          {
+            printf 'Peanut Admin Core %s\n\n' "$VERSION"
+            printf -- '- Source commit: %s\n' "$SOURCE_COMMIT"
+            printf -- '- Source tree: %s\n' "$SOURCE_TREE"
+            printf -- '- Composer split commit: %s\n' "$SPLIT_COMMIT"
+            printf -- '- Composer split tree: %s\n' "$SPLIT_TREE"
+            printf -- '- npm integrity: %s\n' "$NPM_INTEGRITY"
+            printf -- '- npm payload SHA-256: %s\n' "$NPM_PAYLOAD_SHA256"
+            printf -- '- Composer: peanut-admin/core@%s\n' "$VERSION"
+            printf -- '- npm: @peanut-admin/admin@%s\n' "$VERSION"
+          } > "$notes"
+          gh release create "$RELEASE_TAG" \
+            --repo peanut-opensource/peanut-admin \
+            --title "Peanut Admin Core $VERSION" \
+            --notes-file "$notes" \
+            --verify-tag

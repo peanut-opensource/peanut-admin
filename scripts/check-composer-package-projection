@@ -4,12 +4,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-if [[ $# -ne 1 ]]; then
-  echo 'ERROR: usage: scripts/check-alpha5-package-projection OUTPUT_DIR' >&2
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+  echo 'ERROR: usage: scripts/check-composer-package-projection OUTPUT_DIR [EXPECTED_VERSION]' >&2
   exit 2
 fi
 
 output="$1"
+expected_version="${2:-$(php -r '$manifest=json_decode((string)file_get_contents($argv[1]),true,512,JSON_THROW_ON_ERROR);echo $manifest["version"]??"";' packages/php/composer.json)}"
+if [[ ! "$expected_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo 'ERROR: expected Composer package version must be stable SemVer' >&2
+  exit 1
+fi
 if [[ -e "$output" && ! -d "$output" ]]; then
   echo 'ERROR: output path is not a directory' >&2
   exit 1
@@ -24,7 +29,7 @@ if ! git diff --quiet HEAD -- packages/php; then
   exit 1
 fi
 
-archive="$output/peanut-admin-core-alpha5.tar"
+archive="$output/peanut-admin-core.tar"
 projection="$output/composer"
 mkdir -p "$projection"
 git archive --format=tar HEAD packages/php >"$archive"
@@ -49,28 +54,28 @@ $expected = [
     "PeanutAdmin\\Workflow\\" => "workflow/src/",
 ];
 if (($manifest["name"] ?? null) !== "peanut-admin/core"
-    || ($manifest["version"] ?? null) !== "0.1.0-alpha.5"
+    || ($manifest["version"] ?? null) !== $argv[2]
     || ($manifest["license"] ?? null) !== "Apache-2.0"
     || ($manifest["autoload"]["psr-4"] ?? null) !== $expected
     || isset($manifest["replace"])
     || isset($manifest["provide"])) {
-    fwrite(STDERR, "ERROR: Alpha.5 Composer projection metadata is invalid\n");
+    fwrite(STDERR, "ERROR: Composer projection metadata is invalid\n");
     exit(1);
 }
-' "$projection/composer.json"
+' "$projection/composer.json" "$expected_version"
 
 if find "$projection" -mindepth 2 -name composer.json -print -quit | rg -q .; then
-  echo 'ERROR: Alpha.5 contains a child Composer package' >&2
+  echo 'ERROR: Composer projection contains a child Composer package' >&2
   exit 1
 fi
 if find "$projection" -type f \( -name '.env' -o -name '.env.*' -o -iname '*.pem' -o -iname '*.key' \) -print -quit | rg -q .; then
-  echo 'ERROR: Alpha.5 projection contains a forbidden credential file' >&2
+  echo 'ERROR: Composer projection contains a forbidden credential file' >&2
   exit 1
 fi
 if rg -qi '(article|newsroom|audio|video|broadcast|transcoding|copyright|three[-_ ]review)' \
   "$projection/artifact-revision" "$projection/collaboration" \
   "$projection/entitlement-quota" "$projection/workflow"; then
-  echo 'ERROR: Alpha.5 projection contains product-specific behavior' >&2
+  echo 'ERROR: Composer projection contains product-specific behavior' >&2
   exit 1
 fi
 
@@ -86,7 +91,7 @@ if ($path === false) {
     exit(1);
 }
 $manifest = [
-    "name" => "peanut-admin/alpha5-consumer-probe",
+    "name" => "peanut-admin/core-consumer-probe",
     "type" => "project",
     "repositories" => [[
         "type" => "path",
@@ -95,7 +100,7 @@ $manifest = [
     ]],
     "require" => [
         "php" => "^8.3",
-        "peanut-admin/core" => "0.1.0-alpha.5",
+        "peanut-admin/core" => $argv[3],
     ],
     "minimum-stability" => "stable",
     "prefer-stable" => true,
@@ -105,7 +110,7 @@ file_put_contents(
     $argv[2],
     json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n",
 );
-' "$projection" "$consumer/composer.json"
+' "$projection" "$consumer/composer.json" "$expected_version"
 "$composer_bin" install \
   --working-dir "$consumer" \
   --no-interaction \
@@ -132,5 +137,5 @@ foreach ([
 }
 ' "$consumer/vendor/autoload.php"
 
-printf 'Alpha.5 Composer projection: commit=%s; files=%s; psr4_roots=14; isolated_consumer=passed\n' \
-  "$(git rev-parse HEAD)" "$(find "$projection" -type f | wc -l | tr -d ' ')"
+printf 'Composer projection: version=%s; commit=%s; files=%s; psr4_roots=14; isolated_consumer=passed\n' \
+  "$expected_version" "$(git rev-parse HEAD)" "$(find "$projection" -type f | wc -l | tr -d ' ')"
