@@ -2,7 +2,7 @@
 export interface ShellTabRoute {
   name: unknown
   fullPath: string
-  query?: any
+  query?: Record<string, unknown> | undefined
   meta?: {
     locale?: string
     ignoreCache?: boolean | undefined
@@ -13,7 +13,7 @@ export interface ShellTab {
   title: string
   name: string
   fullPath: string
-  query?: any
+  query?: Record<string, unknown> | undefined
   ignoreCache?: boolean | undefined
 }
 

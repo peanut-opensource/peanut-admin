@@ -51,7 +51,6 @@ final readonly class TenantEntryBindingResolver
         if ($binding !== null) return new TenantSystemContext($binding['tenant_id'], $actor, $operation, $operationId);
         if ($this->defaultSystem === null) throw new \DomainException('TENANT_ENTRY_BINDING_UNAVAILABLE');
         $context = ($this->defaultSystem)($actor, $operation, $operationId);
-        if (!$context instanceof TenantSystemContext) throw new \DomainException('TENANT_ENTRY_BINDING_UNAVAILABLE');
         return $context;
     }
 

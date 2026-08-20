@@ -12,12 +12,7 @@ final class VerificationCodeSecret
         if (preg_match('/^\d{4}$/D', $code) !== 1) {
             throw new \InvalidArgumentException('The verification code format is invalid.');
         }
-        $hash = password_hash($code, PASSWORD_DEFAULT);
-        if (!is_string($hash)) {
-            throw new \RuntimeException('The verification code hash could not be created.');
-        }
-
-        return $hash;
+        return password_hash($code, PASSWORD_DEFAULT);
     }
 
     public static function matches(string $code, string $hash): bool
