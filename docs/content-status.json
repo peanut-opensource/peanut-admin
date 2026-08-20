@@ -833,6 +833,13 @@
       "status": "canonical",
       "owner": "Peanut Admin maintainers",
       "replacement": null
+    },
+    {
+      "path": "docs/decisions/releases/core-0.1.0-publication.md",
+      "title": "Core 0.1.0 Publication Contract",
+      "status": "canonical",
+      "owner": "Peanut Admin maintainers",
+      "replacement": null
     }
   ]
 }
