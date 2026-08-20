@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "project_id": "peanut-admin-core",
+  "authority": {
+    "owner": "Peanut Admin Core maintainers",
+    "source": "this versioned file",
+    "resource_observation_policy": "verify the selected registered environment before every stateful qualification action",
+    "credentials_policy": "qualification uses only the disposable credentials declared by compose.yaml; external publication credentials remain GitHub environment secret references",
+    "fallback_policy": "none; an unavailable or conflicting resource stops only the dependent qualification"
+  },
+  "resources": {
+    "qualification_environments": [
+      {
+        "stable_resource_id": "peanut-admin-core-0.1.0-local-qualification",
+        "purpose": "fixed-candidate Core 0.1.0 aggregate, browser, recovery, performance, starter and package-projection qualification",
+        "environment": "qualification",
+        "owner": "Peanut Admin Core release qualification owner",
+        "host": "macbookpro-arm64",
+        "service_type": "isolated Docker Compose qualification stack plus host toolchain",
+        "compose_project": "peanut-admin-core-q010",
+        "compose_file": "compose.yaml",
+        "versions": {
+          "docker_client": "29.7.2",
+          "docker_server": "29.7.2",
+          "mysql": "8.4.10",
+          "valkey": "9.1.0-alpine",
+          "php": "8.3.24",
+          "composer": "2.10.2",
+          "node": "24.18.0",
+          "pnpm": "11.13.0"
+        },
+        "credential_ref": "compose.yaml qualification-only disposable defaults; GitHub npm-release environment for publication credentials",
+        "database": "peanut_admin_core_q010 plus test-owned peanut_admin_* databases inside the isolated MySQL volume",
+        "schema": "Core Kernel and test-owned schemas",
+        "namespace": "Docker Compose project peanut-admin-core-q010 and its isolated mysql-data/cache-data volumes",
+        "data_source": "the exact locked Core candidate tree and repository-owned synthetic fixtures",
+        "freshness_requirement": "the Compose project, containers and volumes must be absent before the candidate starts; all databases are created by that candidate and destroyed after evidence capture",
+        "listeners": [
+          {
+            "stable_resource_id": "peanut-admin-core-q010-mysql",
+            "host": "127.0.0.1",
+            "port": 20220,
+            "port_env": "MYSQL_PORT and DB_PORT",
+            "service_type": "MySQL 8.4.10"
+          },
+          {
+            "stable_resource_id": "peanut-admin-core-q010-cache",
+            "host": "127.0.0.1",
+            "port": 20221,
+            "port_env": "CACHE_PORT",
+            "service_type": "Valkey 9.1.0-alpine"
+          },
+          {
+            "stable_resource_id": "peanut-admin-core-q010-backend",
+            "host": "127.0.0.1",
+            "port": 20222,
+            "port_env": "BACKEND_PORT",
+            "service_type": "reference backend"
+          },
+          {
+            "stable_resource_id": "peanut-admin-core-q010-frontend",
+            "host": "127.0.0.1",
+            "port": 20223,
+            "port_env": "FRONTEND_PORT",
+            "service_type": "reference frontend"
+          },
+          {
+            "stable_resource_id": "peanut-admin-core-q010-browser-backend",
+            "host": "127.0.0.1",
+            "port": 20224,
+            "port_env": "PEANUT_BROWSER_BACKEND_PORT",
+            "service_type": "browser fixture backend"
+          },
+          {
+            "stable_resource_id": "peanut-admin-core-q010-browser-frontend",
+            "host": "127.0.0.1",
+            "port": 20225,
+            "port_env": "PEANUT_BROWSER_FRONTEND_PORT",
+            "service_type": "browser fixture frontend"
+          }
+        ],
+        "health_check": {
+          "toolchain": "verify the exact versions recorded above before start",
+          "allocation": "all six registered ports are free and docker compose --project-name peanut-admin-core-q010 ps --all has no resources before start",
+          "mysql": "credential-backed PDO ping to 127.0.0.1:20220 after the isolated stack starts",
+          "cache": "RESP PING to 127.0.0.1:20221 after the isolated stack starts"
+        },
+        "fallback": "none",
+        "lifecycle": "ephemeral for one exact candidate",
+        "cleanup_responsibility": "the qualification owner runs docker compose --project-name peanut-admin-core-q010 down --volumes --remove-orphans after success or after preserving failure evidence",
+        "publication_side_effects": "none; qualification never creates a source tag, Registry version or GitHub Release"
+      }
+    ],
+    "external_publication": [
+      {
+        "stable_resource_id": "peanut-admin-core-public-registries",
+        "purpose": "tag-triggered Composer split, Packagist, npm and GitHub Release publication",
+        "environment": "release",
+        "owner": "Peanut Admin Core release owner",
+        "host": "github.com, packagist.org and registry.npmjs.org",
+        "port": 443,
+        "database": null,
+        "schema": null,
+        "namespace": "peanut-opensource/peanut-admin, peanut-opensource/peanut-admin-core, peanut-admin/core and @peanut-admin/admin",
+        "service_type": "GitHub, Packagist and npm public registries",
+        "version": "immutable SemVer tag and package version selected by the release contract",
+        "credential_ref": "GitHub environment npm-release: CORE_SPLIT_DEPLOY_KEY, PACKAGIST_USERNAME and PACKAGIST_API_TOKEN; npm trusted publisher binding",
+        "data_source": "the exact qualified origin/main commit and annotated tag",
+        "freshness_requirement": "read-only preflight verifies target-version absence or exact resumable identity immediately before publication",
+        "health_check": "the tag workflow verifies repository access, Packagist API access and clean Registry consumers",
+        "fallback": "none",
+        "cleanup_responsibility": "not applicable; published identities are immutable"
+      }
+    ]
+  }
+}
