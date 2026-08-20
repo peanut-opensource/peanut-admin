@@ -10,7 +10,7 @@ class OfficialAccountService
     private const TOKEN_URL = 'https://api.weixin.qq.com/cgi-bin/token';
     private const MENU_URL = 'https://api.weixin.qq.com/cgi-bin/menu/create';
 
-    /** @var null|callable(string,string,array,string):array{0:int,1:string} */
+    /** @var null|callable(string,string,array<int,string>,string):mixed */
     private $transport;
 
     public function __construct(?callable $transport = null)
@@ -93,6 +93,10 @@ class OfficialAccountService
     /** @return array{0: int, 1: string} */
     private function request(string $method, string $url, string $body): array
     {
+        $method = strtoupper(trim($method));
+        if ($method === '') {
+            throw new \RuntimeException('微信公众号请求方法无效');
+        }
         if ($this->transport !== null) {
             $result = ($this->transport)($method, $url, ['Accept: application/json', 'Content-Type: application/json', 'User-Agent: PeanutAdmin/1.0'], $body);
             if (!is_array($result) || count($result) !== 2) {
@@ -107,7 +111,19 @@ class OfficialAccountService
         if ($curl === false) {
             throw new \RuntimeException('微信接口请求初始化失败');
         }
-        curl_setopt_array($curl, [CURLOPT_CUSTOMREQUEST => $method, CURLOPT_POSTFIELDS => $method === 'POST' ? $body : null, CURLOPT_HTTPHEADER => ['Accept: application/json', 'Content-Type: application/json', 'User-Agent: PeanutAdmin/1.0'], CURLOPT_RETURNTRANSFER => true, CURLOPT_CONNECTTIMEOUT => 10, CURLOPT_TIMEOUT => 30, CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2]);
+        $options = [
+            CURLOPT_CUSTOMREQUEST => $method,
+            CURLOPT_HTTPHEADER => ['Accept: application/json', 'Content-Type: application/json', 'User-Agent: PeanutAdmin/1.0'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+        ];
+        if ($method === 'POST') {
+            $options[CURLOPT_POSTFIELDS] = $body;
+        }
+        curl_setopt_array($curl, $options);
         $response = curl_exec($curl);
         if ($response === false) {
             $error = curl_error($curl);
@@ -119,7 +135,10 @@ class OfficialAccountService
         return [$status, (string) $response];
     }
 
-    /** @param array<int, array<string, mixed>> $menu @return array<int, array<string, mixed>> */
+    /**
+     * @param array<int, array<string, mixed>> $menu
+     * @return array<int, array<string, mixed>>
+     */
     private function wechatButtons(array $menu): array
     {
         return array_map(function (array $item): array {

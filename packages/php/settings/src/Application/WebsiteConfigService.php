@@ -33,7 +33,7 @@ final class WebsiteConfigService
     /** @var array<string, string> */
     private array $defaults;
 
-    /** @param array<string, string> $defaults */
+    /** @param array<string, mixed> $defaults */
     public function __construct(
         private WebsiteConfigStore $store,
         private Closure $urlForRead,
@@ -43,12 +43,14 @@ final class WebsiteConfigService
         if (array_keys($defaults) !== self::FIELDS) {
             throw new InvalidArgumentException('品牌默认字段与网站配置合同不一致');
         }
-        foreach ($defaults as $value) {
+        $validatedDefaults = [];
+        foreach ($defaults as $field => $value) {
             if (!is_string($value)) {
                 throw new InvalidArgumentException('品牌默认字段必须是字符串');
             }
+            $validatedDefaults[$field] = $value;
         }
-        $this->defaults = $defaults;
+        $this->defaults = $validatedDefaults;
     }
 
     /** @return array<string, string> */
